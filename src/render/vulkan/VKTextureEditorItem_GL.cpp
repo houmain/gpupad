@@ -1,10 +1,6 @@
 #include "VKTextureEditorItem.h"
 #include "VKTexture.h"
 #include "VKWindow.h"
-#include "render/opengl/GLContext.h"
-#include <KDGpu/command_recorder.h>
-#include <KDGpu/device.h>
-#include <QOffscreenSurface>
 
 namespace {
     GLenum attachmentForFormat(Texture::Format format)
@@ -171,19 +167,6 @@ namespace {
     }
 } // namespace
 
-struct VKTextureEditorItem::GLState
-{
-    std::unique_ptr<GLContext> context;
-    std::unique_ptr<QOffscreenSurface> surface;
-    ShareHandle importedShareHandle{};
-    GLuint textureId{};
-};
-
-void VKTextureEditorItem::GLStateDeleter::operator()(GLState *state) const
-{
-    delete state;
-}
-
 bool VKTextureEditorItem::ensureGLContext()
 {
     if (!mGl)
@@ -220,15 +203,15 @@ void VKTextureEditorItem::releaseGL()
     mGl.reset();
 }
 
-bool VKTextureEditorItem::updateOpenGLTexture()
+bool VKTextureEditorItem::copyOpenGLTexture(ShareHandle textureHandle)
 {
-    if (mPreviewTextureHandle.type != ShareHandleType::OPENGL_TEXTURE_ID)
+    if (textureHandle.type != ShareHandleType::OPENGL_TEXTURE_ID)
         return false;
 
     const auto sourceTextureId = static_cast<GLuint>(
-        reinterpret_cast<std::uintptr_t>(mPreviewTextureHandle.handle));
+        reinterpret_cast<std::uintptr_t>(textureHandle.handle));
 
-    if (mUpload || !mTexture || mTexture->samples() != mTextureSamples) {
+    if (!mTexture || mTexture->samples() != mTextureSamples) {
         releaseGL();
         if (mTexture)
             mTexture->release(window().device());
@@ -246,7 +229,6 @@ bool VKTextureEditorItem::updateOpenGLTexture()
             return false;
         }
         submitCommandQueue(context);
-        mUpload = false;
     }
 
     if (!ensureGLContext())
@@ -277,10 +259,6 @@ bool VKTextureEditorItem::updateOpenGLTexture()
         cleanup.dismiss();
     }
 
-    if (mShareSync)
-        mShareSync->beginUsage(&gl);
-    const auto cleanup = qScopeGuard([&] { mShareSync->endUsage(&gl); });
-
     if (!copyTexture(gl, mImage, sourceTextureId, state.textureId))
         return false;
     gl.glFinish();
@@ -288,7 +266,11 @@ bool VKTextureEditorItem::updateOpenGLTexture()
     auto context = makeContext();
     context.commandRecorder =
         context.device.createCommandRecorder({ .queue = context.queue });
-    mTexture->prepareSampledImage(context);
+    if (!mTexture->prepareSampledImage(context)) {
+        mTexture->release(window().device());
+        mTexture.reset();
+        return false;
+    }
     submitCommandQueue(context);
     return (mTexture && mTexture->texture().isValid());
 }

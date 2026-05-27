@@ -3,7 +3,7 @@
 #include "RenderTask.h"
 #include "MessageList.h"
 #include "TextureData.h"
-#include "render/ShareSync.h"
+#include "ShareHandle.h"
 #include "session/SessionModel.h"
 #include "scripting/IScriptRenderSession.h"
 #include "scripting/ScriptSession.h"
@@ -13,7 +13,6 @@
 
 class BufferBase;
 class TextureBase;
-class ShareSync;
 
 struct UniformBinding
 {
@@ -120,7 +119,7 @@ protected:
 
     void addMessage(MessagePtr message) { mMessages += message; }
     void addUsedItems(const QSet<ItemId> &itemIds) { mUsedItems += itemIds; }
-    bool updatingPreviewTextures() const;
+    bool updatingSharedTextures() const;
     size_t timeQueryCount() const { return mTimeQueryCallIds.size(); }
     void obtainTimeQueryResults();
 
@@ -138,8 +137,7 @@ protected:
     void beginDownloadModifiedResources(CommandQueue &commandQueue) noexcept;
 
     template <typename CommandQueue>
-    void finishCommandQueue(CommandQueue &commandQueue,
-        ShareSyncPtr shareSync) noexcept;
+    void finishCommandQueue(CommandQueue &commandQueue) noexcept;
 
 private:
     struct GroupIteration

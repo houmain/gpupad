@@ -1,5 +1,4 @@
 #include "D3DRenderSession.h"
-#include "D3DShareSync.h"
 #include "D3DBuffer.h"
 #include "D3DCall.h"
 #include "D3DDevice.h"
@@ -123,9 +122,6 @@ std::shared_ptr<void> D3DRenderSession::beginTimeQuery(size_t index)
 
 void D3DRenderSession::render()
 {
-    if (!mShareSync)
-        mShareSync = std::make_shared<D3DShareSync>(d3dDevice().device());
-
     if (itemsChanged() || evaluationType() == EvaluationType::Reset) {
         createCommandQueue();
         buildCommandQueue<D3DRenderSession>(*mCommandQueue);
@@ -137,8 +133,6 @@ void D3DRenderSession::render()
         reuseUnmodifiedItems(*mCommandQueue, *mPrevCommandQueue);
         mPrevCommandQueue.reset();
     }
-
-    mShareSync->beginUpdate();
 
     AssertIfFailed(
         context.graphicsCommandList->Reset(mCommandAllocator.Get(), nullptr));
@@ -172,23 +166,18 @@ void D3DRenderSession::render()
 
     context.stagingBuffers.clear();
     obtainTimeQueryResults();
-
-    mShareSync->endUpdate();
 }
 
 void D3DRenderSession::finish()
 {
     if (mCommandQueue)
-        finishCommandQueue(*mCommandQueue, mShareSync);
+        finishCommandQueue(*mCommandQueue);
 }
 
 void D3DRenderSession::release()
 {
     mCommandAllocator.Reset();
     mFence.Reset();
-    if (mShareSync)
-        mShareSync->cleanup();
-    mShareSync.reset();
     mCommandQueue.reset();
     mPrevCommandQueue.reset();
 

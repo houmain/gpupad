@@ -216,11 +216,23 @@ bool VKTexture::clear(VKContext &context, std::array<double, 4> color,
 
 bool VKTexture::copy(VKContext &context, VKTexture &source)
 {
+    source.prepareTransferSource(context);
+
+    reload(true);
+    createAndUpload(context);
+    mDeviceCopyModified = true;
+    mMipmapsInvalidated = true;
+
+    memoryBarrier(*context.commandRecorder,
+        KDGpu::TextureLayout::TransferDstOptimal,
+        KDGpu::AccessFlagBit::TransferWriteBit,
+        KDGpu::PipelineStageFlagBit::TransferBit);
+
     context.commandRecorder->copyTextureToTexture({ 
         .srcTexture = source.texture(),
-        .srcLayout = mCurrentLayout,
+        .srcLayout = source.currentLayout(),
         .dstTexture = texture(),
-        .dstLayout = KDGpu::TextureLayout::General,
+        .dstLayout = mCurrentLayout,
         .regions = { KDGpu::TextureCopyRegion{ 
             .srcSubresource{ .aspectMask = source.aspectMask() },
             .dstSubresource{ .aspectMask = aspectMask() },
@@ -231,7 +243,6 @@ bool VKTexture::copy(VKContext &context, VKTexture &source)
             }, }, }, 
         });
 
-    mCurrentLayout = KDGpu::TextureLayout::General;
     return true;
 }
 

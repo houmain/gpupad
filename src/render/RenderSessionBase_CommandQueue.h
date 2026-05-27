@@ -400,8 +400,7 @@ void RenderSessionBase::beginDownloadModifiedResources(
 }
 
 template <typename CommandQueue>
-void RenderSessionBase::finishCommandQueue(CommandQueue &commandQueue,
-    ShareSyncPtr shareSync) noexcept
+void RenderSessionBase::finishCommandQueue(CommandQueue &commandQueue) noexcept
 {
     Q_ASSERT(onMainThread());
     auto &editors = Singletons::editorManager();
@@ -417,9 +416,10 @@ void RenderSessionBase::finishCommandQueue(CommandQueue &commandQueue,
         if (texture.deviceCopyModified())
             if (const auto fileItem = sessionModel.findItem<FileItem>(itemId))
                 if (auto editor =
-                        editors.openTextureEditor(fileItem->fileName, true))
-                    editor->setPreviewTexture(shareSync,
-                        texture.getShareHandle(), texture.samples());
+                        editors.openTextureEditor(fileItem->fileName, true)) {
+                    editor->copySharedTexture(texture.getShareHandle(),
+                        texture.samples());
+                }
 
     for (auto &[itemId, buffer] : commandQueue.buffers)
         if (buffer.finishDownload())

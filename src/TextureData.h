@@ -4,6 +4,8 @@
 #include <ktx.h>
 #include <vulkan/vulkan.h>
 #include <ktxvulkan.h>
+#include <atomic>
+#include <cstdint>
 #include <memory>
 
 class TextureData
@@ -99,31 +101,6 @@ enum class TextureDataType {
     Uint32,
     Float16,
     Float32,
-};
-
-enum class ShareHandleType {
-    None = 0,
-    OPENGL_TEXTURE_ID = 1,
-    OPAQUE_FD = 0x9586,
-    OPAQUE_WIN32 = 0x9587,
-    OPAQUE_WIN32_KMT = 0x9588,
-    D3D12_TILEPOOL = 0x9589,
-    D3D12_RESOURCE = 0x958A,
-    D3D11_IMAGE = 0x958B,
-    D3D11_IMAGE_KMT = 0x958C,
-    D3D_FENCE = 0x9594,
-};
-
-struct ShareHandle
-{
-    ShareHandleType type;
-    void *handle;
-    size_t allocationSize;
-    size_t allocationOffset;
-    bool dedicated;
-
-    explicit operator bool() const { return (handle != nullptr); }
-    auto operator<=>(const ShareHandle &) const = default;
 };
 
 bool isMultisampleTarget(Texture::Target target);

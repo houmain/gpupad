@@ -159,7 +159,7 @@ bool RenderSessionBase::usesViewportSize(const QString &fileName) const
     return (mScriptSession && mScriptSession->usesViewportSize(fileName));
 }
 
-bool RenderSessionBase::updatingPreviewTextures() const
+bool RenderSessionBase::updatingSharedTextures() const
 {
     return (!mItemsChanged && mEvaluationType == EvaluationType::Steady);
 }
@@ -289,7 +289,7 @@ void RenderSessionBase::evaluateTargetProperties(const Target &target,
 void RenderSessionBase::obtainTimeQueryResults()
 {
     // TODO: remove when message list performance issue is resolved
-    if (updatingPreviewTextures()) {
+    if (updatingSharedTextures()) {
         resetTimeQueries(0);
         mTimeQueryCallIds.clear();
         return;

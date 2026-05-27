@@ -3,9 +3,9 @@
 
 #  include "render/RenderSessionBase.h"
 #  include "VKContext.h"
+#  include <vector>
 
 class VKDevice;
-class VKShareSync;
 
 class VKRenderSession final : public RenderSessionBase
 {
@@ -26,7 +26,6 @@ private:
     VKDevice &vkDevice();
     void createCommandQueue();
 
-    std::shared_ptr<VKShareSync> mShareSync;
     std::unique_ptr<CommandQueue> mCommandQueue;
     std::unique_ptr<CommandQueue> mPrevCommandQueue;
     KDGpu::TimestampQueryRecorder mTimestampQueries;

@@ -4,6 +4,18 @@
 
 #  include "MessageList.h"
 
+namespace {
+#  if !defined(NDEBUG)
+    const bool sDebugLayerEnabled = [] {
+        auto debug = ComPtr<ID3D12Debug>();
+        if (FAILED(D3D12GetDebugInterface(IID_PPV_ARGS(&debug))))
+            return false;
+        debug->EnableDebugLayer();
+        return true;
+    }();
+#  endif
+} // namespace
+
 D3DDevice::D3DDevice() : Device(Type::Direct3D) { }
 
 D3DDevice::~D3DDevice()
@@ -15,14 +27,9 @@ bool D3DDevice::initialize(const AdapterIdentity &adapterIdentity)
 try {
     const auto ThrowIfFailed = [](HRESULT hr) {
         if (FAILED(hr))
-            throw std::runtime_error("failed");
+            throw std::runtime_error(qUtf8Printable("HRESULT: "
+                + QString::number(static_cast<unsigned long>(hr), 16)));
     };
-
-#  if !defined(NDEBUG)
-    auto debugController = ComPtr<ID3D12Debug>();
-    ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)));
-    debugController->EnableDebugLayer();
-#  endif
 
     ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(&mDxgiFactory)));
 
@@ -53,8 +60,8 @@ try {
 
     ThrowIfFailed(mRenderTargetHelper.Init(mDevice.Get()));
     return true;
-} catch (const std::exception &) {
-    mMessages.insert(0, MessageType::Direct3DNotAvailable);
+} catch (const std::exception &ex) {
+    mMessages.insert(0, MessageType::Direct3DNotAvailable, ex.what());
     shutdown();
     return false;
 }

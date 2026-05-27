@@ -2,7 +2,7 @@
 
 #include "Range.h"
 #include "TextureData.h"
-#include "render/ShareSync.h"
+#include "render/ShareHandle.h"
 #include <QObject>
 #include <QOpenGLTexture>
 #include <QString>
@@ -26,12 +26,7 @@ public:
     void setImage(TextureData image);
     const TextureData &image() const { return mImage; }
     virtual bool downloadImage(TextureData *image);
-
-    virtual void setPreviewTexture(ShareSyncPtr shareSync,
-        ShareHandle textureHandle, int samples)
-    {
-        Q_ASSERT(!"preview texture import is not implemented for this item");
-    }
+    virtual void copySharedTexture(ShareHandle textureHandle, int samples) = 0;
 
     bool canFilter() const;
     void setMagnifyLinear(bool magnifyLinear)

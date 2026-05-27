@@ -384,7 +384,7 @@ void TextureEditorItem::computeHistogramBounds()
     }
 
     //mComputeRange->setImage(mImage.getTarget(mTextureSamples),
-    //    (mPreviewTextureId ? mPreviewTextureId : mImageTextureId), mImage,
+    //    (mSharedTextureId ? mSharedTextureId : mImageTextureId), mImage,
     //    static_cast<int>(mLevel), static_cast<int>(mLayer), mFace);
 
     mComputeRange->update();

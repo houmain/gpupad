@@ -1,8 +1,9 @@
 #pragma once
 #if defined(VULKAN_ENABLED)
 
-#include "editors/texture/TextureEditorItem.h"
-#include <memory>
+#  include "editors/texture/TextureEditorItem.h"
+#  include "render/opengl/GLContext.h"
+#  include <QOffscreenSurface>
 
 class VKWindow;
 class VKTexture;
@@ -17,20 +18,31 @@ public:
     void releaseGpu() override;
     void paintGpu(const QMatrix4x4 &transform) override;
     bool downloadImage(TextureData *image) override;
-    void setPreviewTexture(ShareSyncPtr shareSync, ShareHandle textureHandle,
-        int samples) override;
+    void copySharedTexture(ShareHandle textureHandle, int samples) override;
 
 private:
-    struct GLState;
-    struct GLStateDeleter
+    // Shared-memory path: copySharedTexture gets a producer memory handle,
+    // imports it as a source VkImage/VKTexture, then copies that source into
+    // the editor-owned mTexture used for rendering.
+    struct ShareState
     {
-        void operator()(GLState *state) const;
+        ShareHandle shareHandle{};
+        VkImage image{};
+        VkDeviceMemory memory{};
+        std::unique_ptr<VKTexture> texture;
     };
-    struct ShareState;
-    struct ShareStateDeleter
+
+    // OpenGL path: copySharedTexture gets a producer GL texture id, exports
+    // editor-owned mTexture to GL, blits the GL source into that view, then
+    // transitions mTexture back for Vulkan rendering.
+    struct GLState
     {
-        void operator()(ShareState *state) const;
+        std::unique_ptr<GLContext> context;
+        std::unique_ptr<QOffscreenSurface> surface;
+        ShareHandle importedShareHandle{};
+        GLuint textureId{};
     };
+
     struct TextureBinding;
     struct PipelineCache;
 
@@ -39,20 +51,21 @@ private:
     void submitCommandQueue(VKContext &context);
     bool ensureGLContext();
     void releaseGL();
-    bool updateTexture();
-    bool updateImportedTexture();
+    bool uploadTexture();
+    bool copyImportedTexture(ShareHandle textureHandle);
     bool importShareHandle(VKContext &context, ShareHandle shareHandle);
-    bool updateOpenGLTexture();
+    void releaseShareState();
+    bool copyShareStateToTexture(VKContext &context);
+    bool copyOpenGLTexture(ShareHandle textureHandle);
     bool renderTexture(const QMatrix4x4 &transform);
     void resetTextureBinding();
 
     std::unique_ptr<PipelineCache> mPipelineCache;
-    std::unique_ptr<ShareState, ShareStateDeleter> mShare;
-    std::unique_ptr<GLState, GLStateDeleter> mGl;
+    std::unique_ptr<ShareState> mShare;
+    std::unique_ptr<GLState> mGl;
     std::unique_ptr<VKTexture> mTexture;
     std::unique_ptr<TextureBinding> mTextureBinding;
-    ShareSyncPtr mShareSync;
-    ShareHandle mPreviewTextureHandle{};
+    ShareHandle mSharedTextureHandle{};
 };
 
 #endif // defined(VULKAN_ENABLED)

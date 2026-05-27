@@ -6,7 +6,6 @@
 
 struct D3DContext;
 class D3DDevice;
-class D3DShareSync;
 struct ID3D12CommandAllocator;
 struct ID3D12Fence;
 
@@ -29,7 +28,6 @@ private:
     D3DDevice &d3dDevice();
     void createCommandQueue();
 
-    std::shared_ptr<D3DShareSync> mShareSync;
     std::unique_ptr<CommandQueue> mCommandQueue;
     std::unique_ptr<CommandQueue> mPrevCommandQueue;
     ComPtr<ID3D12CommandAllocator> mCommandAllocator;

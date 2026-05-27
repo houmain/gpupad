@@ -4,7 +4,6 @@
 
 #include <QMatrix4x4>
 #include <QOpenGLShaderProgram>
-#include <QScopeGuard>
 #include <algorithm>
 #include <cstdint>
 #include <map>
@@ -43,7 +42,7 @@ GLTextureEditorItem::GLTextureEditorItem(GLWindow *parent)
 
 GLTextureEditorItem::~GLTextureEditorItem()
 {
-    Q_ASSERT(!mImageTextureId && !mPreviewTextureId);
+    Q_ASSERT(!mImageTextureId && !mSharedTextureId);
 }
 
 void GLTextureEditorItem::releaseGpu()
@@ -59,8 +58,7 @@ void GLTextureEditorItem::releaseGpu()
             mHistogramTexture.destroy();
     }
     mImageTextureId = GL_NONE;
-    mPreviewTextureId = GL_NONE;
-    mShareSync.reset();
+    mSharedTextureId = GL_NONE;
 
     mProgramCache.reset();
     mProgramCache = std::make_unique<ProgramCache>();
@@ -70,7 +68,7 @@ void GLTextureEditorItem::paintGpu(const QMatrix4x4 &transform)
 {
     Q_ASSERT(glGetError() == GL_NO_ERROR);
 
-    if (updateTexture())
+    if (uploadTexture())
         renderTexture(transform);
 
     Q_ASSERT(glGetError() == GL_NO_ERROR);
@@ -79,7 +77,7 @@ void GLTextureEditorItem::paintGpu(const QMatrix4x4 &transform)
 bool GLTextureEditorItem::downloadImage(TextureData *image)
 {
     Q_ASSERT(image);
-    if (!mPreviewTextureId)
+    if (!mSharedTextureId)
         return TextureEditorItem::downloadImage(image);
 
     if (!window().makeCurrent())
@@ -88,39 +86,32 @@ bool GLTextureEditorItem::downloadImage(TextureData *image)
     auto data = mImage;
     auto &gl = window().context();
     const auto target = data.getTarget(mTextureSamples);
-    if (mShareSync)
-        mShareSync->beginUsage(&gl);
-    const auto cleanup = qScopeGuard([&] {
-        if (mShareSync)
-            mShareSync->endUsage(&gl);
-    });
 
-    if (!gl.glIsTexture(mPreviewTextureId))
+    if (!gl.glIsTexture(mSharedTextureId))
         return false;
 
-    if (!GLTexture::download(gl, data, target, mPreviewTextureId))
+    if (!GLTexture::download(gl, data, target, mSharedTextureId))
         return false;
 
+    gl.glFinish();
     *image = std::move(data);
     return true;
 }
 
-void GLTextureEditorItem::setPreviewTexture(ShareSyncPtr shareSync,
-    ShareHandle textureHandle, int samples)
+void GLTextureEditorItem::copySharedTexture(ShareHandle textureHandle,
+    int samples)
 {
     Q_ASSERT(!textureHandle
         || textureHandle.type == ShareHandleType::OPENGL_TEXTURE_ID);
 
-    mShareSync.reset();
-    mPreviewTextureId = GL_NONE;
+    mSharedTextureId = GL_NONE;
     if (textureHandle.type != ShareHandleType::OPENGL_TEXTURE_ID
         || !textureHandle) {
         render();
         return;
     }
 
-    mShareSync = std::move(shareSync);
-    mPreviewTextureId = static_cast<GLuint>(
+    mSharedTextureId = static_cast<GLuint>(
         reinterpret_cast<std::uintptr_t>(textureHandle.handle));
     mTextureSamples = std::max(samples, 1);
     render();
@@ -133,16 +124,15 @@ GLWindow &GLTextureEditorItem::window()
 
 void GLTextureEditorItem::imageChanged()
 {
-    mShareSync.reset();
-    mPreviewTextureId = GL_NONE;
+    mSharedTextureId = GL_NONE;
 }
 
-bool GLTextureEditorItem::updateTexture()
+bool GLTextureEditorItem::uploadTexture()
 {
     if (mImage.isNull())
         return false;
 
-    if (!mPreviewTextureId && std::exchange(mUpload, false)) {
+    if (!mSharedTextureId && std::exchange(mUpload, false)) {
         auto &gl = window().context();
         gl.glDeleteTextures(1, &mImageTextureId);
         mImageTextureId = GL_NONE;
@@ -150,10 +140,10 @@ bool GLTextureEditorItem::updateTexture()
         const auto result = GLTexture::upload(gl, mImage, mImage.getTarget(), 1,
             &mImageTextureId);
         Q_ASSERT(result);
-    } else if (mPreviewTextureId) {
+    } else if (mSharedTextureId) {
         mUpload = false;
     }
-    return (mPreviewTextureId || mImageTextureId);
+    return (mSharedTextureId || mImageTextureId);
 }
 
 bool GLTextureEditorItem::renderTexture(const QMatrix4x4 &transform)
@@ -161,20 +151,14 @@ bool GLTextureEditorItem::renderTexture(const QMatrix4x4 &transform)
     Q_ASSERT(glGetError() == GL_NO_ERROR);
     auto &gl = window().context();
 
-    if (mPreviewTextureId && !gl.glIsTexture(mPreviewTextureId))
-        mPreviewTextureId = GL_NONE;
+    if (mSharedTextureId && !gl.glIsTexture(mSharedTextureId))
+        mSharedTextureId = GL_NONE;
 
     const auto target =
-        mImage.getTarget(mPreviewTextureId ? mTextureSamples : 0);
+        mImage.getTarget(mSharedTextureId ? mTextureSamples : 0);
     gl.glActiveTexture(GL_TEXTURE0);
-    const auto usingPreviewTexture = (mPreviewTextureId != GL_NONE);
-    if (usingPreviewTexture && mShareSync)
-        mShareSync->beginUsage(&gl);
-
-    if (mPreviewTextureId)
-        gl.glBindTexture(target, mPreviewTextureId);
-    else
-        gl.glBindTexture(target, mImageTextureId);
+    gl.glBindTexture(target,
+        mSharedTextureId ? mSharedTextureId : mImageTextureId);
 
     gl.glEnable(GL_BLEND);
     gl.glBlendEquation(GL_FUNC_ADD);
@@ -197,84 +181,88 @@ bool GLTextureEditorItem::renderTexture(const QMatrix4x4 &transform)
         }
     }
 
-    const auto desc = ShaderDesc{ target, mImage.format(), mPickerEnabled,
-        mHistogramEnabled };
-    if (auto *program = mProgramCache->getProgram(desc, vertexShaderSource,
-            buildFragmentShader(desc))) {
-        const auto params = getParams(transform, mTextureSamples);
+    const auto desc = ShaderDesc{
+        .target = target,
+        .format = mImage.format(),
+        .picker = mPickerEnabled,
+        .histogram = mHistogramEnabled,
+    };
+    auto *program = mProgramCache->getProgram(desc, vertexShaderSource,
+        buildFragmentShader(desc));
+    if (!program)
+        return false;
 
-        program->bind();
-        program->setUniformValue("uTexture", 0);
-        program->setUniformValue("uTransform", transform);
-        program->setUniformValue("uSize", params.width, params.height);
-        program->setUniformValue("uLevel", params.level);
-        program->setUniformValue("uFace", params.face);
-        program->setUniformValue("uLayer", params.layer);
-        program->setUniformValue("uSample", params.sample);
-        program->setUniformValue("uSamples", params.samples);
-        program->setUniformValue("uFlipVertically", params.flipVertically);
-        program->setUniformValue("uMappingOffset", params.mappingOffset);
-        program->setUniformValue("uMappingFactor", params.mappingFactor);
-        program->setUniformValue("uColorMask",
-            static_cast<GLint>(params.colorMask));
+    const auto params = getParams(transform, mTextureSamples);
+    program->bind();
+    program->setUniformValue("uTexture", 0);
+    program->setUniformValue("uTransform", transform);
+    program->setUniformValue("uSize", params.width, params.height);
+    program->setUniformValue("uLevel", params.level);
+    program->setUniformValue("uFace", params.face);
+    program->setUniformValue("uLayer", params.layer);
+    program->setUniformValue("uSample", params.sample);
+    program->setUniformValue("uSamples", params.samples);
+    program->setUniformValue("uFlipVertically", params.flipVertically);
+    program->setUniformValue("uMappingOffset", params.mappingOffset);
+    program->setUniformValue("uMappingFactor", params.mappingFactor);
+    program->setUniformValue("uColorMask",
+        static_cast<GLint>(params.colorMask));
 
-        if (mPickerEnabled) {
-            if (!mPickerTexture.isCreated()) {
-                mPickerTexture.setSize(1, 1);
-                mPickerTexture.setFormat(QOpenGLTexture::RGBA32F);
-                mPickerTexture.allocateStorage();
-            }
-            gl.glBindImageTexture(1, mPickerTexture.textureId(), 0, GL_FALSE, 0,
-                GL_WRITE_ONLY, GL_RGBA32F);
-            program->setUniformValue("uPickerColor", 1);
-            program->setUniformValue("uPickerFragCoord",
-                mMousePosition + QPointF(0.5, 0.5));
+    if (mPickerEnabled) {
+        if (!mPickerTexture.isCreated()) {
+            mPickerTexture.setSize(1, 1);
+            mPickerTexture.setFormat(QOpenGLTexture::RGBA32F);
+            mPickerTexture.allocateStorage();
         }
-        if (mHistogramEnabled) {
-            if (!mHistogramTexture.isCreated()
-                || mHistogramTexture.width() != mHistogramBins.size()) {
-                mHistogramTexture.destroy();
-                mHistogramTexture.setSize(mHistogramBins.size());
-                mHistogramTexture.setFormat(QOpenGLTexture::R32U);
-                mHistogramTexture.allocateStorage();
-            }
-            gl.glBindImageTexture(2, mHistogramTexture.textureId(), 0, GL_FALSE,
-                0, GL_READ_WRITE, GL_R32UI);
-            program->setUniformValue("uHistogram", 2);
-            program->setUniformValue("uHistogramOffset",
-                static_cast<float>(-mHistogramBounds.minimum));
-            const auto scaleToBins = mHistogramBins.size() / 3 - 1;
-            program->setUniformValue("uHistogramFactor",
-                static_cast<float>(1 / mHistogramBounds.range() * scaleToBins));
+        gl.glBindImageTexture(1, mPickerTexture.textureId(), 0, GL_FALSE, 0,
+            GL_WRITE_ONLY, GL_RGBA32F);
+        program->setUniformValue("uPickerColor", 1);
+        program->setUniformValue("uPickerFragCoord",
+            mMousePosition + QPointF(0.5, 0.5));
+    }
+    if (mHistogramEnabled) {
+        if (!mHistogramTexture.isCreated()
+            || mHistogramTexture.width() != mHistogramBins.size()) {
+            mHistogramTexture.destroy();
+            mHistogramTexture.setSize(mHistogramBins.size());
+            mHistogramTexture.setFormat(QOpenGLTexture::R32U);
+            mHistogramTexture.allocateStorage();
         }
-
-        gl.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-        gl.glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT);
-
-        auto pickerColor = QVector4D{};
-        if (mPickerEnabled) {
-            gl.glBindTexture(mPickerTexture.target(),
-                mPickerTexture.textureId());
-            gl.glGetTexImage(mPickerTexture.target(), 0, GL_RGBA, GL_FLOAT,
-                &pickerColor);
-        }
-        Q_EMIT pickerColorChanged(pickerColor);
-
-        if (mHistogramEnabled) {
-            gl.glBindTexture(mHistogramTexture.target(),
-                mHistogramTexture.textureId());
-            gl.glGetTexImage(mHistogramTexture.target(), 0, GL_RED_INTEGER,
-                GL_UNSIGNED_INT, mHistogramBins.data());
-            updateHistogram();
-        }
-
-        program->release();
+        gl.glBindImageTexture(2, mHistogramTexture.textureId(), 0, GL_FALSE, 0,
+            GL_READ_WRITE, GL_R32UI);
+        program->setUniformValue("uHistogram", 2);
+        program->setUniformValue("uHistogramOffset",
+            static_cast<float>(-mHistogramBounds.minimum));
+        const auto scaleToBins = mHistogramBins.size() / 3 - 1;
+        program->setUniformValue("uHistogramFactor",
+            static_cast<float>(1 / mHistogramBounds.range() * scaleToBins));
     }
 
+    gl.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+    gl.glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT);
+
+    auto pickerColor = QVector4D{};
+    if (mPickerEnabled) {
+        gl.glBindTexture(mPickerTexture.target(), mPickerTexture.textureId());
+        gl.glGetTexImage(mPickerTexture.target(), 0, GL_RGBA, GL_FLOAT,
+            &pickerColor);
+    }
+    Q_EMIT pickerColorChanged(pickerColor);
+
+    if (mHistogramEnabled) {
+        gl.glBindTexture(mHistogramTexture.target(),
+            mHistogramTexture.textureId());
+        gl.glGetTexImage(mHistogramTexture.target(), 0, GL_RED_INTEGER,
+            GL_UNSIGNED_INT, mHistogramBins.data());
+        updateHistogram();
+    }
+
+    program->release();
+
     gl.glBindTexture(target, 0);
-    if (usingPreviewTexture && mShareSync)
-        mShareSync->endUsage(&gl);
+    if (mSharedTextureId)
+        gl.glFinish();
     Q_ASSERT(glGetError() == GL_NO_ERROR);
     return true;
 }

@@ -216,26 +216,34 @@ VKTextureEditorItem::VKTextureEditorItem(VKWindow *parent)
 VKTextureEditorItem::~VKTextureEditorItem()
 {
     Q_ASSERT(!mTexture);
+    Q_ASSERT(!mShare);
 }
 
 void VKTextureEditorItem::releaseGpu()
 {
+    if (!window().initialized())
+        return;
+
     releaseGL();
-    if (mTexture && window().initialized())
+    if (mTexture)
         mTexture->release(window().device());
+    releaseShareState();
     mTextureBinding.reset();
     mTexture.reset();
-    mShare.reset();
     mPipelineCache.reset();
-    mShareSync.reset();
-    mPreviewTextureHandle = {};
+    mSharedTextureHandle = {};
     mTextureSamples = 1;
 }
 
 void VKTextureEditorItem::paintGpu(const QMatrix4x4 &transform)
 {
-    if (updateTexture())
-        renderTexture(transform);
+    if (!window().initialized() || mImage.isNull())
+        return;
+
+    if (mUpload && uploadTexture())
+        mUpload = false;
+
+    renderTexture(transform);
 }
 
 bool VKTextureEditorItem::downloadImage(TextureData *image)
@@ -262,26 +270,36 @@ bool VKTextureEditorItem::downloadImage(TextureData *image)
     return true;
 }
 
-void VKTextureEditorItem::setPreviewTexture(ShareSyncPtr shareSync,
-    ShareHandle textureHandle, int samples)
+void VKTextureEditorItem::copySharedTexture(ShareHandle textureHandle,
+    int samples)
 {
-    const auto previewSamples = std::max(samples, 1);
-    const auto typeChanged = (mPreviewTextureHandle.type != textureHandle.type);
-    if (mPreviewTextureHandle != textureHandle
-        || mTextureSamples != previewSamples)
+    Q_ASSERT(textureHandle);
+    if (!window().initialized() || !textureHandle.handle)
+        return;
+
+    const auto textureSamples = std::max(samples, 1);
+    const auto typeChanged = (mSharedTextureHandle.type != textureHandle.type);
+    if (!mSharedTextureHandle.sameResource(textureHandle)
+        || mTextureSamples != textureSamples)
         mTextureBinding.reset();
 
-    if (typeChanged) {
+    if (typeChanged || mUpload) {
         releaseGL();
-        if (mTexture && window().initialized())
+        if (mTexture)
             mTexture->release(window().device());
+        releaseShareState();
         mTexture.reset();
-        mShare.reset();
+        mUpload = false;
     }
 
-    mShareSync = std::move(shareSync);
-    mPreviewTextureHandle = textureHandle;
-    mTextureSamples = previewSamples;
+    mSharedTextureHandle = std::move(textureHandle);
+    mTextureSamples = textureSamples;
+
+    if (mSharedTextureHandle.type == ShareHandleType::OPENGL_TEXTURE_ID) {
+        copyOpenGLTexture(mSharedTextureHandle);
+    } else {
+        copyImportedTexture(mSharedTextureHandle);
+    }
     render();
 }
 
@@ -307,49 +325,37 @@ void VKTextureEditorItem::submitCommandQueue(VKContext &context)
     }
 
     if (!context.commandBuffers.empty()) {
-        context.queue.submit({
+        auto submitOptions = KDGpu::SubmitOptions{
             .commandBuffers =
                 std::vector<KDGpu::Handle<KDGpu::CommandBuffer_t>>(
                     context.commandBuffers.begin(),
                     context.commandBuffers.end()),
-        });
+        };
+        context.queue.submit(submitOptions);
         context.queue.waitUntilIdle();
         context.commandBuffers.clear();
     }
     context.stagingBuffers.clear();
 }
 
-bool VKTextureEditorItem::updateTexture()
+bool VKTextureEditorItem::uploadTexture()
 {
-    if (mImage.isNull() || !window().initialized())
+    if (mTexture)
+        mTexture->release(window().device());
+    mTextureBinding.reset();
+    mTexture = std::make_unique<VKTexture>(mImage, mTextureSamples);
+    mTexture->boundAsSampler();
+
+    auto context = makeContext();
+    context.commandRecorder =
+        context.device.createCommandRecorder({ .queue = context.queue });
+    if (!mTexture->prepareSampledImage(context)) {
+        mTexture->release(window().device());
+        mTexture.reset();
         return false;
-
-    if (mPreviewTextureHandle.type == ShareHandleType::OPENGL_TEXTURE_ID)
-        return updateOpenGLTexture();
-
-    if (mPreviewTextureHandle)
-        return updateImportedTexture();
-
-    if (mUpload || !mTexture || mTexture->samples() != mTextureSamples) {
-        if (mTexture)
-            mTexture->release(window().device());
-        mTextureBinding.reset();
-        mTexture = std::make_unique<VKTexture>(mImage, mTextureSamples);
-        mTexture->boundAsSampler();
-
-        auto context = makeContext();
-        context.commandRecorder =
-            context.device.createCommandRecorder({ .queue = context.queue });
-        if (!mTexture->prepareSampledImage(context)) {
-            mTexture->release(window().device());
-            mTexture.reset();
-            return false;
-        }
-        submitCommandQueue(context);
-        mUpload = false;
     }
-
-    return (mTexture && mTexture->texture().isValid());
+    submitCommandQueue(context);
+    return true;
 }
 
 bool VKTextureEditorItem::renderTexture(const QMatrix4x4 &transform)

@@ -2,48 +2,18 @@
 #include "KDGpuEnums.h"
 #include "VKTexture.h"
 #include "VKWindow.h"
-#include <KDGpu/command_recorder.h>
-#include <KDGpu/device.h>
-#include <KDGpu/texture_options.h>
-#include <KDGpu/vulkan/vulkan_adapter.h>
-#include <KDGpu/vulkan/vulkan_device.h>
-#include <KDGpu/vulkan/vulkan_graphics_api.h>
-#include <KDGpu/vulkan/vulkan_resource_manager.h>
 
 #if defined(_WIN32)
-#  if !defined(NOMINMAX)
-#    define NOMINMAX
-#  endif
-#  if !defined(WIN32_LEAN_AND_MEAN)
-#    define WIN32_LEAN_AND_MEAN
-#  endif
 #  include <vulkan/vulkan_win32.h>
-#else
-#  include <unistd.h>
 #endif
 
-struct VKTextureEditorItem::ShareState
-{
-    VkDevice device{};
-    VkImage image{};
-    VkDeviceMemory memory{};
-    ShareHandle shareHandle{};
-};
-
-void VKTextureEditorItem::ShareStateDeleter::operator()(ShareState *state) const
-{
-    if (!state)
-        return;
-    if (state->device) {
-        if (auto image = std::exchange(state->image, {}))
-            vkDestroyImage(state->device, image, nullptr);
-        if (auto memory = std::exchange(state->memory, {}))
-            vkFreeMemory(state->device, memory, nullptr);
-    }
-    delete state;
-}
-
 namespace {
+    KDGpu::VulkanDevice *getVkDevice(KDGpu::Device &device)
+    {
+        const auto &rm = *device.graphicsApi()->resourceManager();
+        return static_cast<KDGpu::VulkanDevice *>(rm.getDevice(device));
+    }
+
     KDGpu::TextureType getKDTextureType(const TextureKind &kind)
     {
         if (kind.cubeMap)
@@ -132,25 +102,52 @@ namespace {
 
 } // namespace
 
-bool VKTextureEditorItem::updateImportedTexture()
+void VKTextureEditorItem::releaseShareState()
 {
-    if (!mUpload && mShare && mShare->shareHandle == mPreviewTextureHandle
-        && mTexture && mTexture->texture().isValid()
-        && mTexture->samples() == mTextureSamples)
-        return true;
+    if (!mShare)
+        return;
 
+    if (window().initialized()) {
+        auto &device = window().device();
+        if (mShare->texture) {
+            mShare->texture->release(device);
+            mShare->texture.reset();
+        }
+
+        if (auto vkDevice = getVkDevice(device)) {
+            if (auto image = std::exchange(mShare->image, {}))
+                vkDestroyImage(vkDevice->device, image, nullptr);
+            if (auto memory = std::exchange(mShare->memory, {}))
+                vkFreeMemory(vkDevice->device, memory, nullptr);
+        }
+    } else {
+        Q_ASSERT(!mShare->texture && !mShare->image && !mShare->memory);
+    }
+
+    mShare.reset();
+}
+
+bool VKTextureEditorItem::copyImportedTexture(ShareHandle textureHandle)
+{
     auto context = makeContext();
+
     context.commandRecorder =
         context.device.createCommandRecorder({ .queue = context.queue });
-    if (!importShareHandle(context, mPreviewTextureHandle)) {
+    if (!importShareHandle(context, std::move(textureHandle))) {
         if (mTexture)
             mTexture->release(window().device());
         mTexture.reset();
-        mShare.reset();
+        releaseShareState();
         return false;
     }
+    if (!copyShareStateToTexture(context)) {
+        if (mTexture)
+            mTexture->release(window().device());
+        mTexture.reset();
+        return false;
+    }
+
     submitCommandQueue(context);
-    mUpload = false;
     return (mTexture && mTexture->texture().isValid());
 }
 
@@ -162,41 +159,37 @@ bool VKTextureEditorItem::importShareHandle(VKContext &context,
 
     auto externalHandleType = toVkHandleType(shareHandle.type);
     if (!externalHandleType) {
-        qWarning() << "Unsupported shared preview texture handle type";
+        qWarning() << "Unsupported shared texture handle type";
         return false;
     }
 
-    if (!mUpload && mShare && mShare->shareHandle == shareHandle && mTexture
-        && mTexture->texture().isValid()
-        && mTexture->samples() == mTextureSamples)
+    if (mShare && mShare->shareHandle.sameResource(shareHandle)
+        && mShare->texture && mShare->texture->texture().isValid()
+        && mShare->texture->samples() == mTextureSamples) {
+        mShare->shareHandle = std::move(shareHandle);
         return true;
+    }
 
     const auto format = toKDGpu(mImage.format());
     if (format == KDGpu::Format::UNDEFINED) {
-        qWarning() << "Unsupported Vulkan preview import format";
+        qWarning() << "Unsupported Vulkan shared texture import format";
         return false;
     }
 
-    if (mTexture)
-        mTexture->release(context.device);
-    mTexture.reset();
-    mShare.reset();
-    resetTextureBinding();
+    releaseShareState();
 
     const auto &rm = *context.device.graphicsApi()->resourceManager();
-    const auto vkDevice =
-        static_cast<KDGpu::VulkanDevice *>(rm.getDevice(context.device));
+    const auto vkDevice = getVkDevice(context.device);
     const auto vkAdapter = rm.getAdapter(context.device.adapter()->handle());
 
-    const auto kind = getKind(mImage.getTarget(mTextureSamples),
-        mImage.format());
+    const auto kind =
+        getKind(mImage.getTarget(mTextureSamples), mImage.format());
     const auto levelCount = static_cast<uint32_t>(
         mTextureSamples > 1 ? 1 : std::max(mImage.levels(), 1));
     const auto layerCount = vkArrayLayerCount(kind, mImage.layers());
 
-    auto imported =
-        std::unique_ptr<ShareState, ShareStateDeleter>(new ShareState);
-    imported->device = vkDevice->device;
+    mShare.reset(new ShareState);
+    auto &imported = *mShare;
 
     const auto imageUsage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT
         | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
@@ -226,25 +219,27 @@ bool VKTextureEditorItem::importShareHandle(VKContext &context,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     };
 
-    if (vkCreateImage(vkDevice->device, &imageInfo, nullptr, &imported->image)
+    if (vkCreateImage(vkDevice->device, &imageInfo, nullptr, &imported.image)
         != VK_SUCCESS) {
-        qWarning() << "Creating imported Vulkan preview image failed";
+        qWarning() << "Creating imported Vulkan shared texture image failed";
+        releaseShareState();
         return false;
     }
 
     auto requirements = VkMemoryRequirements{};
-    vkGetImageMemoryRequirements(vkDevice->device, imported->image,
+    vkGetImageMemoryRequirements(vkDevice->device, imported.image,
         &requirements);
     const auto memoryTypeIndex = findMemoryType(vkAdapter->physicalDevice,
         requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     if (memoryTypeIndex == VK_MAX_MEMORY_TYPES) {
-        qWarning() << "No compatible Vulkan memory type for preview import";
+        qWarning() << "No compatible Vulkan memory type for shared texture import";
+        releaseShareState();
         return false;
     }
 
     auto dedicatedInfo = VkMemoryDedicatedAllocateInfo{
         .sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO,
-        .image = imported->image,
+        .image = imported.image,
     };
     auto allocateInfo = VkMemoryAllocateInfo{
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
@@ -289,16 +284,23 @@ bool VKTextureEditorItem::importShareHandle(VKContext &context,
 #endif
 
     if (vkAllocateMemory(vkDevice->device, &allocateInfo, nullptr,
-            &imported->memory)
+            &imported.memory)
         != VK_SUCCESS) {
-        qWarning() << "Importing Vulkan preview memory failed";
+        qWarning() << "Importing Vulkan shared texture memory failed";
+        releaseShareState();
+        return false;
+    }
+    if (!imported.memory) {
+        qWarning() << "Importing Vulkan shared texture memory returned a null handle";
+        releaseShareState();
         return false;
     }
 
-    if (vkBindImageMemory(vkDevice->device, imported->image, imported->memory,
+    if (vkBindImageMemory(vkDevice->device, imported.image, imported.memory,
             static_cast<VkDeviceSize>(shareHandle.allocationOffset))
         != VK_SUCCESS) {
-        qWarning() << "Binding Vulkan preview memory failed";
+        qWarning() << "Binding Vulkan shared texture memory failed";
+        releaseShareState();
         return false;
     }
 
@@ -324,20 +326,40 @@ bool VKTextureEditorItem::importShareHandle(VKContext &context,
             .memoryUsage = KDGpu::MemoryUsage::GpuOnly,
             .initialLayout = KDGpu::TextureLayout::Undefined,
         },
-        imported->image);
-    if (!texture.isValid())
-        return false;
-
-    auto gpuTexture = std::make_unique<VKTexture>(mImage, mTextureSamples,
-        std::move(texture));
-    if (!gpuTexture->prepareSampledImage(context)) {
-        gpuTexture->release(context.device);
+        imported.image);
+    if (!texture.isValid()) {
+        releaseShareState();
         return false;
     }
 
-    imported->shareHandle = shareHandle;
-    mTexture = std::move(gpuTexture);
-    mShare = std::move(imported);
+    imported.texture = std::make_unique<VKTexture>(mImage, mTextureSamples,
+        std::move(texture));
+    if (!imported.texture->prepareSampledImage(context)) {
+        releaseShareState();
+        return false;
+    }
+
+    imported.shareHandle = std::move(shareHandle);
+    return true;
+}
+
+bool VKTextureEditorItem::copyShareStateToTexture(VKContext &context)
+{
+    if (!mShare || !mShare->texture || !mShare->texture->texture().isValid())
+        return false;
+
+    if (!mTexture || mTexture->samples() != mTextureSamples) {
+        if (mTexture)
+            mTexture->release(context.device);
+        mTexture = std::make_unique<VKTexture>(mImage, mTextureSamples);
+        mTexture->boundAsSampler();
+    }
+
+    if (!mTexture->copy(context, *mShare->texture))
+        return false;
+    if (!mTexture->prepareSampledImage(context))
+        return false;
+
     resetTextureBinding();
     return true;
 }

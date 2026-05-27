@@ -6,8 +6,6 @@
 #  include <QOpenGLTimerQuery>
 #  include <deque>
 
-class GLShareSync;
-
 class GLRenderSession final : public RenderSessionBase
 {
 public:
@@ -27,7 +25,6 @@ private:
     void createCommandQueue();
 
     QOpenGLVertexArrayObject mVao;
-    std::shared_ptr<GLShareSync> mShareSync;
     std::unique_ptr<CommandQueue> mCommandQueue;
     std::unique_ptr<CommandQueue> mPrevCommandQueue;
     std::deque<QOpenGLTimerQuery> mTimeQueries;

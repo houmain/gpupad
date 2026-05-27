@@ -2,7 +2,7 @@
 
 #include "TextureData.h"
 #include "editors/IEditor.h"
-#include "render/ShareSync.h"
+#include "render/ShareHandle.h"
 #include <QOpenGLTexture>
 #include <QAbstractScrollArea>
 
@@ -41,8 +41,7 @@ public:
     bool isRaw() const { return mIsRaw; }
     void replace(TextureData texture, bool emitFileChanged = true);
     void setFlipVertically(bool flipVertically);
-    void setPreviewTexture(ShareSyncPtr shareSync, ShareHandle textureHandle,
-        int samples = 1);
+    void copySharedTexture(ShareHandle textureHandle, int samples = 1);
     void recreateGpuWindow();
     const TextureData &texture() const { return mTexture; }
 

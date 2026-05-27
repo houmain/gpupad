@@ -1,5 +1,4 @@
 #include "GLRenderSession.h"
-#include "GLShareSync.h"
 #include "GLAccelerationStructure.h"
 #include "GLBuffer.h"
 #include "GLCall.h"
@@ -30,7 +29,6 @@ struct GLRenderSession::CommandQueue
 
 GLRenderSession::GLRenderSession(RendererPtr renderer)
     : RenderSessionBase(std::move(renderer))
-    , mShareSync(std::make_shared<GLShareSync>())
 {
 }
 
@@ -90,14 +88,12 @@ void GLRenderSession::render()
         mPrevCommandQueue.reset();
     }
 
-    mShareSync->beginUpdate(gl);
-
     executeCommandQueue(*mCommandQueue);
 
     beginDownloadModifiedResources(*mCommandQueue);
     obtainTimeQueryResults();
 
-    mShareSync->endUpdate(gl);
+    gl.glFinish();
 
     Q_ASSERT(glGetError() == GL_NO_ERROR);
 }
@@ -105,14 +101,12 @@ void GLRenderSession::render()
 void GLRenderSession::finish()
 {
     if (mCommandQueue)
-        finishCommandQueue(*mCommandQueue, mShareSync);
+        finishCommandQueue(*mCommandQueue);
 }
 
 void GLRenderSession::release()
 {
-    auto &gl = renderer().device<GLDevice>().context();
     mTimeQueries.clear();
-    mShareSync->cleanup(gl);
     mVao.destroy();
     mCommandQueue.reset();
     mPrevCommandQueue.reset();

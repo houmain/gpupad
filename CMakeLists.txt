@@ -219,7 +219,6 @@ if(WIN32)
   src/render/direct3d/D3DTexture.cpp
   src/render/direct3d/D3DDevice.cpp
   src/render/direct3d/D3DRenderSession.cpp
-  src/render/direct3d/D3DShareSync.cpp
   libs/d3d12/RenderTargetHelper.cpp)
 endif()
 
@@ -241,7 +240,6 @@ if (ENABLE_OPENGL)
   src/render/opengl/GLPrintf.cpp
   src/render/opengl/GLRenderSession.cpp
   src/render/opengl/GLComputeRange.cpp
-  src/render/opengl/GLShareSync.cpp
   src/render/opengl/GLWindow.cpp)
 endif()
 
@@ -273,7 +271,6 @@ if (ENABLE_VULKAN)
   src/render/vulkan/VKTextureEditorItem_Share.cpp
   src/render/vulkan/VKRenderSession.cpp
   src/render/vulkan/VKAccelerationStructure.cpp
-  src/render/vulkan/VKShareSync.cpp
   src/render/vulkan/VKWindow.cpp)
 endif()
 

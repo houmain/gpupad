@@ -1,5 +1,4 @@
 #include "VKRenderSession.h"
-#include "VKShareSync.h"
 #include "VKBuffer.h"
 #include "VKCall.h"
 #include "VKDevice.h"
@@ -9,6 +8,7 @@
 #include "VKTexture.h"
 #include "VKAccelerationStructure.h"
 #include "render/RenderSessionBase_CommandQueue.h"
+#include <algorithm>
 #include <QStack>
 #include <deque>
 #include <functional>
@@ -82,9 +82,6 @@ std::shared_ptr<void> VKRenderSession::beginTimeQuery(size_t index)
 
 void VKRenderSession::render()
 {
-    if (!mShareSync)
-        mShareSync = std::make_shared<VKShareSync>(vkDevice().device());
-
     if (itemsChanged() || evaluationType() == EvaluationType::Reset) {
         createCommandQueue();
         buildCommandQueue<VKRenderSession>(*mCommandQueue);
@@ -96,8 +93,6 @@ void VKRenderSession::render()
         reuseUnmodifiedItems(*mCommandQueue, *mPrevCommandQueue);
         mPrevCommandQueue.reset();
     }
-
-    mShareSync->beginUpdate();
 
     context.commandRecorder = context.device.createCommandRecorder();
     mTimestampQueries =
@@ -114,32 +109,23 @@ void VKRenderSession::render()
     auto submitOptions = KDGpu::SubmitOptions{
         .commandBuffers = std::vector<KDGpu::Handle<KDGpu::CommandBuffer_t>>(
             context.commandBuffers.begin(), context.commandBuffers.end()),
-        .signalSemaphores = { mShareSync->usageSemaphore() },
     };
-    if (auto &semaphore = mShareSync->usageSemaphore(); semaphore.isValid())
-        submitOptions.waitSemaphores.push_back(semaphore);
-
     context.queue.submit(submitOptions);
     context.queue.waitUntilIdle();
 
     obtainTimeQueryResults();
     context.commandBuffers.clear();
     context.stagingBuffers.clear();
-
-    mShareSync->endUpdate();
 }
 
 void VKRenderSession::finish()
 {
     if (mCommandQueue)
-        finishCommandQueue(*mCommandQueue, mShareSync);
+        finishCommandQueue(*mCommandQueue);
 }
 
 void VKRenderSession::release()
 {
-    if (mShareSync)
-        mShareSync->cleanup();
-    mShareSync.reset();
     mCommandQueue.reset();
     mPrevCommandQueue.reset();
 

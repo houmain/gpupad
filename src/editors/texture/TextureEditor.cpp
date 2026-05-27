@@ -2,9 +2,7 @@
 #include "FileCache.h"
 #include "FileDialog.h"
 #include "InputState.h"
-#include "Settings.h"
 #include "Singletons.h"
-#include "SynchronizeLogic.h"
 #include "TextureEditorBackground.h"
 #include "TextureEditorToolBar.h"
 #include "TextureInfoBar.h"
@@ -17,8 +15,6 @@
 #include "render/vulkan/VKTextureEditorBackground.h"
 #include "render/vulkan/VKTextureEditorItem.h"
 #include "render/vulkan/VKWindow.h"
-#include "session/Item.h"
-#include <QAction>
 #include <QApplication>
 #include <QClipboard>
 #include <QMatrix4x4>
@@ -400,13 +396,11 @@ void TextureEditor::copy()
     }
 }
 
-void TextureEditor::setPreviewTexture(ShareSyncPtr shareSync,
-    ShareHandle textureHandle, int samples)
+void TextureEditor::copySharedTexture(ShareHandle textureHandle, int samples)
 {
     if (!mGpuWindow->initialized())
         mGpuWindow->update();
-    mTextureItem->setPreviewTexture(std::move(shareSync), textureHandle,
-        samples);
+    mTextureItem->copySharedTexture(std::move(textureHandle), samples);
 }
 
 void TextureEditor::setModified()

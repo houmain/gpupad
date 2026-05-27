@@ -35,6 +35,7 @@ void Singletons::selectAdapter(const AdapterIdentity &adapter)
     if (sInstance->mSelectedAdapter && *sInstance->mSelectedAdapter == adapter)
         return;
 
+    sInstance->mSynchronizeLogic->resetRenderSession();
     sInstance->mGLRenderer.reset();
     sInstance->mVKRenderer.reset();
     sInstance->mD3DRenderer.reset();
