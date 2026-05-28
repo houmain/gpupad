@@ -122,11 +122,6 @@ GLWindow &GLTextureEditorItem::window()
     return static_cast<GLWindow &>(TextureEditorItem::window());
 }
 
-void GLTextureEditorItem::imageChanged()
-{
-    mSharedTextureId = GL_NONE;
-}
-
 bool GLTextureEditorItem::uploadTexture()
 {
     if (mImage.isNull())

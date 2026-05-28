@@ -287,13 +287,16 @@ bool VKTexture::updateMipmaps(VKContext &context)
 void VKTexture::release(KDGpu::Device &device)
 {
     if (std::exchange(mCreated, false)) {
-        if (mKtxTexture.vkDestroyImage) {
+        const auto textureValid = mTexture.isValid();
+        mTextureViews.clear();
+        mTexture = {};
+
+        if (textureValid && mKtxTexture.vkDestroyImage) {
             auto vkDevice = static_cast<KDGpu::VulkanDevice *>(
                 device.graphicsApi()->resourceManager()->getDevice(device));
             ktxVulkanTexture_Destruct(&mKtxTexture, vkDevice->device, nullptr);
         }
-        mTexture = {};
-        mTextureViews.clear();
+        mKtxTexture = {};
     }
 }
 

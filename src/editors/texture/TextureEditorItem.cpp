@@ -226,15 +226,14 @@ TextureEditorItem::~TextureEditorItem() = default;
 
 void TextureEditorItem::setImage(TextureData image)
 {
-    Q_ASSERT(!image.isNull());
     const auto w = image.width();
     const auto h = image.height();
     mBoundingRect = { -w / 2, -h / 2, w, h };
     mImage = std::move(image);
-    mUpload = true;
+    if (!mImage.isNull())
+        mUpload = true;
     mTextureSamples = 1;
-    imageChanged();
-    render();
+    update();
 }
 
 bool TextureEditorItem::downloadImage(TextureData *image)
@@ -255,35 +254,32 @@ bool TextureEditorItem::canFilter() const
 
 QString TextureEditorItem::buildFragmentShader(const ShaderDesc &desc)
 {
-    static auto sTargetVersions =
-        std::map<Texture::Target, TargetVersion>{
-            { Texture::Target::Target1D,
-                { "sampler1D", "textureLod(S, TC.x, pc.level)" } },
-            { Texture::Target::Target1DArray,
-                { "sampler1DArray",
-                    "textureLod(S, vec2(TC.x, pc.layer), pc.level)" } },
-            { Texture::Target::Target2D,
-                { "sampler2D", "textureLod(S, TC, pc.level)" } },
-            { Texture::Target::Target2DArray,
-                { "sampler2DArray",
-                    "textureLod(S, vec3(TC, pc.layer), pc.level)" } },
-            { Texture::Target::Target3D,
-                { "sampler3D",
-                    "textureLod(S, vec3(TC, pc.layer), pc.level)" } },
-            { Texture::Target::TargetCubeMap,
-                { "samplerCube",
-                    "textureLod(S, getCubeTexCoord(TC, pc.face), pc.level)" } },
-            { Texture::Target::TargetCubeMapArray,
-                { "samplerCubeArray",
-                    "textureLod(S, vec4(getCubeTexCoord(TC, pc.face), "
-                    "pc.layer), pc.level)" } },
-            { Texture::Target::Target2DMultisample,
-                { "sampler2DMS",
-                    "texelFetch(S, ivec2(TC * (pc.size - 1)), s)" } },
-            { Texture::Target::Target2DMultisampleArray,
-                { "sampler2DMSArray",
-                    "texelFetch(S, ivec3(TC * (pc.size - 1), pc.layer), s)" } },
-        };
+    static auto sTargetVersions = std::map<Texture::Target, TargetVersion>{
+        { Texture::Target::Target1D,
+            { "sampler1D", "textureLod(S, TC.x, pc.level)" } },
+        { Texture::Target::Target1DArray,
+            { "sampler1DArray",
+                "textureLod(S, vec2(TC.x, pc.layer), pc.level)" } },
+        { Texture::Target::Target2D,
+            { "sampler2D", "textureLod(S, TC, pc.level)" } },
+        { Texture::Target::Target2DArray,
+            { "sampler2DArray",
+                "textureLod(S, vec3(TC, pc.layer), pc.level)" } },
+        { Texture::Target::Target3D,
+            { "sampler3D", "textureLod(S, vec3(TC, pc.layer), pc.level)" } },
+        { Texture::Target::TargetCubeMap,
+            { "samplerCube",
+                "textureLod(S, getCubeTexCoord(TC, pc.face), pc.level)" } },
+        { Texture::Target::TargetCubeMapArray,
+            { "samplerCubeArray",
+                "textureLod(S, vec4(getCubeTexCoord(TC, pc.face), "
+                "pc.layer), pc.level)" } },
+        { Texture::Target::Target2DMultisample,
+            { "sampler2DMS", "texelFetch(S, ivec2(TC * (pc.size - 1)), s)" } },
+        { Texture::Target::Target2DMultisampleArray,
+            { "sampler2DMSArray",
+                "texelFetch(S, ivec3(TC * (pc.size - 1), pc.layer), s)" } },
+    };
     static auto sSampleTypeVersions =
         std::map<TextureSampleType, SampleTypeVersion>{
             { TextureSampleType::Normalized, { "", "color" } },
@@ -424,8 +420,6 @@ auto TextureEditorItem::getParams(const QMatrix4x4 &transform,
     params.colorMask = mColorMask;
     return params;
 }
-
-void TextureEditorItem::imageChanged() { }
 
 void TextureEditorItem::updateHistogram()
 {

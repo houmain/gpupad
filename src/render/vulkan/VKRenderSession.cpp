@@ -16,6 +16,13 @@
 
 struct VKRenderSession::CommandQueue
 {
+    ~CommandQueue()
+    {
+        context.device.waitUntilIdle();
+        for (auto &[itemId, texture] : textures)
+            texture.release(context.device);
+    }
+
     using Call = VKCall;
     VKContext context;
     std::map<ItemId, VKTexture> textures;

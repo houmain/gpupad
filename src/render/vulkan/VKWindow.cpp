@@ -292,7 +292,7 @@ void VKWindow::exposeEvent(QExposeEvent *)
 
 void VKWindow::update()
 {
-    if (!isExposed())
+    if (mInitialized && !isExposed())
         return;
 
     if (!mInitialized)

@@ -9,6 +9,7 @@
 #include <KDGpu/device.h>
 #include <KDGpu/graphics_pipeline_options.h>
 #include <KDGpu/pipeline_layout_options.h>
+#include <KDGpu/queue.h>
 #include <KDGpu/render_pass_command_recorder.h>
 #include <KDGpu/sampler.h>
 #include <KDGpu/sampler_options.h>
@@ -147,14 +148,16 @@ struct VKTextureEditorItem::PipelineCache
 
 struct VKTextureEditorItem::TextureBinding
 {
-    bool ensureBindGroup(KDGpu::Device &device, const Pipeline &pipeline,
-        VKTexture &texture, bool linear)
+    bool ensureBindGroup(KDGpu::Device &device, KDGpu::Queue &queue,
+        const Pipeline &pipeline, VKTexture &texture, bool linear)
     {
         if (bindGroup.isValid()
             && bindGroupLayout == pipeline.bindGroupLayout.handle()
             && samplerLinear == linear)
             return true;
 
+        if (bindGroup.isValid() || sampler.isValid())
+            queue.waitUntilIdle();
         bindGroup = {};
         sampler = device.createSampler({
             .magFilter = linear ? KDGpu::FilterMode::Linear
@@ -205,6 +208,8 @@ struct VKTextureEditorItem::TextureBinding
 
 void VKTextureEditorItem::resetTextureBinding()
 {
+    if (mTextureBinding && window().initialized())
+        window().queue().waitUntilIdle();
     mTextureBinding.reset();
 }
 
@@ -225,10 +230,10 @@ void VKTextureEditorItem::releaseGpu()
         return;
 
     releaseGL();
+    resetTextureBinding();
     if (mTexture)
         mTexture->release(window().device());
     releaseShareState();
-    mTextureBinding.reset();
     mTexture.reset();
     mPipelineCache.reset();
     mSharedTextureHandle = {};
@@ -281,10 +286,11 @@ void VKTextureEditorItem::copySharedTexture(ShareHandle textureHandle,
     const auto typeChanged = (mSharedTextureHandle.type != textureHandle.type);
     if (!mSharedTextureHandle.sameResource(textureHandle)
         || mTextureSamples != textureSamples)
-        mTextureBinding.reset();
+        resetTextureBinding();
 
     if (typeChanged || mUpload) {
         releaseGL();
+        resetTextureBinding();
         if (mTexture)
             mTexture->release(window().device());
         releaseShareState();
@@ -340,9 +346,9 @@ void VKTextureEditorItem::submitCommandQueue(VKContext &context)
 
 bool VKTextureEditorItem::uploadTexture()
 {
+    resetTextureBinding();
     if (mTexture)
         mTexture->release(window().device());
-    mTextureBinding.reset();
     mTexture = std::make_unique<VKTexture>(mImage, mTextureSamples);
     mTexture->boundAsSampler();
 
@@ -389,8 +395,8 @@ bool VKTextureEditorItem::renderTexture(const QMatrix4x4 &transform)
         && mTexture->samples() == 1;
     if (!mTextureBinding)
         mTextureBinding = std::make_unique<TextureBinding>();
-    if (!mTextureBinding->ensureBindGroup(gpuWindow.device(), *pipeline,
-            *mTexture, linear))
+    if (!mTextureBinding->ensureBindGroup(gpuWindow.device(),
+            gpuWindow.queue(), *pipeline, *mTexture, linear))
         return false;
 
     const auto constants = getParams(transform, mTexture->samples());

@@ -20,7 +20,6 @@ private:
     class ProgramCache;
 
     GLWindow &window();
-    void imageChanged() override;
     bool uploadTexture();
     bool renderTexture(const QMatrix4x4 &transform);
 

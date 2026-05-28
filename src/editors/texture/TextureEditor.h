@@ -68,7 +68,6 @@ private:
     void destroyGpuWindow();
     void setupGpuWindow();
     void paintGpu();
-    void releaseGpu();
     void updateMousePosition(const QPoint &position);
     void setBounds(QRect bounds);
     void setZoomToFit(bool fit);

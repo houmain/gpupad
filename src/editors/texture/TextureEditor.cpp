@@ -52,11 +52,11 @@ TextureEditor::TextureEditor(QString fileName,
         setEnabled(false);
         return;
     }
-    setupGpuWindow();
-
     setAcceptDrops(false);
     setMouseTracking(true);
     setFrameStyle(QFrame::NoFrame);
+    setAutoFillBackground(false);
+    setupGpuWindow();
 }
 
 TextureEditor::~TextureEditor()
@@ -100,59 +100,50 @@ void TextureEditor::destroyGpuWindow()
 
 void TextureEditor::setupGpuWindow()
 {
-    mGpuWindowContainer = QWidget::createWindowContainer(mGpuWindow);
-    mGpuWindow->installEventFilter(this);
-    setViewport(mGpuWindowContainer);
-
-    connect(mGpuWindow, &RenderWindow::releasingGpu, this,
-        &TextureEditor::releaseGpu);
+    connect(mGpuWindow, &RenderWindow::releasingGpu, mTextureItem,
+        &TextureEditorItem::releaseGpu);
+    connect(mGpuWindow, &RenderWindow::releasingGpu, mBackground,
+        &TextureEditorBackground::releaseGpu);
     connect(mGpuWindow, &RenderWindow::paintingGpu, this,
         &TextureEditor::paintGpu);
+
+    mGpuWindowContainer = QWidget::createWindowContainer(mGpuWindow);
+    mGpuWindowContainer->setAutoFillBackground(false);
+    mGpuWindow->installEventFilter(this);
+    setViewport(mGpuWindowContainer);
 }
 
 void TextureEditor::recreateGpuWindow()
 {
-    const auto magnifyLinear =
-        mTextureItem ? mTextureItem->magnifyLinear() : false;
-    const auto level = mTextureItem ? mTextureItem->level() : 0.0f;
-    const auto face = mTextureItem ? mTextureItem->face() : 0;
-    const auto layer = mTextureItem ? mTextureItem->layer() : 0.0f;
-    const auto sample = mTextureItem ? mTextureItem->sample() : -1;
-    const auto flipVertically =
-        mTextureItem ? mTextureItem->flipVertically() : false;
-    const auto histogramEnabled =
-        mTextureItem ? mTextureItem->histogramEnabled() : false;
-    const auto mappingRange =
-        mTextureItem ? mTextureItem->mappingRange() : Range{ 0, 1 };
-    const auto histogramBounds =
-        mTextureItem ? mTextureItem->histogramBounds() : Range{ 0, 1 };
-    const auto colorMask = mTextureItem ? mTextureItem->colorMask() : 0u;
+    const auto prevTextureItem = mTextureItem;
+    if (mGpuWindow)
+        mGpuWindow->deleteLater();
 
-    destroyGpuWindow();
-    if (!createGpuWindow()) {
-        setEnabled(false);
+    mGpuWindow = nullptr;
+    mGpuWindowContainer = nullptr;
+    mTextureItem = nullptr;
+    mBackground = nullptr;
+
+    setEnabled(false);
+    if (!createGpuWindow())
         return;
-    }
-
     setEnabled(true);
-    setupGpuWindow();
 
-    if (!mTexture.isNull()) {
-        mTextureItem->setImage(mTexture);
-        mTextureItem->setMagnifyLinear(magnifyLinear);
-        mTextureItem->setLevel(level);
-        mTextureItem->setFace(face);
-        mTextureItem->setLayer(layer);
-        mTextureItem->setSample(sample);
-        mTextureItem->setFlipVertically(flipVertically);
-        mTextureItem->setHistogramEnabled(histogramEnabled);
-        mTextureItem->setMappingRange(mappingRange);
-        mTextureItem->setHistogramBounds(histogramBounds);
-        mTextureItem->setColorMask(colorMask);
-        setBounds(mTextureItem->boundingRect().toRect());
+    if (prevTextureItem) {
+        mTextureItem->setImage(prevTextureItem->image());
+        mTextureItem->setMagnifyLinear(prevTextureItem->magnifyLinear());
+        mTextureItem->setLevel(prevTextureItem->level());
+        mTextureItem->setFace(prevTextureItem->face());
+        mTextureItem->setLayer(prevTextureItem->layer());
+        mTextureItem->setSample(prevTextureItem->sample());
+        mTextureItem->setFlipVertically(prevTextureItem->flipVertically());
+        mTextureItem->setHistogramEnabled(prevTextureItem->histogramEnabled());
+        mTextureItem->setMappingRange(prevTextureItem->mappingRange());
+        mTextureItem->setHistogramBounds(prevTextureItem->histogramBounds());
+        mTextureItem->setColorMask(prevTextureItem->colorMask());
     }
-
-    updateScrollBars();
+    setBounds(mTextureItem->boundingRect().toRect());
+    setupGpuWindow();
 }
 
 void TextureEditor::resizeEvent(QResizeEvent *event)
@@ -170,12 +161,6 @@ void TextureEditor::paintEvent(QPaintEvent *event)
 {
     if (mGpuWindow)
         mGpuWindow->update();
-}
-
-void TextureEditor::releaseGpu()
-{
-    mBackground->releaseGpu();
-    mTextureItem->releaseGpu();
 }
 
 QList<QMetaObject::Connection> TextureEditor::connectEditActions(

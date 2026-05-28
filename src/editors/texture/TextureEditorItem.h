@@ -126,7 +126,6 @@ protected:
     void update();
     void updateHistogram();
     Params getParams(const QMatrix4x4 &transform, int textureSamples) const;
-    virtual void imageChanged();
 
     QRect mBoundingRect;
     TextureData mImage;

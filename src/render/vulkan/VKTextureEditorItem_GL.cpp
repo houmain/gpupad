@@ -205,7 +205,8 @@ void VKTextureEditorItem::releaseGL()
 
 bool VKTextureEditorItem::copyOpenGLTexture(ShareHandle textureHandle)
 {
-    if (textureHandle.type != ShareHandleType::OPENGL_TEXTURE_ID)
+    if (textureHandle.type != ShareHandleType::OPENGL_TEXTURE_ID
+        || mImage.isNull())
         return false;
 
     const auto sourceTextureId = static_cast<GLuint>(
