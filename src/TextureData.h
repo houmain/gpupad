@@ -57,7 +57,7 @@ public:
     int getLevelSize(int level) const;
     bool uploadGL(GLuint *textureId) const;
     bool uploadVK(ktxVulkanDeviceInfo *vdi, ktxVulkanTexture *vkTexture,
-        VkImageUsageFlags usageFlags, VkImageLayout initialLayout) const;
+        VkImageUsageFlags usageFlags, VkImageLayout finalLayout) const;
 
     friend bool operator==(const TextureData &a, const TextureData &b);
     friend bool operator!=(const TextureData &a, const TextureData &b);

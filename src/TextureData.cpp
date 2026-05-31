@@ -1293,13 +1293,27 @@ bool TextureData::uploadGL(GLuint *textureId) const
 
 bool TextureData::uploadVK(ktxVulkanDeviceInfo *vdi,
     ktxVulkanTexture *vkTexture, VkImageUsageFlags usageFlags,
-    VkImageLayout initialLayout) const
+    VkImageLayout finalLayout) const
 {
     if (isNull() || !vkTexture || !vdi)
         return false;
 
-    const auto result = ktxTexture_VkUploadEx(ktxTexture(mKtxTexture.get()),
-        vdi, vkTexture, VK_IMAGE_TILING_OPTIMAL, usageFlags, initialLayout);
+    const auto texture = ktxTexture(mKtxTexture.get());
+    const auto numLevels = texture->numLevels;
+    const auto dataSize = texture->dataSize;
+    const auto restoreTexture = qScopeGuard([&] {
+        texture->numLevels = numLevels;
+        texture->dataSize = dataSize;
+    });
+
+    // KTX's Vulkan mipmap path expects only the base level to be present.
+    if (texture->generateMipmaps && texture->numLevels > 1) {
+        texture->numLevels = 1;
+        texture->dataSize = static_cast<ktx_size_t>(getLevelSize(0));
+    }
+
+    const auto result = ktxTexture_VkUploadEx(texture,
+        vdi, vkTexture, VK_IMAGE_TILING_OPTIMAL, usageFlags, finalLayout);
 
     return (result == KTX_SUCCESS);
 }

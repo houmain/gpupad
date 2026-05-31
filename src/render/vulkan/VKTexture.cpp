@@ -269,6 +269,8 @@ bool VKTexture::updateMipmaps(VKContext &context)
         const auto options = KDGpu::GenerateMipMapsOptions{
             .texture = mTexture,
             .layout = mCurrentLayout,
+            .srcStages = mCurrentStage,
+            .srcMask = mCurrentAccessMask,
             .newLayout = KDGpu::TextureLayout::TransferSrcOptimal,
             .extent = {
                 .width = static_cast<uint32_t>(mWidth),
@@ -279,7 +281,9 @@ bool VKTexture::updateMipmaps(VKContext &context)
             .layerCount = vkArrayLayerCount(mKind, mLayers),
         };
         context.commandRecorder->generateMipMaps(options);
+        mCurrentStage = KDGpu::PipelineStageFlagBit::TransferBit;
         mCurrentLayout = options.newLayout;
+        mCurrentAccessMask = KDGpu::AccessFlagBit::TransferReadBit;
     }
     return true;
 }
@@ -330,14 +334,23 @@ void VKTexture::createAndUpload(VKContext &context)
     if (isWritten || mSamples > 1) {
         mTexture = {};
     } else {
-        mCurrentLayout = KDGpu::TextureLayout::TransferDstOptimal;
+        const auto isSampled =
+            (mUsage & KDGpu::TextureUsageFlagBits::SampledBit);
+        const auto finalLayout = (isSampled
+                ? KDGpu::TextureLayout::ShaderReadOnlyOptimal
+                : KDGpu::TextureLayout::TransferSrcOptimal);
         if (mData.uploadVK(&context.ktxDeviceInfo, &mKtxTexture,
                 static_cast<VkImageUsageFlags>(mUsage.toInt()),
-                static_cast<VkImageLayout>(mCurrentLayout))) {
+                static_cast<VkImageLayout>(finalLayout))) {
             auto vkApi = static_cast<KDGpu::VulkanGraphicsApi *>(
                 context.device.graphicsApi());
             mTexture = vkApi->createTextureFromExistingVkImage(context.device,
                 textureOptions, mKtxTexture.image);
+            mCurrentLayout = finalLayout;
+            mCurrentAccessMask = (isSampled
+                    ? KDGpu::AccessFlagBit::MemoryReadBit
+                    : KDGpu::AccessFlagBit::TransferReadBit);
+            mCurrentStage = KDGpu::PipelineStageFlagBit::AllCommandsBit;
         } else {
             mMessages.insert(mItemId, MessageType::UploadingImageFailed);
         }
