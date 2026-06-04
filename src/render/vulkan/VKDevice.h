@@ -10,18 +10,20 @@
 #    define FMT_ASSERT
 #  endif
 
+namespace KDGpu {
+    class Adapter;
+    class Surface;
+    class VulkanGraphicsApi;
+    class Texture;
+    class Instance;
+} // namespace KDGpu
+
 #  include <KDGpu/instance.h>
 #  include <KDGpu/device.h>
 #  include <KDGpu/queue.h>
 #  include <vulkan/vulkan.h>
 #  include <ktxvulkan.h>
 #  include <memory>
-
-namespace KDGpu {
-    class Adapter;
-    class Surface;
-    class VulkanGraphicsApi;
-} // namespace KDGpu
 
 class VKDevice final : public Device
 {

@@ -578,10 +578,11 @@ void MainWindow::waitForSync()
 #endif
         if (mSyncWindow) {
             mSyncWindowAdapter = Singletons::selectedAdapter();
-            mSyncWindowContainer =
-                QWidget::createWindowContainer(mSyncWindow);
-            mSyncWindowContainer->setGeometry(0, 0, 1, 1);
-            mSyncWindowContainer->setParent(this);
+            mSyncWindowContainer = QWidget::createWindowContainer(mSyncWindow);
+            mSyncWindowContainer->setAutoFillBackground(false);
+            mSyncWindowContainer->setMinimumSize(1, 1);
+            mSyncWindowContainer->setMaximumSize(1, 1);
+            mUi->toolBarMain->addWidget(mSyncWindowContainer);
         }
     }
     if (mSyncWindow)

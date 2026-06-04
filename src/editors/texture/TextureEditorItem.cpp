@@ -70,7 +70,7 @@ void main() {
   vec2 pos = data[gl_VertexID];
 #endif
   vTexCoord = (pos + 1.0) / 2.0;
-  if (pc.flipVertically != 0)
+  if (pc.flipVertically == 0)
     pos.y *= -1;
   gl_Position = pc.transform * vec4(pos, 0.0, 1.0);
 }

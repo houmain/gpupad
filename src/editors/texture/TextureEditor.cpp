@@ -685,12 +685,12 @@ void TextureEditor::paintGpu()
                             std::max(height - bounds.height(), 0.0))
         + QPointF(std::min(scrollOffsetX + 2 * margin(), 0),
             std::min(scrollOffsetY + 2 * margin(), 0))
-        + QPointF(-scrollX, scrollY);
+        + QPointF(-scrollX, -scrollY);
     mBackground->paintGpu(bounds, offset / 2);
 
     const auto sx = bounds.width() / width;
-    const auto sy = -bounds.height() / height;
+    const auto sy = bounds.height() / height;
     const auto x = -scrollX / width;
-    const auto y = scrollY / height;
+    const auto y = -scrollY / height;
     mTextureItem->paintGpu(QTransform(sx, 0, 0, 0, sy, 0, x, y, 1));
 }

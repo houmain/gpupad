@@ -16,10 +16,10 @@
             "bindingType": "Uniform",
             "editor": "Expression",
             "id": 74,
-            "name": "time",
+            "name": "frame",
             "type": "Binding",
             "values": [
-                "app.time"
+                "app.frame"
             ]
         },
         {

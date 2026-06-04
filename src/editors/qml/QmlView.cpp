@@ -240,6 +240,7 @@ void QmlView::reset()
 
     mQuickView->setSource(QUrl::fromLocalFile(mFileName));
     mQuickWidget = QWidget::createWindowContainer(mQuickView);
+    mQuickWidget->setAutoFillBackground(false);
 
     layout()->addWidget(mQuickWidget);
 }

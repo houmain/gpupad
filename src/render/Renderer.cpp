@@ -144,8 +144,12 @@ QThread *Renderer::renderThread()
 
 void Renderer::finish()
 {
-    while (mCurrentTask)
+    for (auto i = 0; i < 100; ++i) {
+        if (!mCurrentTask)
+            return;
         qApp->processEvents(QEventLoop::WaitForMoreEvents);
+    }
+    Q_ASSERT(!"unreachable");
 }
 
 Device &Renderer::device()

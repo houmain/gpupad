@@ -44,6 +44,7 @@ void Singletons::selectAdapter(const AdapterIdentity &adapter)
     resetSharedVKDevice();
 #endif
     sInstance->mEditorManager->recreateTextureEditorGpuWindows();
+    sInstance->mSynchronizeLogic->invalidateRenderSession();
 }
 
 const AdapterIdentity &Singletons::selectedAdapter()

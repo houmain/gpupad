@@ -26,6 +26,7 @@ public:
     void resetEvaluation();
     void manualEvaluation();
     void finishEvaluation();
+    void invalidateRenderSession();
     bool resetRenderSessionInvalidationState();
     void updateEditor(ItemId itemId, bool activated);
 
@@ -55,7 +56,6 @@ Q_SIGNALS:
     void itemRemoved(const Item *item);
 
 private:
-    void invalidateRenderSession();
     void triggerEvaluation(EvaluationType type, int delayMs = 0);
     bool initializeRenderSession();
     void handleItemRenamed(const QModelIndex &index, const QString &prevName);
