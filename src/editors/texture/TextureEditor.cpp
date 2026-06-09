@@ -137,9 +137,7 @@ void TextureEditor::recreateGpuWindow()
         mTextureItem->setLayer(prevTextureItem->layer());
         mTextureItem->setSample(prevTextureItem->sample());
         mTextureItem->setFlipVertically(prevTextureItem->flipVertically());
-        mTextureItem->setHistogramEnabled(prevTextureItem->histogramEnabled());
         mTextureItem->setMappingRange(prevTextureItem->mappingRange());
-        mTextureItem->setHistogramBounds(prevTextureItem->histogramBounds());
         mTextureItem->setColorMask(prevTextureItem->colorMask());
     }
     setBounds(mTextureItem->boundingRect().toRect());
@@ -203,28 +201,11 @@ QList<QMetaObject::Connection> TextureEditor::connectEditActions(
         mTextureItem, &TextureEditorItem::setFlipVertically);
     c += connect(mTextureItem, &TextureEditorItem::pickerColorChanged,
         &mTextureInfoBar, &TextureInfoBar::setPickerColor);
-    c += connect(mTextureItem, &TextureEditorItem::histogramChanged,
-        &mTextureInfoBar, &TextureInfoBar::updateHistogram);
-    c += connect(&mTextureInfoBar, &TextureInfoBar::pickerEnabledChanged,
-        mTextureItem, &TextureEditorItem::setHistogramEnabled);
     c += connect(&mTextureInfoBar, &TextureInfoBar::mappingRangeChanged,
         mTextureItem, &TextureEditorItem::setMappingRange);
-    c += connect(&mTextureInfoBar, &TextureInfoBar::histogramBinCountChanged,
-        mTextureItem, &TextureEditorItem::setHistogramBinCount);
-    c += connect(&mTextureInfoBar, &TextureInfoBar::histogramBoundsChanged,
-        mTextureItem, &TextureEditorItem::setHistogramBounds);
-    c += connect(&mTextureInfoBar, &TextureInfoBar::autoRangeRequested,
-        mTextureItem, &TextureEditorItem::computeHistogramBounds);
-    c += connect(mTextureItem, &TextureEditorItem::histogramBoundsComputed,
-        &mTextureInfoBar, &TextureInfoBar::setHistogramBounds);
-    c += connect(mTextureItem, &TextureEditorItem::histogramBoundsComputed,
-        &mTextureInfoBar, &TextureInfoBar::setMappingRange);
     c += connect(&mTextureInfoBar, &TextureInfoBar::colorMaskChanged,
         mTextureItem, &TextureEditorItem::setColorMask);
 
-    mTextureItem->setHistogramEnabled(mTextureInfoBar.isPickerEnabled());
-    mTextureItem->setHistogramBinCount(mTextureInfoBar.histogramBinCount());
-    mTextureInfoBar.setHistogramBounds(mTextureItem->histogramBounds());
     mTextureInfoBar.setMappingRange(mTextureItem->mappingRange());
     mTextureInfoBar.setColorMask(mTextureItem->colorMask());
     return c;

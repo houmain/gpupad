@@ -1,8 +1,5 @@
 #include "TextureEditorItem.h"
-#include "Singletons.h"
-#include "render/ComputeRange.h"
 #include "render/RenderWindow.h"
-
 #include <QMatrix4x4>
 #include <algorithm>
 #include <array>
@@ -35,6 +32,7 @@ layout(push_constant) uniform Params {
   int samp;
   int samples;
   int flipVertically;
+  vec2 pickerFragCoord;
   float mappingOffset;
   float mappingFactor;
   uint colorMask;
@@ -72,7 +70,14 @@ void main() {
   vTexCoord = (pos + 1.0) / 2.0;
   if (pc.flipVertically == 0)
     pos.y *= -1;
-  gl_Position = pc.transform * vec4(pos, 0.0, 1.0);
+
+  mat4 transform = pc.transform;
+#if !defined(VULKAN)
+  transform[1][1] *= -1;
+  transform[3][1] *= -1;
+#endif
+
+  gl_Position = transform * vec4(pos, 0.0, 1.0);
 }
 )";
 
@@ -88,14 +93,16 @@ layout(push_constant) uniform Params {
   int samp;
   int samples;
   int flipVertically;
+  vec2 pickerFragCoord;
   float mappingOffset;
   float mappingFactor;
   uint colorMask;
 } pc;
 
-layout(set = 0, binding = 0) uniform SAMPLER uTexture;
+layout(binding = 0) uniform SAMPLER uTexture;
 layout(location = 0) in vec2 vTexCoord;
 layout(location = 0) out vec4 oColor;
+writeonly layout(binding = 1, rgba32f) uniform image1D uPickerColor;
 
 #else // !defined(VULKAN)
 
@@ -107,10 +114,6 @@ layout(location = 0) out vec4 oColor;
 #extension GL_ARB_shader_image_load_store: enable
 #extension GL_ARB_shader_image_size: enable
 writeonly layout(rgba32f) uniform image1D uPickerColor;
-uniform vec2 uPickerFragCoord;
-layout(r32ui) uniform uimage1D uHistogram;
-uniform float uHistogramOffset;
-uniform float uHistogramFactor;
 #endif
 
 uniform SAMPLER uTexture;
@@ -120,6 +123,7 @@ uniform float uLayer;
 uniform int uFace;
 uniform int uSample;
 uniform int uSamples;
+uniform vec2 uPickerFragCoord;
 uniform float uMappingOffset;
 uniform float uMappingFactor;
 uniform int uColorMask;
@@ -134,6 +138,7 @@ struct Params {
   int face;
   int samp;
   int samples;
+  vec2 pickerFragCoord;
   float mappingOffset;
   float mappingFactor;
   int colorMask;
@@ -145,6 +150,7 @@ Params pc = Params(
   uFace,
   uSample,
   uSamples,
+  uPickerFragCoord,
   uMappingOffset,
   uMappingFactor,
   uColorMask);
@@ -194,33 +200,18 @@ void main() {
   color = vec4(linearToSrgb(color.rgb), color.a);
 #endif
 
-#if !defined(VULKAN)
 #if PICKER_ENABLED && defined(GL_ARB_shader_image_load_store)
-  if (gl_FragCoord.xy == uPickerFragCoord)
+  if (gl_FragCoord.xy == pc.pickerFragCoord)
     imageStore(uPickerColor, 0, color);
 #endif
 
-#if HISTOGRAM_ENABLED && defined(GL_ARB_shader_image_load_store)
-  if (clamp(TC, vec2(0), vec2(1)) == TC) {
-    ivec3 offset = ivec3((color.rgb + vec3(uHistogramOffset)) * uHistogramFactor + vec3(0.5));
-    offset = clamp(offset, ivec3(0), ivec3(imageSize(uHistogram) / 3 - 1)) * 3 + ivec3(0, 1, 2);
-    imageAtomicAdd(uHistogram, offset.r, 1u);
-    imageAtomicAdd(uHistogram, offset.g, 1u);
-    imageAtomicAdd(uHistogram, offset.b, 1u);
-
-    color.rgb = (color.rgb + vec3(pc.mappingOffset)) * pc.mappingFactor;
-  }
-#endif
-#endif // !defined(VULKAN)
+  color.rgb = (color.rgb + vec3(pc.mappingOffset)) * pc.mappingFactor;
 
   oColor = color;
 }
 )";
 
-TextureEditorItem::TextureEditorItem(RenderWindow *window) : QObject(window)
-{
-    setHistogramBinCount(1);
-}
+TextureEditorItem::TextureEditorItem(RenderWindow *window) : QObject(window) { }
 
 TextureEditorItem::~TextureEditorItem() = default;
 
@@ -318,7 +309,6 @@ QString TextureEditorItem::buildFragmentShader(const ShaderDesc &desc)
         + sampleTypeVersion.mapping + "\n" + "#define SWIZZLE " + swizzle + "\n"
         + "#define LINEAR_TO_SRGB " + QString::number(linearToSrgb) + "\n"
         + "#define PICKER_ENABLED " + QString::number(desc.picker) + "\n"
-        + "#define HISTOGRAM_ENABLED " + QString::number(desc.histogram) + "\n"
         + fragmentShaderSource;
 }
 
@@ -351,41 +341,6 @@ void TextureEditorItem::setMappingRange(const Range &range)
     }
 }
 
-void TextureEditorItem::setHistogramBinCount(int count)
-{
-    count = qMax(count / 3, 1) * 3;
-
-    if (mHistogramBins.size() != count) {
-        mHistogramBins.resize(count);
-        if (mHistogramEnabled)
-            update();
-    }
-}
-
-void TextureEditorItem::setHistogramBounds(const Range &bounds)
-{
-    if (mHistogramBounds != bounds) {
-        mHistogramBounds = bounds;
-        if (mHistogramEnabled)
-            update();
-    }
-}
-
-void TextureEditorItem::computeHistogramBounds()
-{
-    if (!mComputeRange) {
-        mComputeRange = new ComputeRange(Singletons::glRenderer(), this);
-        connect(mComputeRange, &ComputeRange::rangeComputed, this,
-            &TextureEditorItem::histogramBoundsComputed);
-    }
-
-    //mComputeRange->setImage(mImage.getTarget(mTextureSamples),
-    //    (mSharedTextureId ? mSharedTextureId : mImageTextureId), mImage,
-    //    static_cast<int>(mLevel), static_cast<int>(mLayer), mFace);
-
-    mComputeRange->update();
-}
-
 RenderWindow &TextureEditorItem::window()
 {
     return *qobject_cast<RenderWindow *>(parent());
@@ -415,36 +370,14 @@ auto TextureEditorItem::getParams(const QMatrix4x4 &transform,
     params.sample = std::max(0, resolve ? 0 : mSample);
     params.samples = std::max(1, resolve ? textureSamples : 1);
     params.flipVertically = (mFlipVertically ? 1 : 0);
+    params.pickerFragCoord = {
+        static_cast<float>(mMousePosition.x() + 0.5f),
+        static_cast<float>(mMousePosition.y() + 0.5f),
+    };
     params.mappingOffset = static_cast<float>(-mMappingRange.minimum);
     params.mappingFactor = static_cast<float>(1 / mMappingRange.range());
     params.colorMask = mColorMask;
     return params;
-}
-
-void TextureEditorItem::updateHistogram()
-{
-    if (mPrevHistogramBins.size() != mHistogramBins.size()) {
-        // cannot compute delta since prev is still undefined - trigger another update
-        mPrevHistogramBins = mHistogramBins;
-        return update();
-    }
-
-    auto maxValue = std::array<quint32, 3>{ 1, 1, 1 };
-    for (auto i = 0, c = 0; i < mHistogramBins.size(); ++i, c = (c + 1) % 3) {
-        const auto value = (mHistogramBins[i] - mPrevHistogramBins[i]);
-        maxValue[c] = qMax(maxValue[c], value);
-    }
-
-    auto histogram = QVector<qreal>(mHistogramBins.size());
-    const auto scale = std::array<qreal, 3>{ 1.0 / maxValue[0],
-        1.0 / maxValue[1], 1.0 / maxValue[2] };
-    for (auto i = 0, c = 0; i < mHistogramBins.size(); ++i, c = (c + 1) % 3) {
-        const auto value = (mHistogramBins[i] - mPrevHistogramBins[i]);
-        histogram[i] = (1.0 - (value * scale[c]));
-    }
-    mPrevHistogramBins.swap(mHistogramBins);
-
-    Q_EMIT histogramChanged(histogram);
 }
 
 void TextureEditorItem::setColorMask(unsigned int colorMask)

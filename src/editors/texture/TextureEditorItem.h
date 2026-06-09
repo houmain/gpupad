@@ -11,7 +11,6 @@
 #include <memory>
 #include <tuple>
 
-class ComputeRange;
 class QMatrix4x4;
 class RenderWindow;
 
@@ -69,12 +68,6 @@ public:
     bool pickerEnabled() const { return mPickerEnabled; }
     void setMappingRange(const Range &bounds);
     const Range &mappingRange() const { return mMappingRange; }
-    void setHistogramBinCount(int count);
-    void setHistogramBounds(const Range &range);
-    const Range &histogramBounds() const { return mHistogramBounds; }
-    void computeHistogramBounds();
-    void setHistogramEnabled(bool enabled) { mHistogramEnabled = enabled; }
-    bool histogramEnabled() const { return mHistogramEnabled; }
     void setColorMask(unsigned int colorMask);
     unsigned int colorMask() const { return mColorMask; }
     QRectF boundingRect() const { return mBoundingRect; }
@@ -82,8 +75,6 @@ public:
 
 Q_SIGNALS:
     void pickerColorChanged(const QVector4D &color);
-    void histogramChanged(const QVector<qreal> &histogram);
-    void histogramBoundsComputed(const Range &range);
 
 protected:
     struct ShaderDesc
@@ -91,12 +82,11 @@ protected:
         Texture::Target target{};
         Texture::Format format{};
         bool picker{};
-        bool histogram{};
 
         friend bool operator<(const ShaderDesc &a, const ShaderDesc &b)
         {
-            return std::tie(a.target, a.format, a.picker, a.histogram)
-                < std::tie(b.target, b.format, b.picker, b.histogram);
+            return std::tie(a.target, a.format, a.picker)
+                < std::tie(b.target, b.format, b.picker);
         }
     };
 
@@ -111,11 +101,12 @@ protected:
         int32_t sample{};
         int32_t samples{};
         int32_t flipVertically{};
+        std::array<float, 2> pickerFragCoord{};
         float mappingOffset{};
         float mappingFactor{};
         uint32_t colorMask{};
     };
-    static_assert(sizeof(Params) == 108);
+    static_assert(sizeof(Params) == 116);
 
     static QString vertexShaderSource;
     static QString buildFragmentShader(const ShaderDesc &desc);
@@ -124,7 +115,6 @@ protected:
     RenderWindow &window();
     void render();
     void update();
-    void updateHistogram();
     Params getParams(const QMatrix4x4 &transform, int textureSamples) const;
 
     QRect mBoundingRect;
@@ -138,14 +128,8 @@ protected:
     bool mFlipVertically{};
     bool mPickerEnabled{};
     QOpenGLTexture mPickerTexture{ QOpenGLTexture::Target1D };
-    bool mHistogramEnabled{};
-    QOpenGLTexture mHistogramTexture{ QOpenGLTexture::Target1D };
     Range mMappingRange{ 0, 1 };
-    Range mHistogramBounds{ 0, 1 };
-    QVector<quint32> mHistogramBins;
-    QVector<quint32> mPrevHistogramBins;
     QPointF mMousePosition{};
     bool mUpload{};
-    ComputeRange *mComputeRange{};
     unsigned int mColorMask{};
 };

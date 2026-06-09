@@ -1,5 +1,4 @@
 #include "TextureInfoBar.h"
-#include "Histogram.h"
 #include "ui_TextureInfoBar.h"
 #include <QAction>
 #include <QVector4D>
@@ -8,40 +7,18 @@
 TextureInfoBar::TextureInfoBar(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::TextureInfoBar)
-    , mHistogram(new Histogram(this))
 {
     ui->setupUi(this);
-    ui->minimum->setDecimal(true);
-    ui->maximum->setDecimal(true);
-    ui->horizontalLayout->insertWidget(5, mHistogram);
 
     setMinimumSize(0, 80);
     setMaximumSize(4096, 80);
-    mHistogram->setFixedHeight(70);
-
-    connect(ui->minimum, &ExpressionLineEdit::textChanged,
-        [this](const QString &text) {
-            auto ok = false;
-            if (auto value = text.toDouble(&ok); ok)
-                setHistogramBounds({ value, mHistogramBounds.maximum });
-        });
-    connect(ui->maximum, &ExpressionLineEdit::textChanged,
-        [this](const QString &text) {
-            auto ok = false;
-            if (auto value = text.toDouble(&ok); ok)
-                setHistogramBounds({ mHistogramBounds.minimum, value });
-        });
 
     connect(ui->buttonClose, &QPushButton::clicked, this,
         &TextureInfoBar::cancelled);
-    connect(ui->buttonAutoRange, &QPushButton::clicked, this,
-        &TextureInfoBar::autoRangeRequested);
-    connect(ui->buttonResetRange, &QPushButton::clicked, this,
-        &TextureInfoBar::resetRange);
-    connect(ui->buttonInvertRange, &QPushButton::clicked, this,
-        &TextureInfoBar::invertRange);
-    connect(mHistogram, &Histogram::mappingRangeChanged, this,
-        &TextureInfoBar::mappingRangeChanged);
+    connect(ui->minimum, &QDoubleSpinBox::valueChanged, this,
+        &TextureInfoBar::handleMappingRangeChanged);
+    connect(ui->maximum, &QDoubleSpinBox::valueChanged, this,
+        &TextureInfoBar::handleMappingRangeChanged);
 
     for (auto button : { ui->buttonColorR, ui->buttonColorG, ui->buttonColorB,
              ui->buttonColorA })
@@ -104,55 +81,18 @@ void TextureInfoBar::setPickerEnabled(bool enabled)
 
 void TextureInfoBar::setMappingRange(const Range &range)
 {
-    mHistogram->setMappingRange(range);
+  ui->minimum->setValue(range.minimum);
+  ui->maximum->setValue(range.maximum);
 }
 
-const Range &TextureInfoBar::mappingRange() const
+Range TextureInfoBar::mappingRange() const
 {
-    return mHistogram->mappingRange();
+    return { ui->minimum->value(), ui->maximum->value() };
 }
 
-void TextureInfoBar::setHistogramBounds(const Range &bounds)
+void TextureInfoBar::handleMappingRangeChanged()
 {
-    if (mHistogramBounds != bounds) {
-        mHistogramBounds = bounds;
-        ui->minimum->setValue(bounds.minimum);
-        ui->maximum->setValue(bounds.maximum);
-        Q_EMIT histogramBoundsChanged(bounds);
-    }
-    mHistogram->setHistogramBounds(bounds);
-}
-
-void TextureInfoBar::updateHistogram(const QVector<qreal> &histogramUpdate)
-{
-    mHistogram->updateHistogram(histogramUpdate);
-}
-
-void TextureInfoBar::resetRange()
-{
-    setHistogramBounds({ 0, 1 });
-    setMappingRange({ 0, 1 });
-}
-
-void TextureInfoBar::invertRange()
-{
-    const auto bounds = histogramBounds();
-    const auto range = mappingRange();
-    setHistogramBounds({ bounds.maximum, bounds.minimum });
-    setMappingRange({ range.maximum, range.minimum });
-}
-
-int TextureInfoBar::histogramBinCount() const
-{
-    const auto minWidth = 2;
-    const auto multiple = 3 * 128;
-    return qMax(mHistogram->width() / multiple / minWidth, 1) * multiple;
-}
-
-void TextureInfoBar::resizeEvent(QResizeEvent *event)
-{
-    QWidget::resizeEvent(event);
-    Q_EMIT histogramBinCountChanged(histogramBinCount());
+    Q_EMIT mappingRangeChanged(mappingRange());
 }
 
 void TextureInfoBar::handleColorMaskToggled()

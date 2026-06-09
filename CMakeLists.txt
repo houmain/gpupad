@@ -127,7 +127,6 @@ set(SOURCES
   src/editors/source/SyntaxHLSL.cpp
   src/editors/source/SyntaxSlang.cpp
   src/editors/source/SyntaxJavaScript.cpp
-  src/editors/texture/Histogram.cpp
   src/editors/texture/TextureEditor.cpp
   src/editors/texture/TextureEditorToolBar.cpp
   src/editors/texture/TextureEditorToolBar.ui
@@ -239,7 +238,6 @@ if (ENABLE_OPENGL)
   src/render/opengl/GLDevice.cpp
   src/render/opengl/GLPrintf.cpp
   src/render/opengl/GLRenderSession.cpp
-  src/render/opengl/GLComputeRange.cpp
   src/render/opengl/GLWindow.cpp)
 endif()
 

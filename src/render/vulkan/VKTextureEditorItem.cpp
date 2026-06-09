@@ -22,14 +22,13 @@ namespace {
         Texture::Format textureFormat{};
         KDGpu::Format swapchainFormat{};
         bool picker{};
-        bool histogram{};
 
         friend bool operator<(const PipelineDesc &a, const PipelineDesc &b)
         {
             return std::tie(a.target, a.textureFormat, a.swapchainFormat,
-                       a.picker, a.histogram)
+                       a.picker)
                 < std::tie(b.target, b.textureFormat, b.swapchainFormat,
-                    b.picker, b.histogram);
+                    b.picker);
         }
     };
 
@@ -128,13 +127,19 @@ namespace {
 struct VKTextureEditorItem::PipelineCache
 {
     Pipeline *getPipeline(KDGpu::Device &device, const PipelineDesc &desc,
-        const QString &vertexShaderSource, const QString &fragmentShaderSource,
+
         size_t constantsSize)
     {
         auto &pipeline = mPipelines[desc];
         if (!pipeline || !pipeline->pipeline.isValid()) {
+            const auto shaderDesc = ShaderDesc{
+                .target = desc.target,
+                .format = desc.textureFormat,
+                .picker = desc.picker,
+            };
             pipeline = std::make_unique<Pipeline>(device, desc,
-                vertexShaderSource, fragmentShaderSource, constantsSize);
+                vertexShaderSource, buildFragmentShader(shaderDesc),
+                constantsSize);
             if (!pipeline->pipeline.isValid()) {
                 mPipelines.erase(desc);
                 return nullptr;
@@ -377,17 +382,10 @@ bool VKTextureEditorItem::renderTexture(const QMatrix4x4 &transform)
         .target = mTexture->target(),
         .textureFormat = mTexture->format(),
         .swapchainFormat = gpuWindow.swapchainFormat(),
-        .picker = false,
-        .histogram = false,
+        .picker = mPickerEnabled,
     };
-    const auto shaderDesc = ShaderDesc{
-        .target = desc.target,
-        .format = desc.textureFormat,
-        .picker = desc.picker,
-        .histogram = desc.histogram,
-    };
-    auto *pipeline = mPipelineCache->getPipeline(gpuWindow.device(), desc,
-        vertexShaderSource, buildFragmentShader(shaderDesc), sizeof(Params));
+    auto *pipeline =
+        mPipelineCache->getPipeline(gpuWindow.device(), desc, sizeof(Params));
     if (!pipeline)
         return false;
 
@@ -395,8 +393,8 @@ bool VKTextureEditorItem::renderTexture(const QMatrix4x4 &transform)
         && mTexture->samples() == 1;
     if (!mTextureBinding)
         mTextureBinding = std::make_unique<TextureBinding>();
-    if (!mTextureBinding->ensureBindGroup(gpuWindow.device(),
-            gpuWindow.queue(), *pipeline, *mTexture, linear))
+    if (!mTextureBinding->ensureBindGroup(gpuWindow.device(), gpuWindow.queue(),
+            *pipeline, *mTexture, linear))
         return false;
 
     const auto constants = getParams(transform, mTexture->samples());
