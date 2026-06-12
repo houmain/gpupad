@@ -104,8 +104,12 @@ void TextureEditor::setupGpuWindow()
         &TextureEditorItem::releaseGpu);
     connect(mGpuWindow, &RenderWindow::releasingGpu, mBackground,
         &TextureEditorBackground::releaseGpu);
+    connect(mGpuWindow, &RenderWindow::preparingGpu, mTextureItem,
+        &TextureEditorItem::prepareGpu);
     connect(mGpuWindow, &RenderWindow::paintingGpu, this,
         &TextureEditor::paintGpu);
+    connect(mGpuWindow, &RenderWindow::submittedGpu, mTextureItem,
+        &TextureEditorItem::submittedGpu);
 
     mGpuWindowContainer = QWidget::createWindowContainer(mGpuWindow);
     mGpuWindowContainer->setAutoFillBackground(false);

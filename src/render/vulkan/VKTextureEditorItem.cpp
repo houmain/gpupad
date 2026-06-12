@@ -13,6 +13,8 @@
 #include <KDGpu/render_pass_command_recorder.h>
 #include <KDGpu/sampler.h>
 #include <KDGpu/sampler_options.h>
+#include <KDGpu/texture_view.h>
+#include <QVector4D>
 #include <map>
 
 namespace {
@@ -61,14 +63,22 @@ namespace {
             if (!vertexShader.isValid() || !fragmentShader.isValid())
                 return;
 
-            bindGroupLayout = device.createBindGroupLayout({
-                .bindings = { {
-                    .binding = 0,
-                    .resourceType =
-                        KDGpu::ResourceBindingType::CombinedImageSampler,
+            auto bindings = std::vector<KDGpu::ResourceBindingLayout>{ {
+                .binding = 0,
+                .resourceType =
+                    KDGpu::ResourceBindingType::CombinedImageSampler,
+                .shaderStages = KDGpu::ShaderStageFlagBits::FragmentBit,
+            } };
+            if (desc.picker) {
+                bindings.push_back({
+                    .binding = 1,
+                    .resourceType = KDGpu::ResourceBindingType::StorageImage,
                     .shaderStages = KDGpu::ShaderStageFlagBits::FragmentBit,
-                } },
-            });
+                });
+            }
+
+            bindGroupLayout =
+                device.createBindGroupLayout({ .bindings = bindings });
             if (!bindGroupLayout.isValid())
                 return;
 
@@ -153,6 +163,38 @@ struct VKTextureEditorItem::PipelineCache
 
 struct VKTextureEditorItem::TextureBinding
 {
+    void reset(KDGpu::Queue &queue)
+    {
+        if (bindGroup.isValid() || sampler.isValid())
+            queue.waitUntilIdle();
+
+        bindGroup = {};
+        sampler = {};
+        bindGroupLayout = {};
+        samplerLinear = false;
+    }
+
+    void release(KDGpu::Device &device, KDGpu::Queue &queue)
+    {
+        reset(queue);
+        if (pickerTexture)
+            pickerTexture->release(device);
+        pickerTexture.reset();
+        pickerColorWritten = false;
+    }
+
+    bool ensurePickerTexture()
+    {
+        if (!pickerTexture) {
+            auto data = TextureData{};
+            data.create(Texture::Target::Target1D, Texture::Format::RGBA32F, 1,
+                1, 1, 1);
+            pickerTexture = std::make_unique<VKTexture>(data, 1);
+            pickerTexture->boundAsImage();
+        }
+        return (pickerTexture != nullptr);
+    }
+
     bool ensureBindGroup(KDGpu::Device &device, KDGpu::Queue &queue,
         const Pipeline &pipeline, VKTexture &texture, bool linear)
     {
@@ -185,17 +227,34 @@ struct VKTextureEditorItem::TextureBinding
         if (!view.isValid())
             return false;
 
+        auto resources = std::vector<KDGpu::BindGroupEntry>{ {
+            .binding = 0,
+            .resource =
+                KDGpu::TextureViewSamplerBinding{
+                    .textureView = view.handle(),
+                    .sampler = sampler.handle(),
+                    .layout = texture.currentLayout(),
+                },
+        } };
+        if (pipeline.desc.picker) {
+            if (!pickerTexture)
+                return false;
+            auto &pickerView = pickerTexture->getView();
+            if (!pickerView.isValid())
+                return false;
+            resources.push_back({
+                .binding = 1,
+                .resource =
+                    KDGpu::ImageBinding{
+                        .textureView = pickerView.handle(),
+                        .layout = KDGpu::TextureLayout::General,
+                    },
+            });
+        }
+
         bindGroup = device.createBindGroup({
             .layout = pipeline.bindGroupLayout.handle(),
-            .resources = { {
-                .binding = 0,
-                .resource =
-                    KDGpu::TextureViewSamplerBinding{
-                        .textureView = view.handle(),
-                        .sampler = sampler.handle(),
-                        .layout = texture.currentLayout(),
-                    },
-            } },
+            .resources = std::move(resources),
         });
         if (!bindGroup.isValid())
             return false;
@@ -208,14 +267,15 @@ struct VKTextureEditorItem::TextureBinding
     KDGpu::Sampler sampler;
     KDGpu::BindGroup bindGroup;
     KDGpu::Handle<KDGpu::BindGroupLayout_t> bindGroupLayout;
+    std::unique_ptr<VKTexture> pickerTexture;
+    bool pickerColorWritten{};
     bool samplerLinear{};
 };
 
 void VKTextureEditorItem::resetTextureBinding()
 {
     if (mTextureBinding && window().initialized())
-        window().queue().waitUntilIdle();
-    mTextureBinding.reset();
+        mTextureBinding->reset(window().queue());
 }
 
 VKTextureEditorItem::VKTextureEditorItem(VKWindow *parent)
@@ -235,7 +295,9 @@ void VKTextureEditorItem::releaseGpu()
         return;
 
     releaseGL();
-    resetTextureBinding();
+    if (mTextureBinding)
+        mTextureBinding->release(window().device(), window().queue());
+    mTextureBinding.reset();
     if (mTexture)
         mTexture->release(window().device());
     releaseShareState();
@@ -243,6 +305,31 @@ void VKTextureEditorItem::releaseGpu()
     mPipelineCache.reset();
     mSharedTextureHandle = {};
     mTextureSamples = 1;
+}
+
+void VKTextureEditorItem::prepareGpu()
+{
+    if (!window().initialized())
+        return;
+
+    if (!mPickerEnabled) {
+        Q_EMIT pickerColorChanged({});
+        return;
+    }
+
+    if (!mTextureBinding)
+        mTextureBinding = std::make_unique<TextureBinding>();
+    if (!mTextureBinding->ensurePickerTexture())
+        return;
+
+    mTextureBinding->pickerColorWritten = false;
+
+    auto context = makeContext();
+    context.commandRecorder =
+        context.device.createCommandRecorder({ .queue = context.queue });
+    if (!mTextureBinding->pickerTexture->prepareStorageImage(context))
+        return;
+    submitCommandQueue(context);
 }
 
 void VKTextureEditorItem::paintGpu(const QMatrix4x4 &transform)
@@ -254,6 +341,33 @@ void VKTextureEditorItem::paintGpu(const QMatrix4x4 &transform)
         mUpload = false;
 
     renderTexture(transform);
+}
+
+void VKTextureEditorItem::submittedGpu()
+{
+    if (!mPickerEnabled || !mTextureBinding || !mTextureBinding->pickerColorWritten
+        || !mTextureBinding->pickerTexture
+        || !mTextureBinding->pickerTexture->texture().isValid())
+        return;
+
+    window().queue().waitUntilIdle();
+
+    auto context = makeContext();
+    context.commandRecorder =
+        context.device.createCommandRecorder({ .queue = context.queue });
+    mTextureBinding->pickerTexture->beginDownload(context);
+    submitCommandQueue(context);
+    if (!mTextureBinding->pickerTexture->finishDownload())
+        return;
+
+    auto pickerColor = QVector4D{};
+    const auto *data = reinterpret_cast<const float *>(
+        mTextureBinding->pickerTexture->data().getData());
+    if (data)
+        pickerColor = QVector4D{ data[0], data[1], data[2], data[3] };
+    mTextureBinding->pickerColorWritten = false;
+
+    Q_EMIT pickerColorChanged(pickerColor);
 }
 
 bool VKTextureEditorItem::downloadImage(TextureData *image)
@@ -406,5 +520,7 @@ bool VKTextureEditorItem::renderTexture(const QMatrix4x4 &transform)
     renderPass.pushConstant(pushConstantRange(sizeof(Params)), &constants,
         pipeline->pipelineLayout);
     renderPass.draw({ .vertexCount = 4 });
+    if (mPickerEnabled && mTextureBinding)
+        mTextureBinding->pickerColorWritten = true;
     return true;
 }

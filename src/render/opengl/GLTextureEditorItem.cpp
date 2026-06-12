@@ -212,7 +212,12 @@ bool GLTextureEditorItem::renderTexture(const QMatrix4x4 &transform)
     }
     gl.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-    gl.glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT);
+    program->release();
+
+    gl.glBindTexture(target, 0);
+    if (mSharedTextureId)
+        gl.glFinish();
+    Q_ASSERT(glGetError() == GL_NO_ERROR);
 
     auto pickerColor = QVector4D{};
     if (mPickerEnabled) {
@@ -222,11 +227,5 @@ bool GLTextureEditorItem::renderTexture(const QMatrix4x4 &transform)
     }
     Q_EMIT pickerColorChanged(pickerColor);
 
-    program->release();
-
-    gl.glBindTexture(target, 0);
-    if (mSharedTextureId)
-        gl.glFinish();
-    Q_ASSERT(glGetError() == GL_NO_ERROR);
     return true;
 }

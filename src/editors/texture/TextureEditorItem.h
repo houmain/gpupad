@@ -21,7 +21,9 @@ public:
     explicit TextureEditorItem(RenderWindow *parent);
     ~TextureEditorItem() override;
     virtual void releaseGpu() = 0;
+    virtual void prepareGpu() { }
     virtual void paintGpu(const QMatrix4x4 &transform) = 0;
+    virtual void submittedGpu() { }
     void setImage(TextureData image);
     const TextureData &image() const { return mImage; }
     virtual bool downloadImage(TextureData *image);

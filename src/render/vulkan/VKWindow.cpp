@@ -390,6 +390,8 @@ void VKWindow::swapBuffers()
     auto &renderComplete =
         state.renderCompleteSemaphores.at(state.currentSwapchainImageIndex);
 
+    Q_EMIT preparingGpu();
+
     auto commandRecorder =
         shared.device().createCommandRecorder({ .queue = shared.queue() });
     state.renderPass.emplace(commandRecorder.beginRenderPass(
@@ -418,6 +420,7 @@ void VKWindow::swapBuffers()
         .signalSemaphores = { renderComplete },
         .signalFence = frameFence,
     });
+    Q_EMIT submittedGpu();
 
     const auto presentResult = shared.queue().present({
         .waitSemaphores = { renderComplete },

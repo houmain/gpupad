@@ -15,6 +15,8 @@ public:
 
 Q_SIGNALS:
     void initializingGpu();
+    void preparingGpu();
     void paintingGpu();
+    void submittedGpu();
     void releasingGpu();
 };
