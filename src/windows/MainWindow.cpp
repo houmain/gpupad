@@ -58,7 +58,6 @@ MainWindow::MainWindow(QWidget *parent)
     icon.addFile(":images/64x64/icon.png");
     setWindowIcon(icon);
 
-    mUi->menubar->setFixedHeight(24);
     mUi->toolBarMain->toggleViewAction()->setVisible(false);
 
     setDockOptions(QMainWindow::AllowNestedDocks);
@@ -1288,7 +1287,8 @@ void MainWindow::handleHideMenuBarChanged(bool hide)
         mUi->toolBarMain->insertSeparator(mUi->actionNew);
     } else {
         const auto &actions = mUi->toolBarMain->actions();
-        mUi->toolBarMain->removeAction(actions.front());
+        mUi->toolBarMain->removeAction(actions[0]);
+        mUi->toolBarMain->removeAction(actions[1]);
     }
 }
 
