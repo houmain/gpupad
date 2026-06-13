@@ -235,6 +235,7 @@ if (ENABLE_OPENGL)
   src/render/opengl/GLStream.cpp
   src/render/opengl/GLTarget.cpp
   src/render/opengl/GLTexture.cpp
+  src/render/opengl/GLContext.cpp
   src/render/opengl/GLDevice.cpp
   src/render/opengl/GLPrintf.cpp
   src/render/opengl/GLRenderSession.cpp

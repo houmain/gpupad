@@ -1,10 +1,10 @@
 #pragma once
 #if defined(OPENGL_ENABLED)
 
-#  include "GLDevice.h"
+#  include "GLContext.h"
 #  include "render/RenderWindow.h"
-#  include <QOpenGLVertexArrayObject>
 #  include <chrono>
+#  include <memory>
 
 class GLWindow : public RenderWindow
 {
@@ -16,7 +16,7 @@ public:
     ~GLWindow() override;
 
     bool initialized() const override { return mInitialized; }
-    GLContext &context() { return mDevice->context(); }
+    GLContext &context() { return *mContext; }
 
     void update() override;
     bool makeCurrent();
@@ -30,8 +30,7 @@ private:
 
     const int mSyncInterval{};
     bool mInitialized{};
-    std::unique_ptr<GLDevice> mDevice;
-    QOpenGLVertexArrayObject mVao;
+    std::unique_ptr<GLContext> mContext;
     std::chrono::high_resolution_clock::time_point mLastSwapTime{};
 };
 

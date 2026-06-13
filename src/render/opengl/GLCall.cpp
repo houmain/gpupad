@@ -237,7 +237,7 @@ void GLCall::execute(GLContext &gl, MessagePtrSet &messages,
 
     gl.glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
-    if (auto errorMessage = getFirstGLError(); !errorMessage.isEmpty())
+    if (auto errorMessage = gl.getLastGLError(); !errorMessage.isEmpty())
         messages.insert(mCall.id, MessageType::CallFailed, errorMessage);
 }
 

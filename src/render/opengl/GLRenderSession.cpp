@@ -76,7 +76,7 @@ void GLRenderSession::render()
     auto &gl = renderer().device<GLDevice>().context();
 
     Q_ASSERT(glGetError() == GL_NO_ERROR);
-    QOpenGLVertexArrayObject::Binder vaoBinder(&mVao);
+    auto vaoBinder = gl.bindVertexArrayObject();
 
     gl.glEnable(GL_FRAMEBUFFER_SRGB);
     gl.glEnable(GL_PROGRAM_POINT_SIZE);
@@ -107,7 +107,6 @@ void GLRenderSession::finish()
 void GLRenderSession::release()
 {
     mTimeQueries.clear();
-    mVao.destroy();
     mCommandQueue.reset();
     mPrevCommandQueue.reset();
 

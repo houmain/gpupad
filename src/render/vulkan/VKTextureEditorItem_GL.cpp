@@ -165,7 +165,7 @@ bool VKTextureEditorItem::ensureGLContext()
     }
     if (!state.context->makeCurrent(state.surface.get()))
         return false;
-    return state.context->initializeOpenGLFunctions();
+    return state.context->initializeCurrentContext(true);
 }
 
 void VKTextureEditorItem::releaseGL()
@@ -174,9 +174,11 @@ void VKTextureEditorItem::releaseGL()
         return;
 
     auto &state = *mGl;
-    if (state.textureId && state.context && state.surface
+    if (state.context && state.surface
         && state.context->makeCurrent(state.surface.get())) {
-        state.context->glDeleteTextures(1, &state.textureId);
+        if (state.textureId)
+            state.context->glDeleteTextures(1, &state.textureId);
+        state.context->shutdownCurrentContext();
         state.context->doneCurrent();
     }
     mGl.reset();

@@ -2,7 +2,6 @@
 #if defined(OPENGL_ENABLED)
 
 #  include "render/RenderSessionBase.h"
-#  include <QOpenGLVertexArrayObject>
 #  include <QOpenGLTimerQuery>
 #  include <deque>
 
@@ -24,7 +23,6 @@ public:
 private:
     void createCommandQueue();
 
-    QOpenGLVertexArrayObject mVao;
     std::unique_ptr<CommandQueue> mCommandQueue;
     std::unique_ptr<CommandQueue> mPrevCommandQueue;
     std::deque<QOpenGLTimerQuery> mTimeQueries;

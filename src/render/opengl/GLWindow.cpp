@@ -1,5 +1,10 @@
 #include "GLWindow.h"
 
+#include <QOffscreenSurface>
+#include <QScopeGuard>
+#include <algorithm>
+#include <thread>
+
 AdapterIdentity GLWindow::getAdapterIdentity()
 {
     auto glContext = QOpenGLContext();
@@ -51,7 +56,7 @@ AdapterIdentity GLWindow::getAdapterIdentity()
 
 GLWindow::GLWindow(int syncInterval)
     : mSyncInterval(syncInterval)
-    , mDevice(std::make_unique<GLDevice>(GLDevice::Usage::Window, this))
+    , mContext(std::make_unique<GLContext>(this))
 {
     setSurfaceType(QWindow::OpenGLSurface);
 
@@ -68,11 +73,11 @@ GLWindow::~GLWindow()
 
 void GLWindow::initializeGL()
 {
-    if (!mDevice->initialize({}))
+    auto &gl = context();
+    if (QOpenGLContext::currentContext() != &gl)
         return;
-
-    if (!mVao.isCreated())
-        mVao.create();
+    if (!gl.initializeCurrentContext())
+        return;
 
     mInitialized = true;
 
@@ -84,10 +89,11 @@ void GLWindow::releaseGL()
     if (!mInitialized)
         return;
 
-    mDevice->context().makeCurrent(this);
-    Q_EMIT releasingGpu();
-    mVao.destroy();
-    mDevice->shutdown();
+    if (mContext && mContext->makeCurrent(this)) {
+        Q_EMIT releasingGpu();
+        mContext->shutdownCurrentContext();
+        mContext->doneCurrent();
+    }
     mInitialized = false;
 }
 
@@ -96,7 +102,7 @@ void GLWindow::paintGL()
     if (!mInitialized)
         return;
 
-    QOpenGLVertexArrayObject::Binder vaoBinder(&mVao);
+    auto vaoBinder = context().bindVertexArrayObject();
     Q_EMIT paintingGpu();
 }
 
@@ -123,7 +129,7 @@ void GLWindow::update()
         return;
 
     const qreal dpr = devicePixelRatio();
-    auto &gl = mDevice->context();
+    auto &gl = context();
     gl.glViewport(0, 0, width() * dpr, height() * dpr);
     paintGL();
 
@@ -141,7 +147,7 @@ void GLWindow::update()
 
 bool GLWindow::makeCurrent()
 {
-    auto &gl = mDevice->context();
+    auto &gl = context();
     if (!gl.isValid()) {
         gl.setFormat(format());
         if (auto *shareContext = QOpenGLContext::globalShareContext())

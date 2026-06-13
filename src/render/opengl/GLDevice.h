@@ -6,18 +6,12 @@
 #  include "MessageList.h"
 #  include "render/Device.h"
 #  include <QOffscreenSurface>
-#  include <QOpenGLDebugLogger>
 #  include <memory>
 
 class GLDevice final : public Device
 {
 public:
-    enum class Usage {
-        Renderer,
-        Window,
-    };
-
-    explicit GLDevice(Usage usage = Usage::Renderer, QObject *parent = nullptr);
+    explicit GLDevice(QObject *parent = nullptr);
     ~GLDevice() override;
 
     void moveToThread(QThread *thread) override;
@@ -30,17 +24,11 @@ public:
 private:
     void createContext(QObject *parent = nullptr);
     void createRendererContext();
-    bool initializeCurrentContext();
-    void handleDebugMessage(const QOpenGLDebugMessage &message);
 
-    Usage mUsage{};
     std::unique_ptr<GLContext> mContext;
     std::unique_ptr<QOffscreenSurface> mSurface;
     bool mInitialized{};
     MessagePtrSet mMessages;
-    std::unique_ptr<QOpenGLDebugLogger> mDebugLogger;
 };
-
-QString getFirstGLError();
 
 #endif // defined(OPENGL_ENABLED)

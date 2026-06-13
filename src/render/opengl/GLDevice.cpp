@@ -3,26 +3,12 @@
 #if defined(OPENGL_ENABLED)
 
 #  include <QApplication>
-#  include <QMutex>
 
-namespace {
-    QMutex gFirstGLErrorMutex;
-    QString gFirstGLError;
-} // namespace
-
-QString getFirstGLError()
-{
-    auto lock = QMutexLocker(&gFirstGLErrorMutex);
-    return std::exchange(gFirstGLError, "");
-}
-
-GLDevice::GLDevice(Usage usage, QObject *parent)
+GLDevice::GLDevice(QObject *parent)
     : Device(Type::OpenGL)
-    , mUsage(usage)
 {
     createContext(parent);
-    if (mUsage == Usage::Renderer)
-        createRendererContext();
+    createRendererContext();
 }
 
 GLDevice::~GLDevice()
@@ -42,18 +28,14 @@ bool GLDevice::initialize(const AdapterIdentity &adapterIdentity)
 {
     Q_UNUSED(adapterIdentity);
 
-    if (mUsage == Usage::Renderer) {
-        if (!mContext || !mSurface)
-            createRendererContext();
-        if (!mContext->makeCurrent(mSurface.get())) {
-            mMessages.insert(0, MessageType::OpenGLVersionNotAvailable, "4.5");
-            return false;
-        }
-    } else if (QOpenGLContext::currentContext() != mContext.get()) {
+    if (!mContext || !mSurface)
+        createRendererContext();
+    if (!mContext->makeCurrent(mSurface.get())) {
+        mMessages.insert(0, MessageType::OpenGLVersionNotAvailable, "4.5");
         return false;
     }
 
-    if (!initializeCurrentContext()) {
+    if (!mContext->initializeCurrentContext(true)) {
         mMessages.insert(0, MessageType::OpenGLVersionNotAvailable, "4.5");
         return false;
     }
@@ -64,14 +46,19 @@ bool GLDevice::initialize(const AdapterIdentity &adapterIdentity)
 
 void GLDevice::shutdown()
 {
-    if (mInitialized) {
-        mDebugLogger.reset();
-        if (mContext)
+    if (mContext
+        && (mInitialized || QOpenGLContext::currentContext() == mContext.get())) {
+        auto current = QOpenGLContext::currentContext() == mContext.get();
+        if (!current && mSurface)
+            current = mContext->makeCurrent(mSurface.get());
+        if (current) {
+            mContext->shutdownCurrentContext();
             mContext->doneCurrent();
-        mInitialized = false;
+        }
     }
+    mInitialized = false;
 
-    if (mUsage == Usage::Renderer && mContext && mSurface) {
+    if (mContext && mSurface) {
         auto guiThread = QApplication::instance()->thread();
         mContext->moveToThread(guiThread);
         mSurface->moveToThread(guiThread);
@@ -101,48 +88,6 @@ void GLDevice::createRendererContext()
     mSurface = std::make_unique<QOffscreenSurface>();
     mSurface->setFormat(mContext->format());
     mSurface->create();
-}
-
-bool GLDevice::initializeCurrentContext()
-{
-    if (mInitialized)
-        return true;
-
-    if (!mContext || !mContext->initializeOpenGLFunctions())
-        return false;
-
-    mDebugLogger = std::make_unique<QOpenGLDebugLogger>();
-    if (mDebugLogger->initialize()) {
-        auto disabledSeverities = QOpenGLDebugMessage::Severities{
-            QOpenGLDebugMessage::NotificationSeverity
-        };
-        if (mUsage == Usage::Renderer)
-            disabledSeverities |= QOpenGLDebugMessage::LowSeverity
-                | QOpenGLDebugMessage::MediumSeverity;
-
-        mDebugLogger->disableMessages(QOpenGLDebugMessage::AnySource,
-            QOpenGLDebugMessage::AnyType, disabledSeverities);
-
-        QObject::connect(mDebugLogger.get(), &QOpenGLDebugLogger::messageLogged,
-            mDebugLogger.get(), [this](const QOpenGLDebugMessage &message) {
-                handleDebugMessage(message);
-            });
-        mDebugLogger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
-    }
-    return true;
-}
-
-void GLDevice::handleDebugMessage(const QOpenGLDebugMessage &message)
-{
-    const auto lock = QMutexLocker(&gFirstGLErrorMutex);
-
-    if (message.severity() == QOpenGLDebugMessage::HighSeverity
-        && gFirstGLError.isEmpty())
-        gFirstGLError = message.message();
-
-#  if !defined(NDEBUG)
-    qDebug() << message.message();
-#  endif
 }
 
 #endif // defined(OPENGL_ENABLED)

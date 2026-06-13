@@ -175,7 +175,7 @@ bool GLShader::setShaderObject(GLContext &gl, GLObject shader,
     auto status = GLint{};
     gl.glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
     if (status != GL_TRUE) {
-        if (auto errorMessage = getFirstGLError(); !errorMessage.isEmpty())
+        if (auto errorMessage = gl.getLastGLError(); !errorMessage.isEmpty())
             mMessages.insert(mItemId, MessageType::ShaderError, errorMessage);
         return false;
     }
