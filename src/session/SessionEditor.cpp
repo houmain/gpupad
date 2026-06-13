@@ -187,11 +187,12 @@ void SessionEditor::mouseReleaseEvent(QMouseEvent *event)
     QTreeView::mouseReleaseEvent(event);
 
     // keep current selected
-    if (selectionModel()->selection().isEmpty() && currentIndex().isValid())
+    if (selectionModel()->selection().isEmpty() && currentIndex().isValid()) {
         selectionModel()->select(currentIndex(), QItemSelectionModel::Select);
 
-    // ensure selected item is still visible
-    scrollTo(currentIndex());
+        // ensure selected item is still visible
+        scrollTo(currentIndex());
+    }
 }
 
 void SessionEditor::wheelEvent(QWheelEvent *event)
