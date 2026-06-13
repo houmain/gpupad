@@ -63,8 +63,8 @@ VKTexture::VKTexture(TextureData data, int samples, KDGpu::Texture texture)
     : TextureBase(std::move(data), samples)
     , mCreated(texture.isValid())
     , mUsage(KDGpu::TextureUsageFlagBits::SampledBit
-        | KDGpu::TextureUsageFlagBits::TransferSrcBit
-        | KDGpu::TextureUsageFlagBits::TransferDstBit)
+          | KDGpu::TextureUsageFlagBits::TransferSrcBit
+          | KDGpu::TextureUsageFlagBits::TransferDstBit)
     , mTexture(std::move(texture))
     , mCurrentLayout(KDGpu::TextureLayout::Undefined)
     , mCurrentAccessMask(KDGpu::AccessFlagBit::None)
@@ -216,33 +216,56 @@ bool VKTexture::clear(VKContext &context, std::array<double, 4> color,
 
 bool VKTexture::copy(VKContext &context, VKTexture &source)
 {
-    source.prepareTransferSource(context);
+    if (!source.prepareTransferSource(context))
+        return false;
 
     reload(true);
     createAndUpload(context);
     mDeviceCopyModified = true;
-    mMipmapsInvalidated = true;
+
+    if (!mTexture.isValid())
+        return false;
 
     memoryBarrier(*context.commandRecorder,
         KDGpu::TextureLayout::TransferDstOptimal,
         KDGpu::AccessFlagBit::TransferWriteBit,
         KDGpu::PipelineStageFlagBit::TransferBit);
 
-    context.commandRecorder->copyTextureToTexture({ 
+    const auto layerCount = vkArrayLayerCount(mKind, mLayers);
+    auto regions = std::vector<KDGpu::TextureCopyRegion>();
+    regions.reserve(static_cast<size_t>(levels()));
+    for (auto level = 0; level < levels(); ++level) {
+        const auto mipLevel = static_cast<uint32_t>(level);
+        regions.push_back(KDGpu::TextureCopyRegion{
+            .srcSubresource{
+                .aspectMask = source.aspectMask(),
+                .mipLevel = mipLevel,
+                .layerCount = layerCount,
+            },
+            .dstSubresource{
+                .aspectMask = aspectMask(),
+                .mipLevel = mipLevel,
+                .layerCount = layerCount,
+            },
+            .extent = {
+                static_cast<uint32_t>(mData.getLevelWidth(level)),
+                static_cast<uint32_t>(mData.getLevelHeight(level)),
+                static_cast<uint32_t>(mKind.dimensions == 3
+                        ? mData.getLevelDepth(level)
+                        : 1),
+            },
+        });
+    }
+
+    context.commandRecorder->copyTextureToTexture({
         .srcTexture = source.texture(),
         .srcLayout = source.currentLayout(),
         .dstTexture = texture(),
         .dstLayout = mCurrentLayout,
-        .regions = { KDGpu::TextureCopyRegion{ 
-            .srcSubresource{ .aspectMask = source.aspectMask() },
-            .dstSubresource{ .aspectMask = aspectMask() },
-            .extent = {
-                static_cast<uint32_t>(mWidth),
-                static_cast<uint32_t>(mHeight),
-                static_cast<uint32_t>(mDepth),
-            }, }, }, 
-        });
+        .regions = regions,
+    });
 
+    mMipmapsInvalidated = source.mMipmapsInvalidated;
     return true;
 }
 

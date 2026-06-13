@@ -3,68 +3,45 @@
 #include "VKWindow.h"
 
 namespace {
-    GLenum attachmentForFormat(Texture::Format format)
+    int textureLevelCount(const TextureData &data, int samples)
     {
-        switch (format) {
-        default: return GL_COLOR_ATTACHMENT0;
+        return (samples > 1 ? 1 : data.levels());
+    }
 
-        case Texture::Format::D16:
-        case Texture::Format::D24:
-        case Texture::Format::D32:
-        case Texture::Format::D32F: return GL_DEPTH_ATTACHMENT;
+    int textureHeight(const TextureData &data, Texture::Target target,
+        int level)
+    {
+        if (target == Texture::Target::Target1DArray)
+            return data.layers();
+        return data.getLevelHeight(level);
+    }
 
-        case Texture::Format::S8: return GL_STENCIL_ATTACHMENT;
-
-        case Texture::Format::D24S8:
-        case Texture::Format::D32FS8X24: return GL_DEPTH_STENCIL_ATTACHMENT;
+    int textureDepth(const TextureData &data, Texture::Target target, int level)
+    {
+        switch (target) {
+        case Texture::Target::Target2DArray:
+        case Texture::Target::Target2DMultisampleArray: return data.layers();
+        case Texture::Target::Target3D:                 return data.getLevelDepth(level);
+        case Texture::Target::TargetCubeMap:
+        case Texture::Target::TargetCubeMapArray:
+            return data.layers() * data.faces();
+        default: return 1;
         }
     }
 
-    GLbitfield blitMaskForFormat(Texture::Format format)
-    {
-        switch (format) {
-        default: return GL_COLOR_BUFFER_BIT;
-
-        case Texture::Format::D16:
-        case Texture::Format::D24:
-        case Texture::Format::D32:
-        case Texture::Format::D32F: return GL_DEPTH_BUFFER_BIT;
-
-        case Texture::Format::S8: return GL_STENCIL_BUFFER_BIT;
-
-        case Texture::Format::D24S8:
-        case Texture::Format::D32FS8X24:
-            return GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
-        }
-    }
-
-    GLuint createFramebuffer(GLContext &gl, GLenum target, GLuint textureId,
-        GLenum attachment)
-    {
-        auto fbo = GLuint{};
-        gl.glGenFramebuffers(1, &fbo);
-        gl.glBindFramebuffer(target, fbo);
-        gl.glFramebufferTexture(target, attachment, textureId, 0);
-        return fbo;
-    }
-
-    bool copyTexture(GLContext &gl, const TextureData &data,
+    bool copyTexture(GLContext &gl, const TextureData &data, int samples,
         GLuint sourceTextureId, GLuint destTextureId)
     {
-        const auto attachment = attachmentForFormat(data.format());
-        auto previousTarget = GLint{};
-        gl.glGetIntegerv(GL_FRAMEBUFFER_BINDING, &previousTarget);
-
-        const auto sourceFbo = createFramebuffer(gl, GL_READ_FRAMEBUFFER,
-            sourceTextureId, attachment);
-        const auto destFbo = createFramebuffer(gl, GL_DRAW_FRAMEBUFFER,
-            destTextureId, attachment);
-        gl.glBlitFramebuffer(0, 0, data.width(), data.height(), 0, 0,
-            data.width(), data.height(), blitMaskForFormat(data.format()),
-            GL_NEAREST);
-        gl.glDeleteFramebuffers(1, &sourceFbo);
-        gl.glDeleteFramebuffers(1, &destFbo);
-        gl.glBindFramebuffer(GL_FRAMEBUFFER, previousTarget);
+        const auto textureTarget = data.getTarget(samples);
+        const auto glTarget = static_cast<GLenum>(textureTarget);
+        for (auto level = 0; level < textureLevelCount(data, samples);
+            ++level) {
+            gl.glCopyImageSubData(sourceTextureId, glTarget, level, 0, 0, 0,
+                destTextureId, glTarget, level, 0, 0, 0,
+                data.getLevelWidth(level),
+                textureHeight(data, textureTarget, level),
+                textureDepth(data, textureTarget, level));
+        }
         return (glGetError() == GL_NO_ERROR);
     }
 
@@ -143,22 +120,24 @@ namespace {
             if (isMultisampleTarget(target)) {
                 glTextureStorageMem2DMultisampleEXT(textureId, samples,
                     static_cast<GLenum>(data.format()), data.width(),
-                    data.height(), true, memoryObject, handle.allocationOffset);
+                    textureHeight(data, target, 0), true, memoryObject,
+                    handle.allocationOffset);
             } else {
                 glTextureStorageMem2DEXT(textureId, data.levels(),
                     static_cast<GLenum>(data.format()), data.width(),
-                    data.height(), memoryObject, handle.allocationOffset);
+                    textureHeight(data, target, 0), memoryObject,
+                    handle.allocationOffset);
             }
         } else if (dimensions == 3) {
             if (isMultisampleTarget(target)) {
                 glTextureStorageMem3DMultisampleEXT(textureId, samples,
                     static_cast<GLenum>(data.format()), data.width(),
-                    data.height(), data.depth(), true, memoryObject,
-                    handle.allocationOffset);
+                    data.height(), textureDepth(data, target, 0), true,
+                    memoryObject, handle.allocationOffset);
             } else {
                 glTextureStorageMem3DEXT(textureId, data.levels(),
                     static_cast<GLenum>(data.format()), data.width(),
-                    data.height(), data.depth(), memoryObject,
+                    data.height(), textureDepth(data, target, 0), memoryObject,
                     handle.allocationOffset);
             }
         }
@@ -260,7 +239,8 @@ bool VKTextureEditorItem::copyOpenGLTexture(ShareHandle textureHandle)
         cleanup.dismiss();
     }
 
-    if (!copyTexture(gl, mImage, sourceTextureId, state.textureId))
+    if (!copyTexture(gl, mImage, mTextureSamples, sourceTextureId,
+            state.textureId))
         return false;
     gl.glFinish();
 
