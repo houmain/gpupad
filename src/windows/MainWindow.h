@@ -21,7 +21,7 @@ class FileBrowserWindow;
 class EditorManager;
 class SessionEditor;
 class PropertiesEditor;
-class RenderWindow;
+class GpuWindow;
 class Theme;
 
 class MainWindow final : public QMainWindow
@@ -96,7 +96,7 @@ private:
     void waitForSync();
 
     Ui::MainWindow *mUi{};
-    RenderWindow *mSyncWindow{};
+    GpuWindow *mSyncWindow{};
     QWidget *mSyncWindowContainer{};
     AdapterIdentity mSyncWindowAdapter;
     QToolButton *mMenuButton{};

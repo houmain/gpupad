@@ -10,7 +10,7 @@ class TextureEditorItem;
 class TextureEditorBackground;
 class TextureEditorToolBar;
 class TextureInfoBar;
-class RenderWindow;
+class GpuWindow;
 
 class TextureEditor final : public QAbstractScrollArea, public IEditor
 {
@@ -82,7 +82,7 @@ private:
     QPointF mapToScene(const QPointF &position) const;
     QPointF mapFromScene(const QPointF &position) const;
 
-    RenderWindow *mGpuWindow{};
+    GpuWindow *mGpuWindow{};
     QWidget *mGpuWindowContainer{};
     TextureEditorToolBar &mEditorToolBar;
     TextureInfoBar &mTextureInfoBar;

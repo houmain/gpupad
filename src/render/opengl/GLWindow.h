@@ -2,11 +2,11 @@
 #if defined(OPENGL_ENABLED)
 
 #  include "GLContext.h"
-#  include "render/RenderWindow.h"
+#  include "render/GpuWindow.h"
 #  include <chrono>
 #  include <memory>
 
-class GLWindow : public RenderWindow
+class GLWindow : public GpuWindow
 {
     Q_OBJECT
 public:

@@ -1,5 +1,5 @@
 #include "TextureEditorBackground.h"
-#include "render/RenderWindow.h"
+#include "render/GpuWindow.h"
 #include <QPalette>
 
 QString TextureEditorBackground::vertexShaderSource = R"(
@@ -69,7 +69,7 @@ void main() {
 }
 )";
 
-TextureEditorBackground::TextureEditorBackground(RenderWindow *parent)
+TextureEditorBackground::TextureEditorBackground(GpuWindow *parent)
     : QObject(parent)
 {
 }

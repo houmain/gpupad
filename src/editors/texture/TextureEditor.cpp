@@ -8,7 +8,7 @@
 #include "TextureInfoBar.h"
 #include "TextureEditorItem.h"
 #include "getEventPosition.h"
-#include "render/RenderWindow.h"
+#include "render/GpuWindow.h"
 #include "render/opengl/GLTextureEditorBackground.h"
 #include "render/opengl/GLTextureEditorItem.h"
 #include "render/opengl/GLWindow.h"
@@ -100,15 +100,15 @@ void TextureEditor::destroyGpuWindow()
 
 void TextureEditor::setupGpuWindow()
 {
-    connect(mGpuWindow, &RenderWindow::releasingGpu, mTextureItem,
+    connect(mGpuWindow, &GpuWindow::releasingGpu, mTextureItem,
         &TextureEditorItem::releaseGpu);
-    connect(mGpuWindow, &RenderWindow::releasingGpu, mBackground,
+    connect(mGpuWindow, &GpuWindow::releasingGpu, mBackground,
         &TextureEditorBackground::releaseGpu);
-    connect(mGpuWindow, &RenderWindow::preparingGpu, mTextureItem,
+    connect(mGpuWindow, &GpuWindow::preparingGpu, mTextureItem,
         &TextureEditorItem::prepareGpu);
-    connect(mGpuWindow, &RenderWindow::paintingGpu, this,
+    connect(mGpuWindow, &GpuWindow::paintingGpu, this,
         &TextureEditor::paintGpu);
-    connect(mGpuWindow, &RenderWindow::submittedGpu, mTextureItem,
+    connect(mGpuWindow, &GpuWindow::submittedGpu, mTextureItem,
         &TextureEditorItem::submittedGpu);
 
     mGpuWindowContainer = QWidget::createWindowContainer(mGpuWindow);

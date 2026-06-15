@@ -3,7 +3,7 @@
 
 #include <KDGpu/gpu_core.h>
 #include "render/AdapterIdentity.h"
-#include "render/RenderWindow.h"
+#include "render/GpuWindow.h"
 #include <QList>
 #include <memory>
 
@@ -16,7 +16,7 @@ namespace KDGpu {
     class RenderPassCommandRecorder;
 }
 
-class VKWindow : public RenderWindow
+class VKWindow : public GpuWindow
 {
     Q_OBJECT
 public:

@@ -12,13 +12,13 @@
 #include <tuple>
 
 class QMatrix4x4;
-class RenderWindow;
+class GpuWindow;
 
 class TextureEditorItem : public QObject
 {
     Q_OBJECT
 public:
-    explicit TextureEditorItem(RenderWindow *parent);
+    explicit TextureEditorItem(GpuWindow *parent);
     ~TextureEditorItem() override;
     virtual void releaseGpu() = 0;
     virtual void prepareGpu() { }
@@ -114,7 +114,7 @@ protected:
     static QString buildFragmentShader(const ShaderDesc &desc);
     static bool canLinearFilter(Texture::Format format);
 
-    RenderWindow &window();
+    GpuWindow &window();
     void render();
     void update();
     Params getParams(const QMatrix4x4 &transform, int textureSamples) const;

@@ -2,12 +2,12 @@
 
 #include <QWindow>
 
-class RenderWindow : public QWindow
+class GpuWindow : public QWindow
 {
     Q_OBJECT
 public:
     using QWindow::QWindow;
-    ~RenderWindow() override = default;
+    ~GpuWindow() override = default;
 
     virtual bool initialized() const = 0;
     virtual void update() = 0;
