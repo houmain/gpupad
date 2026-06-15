@@ -17,9 +17,9 @@
 #include "render/vulkan/VKWindow.h"
 #include <QApplication>
 #include <QClipboard>
-#include <QMatrix4x4>
 #include <QMimeData>
 #include <QScrollBar>
+#include <QVBoxLayout>
 #include <QWheelEvent>
 #include <cstring>
 
@@ -44,6 +44,7 @@ TextureEditor::TextureEditor(QString fileName,
     TextureEditorToolBar *editorToolBar, TextureInfoBar *textureInfoBar,
     QWidget *parent)
     : QAbstractScrollArea(parent)
+    , mGpuWidget(new WindowWidget(this))
     , mEditorToolBar(*editorToolBar)
     , mTextureInfoBar(*textureInfoBar)
     , mFileName(fileName)
@@ -56,6 +57,14 @@ TextureEditor::TextureEditor(QString fileName,
     setMouseTracking(true);
     setFrameStyle(QFrame::NoFrame);
     setAutoFillBackground(false);
+
+    auto *viewportWidget = new QWidget();
+    auto *layout = new QVBoxLayout(viewportWidget);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
+    layout->addWidget(mGpuWidget);
+    setViewport(viewportWidget);
+
     setupGpuWindow();
 }
 
@@ -91,9 +100,8 @@ bool TextureEditor::createGpuWindow()
 
 void TextureEditor::destroyGpuWindow()
 {
-    delete mGpuWindow;
+    mGpuWidget->setWindow(nullptr);
     mGpuWindow = nullptr;
-    mGpuWindowContainer = nullptr;
     mTextureItem = nullptr;
     mBackground = nullptr;
 }
@@ -106,27 +114,30 @@ void TextureEditor::setupGpuWindow()
         &TextureEditorBackground::releaseGpu);
     connect(mGpuWindow, &GpuWindow::preparingGpu, mTextureItem,
         &TextureEditorItem::prepareGpu);
-    connect(mGpuWindow, &GpuWindow::paintingGpu, this,
-        &TextureEditor::paintGpu);
+    connect(mGpuWindow, &GpuWindow::paintingGpu, this, [this] {
+        if (QObject::sender() == mGpuWindow)
+            paintGpu();
+    });
     connect(mGpuWindow, &GpuWindow::submittedGpu, mTextureItem,
         &TextureEditorItem::submittedGpu);
 
-    mGpuWindowContainer = QWidget::createWindowContainer(mGpuWindow);
-    mGpuWindowContainer->setAutoFillBackground(false);
+    mGpuWidget->setWindow(mGpuWindow);
     mGpuWindow->installEventFilter(this);
-    setViewport(mGpuWindowContainer);
 }
 
 void TextureEditor::recreateGpuWindow()
 {
     const auto prevTextureItem = mTextureItem;
-    if (mGpuWindow)
-        mGpuWindow->deleteLater();
+    auto *window = mGpuWindow;
+    if (window)
+        window->removeEventFilter(this);
 
+    mGpuWidget->setWindow(nullptr);
     mGpuWindow = nullptr;
-    mGpuWindowContainer = nullptr;
     mTextureItem = nullptr;
     mBackground = nullptr;
+    if (window)
+        window->deleteLater();
 
     setEnabled(false);
     if (!createGpuWindow())
@@ -144,14 +155,14 @@ void TextureEditor::recreateGpuWindow()
         mTextureItem->setMappingRange(prevTextureItem->mappingRange());
         mTextureItem->setColorMask(prevTextureItem->colorMask());
     }
+
     setBounds(mTextureItem->boundingRect().toRect());
     setupGpuWindow();
 }
 
 void TextureEditor::resizeEvent(QResizeEvent *event)
 {
-    if (!mGpuWindow)
-        return;
+    QAbstractScrollArea::resizeEvent(event);
 
     if (mZoomToFit)
         zoomToFit();
@@ -657,6 +668,9 @@ void TextureEditor::updateScrollBars()
 
 void TextureEditor::paintGpu()
 {
+    if (!mGpuWindow || !mBackground || !mTextureItem)
+        return;
+
     const auto dpr = devicePixelRatioF();
     const auto scale = getZoomScale();
     const auto width = viewport()->width() * dpr;
@@ -672,10 +686,5 @@ void TextureEditor::paintGpu()
             std::min(scrollOffsetY + 2 * margin(), 0))
         + QPointF(-scrollX, -scrollY);
     mBackground->paintGpu(bounds, offset / 2);
-
-    const auto sx = bounds.width() / width;
-    const auto sy = bounds.height() / height;
-    const auto x = -scrollX / width;
-    const auto y = -scrollY / height;
-    mTextureItem->paintGpu(QTransform(sx, 0, 0, 0, sy, 0, x, y, 1));
+    mTextureItem->paintGpu(bounds, offset);
 }

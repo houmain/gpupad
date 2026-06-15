@@ -1,6 +1,7 @@
 
 #include "QmlView.h"
 #include "scripting/ScriptEngine.h"
+#include "widgets/WindowWidget.h"
 #include <QAction>
 
 #if !defined(QtQuick_FOUND)
@@ -134,6 +135,7 @@ QmlView::QmlView(QString fileName, QScriptEnginePtr enginePtr, QWidget *parent)
     : QFrame(parent)
     , mFileName(fileName)
     , mEnginePtr(std::move(enginePtr))
+    , mQuickWidget(new WindowWidget(this))
 {
     Q_ASSERT(onMainThread());
     [[maybe_unused]] static const auto once = []() {
@@ -180,15 +182,6 @@ QColor QmlView::backgroundColor() const
 
 void QmlView::reset()
 {
-    if (mQuickWidget) {
-        layout()->removeWidget(mQuickWidget);
-        connect(mQuickWidget, &QWidget::destroyed, this, &QmlView::reset,
-            Qt::QueuedConnection);
-        mQuickWidget->deleteLater();
-        mQuickWidget = nullptr;
-        return;
-    }
-
     mMessages.clear();
 
     const auto qmlEngine = qobject_cast<QQmlEngine *>(&mEnginePtr->jsEngine());
@@ -239,9 +232,7 @@ void QmlView::reset()
     Singletons::fileCache().updateFromEditors();
 
     mQuickView->setSource(QUrl::fromLocalFile(mFileName));
-    mQuickWidget = QWidget::createWindowContainer(mQuickView);
-    mQuickWidget->setAutoFillBackground(false);
-
+    mQuickWidget->setWindow(mQuickView);
     layout()->addWidget(mQuickWidget);
 }
 

@@ -1,6 +1,7 @@
 #include "TextureEditorItem.h"
 #include "render/GpuWindow.h"
 #include <QMatrix4x4>
+#include <QTransform>
 #include <algorithm>
 #include <array>
 #include <map>
@@ -354,6 +355,20 @@ void TextureEditorItem::render()
 void TextureEditorItem::update()
 {
     window().requestUpdate();
+}
+
+QMatrix4x4 TextureEditorItem::getTransform(const QSizeF &bounds,
+    const QPointF &offset)
+{
+    const auto dpr = window().devicePixelRatio();
+    const auto renderSize = QSizeF(window().size());
+    const auto width = std::max(renderSize.width() * dpr, 1.0);
+    const auto height = std::max(renderSize.height() * dpr, 1.0);
+    const auto sx = bounds.width() / width;
+    const auto sy = bounds.height() / height;
+    const auto x = (offset.x() + bounds.width()) / width - 1.0;
+    const auto y = (offset.y() + bounds.height()) / height - 1.0;
+    return QMatrix4x4(QTransform(sx, 0, 0, 0, sy, 0, x, y, 1));
 }
 
 auto TextureEditorItem::getParams(const QMatrix4x4 &transform,

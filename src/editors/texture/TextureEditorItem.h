@@ -5,6 +5,8 @@
 #include "render/ShareHandle.h"
 #include <QObject>
 #include <QOpenGLTexture>
+#include <QPointF>
+#include <QSizeF>
 #include <QString>
 #include <array>
 #include <cstdint>
@@ -22,7 +24,7 @@ public:
     ~TextureEditorItem() override;
     virtual void releaseGpu() = 0;
     virtual void prepareGpu() { }
-    virtual void paintGpu(const QMatrix4x4 &transform) = 0;
+    virtual void paintGpu(const QSizeF &bounds, const QPointF &offset) = 0;
     virtual void submittedGpu() { }
     void setImage(TextureData image);
     const TextureData &image() const { return mImage; }
@@ -117,6 +119,7 @@ protected:
     GpuWindow &window();
     void render();
     void update();
+    QMatrix4x4 getTransform(const QSizeF &bounds, const QPointF &offset);
     Params getParams(const QMatrix4x4 &transform, int textureSamples) const;
 
     QRect mBoundingRect;

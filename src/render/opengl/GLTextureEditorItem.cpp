@@ -61,12 +61,12 @@ void GLTextureEditorItem::releaseGpu()
     mProgramCache = std::make_unique<ProgramCache>();
 }
 
-void GLTextureEditorItem::paintGpu(const QMatrix4x4 &transform)
+void GLTextureEditorItem::paintGpu(const QSizeF &bounds, const QPointF &offset)
 {
     Q_ASSERT(glGetError() == GL_NO_ERROR);
 
     if (uploadTexture())
-        renderTexture(transform);
+        renderTexture(getTransform(bounds, offset));
 
     Q_ASSERT(glGetError() == GL_NO_ERROR);
 }

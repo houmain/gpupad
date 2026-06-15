@@ -14,6 +14,7 @@
 #include <KDGpu/sampler.h>
 #include <KDGpu/sampler_options.h>
 #include <KDGpu/texture_view.h>
+#include <QMatrix4x4>
 #include <QVector4D>
 #include <map>
 
@@ -332,7 +333,7 @@ void VKTextureEditorItem::prepareGpu()
     submitCommandQueue(context);
 }
 
-void VKTextureEditorItem::paintGpu(const QMatrix4x4 &transform)
+void VKTextureEditorItem::paintGpu(const QSizeF &bounds, const QPointF &offset)
 {
     if (!window().initialized() || mImage.isNull())
         return;
@@ -340,7 +341,7 @@ void VKTextureEditorItem::paintGpu(const QMatrix4x4 &transform)
     if (mUpload && uploadTexture())
         mUpload = false;
 
-    renderTexture(transform);
+    renderTexture(getTransform(bounds, offset));
 }
 
 void VKTextureEditorItem::submittedGpu()

@@ -8,6 +8,7 @@ class Theme;
 class QQmlNetworkAccessManagerFactory;
 using QScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
 class QQuickView;
+class WindowWidget;
 
 class QmlView : public QFrame, public IEditor
 {
@@ -47,7 +48,7 @@ private:
 
 #if defined(QtQuick_FOUND)
     QQuickView *mQuickView{};
-    QWidget *mQuickWidget{};
+    WindowWidget *mQuickWidget{};
     std::unique_ptr<QQmlNetworkAccessManagerFactory>
         mNetworkAccessManagerFactory;
 #endif // defined(QtQuick_FOUND)

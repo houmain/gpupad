@@ -17,7 +17,7 @@ public:
 
     void releaseGpu() override;
     void prepareGpu() override;
-    void paintGpu(const QMatrix4x4 &transform) override;
+    void paintGpu(const QSizeF &bounds, const QPointF &offset) override;
     void submittedGpu() override;
     bool downloadImage(TextureData *image) override;
     void copySharedTexture(ShareHandle textureHandle, int samples) override;

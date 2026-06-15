@@ -3,6 +3,7 @@
 #include "TextureData.h"
 #include "editors/IEditor.h"
 #include "render/ShareHandle.h"
+#include "widgets/WindowWidget.h"
 #include <QOpenGLTexture>
 #include <QAbstractScrollArea>
 
@@ -83,7 +84,7 @@ private:
     QPointF mapFromScene(const QPointF &position) const;
 
     GpuWindow *mGpuWindow{};
-    QWidget *mGpuWindowContainer{};
+    WindowWidget *mGpuWidget{};
     TextureEditorToolBar &mEditorToolBar;
     TextureInfoBar &mTextureInfoBar;
     QString mFileName;

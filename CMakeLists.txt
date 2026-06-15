@@ -198,6 +198,7 @@ set(SOURCES
   src/widgets/ExpressionEditor.cpp
   src/widgets/ExpressionLineEdit.cpp
   src/widgets/ExpressionMatrix.cpp
+  src/widgets/WindowWidget.cpp
   src/widgets/ReferenceComboBox.cpp)
 
 if(WIN32)
