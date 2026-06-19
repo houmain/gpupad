@@ -28,7 +28,7 @@ std::unique_ptr<RenderSessionBase> RenderSessionBase::create(
         break;
 
     case Renderer::Type::Direct3D:
-#if defined(_WIN32)
+#if defined(D3D_ENABLED)
         return std::make_unique<D3DRenderSession>(renderer);
 #endif
         break;

@@ -1,6 +1,5 @@
 #pragma once
-
-#if defined(_WIN32)
+#if defined(D3D_ENABLED)
 
 #include "D3DContext.h"
 #include "session/Item.h"
@@ -22,4 +21,4 @@ D3D12_BLEND_OP toD3D(Attachment::BlendEquation eq);
 D3D12_BLEND toD3D(Attachment::BlendFactor factor);
 D3D12_TEXTURE_ADDRESS_MODE toD3D(Binding::WrapMode wrapMode);
 
-#endif // _WIN32
+#endif // D3D_ENABLED

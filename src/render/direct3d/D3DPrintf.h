@@ -1,6 +1,5 @@
 #pragma once
-
-#if defined(_WIN32)
+#if defined(D3D_ENABLED)
 
 #include "D3DBuffer.h"
 #include "render/PrintfBase.h"
@@ -16,4 +15,4 @@ private:
     std::optional<D3DBuffer> mBuffer;
 };
 
-#endif // _WIN32
+#endif // D3D_ENABLED

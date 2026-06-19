@@ -1,6 +1,5 @@
 #pragma once
-
-#if defined(_WIN32)
+#if defined(D3D_ENABLED)
 
 #include "../ShaderCompiler_Microsoft.h"
 #include <dxgi1_4.h>
@@ -24,4 +23,4 @@ struct D3DContext
     const UINT descriptorSize;
 };
 
-#endif // _WIN32
+#endif // D3D_ENABLED

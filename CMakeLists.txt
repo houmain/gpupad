@@ -1,6 +1,7 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.22)
 project(gpupad LANGUAGES CXX C)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+include(FetchSparse)
 
 set(BUILD_TYPES "Debug" "Release")
 get_property(multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
@@ -87,7 +88,6 @@ add_definitions(-DQT_NO_CAST_TO_ASCII
 set(SOURCES
   libs/SingleApplication/singleapplication.cpp
   libs/SingleApplication/singleapplication_p.cpp
-  libs/spirv-reflect/spirv_reflect.cpp
   src/FileDialog.cpp
   src/FileCache.cpp
   src/MessageList.cpp
@@ -204,27 +204,15 @@ set(SOURCES
 if(WIN32)
   set(SOURCES ${SOURCES}
   src/windows/setWindowBorderTheme.cpp
-  src/render/ShaderCompiler_Microsoft.cpp
-  src/render/direct3d/D3DAccelerationStructure.cpp
-  src/render/direct3d/D3DBuffer.cpp
-  src/render/direct3d/D3DCall.cpp
-  src/render/direct3d/D3DEnums.cpp
-  src/render/direct3d/D3DPipeline.cpp
-  src/render/direct3d/D3DProgram.cpp
-  src/render/direct3d/D3DPrintf.cpp
-  src/render/direct3d/D3DShader.cpp
-  src/render/direct3d/D3DShader_Reflection.cpp
-  src/render/direct3d/D3DStream.cpp
-  src/render/direct3d/D3DTarget.cpp
-  src/render/direct3d/D3DTexture.cpp
-  src/render/direct3d/D3DDevice.cpp
-  src/render/direct3d/D3DRenderSession.cpp
-  libs/d3d12/RenderTargetHelper.cpp)
+  src/render/ShaderCompiler_Microsoft.cpp)
 endif()
 
 # OpenGL -------------------------
-option(ENABLE_OPENGL "Enable OpenGL" TRUE)
-if (ENABLE_OPENGL)
+if (NOT APPLE)
+   set(ENABLE_OPENGL_DEFAULT TRUE)
+endif()
+option(GPUPAD_ENABLE_OPENGL "Enable OpenGL" ${ENABLE_OPENGL_DEFAULT})
+if (GPUPAD_ENABLE_OPENGL)
   set(SOURCES ${SOURCES}
   src/render/opengl/GLBuffer.cpp
   src/render/opengl/GLCall.cpp
@@ -248,11 +236,8 @@ find_package(Vulkan)
 if (Vulkan_FOUND)
    set(ENABLE_VULKAN_DEFAULT TRUE)
 endif()
-option(ENABLE_VULKAN "Enable Vulkan" ${ENABLE_VULKAN_DEFAULT})
-if (ENABLE_VULKAN)
-  find_package(VulkanMemoryAllocator CONFIG REQUIRED)
-  find_package(spdlog CONFIG REQUIRED)
-
+option(GPUPAD_ENABLE_VULKAN "Enable Vulkan" ${ENABLE_VULKAN_DEFAULT})
+if (GPUPAD_ENABLE_VULKAN)
   set(SOURCES ${SOURCES}
   src/render/vulkan/KDGpuEnums.cpp
   src/render/vulkan/VKBuffer.cpp
@@ -272,6 +257,30 @@ if (ENABLE_VULKAN)
   src/render/vulkan/VKRenderSession.cpp
   src/render/vulkan/VKAccelerationStructure.cpp
   src/render/vulkan/VKWindow.cpp)
+endif()
+
+# D3D -------------------------
+if (WIN32)
+   set(ENABLE_D3D_DEFAULT TRUE)
+endif()
+option(GPUPAD_ENABLE_D3D "Enable D3D12" ${ENABLE_D3D_DEFAULT})
+if (GPUPAD_ENABLE_D3D)
+  set(SOURCES ${SOURCES}
+  src/render/direct3d/D3DAccelerationStructure.cpp
+  src/render/direct3d/D3DBuffer.cpp
+  src/render/direct3d/D3DCall.cpp
+  src/render/direct3d/D3DEnums.cpp
+  src/render/direct3d/D3DPipeline.cpp
+  src/render/direct3d/D3DProgram.cpp
+  src/render/direct3d/D3DPrintf.cpp
+  src/render/direct3d/D3DShader.cpp
+  src/render/direct3d/D3DShader_Reflection.cpp
+  src/render/direct3d/D3DStream.cpp
+  src/render/direct3d/D3DTarget.cpp
+  src/render/direct3d/D3DTexture.cpp
+  src/render/direct3d/D3DDevice.cpp
+  src/render/direct3d/D3DRenderSession.cpp
+  libs/d3d12/RenderTargetHelper.cpp)
 endif()
 
 file(GLOB_RECURSE HEADERS include src/*.h)
@@ -303,63 +312,130 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     MACOSX_BUNDLE TRUE
 )
 
-# build KDGpu -------------------------
-if (ENABLE_VULKAN)
-    add_library(vulkan-memory-allocator::vulkan-memory-allocator ALIAS GPUOpen::VulkanMemoryAllocator)
-
-    set(PROJECT_VERSION "0.6.0")
-    include(FeatureSummary)
-    add_compile_definitions(KDGPU_STATIC_DEFINE)
-    add_subdirectory(libs/KDGpu/src/KDGpu EXCLUDE_FROM_ALL)
-
-    target_link_libraries(${PROJECT_NAME} PRIVATE KDGpu spdlog::spdlog)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE VULKAN_ENABLED)
-endif()
-
-find_package(Ktx CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE KTX::ktx)
-
 target_include_directories(${PROJECT_NAME} PRIVATE src libs)
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    target_link_libraries(${PROJECT_NAME} PRIVATE GL)
-elseif(WIN32)
-    find_package(directx-dxc CONFIG REQUIRED)
-
-    target_link_libraries(${PROJECT_NAME} PRIVATE 
-      opengl32
-      d3d11
-      dxgi
-      d3dcompiler
-      Microsoft::DirectXShaderCompiler)
-
-elseif(APPLE)
-    find_package(OpenGL REQUIRED)
-    include_directories(${OPENGL_INCLUDE_DIR})
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENGL_LIBRARIES})
-endif()
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # link Qt6
 find_package(Qt6 REQUIRED COMPONENTS Widgets Qml)
 target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Widgets Qt6::Qml)
 
-if (ENABLE_OPENGL)
+# build KTX -------------------------
+set(PROJECT_VERSION "0.0.0")
+set(CMAKE_FOLDER KTX)
+set(GPUPAD_KTX_GIT_REPOSITORY "https://github.com/KhronosGroup/KTX-Software.git" CACHE STRING "KTX-Software Git repository")
+set(GPUPAD_KTX_GIT_REVISION "26cddc8d99386eb4120b8416956d54661fef15c5" CACHE STRING "KTX-Software Git revision")
+FetchSparse(KTXSoftware
+    GIT_REPOSITORY ${GPUPAD_KTX_GIT_REPOSITORY}
+    GIT_TAG ${GPUPAD_KTX_GIT_REVISION}
+    SOURCE_SUBDIR lib
+    CACHE_OPTIONS
+        BUILD_TESTING:BOOL=OFF
+        BUILD_SHARED_LIBS:BOOL=OFF
+        LIBKTX_FEATURE_ETC_UNPACK:BOOL=OFF
+        LIBKTX_VERSION_READ_ONLY:BOOL=OFF
+        KTX_GIT_VERSION_FULL:STRING=v0.0.0-noversion
+    SPARSE_EXCLUDE
+        tests
+        external/basis_universal/bin
+        external/basis_universal/test_files
+        external/basis_universal/python
+        external/basis_universal/shader_deblocking
+        external/basis_universal/webgl
+        external/astc-encoder/Test
+)
+target_link_libraries(${PROJECT_NAME} PRIVATE ktx)
+
+# link OpenGL -------------------------
+if (GPUPAD_ENABLE_OPENGL)
     find_package(Qt6 REQUIRED COMPONENTS OpenGL)
     target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::OpenGL)
     target_compile_definitions(${PROJECT_NAME} PRIVATE OPENGL_ENABLED)
+
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        target_link_libraries(${PROJECT_NAME} PRIVATE GL)
+    elseif(WIN32)
+        target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
+    elseif(APPLE)
+        find_package(OpenGL REQUIRED)
+        include_directories(${OPENGL_INCLUDE_DIR})
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENGL_LIBRARIES})
+    endif()
+endif()
+
+# build KDGpu -------------------------
+if (GPUPAD_ENABLE_VULKAN)
+    set(CMAKE_FOLDER KDGpu)
+    set(GPUPAD_VMA_GIT_REPOSITORY "https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git" CACHE STRING "VulkanMemoryAllocator Git repository")
+    set(GPUPAD_VMA_GIT_REVISION "3aa921224c154a0d2c43912bc88e1c42ce1f7607" CACHE STRING "VulkanMemoryAllocator Git revision")
+    FetchSparse(VulkanMemoryAllocator
+        GIT_REPOSITORY ${GPUPAD_VMA_GIT_REPOSITORY}
+        GIT_TAG ${GPUPAD_VMA_GIT_REVISION}
+        CACHE_OPTIONS
+            VMA_ENABLE_INSTALL:BOOL=OFF
+        SPARSE_EXCLUDE
+            docs
+    )
+    add_library(vulkan-memory-allocator::vulkan-memory-allocator ALIAS VulkanMemoryAllocator)
+
+    set(GPUPAD_SPDLOG_GIT_REPOSITORY "https://github.com/gabime/spdlog.git" CACHE STRING "spdlog Git repository")
+    set(GPUPAD_SPDLOG_GIT_REVISION "f544fce006850a58063277068948dcda5681a27c" CACHE STRING "spdlog Git revision")
+    FetchSparse(spdlog
+        GIT_REPOSITORY ${GPUPAD_SPDLOG_GIT_REPOSITORY}
+        GIT_TAG ${GPUPAD_SPDLOG_GIT_REVISION}
+        CACHE_OPTIONS
+            SPDLOG_INSTALL:BOOL=OFF
+            SPDLOG_BUILD_EXAMPLE:BOOL=OFF
+            SPDLOG_BUILD_TESTS:BOOL=OFF
+            SPDLOG_BUILD_BENCH:BOOL=OFF
+            SPDLOG_FMT_EXTERNAL:BOOL=OFF
+        SPARSE_EXCLUDE
+            tests
+    )
+
+    include(FeatureSummary)
+    add_compile_definitions(KDGPU_STATIC_DEFINE)
+    set(CMAKE_SKIP_INSTALL_RULES TRUE)
+    add_subdirectory(libs/KDGpu/src/KDGpu EXCLUDE_FROM_ALL)
+    set(CMAKE_SKIP_INSTALL_RULES FALSE)
+    target_include_directories(KDGpu PUBLIC "$<BUILD_INTERFACE:${spdlog_SOURCE_DIR}/include/spdlog>")
+
+    target_link_libraries(${PROJECT_NAME} PRIVATE KDGpu spdlog::spdlog)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE VULKAN_ENABLED)
+endif()
+
+# link D3D -------------------------
+if (GPUPAD_ENABLE_D3D)
+    target_link_libraries(${PROJECT_NAME} PRIVATE 
+        d3d11
+        dxgi)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE D3D_ENABLED)
+endif()
+
+# link DXC -------------------------
+if (WIN32)
+    target_link_libraries(${PROJECT_NAME} PRIVATE d3dcompiler)
+
+    find_package(directx-dxc CONFIG)
+    option(GPUPAD_ENABLE_DXC "Enable DXC" ${directx-dxc_FOUND})
+    if(GPUPAD_ENABLE_DXC)
+        target_link_libraries(${PROJECT_NAME} PRIVATE 
+            Microsoft::DirectXShaderCompiler)      
+    endif()
+    target_compile_definitions(${PROJECT_NAME} PRIVATE DXC_ENABLED)
 endif()
 
 find_package(Qt6Multimedia CONFIG)
-option(ENABLE_MULTIMEDIA "Enable QtMultimedia" ON)
-if(ENABLE_MULTIMEDIA AND Qt6Multimedia_FOUND)
+option(GPUPAD_ENABLE_MULTIMEDIA "Enable QtMultimedia" ${Qt6Multimedia_FOUND})
+if(GPUPAD_ENABLE_MULTIMEDIA)
     target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Multimedia)
     target_compile_definitions(${PROJECT_NAME} PRIVATE QtMultimedia_FOUND)
 endif()
 
 find_package(Qt6Quick CONFIG)
 find_package(Qt6QuickWidgets CONFIG)
-option(ENABLE_QUICK "Enable QtQuick" ON)
-if(ENABLE_QUICK AND Qt6Quick_FOUND AND Qt6QuickWidgets_FOUND)
+option(GPUPAD_ENABLE_QUICK "Enable QtQuick" ${Qt6QuickWidgets_FOUND})
+if(GPUPAD_ENABLE_QUICK AND Qt6Quick_FOUND)
     target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Quick Qt6::QuickWidgets)
     target_compile_definitions(${PROJECT_NAME} PRIVATE QtQuick_FOUND)
 
@@ -370,32 +446,100 @@ if(ENABLE_QUICK AND Qt6Quick_FOUND AND Qt6QuickWidgets_FOUND)
     endif()
 endif()
 
+# link SPIRV-Tools
+set(CMAKE_FOLDER SPIRV-Tools)
+set(GPUPAD_SPIRV_HEADERS_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Headers.git" CACHE STRING "SPIRV-Headers Git repository")
+set(GPUPAD_SPIRV_HEADERS_GIT_REVISION "c63848ecf2200425511319fd8bf2c17b751e501e" CACHE STRING "SPIRV-Headers Git revision")
+FetchSparse(SPIRV-Headers
+    GIT_REPOSITORY ${GPUPAD_SPIRV_HEADERS_GIT_REPOSITORY}
+    GIT_TAG ${GPUPAD_SPIRV_HEADERS_GIT_REVISION}
+    CACHE_OPTIONS
+        SPIRV_HEADERS_ENABLE_TESTS:BOOL=OFF
+        SPIRV_HEADERS_ENABLE_INSTALL:BOOL=OFF
+)
+FetchContent_GetProperties(SPIRV-Headers SOURCE_DIR GPUPAD_SPIRV_HEADERS_SOURCE_DIR)
+
+set(GPUPAD_SPIRV_TOOLS_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Tools.git" CACHE STRING "SPIRV-Tools Git repository")
+set(GPUPAD_SPIRV_TOOLS_GIT_REVISION "ee4f6beddb14cf6e9259288b86625405b4cdc4e1" CACHE STRING "SPIRV-Tools Git revision")
+FetchSparse(SPIRV-Tools
+    GIT_REPOSITORY ${GPUPAD_SPIRV_TOOLS_GIT_REPOSITORY}
+    GIT_TAG ${GPUPAD_SPIRV_TOOLS_GIT_REVISION}
+    CACHE_OPTIONS
+        SPIRV-Headers_SOURCE_DIR:PATH=${GPUPAD_SPIRV_HEADERS_SOURCE_DIR}
+        SKIP_SPIRV_TOOLS_INSTALL:BOOL=ON
+        SPIRV_SKIP_EXECUTABLES:BOOL=ON
+        SPIRV_SKIP_TESTS:BOOL=ON
+        SPIRV_WERROR:BOOL=OFF
+        SPIRV_TOOLS_USE_MIMALLOC:BOOL=OFF
+)
+target_link_libraries(${PROJECT_NAME} 
+    PRIVATE SPIRV-Tools-opt)
+
+# link SPIRV-Reflect
+set(CMAKE_FOLDER SPIRV-Reflect)
+set(GPUPAD_SPIRV_REFLECT_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Reflect.git" CACHE STRING "SPIRV-Reflect Git repository")
+set(GPUPAD_SPIRV_REFLECT_GIT_REVISION "c90b7b781cdcff63cf1b409ffc7ca0a714e0425e" CACHE STRING "SPIRV-Reflect Git revision")
+FetchSparse(SPIRV-Reflect
+    GIT_REPOSITORY ${GPUPAD_SPIRV_REFLECT_GIT_REPOSITORY}
+    GIT_TAG ${GPUPAD_SPIRV_REFLECT_GIT_REVISION}
+    CACHE_OPTIONS
+        SPIRV_REFLECT_EXECUTABLE:BOOL=OFF
+        SPIRV_REFLECT_INSTALL:BOOL=OFF
+        SPIRV_REFLECT_STATIC_LIB:BOOL=ON
+    SPARSE_EXCLUDE
+        tests
+        examples
+)
+target_link_libraries(${PROJECT_NAME} 
+    PRIVATE spirv-reflect-static)
+
 # link glslang
-find_package(glslang CONFIG REQUIRED)
+set(GPUPAD_GLSLANG_GIT_REPOSITORY "https://github.com/KhronosGroup/glslang.git" CACHE STRING "glslang Git repository")
+set(GPUPAD_GLSLANG_GIT_REVISION "7801882058ce876e7708f941f0825a58eb94351a" CACHE STRING "glslang Git revision")
+FetchSparse(glslang
+    GIT_REPOSITORY ${GPUPAD_GLSLANG_GIT_REPOSITORY}
+    GIT_TAG ${GPUPAD_GLSLANG_GIT_REVISION}
+    CACHE_OPTIONS
+        GLSLANG_TESTS:BOOL=OFF
+        GLSLANG_ENABLE_INSTALL:BOOL=OFF
+        ENABLE_GLSLANG_BINARIES:BOOL=OFF
+        ENABLE_GLSLANG_JS:BOOL=OFF
+        ENABLE_OPT:BOOL=ON
+    SPARSE_EXCLUDE
+        Test
+)
 target_link_libraries(${PROJECT_NAME} PRIVATE glslang::glslang
     glslang::glslang-default-resource-limits glslang::SPIRV)
 
 # link SPIRV-Cross
-find_package(spirv_cross_core CONFIG REQUIRED)
-find_package(spirv_cross_glsl CONFIG REQUIRED)
-find_package(spirv_cross_hlsl CONFIG REQUIRED)
-find_package(spirv_cross_reflect CONFIG REQUIRED)
+set(CMAKE_FOLDER SPIRV-Cross)
+set(GPUPAD_SPIRV_CROSS_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Cross.git" CACHE STRING "SPIRV-Cross Git repository")
+set(GPUPAD_SPIRV_CROSS_GIT_REVISION "146679ff8255a6068518685599d7fb8761d1b570" CACHE STRING "SPIRV-Cross Git revision")
+FetchSparse(SPIRV-Cross
+    GIT_REPOSITORY ${GPUPAD_SPIRV_CROSS_GIT_REPOSITORY}
+    GIT_TAG ${GPUPAD_SPIRV_CROSS_GIT_REVISION}
+    CACHE_OPTIONS
+        SPIRV_CROSS_CLI:BOOL=OFF
+        SPIRV_CROSS_ENABLE_TESTS:BOOL=OFF
+        SPIRV_CROSS_SKIP_INSTALL:BOOL=ON
+        SPIRV_CROSS_ENABLE_CPP:BOOL=OFF
+        SPIRV_CROSS_ENABLE_MSL:BOOL=OFF
+        SPIRV_CROSS_ENABLE_C_API:BOOL=OFF
+        SPIRV_CROSS_ENABLE_UTIL:BOOL=OFF
+    SPARSE_EXCLUDE
+        reference
+        shaders*
+)
 target_link_libraries(${PROJECT_NAME} 
     PRIVATE spirv-cross-core spirv-cross-glsl spirv-cross-hlsl spirv-cross-reflect)
-
-# link SPIRV-Tools
-find_package(SPIRV-Tools CONFIG REQUIRED)
-find_package(SPIRV-Tools-opt CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} 
-    PRIVATE SPIRV-Tools-opt)
 
 # link OpenImageIO
 find_package(OpenImageIO)
 if (OpenImageIO_FOUND)
     set(ENABLE_OPENIMEAGEIO_DEFAULT TRUE)
 endif()
-option(ENABLE_OPENIMEAGEIO "Enable OpenImageIO" ${ENABLE_OPENIMEAGEIO_DEFAULT})
-if (ENABLE_OPENIMEAGEIO)
+option(GPUPAD_ENABLE_OPENIMEAGEIO "Enable OpenImageIO" ${ENABLE_OPENIMEAGEIO_DEFAULT})
+if (GPUPAD_ENABLE_OPENIMEAGEIO)
     target_link_libraries(${PROJECT_NAME} PRIVATE OpenImageIO::OpenImageIO)
     target_compile_definitions(${PROJECT_NAME} PRIVATE  OpenImageIO_FOUND)
 endif()
@@ -405,13 +549,14 @@ find_package(Slang)
 if (Slang_FOUND)
     set(ENABLE_SLANG_DEFAULT TRUE)
 endif()
-option(ENABLE_SLANG "Enable Slang" ${ENABLE_SLANG_DEFAULT})
-if (ENABLE_SLANG)
+option(GPUPAD_ENABLE_SLANG "Enable Slang" ${ENABLE_SLANG_DEFAULT})
+if (GPUPAD_ENABLE_SLANG)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${Slang_LIBRARY})
     target_compile_definitions(${PROJECT_NAME} PRIVATE Slang_FOUND)
 endif()
 
 # add custom action projects
+set(CMAKE_FOLDER Actions)
 set(ACTIONS
     ImportOBJ
     GenerateMesh

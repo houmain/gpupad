@@ -1,6 +1,5 @@
 #pragma once
-
-#if defined(_WIN32)
+#if defined(D3D_ENABLED)
 
 #  include "D3DContext.h"
 #  include "render/BufferBase.h"
@@ -51,4 +50,4 @@ private:
     bool mCheckModification{};
 };
 
-#endif // _WIN32
+#endif // D3D_ENABLED

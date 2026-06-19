@@ -8,7 +8,7 @@
 #include "editors/EditorManager.h"
 #include "render/AdapterIdentity.h"
 #include "render/Renderer.h"
-#if defined(_WIN32)
+#if defined(D3D_ENABLED)
 #  include "render/direct3d/D3DDevice.h"
 #endif
 #if defined(OPENGL_ENABLED)
@@ -115,7 +115,7 @@ RendererPtr Singletons::d3dRenderer()
 {
     Q_ASSERT(onMainThread());
     if (!sInstance->mD3DRenderer) {
-#if defined(_WIN32)
+#if defined(D3D_ENABLED)
         sInstance->mD3DRenderer =
             std::make_shared<Renderer>(Renderer::Type::Direct3D,
                 std::make_unique<D3DDevice>(), selectedAdapter());

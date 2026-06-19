@@ -1,6 +1,5 @@
 #pragma once
-
-#if defined(_WIN32)
+#if defined(D3D_ENABLED)
 
 #  include "D3DContext.h"
 #  include "D3DPipeline.h"
@@ -83,4 +82,4 @@ private:
     MessagePtrSet mPrintfMessages;
 };
 
-#endif // _WIN32
+#endif // D3D_ENABLED

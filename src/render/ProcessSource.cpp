@@ -158,7 +158,7 @@ void ProcessSource::prepareShader(Shader::ShaderType shaderType)
         break;
 #endif
 
-#if defined(_WIN32)
+#if defined(D3D_ENABLED)
     case Session::Renderer::Direct3D:
         mShader = std::make_unique<D3DShader>(shaderType, shaders, session);
         break;

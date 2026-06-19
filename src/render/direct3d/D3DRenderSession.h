@@ -2,7 +2,7 @@
 
 #include "render/RenderSessionBase.h"
 #include "D3DContext.h"
-#if defined(_WIN32)
+#if defined(D3D_ENABLED)
 
 struct D3DContext;
 class D3DDevice;
@@ -37,4 +37,4 @@ private:
     ComPtr<ID3D12Resource> mTimeQueryResolveBuffer;
 };
 
-#endif // _WIN32
+#endif // D3D_ENABLED

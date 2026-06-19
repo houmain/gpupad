@@ -1,6 +1,5 @@
 #pragma once
-
-#if defined(_WIN32)
+#if defined(D3D_ENABLED)
 
 #  include "../PipelineBase.h"
 #  include "D3DShader.h"
@@ -68,4 +67,4 @@ private:
     std::vector<std::unique_ptr<DynamicConstantBuffer>> mDynamicConstantBuffers;
 };
 
-#endif // _WIN32
+#endif // D3D_ENABLED

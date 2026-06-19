@@ -1,6 +1,5 @@
 #pragma once
-
-#if defined(_WIN32)
+#if defined(D3D_ENABLED)
 
 #include "D3DBuffer.h"
 #include "scripting/ScriptEngine.h"
@@ -57,4 +56,4 @@ private:
     std::vector<D3DInstance> mInstances;
 };
 
-#endif // _WIN32
+#endif // D3D_ENABLED

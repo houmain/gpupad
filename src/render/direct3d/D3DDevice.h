@@ -1,6 +1,5 @@
 #pragma once
-
-#if defined(_WIN32)
+#if defined(D3D_ENABLED)
 
 #  include "render/AdapterIdentity.h"
 #  include "render/Device.h"
@@ -36,4 +35,4 @@ private:
     MessagePtrSet mMessages;
 };
 
-#endif // defined(_WIN32)
+#endif // defined(D3D_ENABLED)

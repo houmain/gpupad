@@ -183,20 +183,24 @@ A portable build can be downloaded from the [latest release](https://github.com/
 
 ## Building
 
-A C++20 conforming compiler is required. A script for the
-[CMake](https://cmake.org) build system is provided.
-It depends on the following libraries, which can be installed using a package manager like [vcpkg](https://github.com/microsoft/vcpkg/) or by other means:
+A C++20 conforming compiler and a [Qt6](https://doc.qt.io/qt-6/get-and-install-qt.html) installation are required. A script for the [CMake](https://cmake.org) build system is provided.
 
-- [Qt6](https://doc.qt.io/qt-6/get-and-install-qt.html)
-- [KDGpu](https://github.com/houmain/KDGpu) (automatically pulled as submodule)
+The build script generator automatically fetches the additionally required libraries:
+
+- [KDGpu](https://github.com/houmain/KDGpu)
+- [libktx](https://github.com/KhronosGroup/KTX-Software)
 - [glslang](https://github.com/KhronosGroup/glslang)
 - [SPIRV-Cross](https://github.com/KhronosGroup/SPIRV-Cross)
 - [SPIRV-Tools](https://github.com/KhronosGroup/SPIRV-Tools)
-- [libktx](https://github.com/KhronosGroup/KTX-Software)
+- [SPIRV-Reflect](https://github.com/KhronosGroup/SPIRV-Reflect)
 - [vulkan-memory-allocator](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator)
-- [Slang](https://https://shader-slang.org)
 - [spdlog](https://github.com/gabime/spdlog)
-- [OpenImageIO](https://github.com/AcademySoftwareFoundation/OpenImageIO) (optional)
+
+The following libraries are optional an can be installed using the system's package manager or a platform independent one like [vcpkg](https://github.com/microsoft/vcpkg/):
+
+- [DirectX Shader Compiler](https://github.com/microsoft/DirectXShaderCompiler)
+- [OpenImageIO](https://github.com/AcademySoftwareFoundation/OpenImageIO)
+- [Slang](https://https://shader-slang.org)
 
 ### Build instructions:
 <details>
@@ -204,7 +208,7 @@ It depends on the following libraries, which can be installed using a package ma
 
 ```bash
 # install dependencies
-sudo pacman -S qt6-declarative libdrm vulkan-headers glslang spirv-cross spirv-tools spdlog
+sudo pacman -S qt6-declarative libdrm vulkan-headers
 
 # install optional dependencies
 sudo pacman -S qt6-multimedia openimageio
@@ -213,15 +217,8 @@ sudo pacman -S qt6-multimedia openimageio
 git clone --recurse-submodules https://github.com/houmain/gpupad
 cd gpupad
 
-# install vcpkg
-git clone --depth=1 https://github.com/microsoft/vcpkg.git
-vcpkg/bootstrap-vcpkg.sh -disableMetrics
-
-# install additional dependencies using vcpkg
-vcpkg/vcpkg install "ktx[vulkan]" vulkan-memory-allocator
-
 # build
-cmake -B build -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake
+cmake -B build
 cmake --build build -j4
 ```
 </details>
@@ -240,16 +237,8 @@ sudo apt install qt6-multimedia-dev libopenimageio-dev libopenexr-dev libz-dev o
 git clone --recurse-submodules https://github.com/houmain/gpupad
 cd gpupad
 
-# install vcpkg
-sudo apt install curl zip unzip tar
-git clone --depth=1 https://github.com/microsoft/vcpkg.git
-vcpkg/bootstrap-vcpkg.sh -disableMetrics
-
-# install additional dependencies using vcpkg
-vcpkg/vcpkg install vulkan "ktx[vulkan]" glslang spirv-cross spirv-tools vulkan-memory-allocator spdlog
-
 # build
-cmake -B build -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake
+cmake -B build
 cmake --build build -j4
 ```
 
@@ -266,12 +255,10 @@ cmake --build build -j4
 git clone --recurse-submodules https://github.com/houmain/gpupad
 cd gpupad
 
-# install vcpkg
+# install optional dependencies using vcpkg
 git clone --depth=1 https://github.com/microsoft/vcpkg.git
 vcpkg\bootstrap-vcpkg -disableMetrics
-
-# install dependencies using vcpkg
-vcpkg\vcpkg install vulkan "ktx[vulkan]" glslang spirv-cross spirv-tools vulkan-memory-allocator spdlog directx-dxc
+vcpkg\vcpkg install directx-dxc openimageio shader-slang
 
 # generate Visual Studio solution (set correct path to Qt installation)
 cmake -B build -DCMAKE_PREFIX_PATH=C:\Qt\6.9.0\msvc2022_64 -DCMAKE_TOOLCHAIN_FILE=vcpkg\scripts\buildsystems\vcpkg.cmake

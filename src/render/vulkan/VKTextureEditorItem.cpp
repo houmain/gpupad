@@ -453,7 +453,7 @@ void VKTextureEditorItem::submitCommandQueue(VKContext &context)
     if (!context.commandBuffers.empty()) {
         auto submitOptions = KDGpu::SubmitOptions{
             .commandBuffers =
-                std::vector<KDGpu::Handle<KDGpu::CommandBuffer_t>>(
+                std::vector<KDGpu::RequiredHandle<KDGpu::CommandBuffer_t>>(
                     context.commandBuffers.begin(),
                     context.commandBuffers.end()),
         };

@@ -114,7 +114,7 @@ void VKRenderSession::render()
     context.commandRecorder.reset();
 
     auto submitOptions = KDGpu::SubmitOptions{
-        .commandBuffers = std::vector<KDGpu::Handle<KDGpu::CommandBuffer_t>>(
+        .commandBuffers = std::vector<KDGpu::RequiredHandle<KDGpu::CommandBuffer_t>>(
             context.commandBuffers.begin(), context.commandBuffers.end()),
     };
     context.queue.submit(submitOptions);

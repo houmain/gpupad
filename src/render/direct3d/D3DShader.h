@@ -1,6 +1,5 @@
 #pragma once
-
-#if defined(_WIN32)
+#if defined(D3D_ENABLED)
 
 #  include "D3DPrintf.h"
 #  include "render/ShaderBase.h"
@@ -35,4 +34,4 @@ private:
 Reflection generateSpirvReflection(Shader::ShaderType shaderType,
     const Reflection &spirvReflection, ID3D12ShaderReflection *reflection);
 
-#endif // _WIN32
+#endif // D3D_ENABLED

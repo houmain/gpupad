@@ -2,9 +2,11 @@
 #include "ShaderCompiler_Microsoft.h"
 #include <d3d12shader.h>
 #include <d3dcompiler.h>
-#include <dxcapi.h>
 #include <QRegularExpression>
 #include <mutex>
+#if defined(DXC_ENABLED)
+# include <dxcapi.h>
+#endif
 
 namespace ShaderCompiler {
 
@@ -66,6 +68,7 @@ namespace ShaderCompiler {
             }
         }
 
+#if defined(DXC_ENABLED)
         void parseLog_DXC(const QString &log, MessagePtrSet &messages,
             const QStringList &fileNames, ItemId itemId)
         {
@@ -225,6 +228,7 @@ namespace ShaderCompiler {
             return sCompiler.compile(std::move(arguments), input, messages,
                 binary, d3dReflection);
         }
+#endif // DXC_ENABLED
     } // namespace
 
     bool compileDXIL_D3DCompiler(const Session &session, const Input &input,
@@ -267,9 +271,11 @@ namespace ShaderCompiler {
         MessagePtrSet &messages, ComPtr<ID3DBlob> &binary,
         ComPtr<ID3D12ShaderReflection> &d3dReflection)
     {
+#if defined(DXC_ENABLED)
         if (session.shaderCompiler == Session::ShaderCompiler::DXC)
             return compile_DXC(session, input, {}, messages, binary,
                 &d3dReflection);
+#endif // DXC_ENABLED
 
         if (session.shaderCompiler == Session::ShaderCompiler::D3DCompiler)
             return compileDXIL_D3DCompiler(session, input, messages, binary,
@@ -279,6 +285,7 @@ namespace ShaderCompiler {
         return false;
     }
 
+#if defined(DXC_ENABLED)
     Spirv compileSpirv_DXC(const Session &session, const Input &input,
         MessagePtrSet &messages)
     {
@@ -297,4 +304,5 @@ namespace ShaderCompiler {
         const auto end = begin + binary->GetBufferSize() / sizeof(uint32_t);
         return Spirv(begin, end);
     }
+#endif // DXC_ENABLED
 } // namespace ShaderCompiler

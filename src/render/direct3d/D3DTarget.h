@@ -1,6 +1,5 @@
 #pragma once
-
-#if defined(_WIN32)
+#if defined(D3D_ENABLED)
 
 #  include "D3DTexture.h"
 
@@ -36,4 +35,4 @@ private:
     bool mFlipViewport{};
 };
 
-#endif // _WIN32
+#endif // D3D_ENABLED

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../session/Item.h"
-#include "spirv-reflect/spirv_reflect.h"
+#include "spirv_reflect.h"
 #include <memory>
 #include <span>
 

@@ -106,8 +106,7 @@ void VKAccelerationStructure::setIndexBuffer(int instanceIndex,
         }
     const auto indexType = getKDIndexType(indexSize);
     if (!indexType || !indexSize) {
-        mMessages.insert(block.id,
-            MessageType::InvalidIndexType,
+        mMessages.insert(block.id, MessageType::InvalidIndexType,
             QStringLiteral("%1 bytes").arg(indexSize));
         return;
     }
@@ -169,8 +168,7 @@ void VKAccelerationStructure::prepare(VKContext &context,
             return ScriptValueList{};
         auto values = scriptEngine.evaluateValues(transform, itemId);
         if (values.size() != 12 && values.size() != 16)
-            mMessages.insert(itemId,
-                MessageType::UniformComponentMismatch,
+            mMessages.insert(itemId, MessageType::UniformComponentMismatch,
                 QString("(%1/12 or 16)").arg(values.count()));
         values.resize(12);
         return values;
@@ -196,8 +194,8 @@ void VKAccelerationStructure::prepare(VKContext &context,
             mUsedItems += geometry.itemId;
 
             if (!geometry.vertexBuffer) {
-                mMessages.insert(geometry.itemId,
-                    MessageType::BufferNotSet, "Vertices");
+                mMessages.insert(geometry.itemId, MessageType::BufferNotSet,
+                    "Vertices");
                 return;
             }
             auto &vertexBuffer = *geometry.vertexBuffer;
@@ -237,8 +235,7 @@ void VKAccelerationStructure::prepare(VKContext &context,
                 geometry.primitiveOffset, geometry.itemId);
 
             if (primitiveCount > maxPrimitiveCount) {
-                mMessages.insert(geometry.itemId,
-                    MessageType::CountExceeded,
+                mMessages.insert(geometry.itemId, MessageType::CountExceeded,
                     QStringLiteral("%1 > %2")
                         .arg(primitiveCount)
                         .arg(maxPrimitiveCount));
@@ -298,7 +295,11 @@ void VKAccelerationStructure::prepare(VKContext &context,
 
         auto &geometryInstance = geometryInstances.data.emplace_back(
             KDGpu::AccelerationStructureGeometryInstance{
-                .transform = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 } },
+                .transform = { {
+                    { { 1.0f, 0.0f, 0.0f, 0.0f } },
+                    { { 0.0f, 1.0f, 0.0f, 0.0f } },
+                    { { 0.0f, 0.0f, 1.0f, 0.0f } },
+                } },
                 .instanceCustomIndex = instanceIndex++,
                 .mask = 0xFF,
                 .instanceShaderBindingTableRecordOffset = 0,

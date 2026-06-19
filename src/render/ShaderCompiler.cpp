@@ -20,7 +20,7 @@ namespace ShaderCompiler {
         }
 
         if (session.shaderCompiler == Session::ShaderCompiler::DXC) {
-#if defined(_WIN32)
+#if defined(DXC_ENABLED)
             auto stageSpirv = std::map<Shader::ShaderType, Spirv>();
             for (const auto &input : inputs) {
                 auto spirv = compileSpirv_DXC(session, { input }, messages);
