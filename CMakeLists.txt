@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 project(gpupad LANGUAGES CXX C)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+set(QT_CREATOR_SKIP_MAINTENANCE_TOOL_PROVIDER ON)
 include(FetchSparse)
 
 set(BUILD_TYPES "Debug" "Release")
@@ -322,6 +323,17 @@ set(BUILD_TESTING OFF)
 set(BUILD_SHARED_LIBS ON)
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
+# add custom action projects -------------------------
+set(CMAKE_FOLDER Actions)
+file(GLOB ACTION_PATHS LIST_DIRECTORIES true "${CMAKE_CURRENT_SOURCE_DIR}/extra/actions/*")
+foreach(ACTION_PATH IN LISTS ACTION_PATHS)
+  if (EXISTS "${ACTION_PATH}/CMakeLists.txt")
+    get_filename_component(ACTION "${ACTION_PATH}" NAME)
+    add_subdirectory("${ACTION_PATH}" EXCLUDE_FROM_ALL)
+    add_dependencies(${PROJECT_NAME} ${ACTION})
+  endif()
+endforeach()
+
 # Qt6 -------------------------
 find_package(Qt6 REQUIRED COMPONENTS Widgets Qml)
 target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Widgets Qt6::Qml)
@@ -569,18 +581,6 @@ if (GPUPAD_ENABLE_SLANG)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${Slang_LIBRARY})
     target_compile_definitions(${PROJECT_NAME} PRIVATE Slang_FOUND)
 endif()
-
-# add custom action projects -------------------------
-set(CMAKE_FOLDER Actions)
-set(ACTIONS
-    ImportOBJ
-    GenerateMesh
-)
-
-foreach(ACTION ${ACTIONS})
-    add_subdirectory("extra/actions/${ACTION}" EXCLUDE_FROM_ALL)
-    add_dependencies(${PROJECT_NAME} ${ACTION})
-endforeach()
 
 # install -------------------------
 set(DOC_FILES LICENSE CHANGELOG.md THIRD-PARTY.md)

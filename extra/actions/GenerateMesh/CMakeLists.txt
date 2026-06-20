@@ -1,7 +1,5 @@
-cmake_minimum_required(VERSION 3.14)
-project(GenerateMesh LANGUAGES C CXX)
 
-add_library(${PROJECT_NAME} SHARED
+add_library(GenerateMesh SHARED
   module.cpp
   ${CMAKE_SOURCE_DIR}/libs/dllreflect/include/dllreflect.h
 )
