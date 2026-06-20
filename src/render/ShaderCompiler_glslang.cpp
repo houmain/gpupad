@@ -8,6 +8,8 @@
 #include <sstream>
 #include <set>
 
+#if defined(GLSLANG_ENABLED)
+
 #define ENABLE_HLSL
 #include <glslang/Public/ResourceLimits.h>
 #include <glslang/Public/ShaderLang.h>
@@ -501,3 +503,53 @@ namespace ShaderCompiler {
     }
 
 } // namespace ShaderCompiler
+
+#else // !defined(GLSLANG_ENABLED)
+
+namespace ShaderCompiler
+{
+    std::map<Shader::ShaderType, Spirv> compileSpirv_glslang(
+        const Session &session, const std::vector<Input> &inputs,
+        ItemId programItemId, MessagePtrSet &messages)
+    {
+        return {};
+    }
+
+    QString preprocess(const Session &session, Shader::ShaderType shaderType,
+        const QStringList &sources, const QStringList &fileNames,
+        const QString &entryPoint, ItemId itemId, const QString &includePaths,
+        MessagePtrSet &messages)
+    {
+        return {};
+    }
+
+    QString disassemble(const Spirv &spirv)
+    {
+        return {};
+    }
+
+    QString generateGLSL(const Spirv &spirv, ItemId itemId,
+        MessagePtrSet &messages) {
+        return {};
+    }
+
+    QString generateHLSL(const Spirv &spirv, ItemId itemId,
+        MessagePtrSet &messages) {
+        return {};
+    }
+
+    QString generateAST(const Session &session, Shader::ShaderType shaderType,
+        const QStringList &sources, const QStringList &fileNames,
+        const QString &entryPoint, ItemId itemId, const QString &includePaths,
+        MessagePtrSet &messages)
+    {
+        return {};
+    }
+
+    Spirv stripReflection(const Spirv &spirv)
+    {
+        return {};
+    }
+} // namespace ShaderCompiler
+
+#endif // !defined(GLSLANG_ENABLED)

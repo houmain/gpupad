@@ -322,11 +322,11 @@ set(BUILD_TESTING OFF)
 set(BUILD_SHARED_LIBS ON)
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
-# link Qt6
+# Qt6 -------------------------
 find_package(Qt6 REQUIRED COMPONENTS Widgets Qml)
 target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Widgets Qt6::Qml)
 
-# build KTX -------------------------
+# KTX -------------------------
 set(PROJECT_VERSION "0.0.0")
 set(CMAKE_FOLDER KTX)
 set(GPUPAD_KTX_GIT_REPOSITORY "https://github.com/KhronosGroup/KTX-Software.git" CACHE STRING "KTX-Software Git repository")
@@ -350,7 +350,25 @@ FetchSparse(KTXSoftware
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE ktx)
 
-# link OpenGL -------------------------
+# SPIRV-Reflect -------------------------
+set(CMAKE_FOLDER SPIRV-Reflect)
+set(GPUPAD_SPIRV_REFLECT_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Reflect.git" CACHE STRING "SPIRV-Reflect Git repository")
+set(GPUPAD_SPIRV_REFLECT_GIT_REVISION "c90b7b781cdcff63cf1b409ffc7ca0a714e0425e" CACHE STRING "SPIRV-Reflect Git revision")
+FetchSparse(SPIRV-Reflect
+    GIT_REPOSITORY ${GPUPAD_SPIRV_REFLECT_GIT_REPOSITORY}
+    GIT_TAG ${GPUPAD_SPIRV_REFLECT_GIT_REVISION}
+    CACHE_OPTIONS
+        SPIRV_REFLECT_EXECUTABLE:BOOL=OFF
+        SPIRV_REFLECT_INSTALL:BOOL=OFF
+        SPIRV_REFLECT_STATIC_LIB:BOOL=ON
+    SPARSE_EXCLUDE
+        tests
+        examples
+)
+target_link_libraries(${PROJECT_NAME}
+    PRIVATE spirv-reflect-static)
+
+# OpenGL -------------------------
 if (GPUPAD_ENABLE_OPENGL)
     find_package(Qt6 REQUIRED COMPONENTS OpenGL)
     target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::OpenGL)
@@ -367,7 +385,7 @@ if (GPUPAD_ENABLE_OPENGL)
     endif()
 endif()
 
-# build KDGpu -------------------------
+# KDGpu -------------------------
 if (GPUPAD_ENABLE_VULKAN)
     set(CMAKE_FOLDER KDGpu)
     set(GPUPAD_VMA_GIT_REPOSITORY "https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git" CACHE STRING "VulkanMemoryAllocator Git repository")
@@ -407,7 +425,7 @@ if (GPUPAD_ENABLE_VULKAN)
     target_compile_definitions(${PROJECT_NAME} PRIVATE VULKAN_ENABLED)
 endif()
 
-# link D3D -------------------------
+# D3D -------------------------
 if (GPUPAD_ENABLE_D3D)
     target_link_libraries(${PROJECT_NAME} PRIVATE 
         d3d11
@@ -415,7 +433,7 @@ if (GPUPAD_ENABLE_D3D)
     target_compile_definitions(${PROJECT_NAME} PRIVATE D3D_ENABLED)
 endif()
 
-# link DXC -------------------------
+# DXC -------------------------
 if (WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE d3dcompiler)
 
@@ -428,6 +446,7 @@ if (WIN32)
     target_compile_definitions(${PROJECT_NAME} PRIVATE DXC_ENABLED)
 endif()
 
+# QtMultimedia -------------------------
 find_package(Qt6Multimedia CONFIG)
 option(GPUPAD_ENABLE_MULTIMEDIA "Enable QtMultimedia" ${Qt6Multimedia_FOUND})
 if(GPUPAD_ENABLE_MULTIMEDIA)
@@ -435,6 +454,7 @@ if(GPUPAD_ENABLE_MULTIMEDIA)
     target_compile_definitions(${PROJECT_NAME} PRIVATE QtMultimedia_FOUND)
 endif()
 
+# Qt6Quick -------------------------
 find_package(Qt6Quick CONFIG)
 find_package(Qt6QuickWidgets CONFIG)
 option(GPUPAD_ENABLE_QUICK "Enable QtQuick" ${Qt6QuickWidgets_FOUND})
@@ -449,97 +469,86 @@ if(GPUPAD_ENABLE_QUICK AND Qt6Quick_FOUND)
     endif()
 endif()
 
-# link SPIRV-Tools
-set(CMAKE_FOLDER SPIRV-Tools)
-set(GPUPAD_SPIRV_HEADERS_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Headers.git" CACHE STRING "SPIRV-Headers Git repository")
-set(GPUPAD_SPIRV_HEADERS_GIT_REVISION "c63848ecf2200425511319fd8bf2c17b751e501e" CACHE STRING "SPIRV-Headers Git revision")
-FetchSparse(SPIRV-Headers
-    GIT_REPOSITORY ${GPUPAD_SPIRV_HEADERS_GIT_REPOSITORY}
-    GIT_TAG ${GPUPAD_SPIRV_HEADERS_GIT_REVISION}
-    CACHE_OPTIONS
-        SPIRV_HEADERS_ENABLE_TESTS:BOOL=OFF
-        SPIRV_HEADERS_ENABLE_INSTALL:BOOL=OFF
-)
-FetchContent_GetProperties(SPIRV-Headers SOURCE_DIR GPUPAD_SPIRV_HEADERS_SOURCE_DIR)
+# SPIRV-Tools, glslang, SPIRV-Cross -------------------------
+option(GPUPAD_ENABLE_GLSLANG "Enable glslang" ON)
+if (GPUPAD_ENABLE_GLSLANG)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE GLSLANG_ENABLED)
 
-set(GPUPAD_SPIRV_TOOLS_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Tools.git" CACHE STRING "SPIRV-Tools Git repository")
-set(GPUPAD_SPIRV_TOOLS_GIT_REVISION "ee4f6beddb14cf6e9259288b86625405b4cdc4e1" CACHE STRING "SPIRV-Tools Git revision")
-FetchSparse(SPIRV-Tools
-    GIT_REPOSITORY ${GPUPAD_SPIRV_TOOLS_GIT_REPOSITORY}
-    GIT_TAG ${GPUPAD_SPIRV_TOOLS_GIT_REVISION}
-    CACHE_OPTIONS
-        SPIRV-Headers_SOURCE_DIR:PATH=${GPUPAD_SPIRV_HEADERS_SOURCE_DIR}
-        SKIP_SPIRV_TOOLS_INSTALL:BOOL=ON
-        SPIRV_SKIP_EXECUTABLES:BOOL=ON
-        SPIRV_SKIP_TESTS:BOOL=ON
-        SPIRV_WERROR:BOOL=OFF
-        SPIRV_TOOLS_USE_MIMALLOC:BOOL=OFF
-        SPIRV_TOOLS_BUILD_STATIC:BOOL=OFF
-)
-target_link_libraries(${PROJECT_NAME} 
-    PRIVATE SPIRV-Tools-opt)
+    # SPIRV-Headers
+    set(CMAKE_FOLDER SPIRV-Tools)
+    set(GPUPAD_SPIRV_HEADERS_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Headers.git" CACHE STRING "SPIRV-Headers Git repository")
+    set(GPUPAD_SPIRV_HEADERS_GIT_REVISION "c63848ecf2200425511319fd8bf2c17b751e501e" CACHE STRING "SPIRV-Headers Git revision")
+    FetchSparse(SPIRV-Headers
+        GIT_REPOSITORY ${GPUPAD_SPIRV_HEADERS_GIT_REPOSITORY}
+        GIT_TAG ${GPUPAD_SPIRV_HEADERS_GIT_REVISION}
+        CACHE_OPTIONS
+            SPIRV_HEADERS_ENABLE_TESTS:BOOL=OFF
+            SPIRV_HEADERS_ENABLE_INSTALL:BOOL=OFF
+    )
+    FetchContent_GetProperties(SPIRV-Headers SOURCE_DIR GPUPAD_SPIRV_HEADERS_SOURCE_DIR)
 
-# link SPIRV-Reflect
-set(CMAKE_FOLDER SPIRV-Reflect)
-set(GPUPAD_SPIRV_REFLECT_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Reflect.git" CACHE STRING "SPIRV-Reflect Git repository")
-set(GPUPAD_SPIRV_REFLECT_GIT_REVISION "c90b7b781cdcff63cf1b409ffc7ca0a714e0425e" CACHE STRING "SPIRV-Reflect Git revision")
-FetchSparse(SPIRV-Reflect
-    GIT_REPOSITORY ${GPUPAD_SPIRV_REFLECT_GIT_REPOSITORY}
-    GIT_TAG ${GPUPAD_SPIRV_REFLECT_GIT_REVISION}
-    CACHE_OPTIONS
-        SPIRV_REFLECT_EXECUTABLE:BOOL=OFF
-        SPIRV_REFLECT_INSTALL:BOOL=OFF
-        SPIRV_REFLECT_STATIC_LIB:BOOL=ON
-    SPARSE_EXCLUDE
-        tests
-        examples
-)
-target_link_libraries(${PROJECT_NAME} 
-    PRIVATE spirv-reflect-static)
+    # SPIRV-Tools
+    set(GPUPAD_SPIRV_TOOLS_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Tools.git" CACHE STRING "SPIRV-Tools Git repository")
+    set(GPUPAD_SPIRV_TOOLS_GIT_REVISION "ee4f6beddb14cf6e9259288b86625405b4cdc4e1" CACHE STRING "SPIRV-Tools Git revision")
+    FetchSparse(SPIRV-Tools
+        GIT_REPOSITORY ${GPUPAD_SPIRV_TOOLS_GIT_REPOSITORY}
+        GIT_TAG ${GPUPAD_SPIRV_TOOLS_GIT_REVISION}
+        CACHE_OPTIONS
+            SPIRV-Headers_SOURCE_DIR:PATH=${GPUPAD_SPIRV_HEADERS_SOURCE_DIR}
+            SKIP_SPIRV_TOOLS_INSTALL:BOOL=ON
+            SPIRV_SKIP_EXECUTABLES:BOOL=ON
+            SPIRV_SKIP_TESTS:BOOL=ON
+            SPIRV_WERROR:BOOL=OFF
+            SPIRV_TOOLS_USE_MIMALLOC:BOOL=OFF
+            SPIRV_TOOLS_BUILD_STATIC:BOOL=OFF
+    )
+    target_link_libraries(${PROJECT_NAME}
+        PRIVATE SPIRV-Tools-opt)
 
-# link glslang (static because of undefined symbol: glslang::TPoolAllocator::allocate)
-set(BUILD_SHARED_LIBS OFF)
-set(GPUPAD_GLSLANG_GIT_REPOSITORY "https://github.com/KhronosGroup/glslang.git" CACHE STRING "glslang Git repository")
-set(GPUPAD_GLSLANG_GIT_REVISION "7801882058ce876e7708f941f0825a58eb94351a" CACHE STRING "glslang Git revision")
-FetchSparse(glslang
-    GIT_REPOSITORY ${GPUPAD_GLSLANG_GIT_REPOSITORY}
-    GIT_TAG ${GPUPAD_GLSLANG_GIT_REVISION}
-    CACHE_OPTIONS
-        GLSLANG_TESTS:BOOL=OFF
-        GLSLANG_ENABLE_INSTALL:BOOL=OFF
-        ENABLE_GLSLANG_BINARIES:BOOL=OFF
-        ENABLE_GLSLANG_JS:BOOL=OFF
-        ENABLE_OPT:BOOL=ON
-    SPARSE_EXCLUDE
-        Test
-)
-target_link_libraries(${PROJECT_NAME} PRIVATE glslang::glslang
-    glslang::glslang-default-resource-limits glslang::SPIRV)
-set(BUILD_SHARED_LIBS ON)
+    # glslang (static because of undefined symbol: glslang::TPoolAllocator::allocate)
+    set(BUILD_SHARED_LIBS OFF)
+    set(GPUPAD_GLSLANG_GIT_REPOSITORY "https://github.com/KhronosGroup/glslang.git" CACHE STRING "glslang Git repository")
+    set(GPUPAD_GLSLANG_GIT_REVISION "7801882058ce876e7708f941f0825a58eb94351a" CACHE STRING "glslang Git revision")
+    FetchSparse(glslang
+        GIT_REPOSITORY ${GPUPAD_GLSLANG_GIT_REPOSITORY}
+        GIT_TAG ${GPUPAD_GLSLANG_GIT_REVISION}
+        CACHE_OPTIONS
+            GLSLANG_TESTS:BOOL=OFF
+            GLSLANG_ENABLE_INSTALL:BOOL=OFF
+            ENABLE_GLSLANG_BINARIES:BOOL=OFF
+            ENABLE_GLSLANG_JS:BOOL=OFF
+            ENABLE_OPT:BOOL=ON
+        SPARSE_EXCLUDE
+            Test
+    )
+    target_link_libraries(${PROJECT_NAME} PRIVATE glslang::glslang
+        glslang::glslang-default-resource-limits glslang::SPIRV)
+    set(BUILD_SHARED_LIBS ON)
 
-# link SPIRV-Cross
-set(CMAKE_FOLDER SPIRV-Cross)
-set(GPUPAD_SPIRV_CROSS_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Cross.git" CACHE STRING "SPIRV-Cross Git repository")
-set(GPUPAD_SPIRV_CROSS_GIT_REVISION "146679ff8255a6068518685599d7fb8761d1b570" CACHE STRING "SPIRV-Cross Git revision")
-FetchSparse(SPIRV-Cross
-    GIT_REPOSITORY ${GPUPAD_SPIRV_CROSS_GIT_REPOSITORY}
-    GIT_TAG ${GPUPAD_SPIRV_CROSS_GIT_REVISION}
-    CACHE_OPTIONS
-        SPIRV_CROSS_CLI:BOOL=OFF
-        SPIRV_CROSS_ENABLE_TESTS:BOOL=OFF
-        SPIRV_CROSS_SKIP_INSTALL:BOOL=ON
-        SPIRV_CROSS_ENABLE_CPP:BOOL=OFF
-        SPIRV_CROSS_ENABLE_MSL:BOOL=OFF
-        SPIRV_CROSS_ENABLE_C_API:BOOL=OFF
-        SPIRV_CROSS_ENABLE_UTIL:BOOL=OFF
-    SPARSE_EXCLUDE
-        reference
-        shaders*
-)
-target_link_libraries(${PROJECT_NAME} 
-    PRIVATE spirv-cross-core spirv-cross-glsl spirv-cross-hlsl spirv-cross-reflect)
+    # SPIRV-Cross
+    set(CMAKE_FOLDER SPIRV-Cross)
+    set(GPUPAD_SPIRV_CROSS_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Cross.git" CACHE STRING "SPIRV-Cross Git repository")
+    set(GPUPAD_SPIRV_CROSS_GIT_REVISION "146679ff8255a6068518685599d7fb8761d1b570" CACHE STRING "SPIRV-Cross Git revision")
+    FetchSparse(SPIRV-Cross
+        GIT_REPOSITORY ${GPUPAD_SPIRV_CROSS_GIT_REPOSITORY}
+        GIT_TAG ${GPUPAD_SPIRV_CROSS_GIT_REVISION}
+        CACHE_OPTIONS
+            SPIRV_CROSS_CLI:BOOL=OFF
+            SPIRV_CROSS_ENABLE_TESTS:BOOL=OFF
+            SPIRV_CROSS_SKIP_INSTALL:BOOL=ON
+            SPIRV_CROSS_ENABLE_CPP:BOOL=OFF
+            SPIRV_CROSS_ENABLE_MSL:BOOL=OFF
+            SPIRV_CROSS_ENABLE_C_API:BOOL=OFF
+            SPIRV_CROSS_ENABLE_UTIL:BOOL=OFF
+        SPARSE_EXCLUDE
+            reference
+            shaders*
+    )
+    target_link_libraries(${PROJECT_NAME}
+        PRIVATE spirv-cross-core spirv-cross-glsl spirv-cross-hlsl spirv-cross-reflect)
+endif()
 
-# link OpenImageIO
+# OpenImageIO -------------------------
 find_package(OpenImageIO)
 if (OpenImageIO_FOUND)
     set(ENABLE_OPENIMEAGEIO_DEFAULT TRUE)
@@ -550,7 +559,7 @@ if (GPUPAD_ENABLE_OPENIMEAGEIO)
     target_compile_definitions(${PROJECT_NAME} PRIVATE  OpenImageIO_FOUND)
 endif()
 
-# link Slang
+# Slang -------------------------
 find_package(Slang)
 if (Slang_FOUND)
     set(ENABLE_SLANG_DEFAULT TRUE)
@@ -561,7 +570,7 @@ if (GPUPAD_ENABLE_SLANG)
     target_compile_definitions(${PROJECT_NAME} PRIVATE Slang_FOUND)
 endif()
 
-# add custom action projects
+# add custom action projects -------------------------
 set(CMAKE_FOLDER Actions)
 set(ACTIONS
     ImportOBJ

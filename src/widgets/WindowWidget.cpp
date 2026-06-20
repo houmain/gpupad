@@ -38,7 +38,13 @@ void WindowWidget::resizeEvent(QResizeEvent *event)
     QWidget::resizeEvent(event);
     if (mWindowContainer)
         mResized = true;
+
+#if defined(_WIN32)
+    // reduce buffer resizes on Windows, which glitches heavily
     mResizeTimer.start(20);
+#else
+    resizeWindow();
+#endif
 }
 
 void WindowWidget::resizeWindow()
