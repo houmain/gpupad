@@ -12,12 +12,12 @@ void WindowWidget::setWindow(QWindow *window)
     if (mWindow == window)
         return;
     if (mWindowContainer) {
-        mWindowContainer->deleteLater();
+        delete mWindowContainer;
         mWindowContainer = nullptr;
         hide();
     }
     if (mWindow)
-        mWindow->deleteLater();
+        delete mWindow;
     mWindow = window;
     if (window)
         show();
@@ -27,25 +27,28 @@ void WindowWidget::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
 
-    if (mWindow && !mWindowContainer) {
+    if (mWindow && !mWindowContainer)
         mWindowContainer = QWidget::createWindowContainer(mWindow, this);
-        mWindowContainer->setGeometry(rect());
-        mWindowContainer->show();
-    }
+
     resizeWindow();
 }
 
 void WindowWidget::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
-    mResizeTimer.start(50);
+    if (mWindowContainer)
+        mResized = true;
+    mResizeTimer.start(20);
 }
 
 void WindowWidget::resizeWindow()
 {
-    if (!mWindowContainer || !mWindow)
+    if (!mWindowContainer)
         return;
 
+    // show after the widget has its final size
     mWindowContainer->setGeometry(rect());
+    if (mResized)
+        mWindowContainer->show();
     mWindow->requestUpdate();
 }

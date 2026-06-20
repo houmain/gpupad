@@ -19,4 +19,5 @@ private:
     QTimer mResizeTimer;
     QWindow *mWindow{};
     QWidget *mWindowContainer{};
+    bool mResized{};
 };

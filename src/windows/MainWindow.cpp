@@ -571,9 +571,12 @@ void MainWindow::waitForSync()
 
     if (!mSyncWindow) {
 #if defined(VULKAN_ENABLED)
-        mSyncWindow = new VKWindow(1);
-#elif defined(OPENGL_ENABLED)
-        mSyncWindow = new GLWindow(1);
+        if (VKWindow::isSupported())
+            mSyncWindow = new VKWindow(1);
+#endif
+#if defined(OPENGL_ENABLED)
+        if (!mSyncWindow)
+            mSyncWindow = new GLWindow(1);
 #endif
         if (mSyncWindow) {
             mSyncWindowAdapter = Singletons::selectedAdapter();
@@ -585,8 +588,11 @@ void MainWindow::waitForSync()
         }
     }
     if (mSyncWindow)
-        for (auto i = 0; i < syncInterval; ++i)
+        for (auto i = 0; i < syncInterval; ++i) {
             mSyncWindow->update();
+            if (i + 1 < syncInterval)
+                qApp->processEvents();
+        }
 }
 
 void MainWindow::setToolbarIconVisible(QAction *action, bool visible)

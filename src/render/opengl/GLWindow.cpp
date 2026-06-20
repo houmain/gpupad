@@ -56,7 +56,6 @@ AdapterIdentity GLWindow::getAdapterIdentity()
 
 GLWindow::GLWindow(int syncInterval)
     : mSyncInterval(syncInterval)
-    , mContext(std::make_unique<GLContext>(this))
 {
     setSurfaceType(QWindow::OpenGLSurface);
 
@@ -68,38 +67,37 @@ GLWindow::GLWindow(int syncInterval)
 
 GLWindow::~GLWindow()
 {
-    releaseGL();
+    if (mContext && mContext->makeCurrent(this)) {
+        Q_EMIT releasingGpu();
+        mContext->release();
+        mContext.reset();
+    }
 }
 
 void GLWindow::initializeGL()
 {
-    auto &gl = context();
-    if (QOpenGLContext::currentContext() != &gl)
-        return;
-    if (!gl.initializeCurrentContext())
+    Q_ASSERT(!mContext);
+    auto context = std::make_unique<GLContext>(this);
+    context->setFormat(format());
+
+    if (auto *shareContext = QOpenGLContext::globalShareContext())
+        context->setShareContext(shareContext);
+    if (!context->create())
         return;
 
-    mInitialized = true;
+    if (!context->makeCurrent(this))
+        return;
 
+    if (!context->initialize())
+        return;
+
+    mContext = std::move(context);
     Q_EMIT initializingGpu();
-}
-
-void GLWindow::releaseGL()
-{
-    if (!mInitialized)
-        return;
-
-    if (mContext && mContext->makeCurrent(this)) {
-        Q_EMIT releasingGpu();
-        mContext->shutdownCurrentContext();
-        mContext->doneCurrent();
-    }
-    mInitialized = false;
 }
 
 void GLWindow::paintGL()
 {
-    if (!mInitialized)
+    if (!initialized())
         return;
 
     auto vaoBinder = context().bindVertexArrayObject();
@@ -147,20 +145,11 @@ void GLWindow::update()
 
 bool GLWindow::makeCurrent()
 {
-    auto &gl = context();
-    if (!gl.isValid()) {
-        gl.setFormat(format());
-        if (auto *shareContext = QOpenGLContext::globalShareContext())
-            gl.setShareContext(shareContext);
-        if (!gl.create())
-            return false;
-    }
-
-    if (!gl.makeCurrent(this))
-        return false;
+    Q_ASSERT(onMainThread());
 
     if (!initialized())
         initializeGL();
 
-    return initialized();
+    return (initialized() && mContext->makeCurrent(this));
 }
+

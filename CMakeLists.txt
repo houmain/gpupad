@@ -41,17 +41,6 @@ else()
     endif()
 endif()
 
-find_package(Qt6 REQUIRED COMPONENTS Core)
-
-if(Qt6_VERSION VERSION_GREATER_EQUAL 6.3)
-    qt_standard_project_setup()
-else()
-    set(CMAKE_AUTOMOC ON)
-    set(CMAKE_AUTOUIC ON)
-    include(GNUInstallDirs)
-endif()
-set(CMAKE_AUTORCC ON)
-
 # setup version -------------------------
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
@@ -306,6 +295,17 @@ endif()
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
 
+find_package(Qt6 REQUIRED COMPONENTS Core)
+if(Qt6_VERSION VERSION_GREATER_EQUAL 6.3)
+    qt_standard_project_setup()
+else()
+    set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+    set(CMAKE_AUTOMOC ON)
+    set(CMAKE_AUTOUIC ON)
+    include(GNUInstallDirs)
+endif()
+set(CMAKE_AUTORCC ON)
+
 qt_add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 set_target_properties(${PROJECT_NAME} PROPERTIES
     WIN32_EXECUTABLE TRUE
@@ -314,7 +314,13 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 target_include_directories(${PROJECT_NAME} PRIVATE src libs)
 
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set(CMAKE_AUTOMOC OFF)
+set(CMAKE_AUTOUIC OFF)
+set(CMAKE_AUTORCC OFF)
+
+set(BUILD_TESTING OFF)
+set(BUILD_SHARED_LIBS ON)
+set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
 # link Qt6
 find_package(Qt6 REQUIRED COMPONENTS Widgets Qml)
@@ -330,8 +336,6 @@ FetchSparse(KTXSoftware
     GIT_TAG ${GPUPAD_KTX_GIT_REVISION}
     SOURCE_SUBDIR lib
     CACHE_OPTIONS
-        BUILD_TESTING:BOOL=OFF
-        BUILD_SHARED_LIBS:BOOL=OFF
         LIBKTX_FEATURE_ETC_UNPACK:BOOL=OFF
         LIBKTX_VERSION_READ_ONLY:BOOL=OFF
         KTX_GIT_VERSION_FULL:STRING=v0.0.0-noversion
@@ -394,7 +398,6 @@ if (GPUPAD_ENABLE_VULKAN)
     )
 
     include(FeatureSummary)
-    add_compile_definitions(KDGPU_STATIC_DEFINE)
     set(CMAKE_SKIP_INSTALL_RULES TRUE)
     add_subdirectory(libs/KDGpu/src/KDGpu EXCLUDE_FROM_ALL)
     set(CMAKE_SKIP_INSTALL_RULES FALSE)
@@ -471,6 +474,7 @@ FetchSparse(SPIRV-Tools
         SPIRV_SKIP_TESTS:BOOL=ON
         SPIRV_WERROR:BOOL=OFF
         SPIRV_TOOLS_USE_MIMALLOC:BOOL=OFF
+        SPIRV_TOOLS_BUILD_STATIC:BOOL=OFF
 )
 target_link_libraries(${PROJECT_NAME} 
     PRIVATE SPIRV-Tools-opt)
@@ -493,7 +497,8 @@ FetchSparse(SPIRV-Reflect
 target_link_libraries(${PROJECT_NAME} 
     PRIVATE spirv-reflect-static)
 
-# link glslang
+# link glslang (static because of undefined symbol: glslang::TPoolAllocator::allocate)
+set(BUILD_SHARED_LIBS OFF)
 set(GPUPAD_GLSLANG_GIT_REPOSITORY "https://github.com/KhronosGroup/glslang.git" CACHE STRING "glslang Git repository")
 set(GPUPAD_GLSLANG_GIT_REVISION "7801882058ce876e7708f941f0825a58eb94351a" CACHE STRING "glslang Git revision")
 FetchSparse(glslang
@@ -510,6 +515,7 @@ FetchSparse(glslang
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE glslang::glslang
     glslang::glslang-default-resource-limits glslang::SPIRV)
+set(BUILD_SHARED_LIBS ON)
 
 # link SPIRV-Cross
 set(CMAKE_FOLDER SPIRV-Cross)
@@ -561,7 +567,7 @@ set(ACTIONS
     ImportOBJ
     GenerateMesh
 )
-set(CMAKE_SHARED_LIBRARY_PREFIX "")
+
 foreach(ACTION ${ACTIONS})
     add_subdirectory("extra/actions/${ACTION}" EXCLUDE_FROM_ALL)
     add_dependencies(${PROJECT_NAME} ${ACTION})

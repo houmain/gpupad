@@ -15,21 +15,19 @@ public:
     explicit GLWindow(int syncInterval = 0);
     ~GLWindow() override;
 
-    bool initialized() const override { return mInitialized; }
+    bool initialized() const override { return static_cast<bool>(mContext); }
     GLContext &context() { return *mContext; }
 
     void update() override;
     bool makeCurrent();
 
 private:
-    void releaseGL();
     bool event(QEvent *event) override;
     void exposeEvent(QExposeEvent *event) override;
     void initializeGL();
     void paintGL();
 
     const int mSyncInterval{};
-    bool mInitialized{};
     std::unique_ptr<GLContext> mContext;
     std::chrono::high_resolution_clock::time_point mLastSwapTime{};
 };

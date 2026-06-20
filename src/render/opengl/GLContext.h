@@ -17,9 +17,10 @@ class GLContext final : public QOpenGLContext, public QOpenGLFunctions_4_5_Core
     Q_OBJECT
 public:
     using QOpenGLContext::QOpenGLContext;
+    ~GLContext();
 
-    bool initializeCurrentContext(bool suppressLowSeverityMessages = false);
-    void shutdownCurrentContext();
+    bool initialize();
+    void release();
     QOpenGLVertexArrayObject::Binder bindVertexArrayObject();
     QString getLastGLError();
 

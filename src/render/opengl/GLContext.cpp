@@ -1,46 +1,40 @@
 #include "GLContext.h"
-
 #include <QDebug>
 #include <utility>
 
-bool GLContext::initializeCurrentContext(bool suppressLowSeverityMessages)
+GLContext::~GLContext()
 {
+    Q_ASSERT(!mDebugLogger);
+}
+
+bool GLContext::initialize()
+{
+    Q_ASSERT(!mDebugLogger);
     if (!initializeOpenGLFunctions())
         return false;
 
-    if (!mVertexArrayObject.isCreated())
-        mVertexArrayObject.create();
-
-    if (mDebugLogger)
-        return true;
-
     mDebugLogger = std::make_unique<QOpenGLDebugLogger>();
-    if (!mDebugLogger->initialize()) {
-        mDebugLogger.reset();
-        return true;
-    }
-
-    auto disabledSeverities =
-        QOpenGLDebugMessage::Severities{ QOpenGLDebugMessage::NotificationSeverity };
-    if (suppressLowSeverityMessages) {
-        disabledSeverities |= QOpenGLDebugMessage::LowSeverity
-            | QOpenGLDebugMessage::MediumSeverity;
-    }
+    Q_ASSERT(mDebugLogger->initialize());
 
     mDebugLogger->disableMessages(QOpenGLDebugMessage::AnySource,
-        QOpenGLDebugMessage::AnyType, disabledSeverities);
+        QOpenGLDebugMessage::AnyType,
+        QOpenGLDebugMessage::NotificationSeverity
+            | QOpenGLDebugMessage::LowSeverity
+            | QOpenGLDebugMessage::MediumSeverity);
 
     QObject::connect(mDebugLogger.get(), &QOpenGLDebugLogger::messageLogged,
         this, &GLContext::handleDebugMessage);
     mDebugLogger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
+
+    mVertexArrayObject.create();
     return true;
 }
 
-void GLContext::shutdownCurrentContext()
+void GLContext::release()
 {
+    Q_ASSERT(QOpenGLContext::currentContext() == this);
     mVertexArrayObject.destroy();
     mDebugLogger.reset();
-    mLastGLError.clear();
 }
 
 QOpenGLVertexArrayObject::Binder GLContext::bindVertexArrayObject()

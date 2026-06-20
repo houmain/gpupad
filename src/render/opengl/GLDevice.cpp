@@ -30,16 +30,11 @@ bool GLDevice::initialize(const AdapterIdentity &adapterIdentity)
 
     if (!mContext || !mSurface)
         createRendererContext();
-    if (!mContext->makeCurrent(mSurface.get())) {
+    if (!mContext->makeCurrent(mSurface.get()) ||
+        !mContext->initialize()) {
         mMessages.insert(0, MessageType::OpenGLVersionNotAvailable, "4.5");
         return false;
     }
-
-    if (!mContext->initializeCurrentContext(true)) {
-        mMessages.insert(0, MessageType::OpenGLVersionNotAvailable, "4.5");
-        return false;
-    }
-
     mInitialized = true;
     return true;
 }
@@ -52,7 +47,7 @@ void GLDevice::shutdown()
         if (!current && mSurface)
             current = mContext->makeCurrent(mSurface.get());
         if (current) {
-            mContext->shutdownCurrentContext();
+            mContext->release();
             mContext->doneCurrent();
         }
     }

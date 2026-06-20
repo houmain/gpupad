@@ -3,6 +3,27 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 4.0.0] - UNRELEASED
+
+### Added
+
+- Rendering texture editors with Vulkan when available.
+- Added adapter selection to session properties.
+- Allow to build without Vulkan/OpenGL/Direct3D.
+
+### Changed 
+
+- Pulling dependencies with FetchContent.
+- Copying all sub resources of texture.
+- Removed Histogram.
+
+### Fixed
+
+- Prevent scrolling to selected session item when expanding a group [#45].
+- Fixed unintentionally collapsing of menu bar [#46].
+- Fixed disabling QmlView support.
+- Several other things.
+
 ## [Version 3.4.1] - 2026-05-01
 
 ### Added
@@ -1080,6 +1101,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 4.0.0]: https://github.com/houmain/gpupad/compare/3.4.1...4.0.0
 [version 3.4.1]: https://github.com/houmain/gpupad/compare/3.4.0...3.4.1
 [version 3.4.0]: https://github.com/houmain/gpupad/compare/3.3.0...3.4.0
 [version 3.3.0]: https://github.com/houmain/gpupad/compare/3.2.0...3.3.0
