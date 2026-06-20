@@ -11,42 +11,11 @@ if(multi_config)
 elseif(NOT CMAKE_BUILD_TYPE OR NOT CMAKE_BUILD_TYPE IN_LIST BUILD_TYPES)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
 endif()
-
-option(ENABLE_UNITY_BUILD "Enable Unity Build" OFF)
-if (ENABLE_UNITY_BUILD)
-    set(CMAKE_UNITY_BUILD TRUE)
-endif()
-
-if (MSVC)
-    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
-    add_compile_options(/W1 /MP)
-    add_compile_options($<$<CONFIG:Release>:/GL>)
-    add_compile_options($<$<CONFIG:Release>:/GR->)
-    add_link_options($<$<CONFIG:Release>:/LTCG>)
-else()
-    add_compile_options($<$<CONFIG:Release>:-fno-rtti>)
-
-    # use mold linker when available
-    find_program(MOLD_PATH NAMES mold)
-    if(MOLD_PATH)
-        message(NOTICE "Using mold linker")
-        add_link_options(-fuse-ld=mold)
-    endif()
-
-    # use ccache when available
-    find_program(CCACHE_PATH NAMES ccache)
-    if(CCACHE_PATH)
-        message(NOTICE "Using ccache")
-        set(CMAKE_C_COMPILER_LAUNCHER "ccache")
-        set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
-    endif()
-endif()
-
-# setup version -------------------------
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
 endif()
 
+# obtain version -------------------------
 set(GIT_COMMIT_LAST_TAG "0.0.0")
 find_package(Git)
 if(NOT VERSION AND GIT_FOUND)
@@ -58,23 +27,7 @@ endif()
 
 configure_file("src/version.h.in" "${CMAKE_SOURCE_DIR}/src/_version.h")
 
-# -------------------------
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-add_definitions(-DQT_NO_CAST_TO_ASCII
-                #-DQT_NO_CAST_FROM_ASCII
-                -DQT_NO_URL_CAST_FROM_STRING
-                -DQT_NO_CAST_FROM_BYTEARRAY
-                -DQT_NO_SIGNALS_SLOTS_KEYWORDS
-                -DQT_USE_QSTRINGBUILDER
-                -DQT_NO_NARROWING_CONVERSIONS_IN_CONNECT
-                #-DQT_STRICT_ITERATORS
-                -DQT_NO_KEYWORDS
-                -DQT_DISABLE_DEPRECATED_BEFORE=0x060500
-                -DQT_NO_FOREACH)
-
+# source files -------------------------
 set(SOURCES
   libs/SingleApplication/singleapplication.cpp
   libs/SingleApplication/singleapplication_p.cpp
@@ -273,10 +226,38 @@ if (GPUPAD_ENABLE_D3D)
   libs/d3d12/RenderTargetHelper.cpp)
 endif()
 
+# header files -------------------------
 file(GLOB_RECURSE HEADERS include src/*.h)
 
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
+
+# build options -------------------------
+option(ENABLE_UNITY_BUILD "Enable Unity Build" OFF)
+if (ENABLE_UNITY_BUILD)
+    set(CMAKE_UNITY_BUILD TRUE)
+endif()
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+add_definitions(-DQT_NO_CAST_TO_ASCII
+                #-DQT_NO_CAST_FROM_ASCII
+                -DQT_NO_URL_CAST_FROM_STRING
+                -DQT_NO_CAST_FROM_BYTEARRAY
+                -DQT_NO_SIGNALS_SLOTS_KEYWORDS
+                -DQT_USE_QSTRINGBUILDER
+                -DQT_NO_NARROWING_CONVERSIONS_IN_CONNECT
+                #-DQT_STRICT_ITERATORS
+                -DQT_NO_KEYWORDS
+                -DQT_DISABLE_DEPRECATED_BEFORE=0x060500
+                -DQT_NO_FOREACH)
+
 if (MSVC)
-    add_compile_options(/W3)
+    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+    add_compile_options(/W3 /MP)
+    add_compile_options($<$<CONFIG:Release>:/GL>)
+    add_compile_options($<$<CONFIG:Release>:/GR->)
+    add_link_options($<$<CONFIG:Release>:/LTCG>)
     
     set(HEADERS ${HEADERS} src/resources.rc src/qt6.natvis)
     
@@ -292,9 +273,23 @@ if (MSVC)
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
 else()
     add_compile_options(-Wall)
-endif()
+    add_compile_options($<$<AND:$<CONFIG:Release>,$<COMPILE_LANGUAGE:CXX>>:-fno-rtti>)
 
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
+    # use mold linker when available
+    find_program(MOLD_PATH NAMES mold)
+    if(MOLD_PATH)
+        message(NOTICE "Using mold linker")
+        add_link_options(-fuse-ld=mold)
+    endif()
+
+    # use ccache when available
+    find_program(CCACHE_PATH NAMES ccache)
+    if(CCACHE_PATH)
+        message(NOTICE "Using ccache")
+        set(CMAKE_C_COMPILER_LAUNCHER "ccache")
+        set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
+    endif()
+endif()
 
 find_package(Qt6 REQUIRED COMPONENTS Core)
 if(Qt6_VERSION VERSION_GREATER_EQUAL 6.3)
@@ -318,12 +313,11 @@ target_include_directories(${PROJECT_NAME} PRIVATE src libs)
 set(CMAKE_AUTOMOC OFF)
 set(CMAKE_AUTOUIC OFF)
 set(CMAKE_AUTORCC OFF)
-
 set(BUILD_TESTING OFF)
 set(BUILD_SHARED_LIBS ON)
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
-# add custom action projects -------------------------
+# Actions -------------------------
 set(CMAKE_FOLDER Actions)
 file(GLOB ACTION_PATHS LIST_DIRECTORIES true "${CMAKE_CURRENT_SOURCE_DIR}/extra/actions/*")
 foreach(ACTION_PATH IN LISTS ACTION_PATHS)
@@ -362,6 +356,10 @@ FetchSparse(KTXSoftware
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE ktx)
 
+# TODO: unity build does not work yet
+set_target_properties(basisu_encoder PROPERTIES UNITY_BUILD OFF)
+set_target_properties(ktx PROPERTIES UNITY_BUILD OFF)
+
 # SPIRV-Reflect -------------------------
 set(CMAKE_FOLDER SPIRV-Reflect)
 set(GPUPAD_SPIRV_REFLECT_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Reflect.git" CACHE STRING "SPIRV-Reflect Git repository")
@@ -377,8 +375,7 @@ FetchSparse(SPIRV-Reflect
         tests
         examples
 )
-target_link_libraries(${PROJECT_NAME}
-    PRIVATE spirv-reflect-static)
+target_link_libraries(${PROJECT_NAME} PRIVATE spirv-reflect-static)
 
 # OpenGL -------------------------
 if (GPUPAD_ENABLE_OPENGL)
@@ -514,8 +511,7 @@ if (GPUPAD_ENABLE_GLSLANG)
             SPIRV_TOOLS_USE_MIMALLOC:BOOL=OFF
             SPIRV_TOOLS_BUILD_STATIC:BOOL=OFF
     )
-    target_link_libraries(${PROJECT_NAME}
-        PRIVATE SPIRV-Tools-opt)
+    target_link_libraries(${PROJECT_NAME} PRIVATE SPIRV-Tools-opt)
 
     # glslang (static because of undefined symbol: glslang::TPoolAllocator::allocate)
     set(BUILD_SHARED_LIBS OFF)
@@ -556,8 +552,12 @@ if (GPUPAD_ENABLE_GLSLANG)
             reference
             shaders*
     )
-    target_link_libraries(${PROJECT_NAME}
-        PRIVATE spirv-cross-core spirv-cross-glsl spirv-cross-hlsl spirv-cross-reflect)
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        spirv-cross-core
+        spirv-cross-glsl
+        spirv-cross-hlsl
+        spirv-cross-reflect
+    )
 endif()
 
 # OpenImageIO -------------------------
