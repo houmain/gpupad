@@ -5,7 +5,7 @@
 #include <cstring>
 #include <limits>
 
-#if defined(OpenImageIO_FOUND)
+#if defined(OPENIMAGEIO_ENABLED)
 #  if defined(_MSC_VER)
 #    pragma warning(disable : 4267)
 #  endif
@@ -798,9 +798,9 @@ bool TextureData::loadKtx(const QString &fileName, bool flipVertically)
 
 bool TextureData::loadOpenImageIO(const QString &fileName, bool flipVertically)
 {
-#if !defined(OpenImageIO_FOUND)
+#if !defined(OPENIMAGEIO_ENABLED)
     return false;
-#else // OpenImageIO_FOUND
+#else // OPENIMAGEIO_ENABLED
     using namespace OIIO;
     auto input = ImageInput::open(qUtf8Printable(fileName));
     if (!input) {
@@ -863,7 +863,7 @@ bool TextureData::loadOpenImageIO(const QString &fileName, bool flipVertically)
         this->flipVertically();
 
     return true;
-#endif // OpenImageIO_FOUND
+#endif // OPENIMAGEIO_ENABLED
 }
 
 bool TextureData::loadQImage(const QString &fileName, bool flipVertically)
@@ -982,9 +982,9 @@ bool TextureData::savePfm(const QString &fileName, bool flipVertically) const
 bool TextureData::saveOpenImageIO(const QString &fileName,
     bool flipVertically) const
 {
-#if !defined(OpenImageIO_FOUND)
+#if !defined(OPENIMAGEIO_ENABLED)
     return false;
-#else // OpenImageIO_FOUND
+#else // OPENIMAGEIO_ENABLED
     using namespace OIIO;
 
     const auto typeDesc = [&]() {
@@ -1017,7 +1017,7 @@ bool TextureData::saveOpenImageIO(const QString &fileName,
     if (!output->write_image(typeDesc, getData(0, 0, 0)))
         return false;
     return true;
-#endif // OpenImageIO_FOUND
+#endif // OPENIMAGEIO_ENABLED
 }
 
 bool TextureData::saveQImage(const QString &fileName, bool flipVertically) const
@@ -1277,6 +1277,7 @@ void TextureData::flipVertically()
     mFlippedVertically = !mFlippedVertically;
 }
 
+#if defined(OPENGL_ENABLED)
 bool TextureData::uploadGL(GLuint *textureId) const
 {
     if (isNull() || !textureId)
@@ -1290,7 +1291,9 @@ bool TextureData::uploadGL(GLuint *textureId) const
     Q_ASSERT(glGetError() == GL_NO_ERROR);
     return (result == KTX_SUCCESS);
 }
+#endif // defined(OPENGL_ENABLED)
 
+#if defined(VULKAN_ENABLED)
 bool TextureData::uploadVK(ktxVulkanDeviceInfo *vdi,
     ktxVulkanTexture *vkTexture, VkImageUsageFlags usageFlags,
     VkImageLayout finalLayout) const
@@ -1317,3 +1320,4 @@ bool TextureData::uploadVK(ktxVulkanDeviceInfo *vdi,
 
     return (result == KTX_SUCCESS);
 }
+#endif // defined(VULKAN_ENABLED)

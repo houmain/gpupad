@@ -8,7 +8,7 @@
 #include <QThread>
 #include <QMutex>
 
-#if defined(QtQuick_FOUND)
+#if defined(QMLVIEW_ENABLED)
 #  include <QQmlEngine>
 #endif
 
@@ -86,7 +86,7 @@ ScriptEngine::ScriptEngine(QObject *parent)
 
 void ScriptEngine::initialize(const ScriptEnginePtr &self, const QDir &basePath)
 {
-#if defined(QtQuick_FOUND)
+#if defined(QMLVIEW_ENABLED)
     // make a QmlEngine which can be shared with QmlViews
     mJsEngine = new QQmlEngine(this);
 #else

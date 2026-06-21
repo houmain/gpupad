@@ -8,7 +8,7 @@
 #include <QTextStream>
 #include <QThread>
 
-#if defined(QtMultimedia_FOUND)
+#if defined(VIDEOPLAYER_ENABLED)
 #  include <QVideoFrame>
 #endif
 
@@ -139,7 +139,7 @@ public Q_SLOTS:
     void convertVideoFrame(const QString &fileName, bool flipVertically,
         const QVideoFrame &frame)
     {
-#if defined(QtMultimedia_FOUND)
+#if defined(VIDEOPLAYER_ENABLED)
         auto texture = TextureData();
         if (texture.loadQImage(frame.toImage(), flipVertically))
             Q_EMIT textureLoaded(fileName, flipVertically, std::move(texture));

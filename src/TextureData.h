@@ -2,11 +2,14 @@
 
 #include "session/Item.h"
 #include <ktx.h>
-#include <vulkan/vulkan.h>
-#include <ktxvulkan.h>
 #include <atomic>
 #include <cstdint>
 #include <memory>
+
+#if defined(VULKAN_ENABLED)
+#  include <vulkan/vulkan.h>
+#  include <ktxvulkan.h>
+#endif
 
 class TextureData
 {
@@ -55,9 +58,15 @@ public:
     int getImageSize(int level) const;
     int getSlicesSize(int level) const;
     int getLevelSize(int level) const;
+
+#if defined(OPENGL_ENABLED)
     bool uploadGL(GLuint *textureId) const;
+#endif
+
+#if defined(VULKAN_ENABLED)
     bool uploadVK(ktxVulkanDeviceInfo *vdi, ktxVulkanTexture *vkTexture,
         VkImageUsageFlags usageFlags, VkImageLayout finalLayout) const;
+#endif
 
     friend bool operator==(const TextureData &a, const TextureData &b);
     friend bool operator!=(const TextureData &a, const TextureData &b);

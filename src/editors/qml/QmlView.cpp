@@ -4,7 +4,7 @@
 #include "widgets/WindowWidget.h"
 #include <QAction>
 
-#if !defined(QtQuick_FOUND)
+#if !defined(QMLVIEW_ENABLED)
 
 QmlView::QmlView(QString fileName, QScriptEnginePtr enginePtr, QWidget *parent)
     : QFrame(parent)
@@ -15,7 +15,7 @@ QmlView::QmlView(QString fileName, QScriptEnginePtr enginePtr, QWidget *parent)
 
 void QmlView::reset() { }
 
-#else // defined(QtQuick_FOUND)
+#else // defined(QMLVIEW_ENABLED)
 
 #  include "FileCache.h"
 #  include "FileDialog.h"
@@ -236,7 +236,7 @@ void QmlView::reset()
     layout()->addWidget(mQuickWidget);
 }
 
-#endif // defined(QtQuick_FOUND)
+#endif // defined(QMLVIEW_ENABLED)
 
 QmlView::~QmlView() { }
 

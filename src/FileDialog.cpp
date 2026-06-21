@@ -17,12 +17,12 @@ namespace {
         "h" };
     const auto ScriptFileExtensions = { "js", "json", "qml" };
     const auto TextureFileExtensions = { "ktx", "dds", "png",
-#if defined(OpenImageIO_FOUND)
+#if defined(OPENIMAGEIO_ENABLED)
         "exr", "hdr",
 #endif
         "tga", "bmp", "jpeg", "jpg", "pbm", "pgm", "tif", "tiff", "raw" };
     const auto VideoFileExtensions = std::initializer_list<const char *>{
-#if defined(QtMultimedia_FOUND)
+#if defined(VIDEOPLAYER_ENABLED)
         "mp4", "webm", "mkv", "ogg", "mpg", "wmv", "mov", "avi"
 #endif
     };

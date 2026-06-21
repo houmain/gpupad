@@ -46,10 +46,10 @@ private:
     QSet<QString> mDependencies;
     bool mResetOnFocus{};
 
-#if defined(QtQuick_FOUND)
+#if defined(QMLVIEW_ENABLED)
     QQuickView *mQuickView{};
     WindowWidget *mQuickWidget{};
     std::unique_ptr<QQmlNetworkAccessManagerFactory>
         mNetworkAccessManagerFactory;
-#endif // defined(QtQuick_FOUND)
+#endif // defined(QMLVIEW_ENABLED)
 };

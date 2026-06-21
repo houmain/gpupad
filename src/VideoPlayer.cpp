@@ -1,4 +1,4 @@
-#if defined(QtMultimedia_FOUND)
+#if defined(VIDEOPLAYER_ENABLED)
 
 #  include "VideoPlayer.h"
 #  include "FileCache.h"
@@ -152,4 +152,4 @@ void VideoPlayer::presentFrame(const QVideoFrame &frame)
         frame);
 }
 
-#endif // QtMultimedia_FOUND
+#endif // VIDEOPLAYER_ENABLED

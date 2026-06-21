@@ -457,29 +457,28 @@ endif()
 
 # QtMultimedia -------------------------
 find_package(Qt6Multimedia CONFIG)
-option(GPUPAD_ENABLE_MULTIMEDIA "Enable QtMultimedia" ${Qt6Multimedia_FOUND})
-if(GPUPAD_ENABLE_MULTIMEDIA)
+option(GPUPAD_ENABLE_VIDEOPLAYER "Enable Video Playback" ${Qt6Multimedia_FOUND})
+if(GPUPAD_ENABLE_VIDEOPLAYER)
     target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Multimedia)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE QtMultimedia_FOUND)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE VIDEOPLAYER_ENABLED)
 endif()
 
 # Qt6Quick -------------------------
 find_package(Qt6Quick CONFIG)
 find_package(Qt6QuickWidgets CONFIG)
-option(GPUPAD_ENABLE_QUICK "Enable QtQuick" ${Qt6QuickWidgets_FOUND})
-if(GPUPAD_ENABLE_QUICK AND Qt6Quick_FOUND)
+option(GPUPAD_ENABLE_QMLVIEW "Enable QML-View" ${Qt6QuickWidgets_FOUND})
+if(GPUPAD_ENABLE_QMLVIEW)
     target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Quick Qt6::QuickWidgets)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE QtQuick_FOUND)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE QMLVIEW_ENABLED)
 
     find_package(Qt6QuickControls2 CONFIG)
     if(Qt6QuickControls2_FOUND)
         target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::QuickControls2)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE QtQuickControls2_FOUND)
     endif()
 endif()
 
 # SPIRV-Tools, glslang, SPIRV-Cross -------------------------
-option(GPUPAD_ENABLE_GLSLANG "Enable glslang" ON)
+option(GPUPAD_ENABLE_GLSLANG "Enable glslang" ${ENABLE_VULKAN_DEFAULT})
 if (GPUPAD_ENABLE_GLSLANG)
     target_compile_definitions(${PROJECT_NAME} PRIVATE GLSLANG_ENABLED)
 
@@ -568,7 +567,7 @@ endif()
 option(GPUPAD_ENABLE_OPENIMEAGEIO "Enable OpenImageIO" ${ENABLE_OPENIMEAGEIO_DEFAULT})
 if (GPUPAD_ENABLE_OPENIMEAGEIO)
     target_link_libraries(${PROJECT_NAME} PRIVATE OpenImageIO::OpenImageIO)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE  OpenImageIO_FOUND)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE OPENIMAGEIO_ENABLED)
 endif()
 
 # Slang -------------------------
@@ -579,7 +578,7 @@ endif()
 option(GPUPAD_ENABLE_SLANG "Enable Slang" ${ENABLE_SLANG_DEFAULT})
 if (GPUPAD_ENABLE_SLANG)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${Slang_LIBRARY})
-    target_compile_definitions(${PROJECT_NAME} PRIVATE Slang_FOUND)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE SLANG_ENABLED)
 endif()
 
 # install -------------------------
