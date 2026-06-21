@@ -9,8 +9,9 @@ namespace {
     template <typename T>
     void setRange(QDoubleSpinBox *spinBox)
     {
-        spinBox->setRange(std::numeric_limits<T>::lowest(),
-            std::numeric_limits<T>::max());
+        spinBox->setRange(
+            static_cast<double>(std::numeric_limits<T>::lowest()),
+            static_cast<double>(std::numeric_limits<T>::max()));
     }
 } // namespace
 

@@ -234,7 +234,7 @@ void BinaryEditor::refresh()
         stride = 16;
     }
 
-    mHexModel->setData(&mData, offset, stride, rowCount);
+    mHexModel->setDataSpan(&mData, offset, stride, rowCount);
 
     clearSpans();
     setRowHeight(mPrevFirstRow, mRowHeight);

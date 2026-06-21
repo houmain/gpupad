@@ -9,7 +9,7 @@ class BinaryEditor::HexModel final : public QAbstractTableModel
 public:
     HexModel(QObject *parent = nullptr) : QAbstractTableModel(parent) { }
 
-    void setData(const QByteArray *data, int offset, int stride, int rowCount)
+    void setDataSpan(const QByteArray *data, int offset, int stride, int rowCount)
     {
         const auto prevData = mData;
         const auto prevOffset = mOffset;

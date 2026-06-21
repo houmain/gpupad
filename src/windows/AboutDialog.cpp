@@ -11,8 +11,10 @@
 #include <QTextBrowser>
 #include <QTextStream>
 
-#include <glslang/build_info.h>
-#include <spirv_cross/spirv_cross_c.h>
+#if defined(GLSLANG_ENABLED)
+#  include <glslang/build_info.h>
+#  include <spirv_cross/spirv_cross_c.h>
+#endif
 
 namespace {
     QString loadTextFile(const QString &fileName)
@@ -51,6 +53,7 @@ namespace {
             .mid(7);
     }
 
+#if defined(GLSLANG_ENABLED)
     QString glslangVersionString()
     {
         return QStringLiteral("%1.%2.%3")
@@ -66,6 +69,7 @@ namespace {
             .arg(SPVC_C_API_VERSION_MINOR)
             .arg(SPVC_C_API_VERSION_PATCH);
     }
+#endif
 } // namespace
 
 AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent)
@@ -118,6 +122,7 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent)
     const auto qtHeader = QString("## Qt Toolkit");
     licenses.replace(qtHeader, qtHeader + " v" + QT_VERSION_STR);
 
+#if defined(GLSLANG_ENABLED)
     const auto glslangHeader = QString("## glslang");
     licenses.replace(glslangHeader,
         glslangHeader + " v" + glslangVersionString());
@@ -125,6 +130,7 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent)
     const auto spirvCrossHeader = QString("## SPIRV-Cross");
     licenses.replace(spirvCrossHeader,
         spirvCrossHeader + " v" + spirvCrossVersionString());
+#endif
 
     addTab(tr("Third-Party Libraries"), licenses);
 
