@@ -19,8 +19,6 @@ public:
     ~D3DDevice() override;
 
     bool initialize(const AdapterIdentity &adapterIdentity) override;
-    void shutdown() override;
-    bool isValid() const override { return mDevice; }
 
     ID3D12Device &device();
     ID3D12CommandQueue &queue();

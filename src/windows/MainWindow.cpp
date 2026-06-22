@@ -9,8 +9,7 @@
 #include "SynchronizeLogic.h"
 #include "Theme.h"
 #include "WindowTitle.h"
-#include "render/vulkan/VKWindow.h"
-#include "render/opengl/GLWindow.h"
+#include "render/RenderWidget.h"
 #include "editors/EditorManager.h"
 #include "editors/IEditor.h"
 #include "editors/qml/QmlView.h"
@@ -561,38 +560,18 @@ void MainWindow::waitForSync()
     const auto syncInterval = Singletons::settings().syncInterval();
     if (!syncInterval)
         return;
-
-    if (mSyncWindow && mSyncWindowAdapter != Singletons::selectedAdapter()) {
-        delete mSyncWindowContainer;
-        mSyncWindowContainer = nullptr;
-        mSyncWindow = nullptr;
-        mSyncWindowAdapter = {};
+        
+    if (!mSyncWidget) {
+        mSyncWidget = new RenderWidget(true, this);
+        mSyncWidget->setAutoFillBackground(false);
+        mSyncWidget->setMinimumSize(2, 2);
+        mSyncWidget->setMaximumSize(2, 2);
+        mUi->toolBarMain->addWidget(mSyncWidget);
     }
+    mSyncWidget->setAdapter(Singletons::selectedAdapter());
 
-    if (!mSyncWindow) {
-#if defined(VULKAN_ENABLED)
-        if (VKWindow::isSupported())
-            mSyncWindow = new VKWindow(1);
-#endif
-#if defined(OPENGL_ENABLED)
-        if (!mSyncWindow)
-            mSyncWindow = new GLWindow(1);
-#endif
-        if (mSyncWindow) {
-            mSyncWindowAdapter = Singletons::selectedAdapter();
-            mSyncWindowContainer = QWidget::createWindowContainer(mSyncWindow);
-            mSyncWindowContainer->setAutoFillBackground(false);
-            mSyncWindowContainer->setMinimumSize(1, 1);
-            mSyncWindowContainer->setMaximumSize(1, 1);
-            mUi->toolBarMain->addWidget(mSyncWindowContainer);
-        }
-    }
-    if (mSyncWindow)
-        for (auto i = 0; i < syncInterval; ++i) {
-            mSyncWindow->update();
-            if (i + 1 < syncInterval)
-                qApp->processEvents();
-        }
+    for (auto i = 0; i < syncInterval; ++i)
+        mSyncWidget->redraw();
 }
 
 void MainWindow::setToolbarIconVisible(QAction *action, bool visible)

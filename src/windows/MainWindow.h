@@ -2,7 +2,6 @@
 
 #include "EditActions.h"
 #include "Evaluation.h"
-#include "render/AdapterIdentity.h"
 #include "session/Item.h"
 #include <QMainWindow>
 
@@ -21,7 +20,7 @@ class FileBrowserWindow;
 class EditorManager;
 class SessionEditor;
 class PropertiesEditor;
-class GpuWindow;
+class RenderWidget;
 class Theme;
 
 class MainWindow final : public QMainWindow
@@ -96,9 +95,7 @@ private:
     void waitForSync();
 
     Ui::MainWindow *mUi{};
-    GpuWindow *mSyncWindow{};
-    QWidget *mSyncWindowContainer{};
-    AdapterIdentity mSyncWindowAdapter;
+    RenderWidget *mSyncWidget{};
     QToolButton *mMenuButton{};
     QSplitter *mSessionSplitter{};
     QToolBar *mFullScreenBar{};

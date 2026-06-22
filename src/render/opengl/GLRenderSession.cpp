@@ -41,7 +41,7 @@ void GLRenderSession::createCommandQueue()
 {
     Q_ASSERT(!mPrevCommandQueue);
     mPrevCommandQueue.swap(mCommandQueue);
-    auto &gl = renderer().device<GLDevice>().context();
+    auto &gl = renderer().device<GLDevice>().gl();
     mCommandQueue = std::make_unique<CommandQueue>(CommandQueue{ gl });
 }
 
@@ -73,7 +73,7 @@ void GLRenderSession::render()
     }
     Q_ASSERT(mCommandQueue);
 
-    auto &gl = renderer().device<GLDevice>().context();
+    auto &gl = renderer().device<GLDevice>().gl();
 
     Q_ASSERT(glGetError() == GL_NO_ERROR);
     auto vaoBinder = gl.bindVertexArrayObject();

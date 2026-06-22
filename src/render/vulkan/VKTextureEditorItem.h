@@ -39,8 +39,9 @@ private:
     // transitions mTexture back for Vulkan rendering.
     struct GLState
     {
-        std::unique_ptr<GLContext> context;
-        std::unique_ptr<QOffscreenSurface> surface;
+        QOpenGLContext context;
+        QOffscreenSurface surface;
+        GLContext gl;
         ShareHandle importedShareHandle{};
         GLuint textureId{};
     };
@@ -51,20 +52,21 @@ private:
     VKWindow &window();
     VKContext makeContext();
     void submitCommandQueue(VKContext &context);
-    bool ensureGLContext();
-    void releaseGL();
     bool uploadTexture();
     bool copyImportedTexture(ShareHandle textureHandle);
     bool importShareHandle(VKContext &context, ShareHandle shareHandle);
     void releaseShareState();
     bool copyShareStateToTexture(VKContext &context);
-    bool copyOpenGLTexture(ShareHandle textureHandle);
     bool renderTexture(const QMatrix4x4 &transform);
     void resetTextureBinding();
 
+    bool makeGLContextCurrent();
+    void releaseGL();
+    bool copyGLTexture(ShareHandle textureHandle);
+
     std::unique_ptr<PipelineCache> mPipelineCache;
     std::unique_ptr<ShareState> mShare;
-    std::unique_ptr<GLState> mGl;
+    std::unique_ptr<GLState> mGLState;
     std::unique_ptr<VKTexture> mTexture;
     std::unique_ptr<TextureBinding> mTextureBinding;
     ShareHandle mSharedTextureHandle{};

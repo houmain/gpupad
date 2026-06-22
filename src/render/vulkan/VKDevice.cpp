@@ -52,8 +52,7 @@ namespace {
 
     bool hasStableIdentity(const AdapterIdentity &adapterIdentity)
     {
-        return !isNull(adapterIdentity.deviceLUID)
-            || hasUUID(adapterIdentity);
+        return !isNull(adapterIdentity.deviceLUID) || hasUUID(adapterIdentity);
     }
 
     bool matchesAdapter(const KDGpu::Adapter &adapter,
@@ -87,8 +86,8 @@ namespace {
             return nullptr;
         }
 
-        if (auto adapter = instance.selectAdapter(
-                KDGpu::AdapterDeviceType::Default))
+        if (auto adapter =
+                instance.selectAdapter(KDGpu::AdapterDeviceType::Default))
             return adapter;
 
         if (!instance.adapters().empty())
@@ -100,11 +99,11 @@ namespace {
     std::optional<uint32_t> findQueueType(KDGpu::Adapter &adapter,
         KDGpu::Surface *surface, bool computeRequired)
     {
-        const auto requiredQueueFlags = KDGpu::QueueFlags(
-            KDGpu::QueueFlagBits::GraphicsBit
-            | KDGpu::QueueFlagBits::TransferBit
-            | (computeRequired ? KDGpu::QueueFlagBits::ComputeBit
-                               : KDGpu::QueueFlags{}));
+        const auto requiredQueueFlags =
+            KDGpu::QueueFlags(KDGpu::QueueFlagBits::GraphicsBit
+                | KDGpu::QueueFlagBits::TransferBit
+                | (computeRequired ? KDGpu::QueueFlagBits::ComputeBit
+                                   : KDGpu::QueueFlags{}));
 
         const auto queueTypes = adapter.queueTypes();
         for (auto i = 0u; i < queueTypes.size(); ++i) {
@@ -136,7 +135,15 @@ VKDevice::VKDevice() : Device(Type::Vulkan) { }
 
 VKDevice::~VKDevice()
 {
-    shutdown();
+    if (mDevice.isValid())
+        mDevice.waitUntilIdle();
+
+    releaseKtx();
+    mQueue = {};
+    mDevice = {};
+    mAdapter = {};
+    mInstance = {};
+    mApi.reset();
 }
 
 bool VKDevice::initialize(const AdapterIdentity &adapterIdentity)
@@ -180,14 +187,11 @@ bool VKDevice::initialize(const AdapterIdentity &adapterIdentity)
 
     if (!chooseQueue(nullptr, true)) {
         error(MessageType::VulkanNotAvailable, "no general queue found");
-        shutdown();
         return false;
     }
 
-    if (!initializeKtx()) {
-        shutdown();
+    if (!initializeKtx())
         return false;
-    }
     return true;
 }
 
@@ -225,7 +229,6 @@ bool VKDevice::initialize(KDGpu::Surface &surface,
 
         if (!chooseQueue(&surface, false)) {
             qWarning() << "No KDGpu Vulkan graphics/present queue found";
-            shutdown();
             return false;
         }
     } else if (hasStableIdentity(adapterIdentity)
@@ -238,24 +241,10 @@ bool VKDevice::initialize(KDGpu::Surface &surface,
         return false;
     }
 
-    if (!initializeKtx()) {
-        shutdown();
+    if (!initializeKtx())
         return false;
-    }
+
     return true;
-}
-
-void VKDevice::shutdown()
-{
-    if (mDevice.isValid())
-        mDevice.waitUntilIdle();
-
-    releaseKtx();
-    mQueue = {};
-    mDevice = {};
-    mAdapter = {};
-    mInstance = {};
-    mApi.reset();
 }
 
 bool VKDevice::hasAdapters()

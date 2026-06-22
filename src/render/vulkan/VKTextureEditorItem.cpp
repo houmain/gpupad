@@ -346,7 +346,8 @@ void VKTextureEditorItem::paintGpu(const QSizeF &bounds, const QPointF &offset)
 
 void VKTextureEditorItem::submittedGpu()
 {
-    if (!mPickerEnabled || !mTextureBinding || !mTextureBinding->pickerColorWritten
+    if (!mPickerEnabled || !mTextureBinding
+        || !mTextureBinding->pickerColorWritten
         || !mTextureBinding->pickerTexture
         || !mTextureBinding->pickerTexture->texture().isValid())
         return;
@@ -377,8 +378,6 @@ bool VKTextureEditorItem::downloadImage(TextureData *image)
     if (!mTexture || !mTexture->texture().isValid())
         return TextureEditorItem::downloadImage(image);
 
-    if (!window().initialized())
-        window().update();
     if (!window().initialized())
         return false;
 
@@ -422,16 +421,15 @@ void VKTextureEditorItem::copySharedTexture(ShareHandle textureHandle,
     mTextureSamples = textureSamples;
 
     if (mSharedTextureHandle.type == ShareHandleType::OPENGL_TEXTURE_ID) {
-        copyOpenGLTexture(mSharedTextureHandle);
+        copyGLTexture(mSharedTextureHandle);
     } else {
         copyImportedTexture(mSharedTextureHandle);
     }
-    render();
 }
 
 VKWindow &VKTextureEditorItem::window()
 {
-    return static_cast<VKWindow &>(TextureEditorItem::window());
+    return *static_cast<VKWindow *>(parent());
 }
 
 VKContext VKTextureEditorItem::makeContext()

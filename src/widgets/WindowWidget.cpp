@@ -1,23 +1,26 @@
 
 #include "WindowWidget.h"
+#include <QApplication>
 
-WindowWidget::WindowWidget(QWidget *parent) : QWidget(parent)
+WindowWidget::WindowWidget(bool forwardInputEvents, QWidget *parent)
+    : QWidget(parent)
+    , mForwardInputEvents(forwardInputEvents)
 {
     mResizeTimer.setSingleShot(true);
     connect(&mResizeTimer, &QTimer::timeout, this, &WindowWidget::resizeWindow);
 }
 
-void WindowWidget::setWindow(QWindow *window)
+void WindowWidget::setWidgetWindow(QWindow *window)
 {
     if (mWindow == window)
         return;
     if (mWindowContainer) {
-        delete mWindowContainer;
+        if (mForwardInputEvents)
+            mWindow->removeEventFilter(this);
+        mWindowContainer->deleteLater();
         mWindowContainer = nullptr;
         hide();
     }
-    if (mWindow)
-        delete mWindow;
     mWindow = window;
     if (window)
         show();
@@ -27,24 +30,29 @@ void WindowWidget::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
 
-    if (mWindow && !mWindowContainer)
+    if (mWindow && !mWindowContainer) {
         mWindowContainer = QWidget::createWindowContainer(mWindow, this);
-
-    resizeWindow();
+        if (mForwardInputEvents)
+            mWindow->installEventFilter(this);
+        scheduleResize();
+    }
 }
 
 void WindowWidget::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
-    if (mWindowContainer)
-        mResized = true;
+    scheduleResize();
+}
 
-#if defined(_WIN32)
+void WindowWidget::scheduleResize()
+{
     // reduce buffer resizes on Windows, which glitches heavily
-    mResizeTimer.start(20);
+#if defined(_WIN32)
+    const auto delay = 20;
 #else
-    resizeWindow();
+    const auto delay = 1;
 #endif
+    mResizeTimer.start(delay);
 }
 
 void WindowWidget::resizeWindow()
@@ -54,7 +62,24 @@ void WindowWidget::resizeWindow()
 
     // show after the widget has its final size
     mWindowContainer->setGeometry(rect());
-    if (mResized)
-        mWindowContainer->show();
+    mWindowContainer->show();
     mWindow->requestUpdate();
+}
+
+bool WindowWidget::eventFilter(QObject *watched, QEvent *event)
+{
+    switch (event->type()) {
+    case QEvent::Wheel:
+    case QEvent::MouseButtonDblClick:
+    case QEvent::MouseButtonPress:
+    case QEvent::MouseMove:
+    case QEvent::MouseButtonRelease:
+    case QEvent::KeyPress:
+    case QEvent::KeyRelease:
+        if (QWidget *p = parentWidget())
+            QApplication::sendEvent(p, event);
+        return true;
+    default: break;
+    }
+    return QWidget::eventFilter(watched, event);
 }

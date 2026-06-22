@@ -135,7 +135,7 @@ QmlView::QmlView(QString fileName, QScriptEnginePtr enginePtr, QWidget *parent)
     : QFrame(parent)
     , mFileName(fileName)
     , mEnginePtr(std::move(enginePtr))
-    , mQuickWidget(new WindowWidget(this))
+    , mQuickWidget(new WindowWidget(false, this))
 {
     Q_ASSERT(onMainThread());
     [[maybe_unused]] static const auto once = []() {
@@ -232,7 +232,7 @@ void QmlView::reset()
     Singletons::fileCache().updateFromEditors();
 
     mQuickView->setSource(QUrl::fromLocalFile(mFileName));
-    mQuickWidget->setWindow(mQuickView);
+    mQuickWidget->setWidgetWindow(mQuickView);
     layout()->addWidget(mQuickWidget);
 }
 

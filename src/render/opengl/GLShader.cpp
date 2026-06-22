@@ -99,8 +99,7 @@ bool GLShader::specialize(GLContext &gl, const Spirv &spirv)
 
     void (*glSpecializeShader)(GLuint, const GLchar *, GLuint, const GLuint *,
         const GLuint *);
-    glSpecializeShader = reinterpret_cast<decltype(glSpecializeShader)>(
-        gl.getProcAddress("glSpecializeShader"));
+    glSpecializeShader = gl.getProcAddress<decltype(glSpecializeShader)>("glSpecializeShader");
     if (!glSpecializeShader) {
         mMessages.insert(mItemId, MessageType::OpenGLVersionNotAvailable,
             "4.6");

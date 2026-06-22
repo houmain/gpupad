@@ -19,7 +19,7 @@ void GLTextureEditorBackground::paintGpu(const QSizeF &size,
     const QPointF &offset)
 {
     Q_ASSERT(glGetError() == GL_NO_ERROR);
-    auto &gl = mWindow.context();
+    auto &gl = mWindow.gl();
 
     if (!mProgram) {
         mProgram = std::make_unique<QOpenGLShaderProgram>();

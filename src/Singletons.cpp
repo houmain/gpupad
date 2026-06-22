@@ -43,7 +43,7 @@ void Singletons::selectAdapter(const AdapterIdentity &adapter)
 #if defined(VULKAN_ENABLED)
     resetSharedVKDevice();
 #endif
-    sInstance->mEditorManager->recreateTextureEditorGpuWindows();
+    sInstance->mEditorManager->recreateRenderWidgets();
     sInstance->mSynchronizeLogic->invalidateRenderSession();
 }
 

@@ -470,14 +470,12 @@ GLuint64 GLTexture::obtainBindlessHandle(GLContext &gl)
         return 0;
 
     static auto glGetTextureHandleARB =
-        reinterpret_cast<PFNGLGETTEXTUREHANDLEARBPROC>(
-            gl.getProcAddress("glGetTextureHandleARB"));
+        gl.getProcAddress<PFNGLGETTEXTUREHANDLEARBPROC>("glGetTextureHandleARB");
     if (glGetTextureHandleARB)
         mBindlessHandle = glGetTextureHandleARB(getReadOnlyTextureId(gl));
 
     static auto glMakeTextureHandleResidentARB =
-        reinterpret_cast<PFNGLMAKETEXTUREHANDLERESIDENTARBPROC>(
-            gl.getProcAddress("glMakeTextureHandleResidentARB"));
+        gl.getProcAddress<PFNGLMAKETEXTUREHANDLERESIDENTARBPROC>("glMakeTextureHandleResidentARB");
     if (mBindlessHandle && glMakeTextureHandleResidentARB)
         glMakeTextureHandleResidentARB(mBindlessHandle);
 

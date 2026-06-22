@@ -2,13 +2,11 @@
 
 #include <QObject>
 
-class GpuWindow;
-
 class TextureEditorBackground : public QObject
 {
     Q_OBJECT
 public:
-    explicit TextureEditorBackground(GpuWindow *parent);
+    explicit TextureEditorBackground(QObject *parent);
     virtual void releaseGpu() = 0;
     virtual void paintGpu(const QSizeF &size, const QPointF &offset) = 0;
 

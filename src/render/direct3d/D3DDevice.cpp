@@ -20,7 +20,11 @@ D3DDevice::D3DDevice() : Device(Type::Direct3D) { }
 
 D3DDevice::~D3DDevice()
 {
-    shutdown();
+    mRenderTargetHelper.Destroy();
+    mQueue.Reset();
+    mDevice.Reset();
+    mAdapter = {};
+    mDxgiFactory.Reset();
 }
 
 bool D3DDevice::initialize(const AdapterIdentity &adapterIdentity)
@@ -62,17 +66,7 @@ try {
     return true;
 } catch (const std::exception &ex) {
     mMessages.insert(0, MessageType::Direct3DNotAvailable, ex.what());
-    shutdown();
     return false;
-}
-
-void D3DDevice::shutdown()
-{
-    mRenderTargetHelper.Destroy();
-    mQueue.Reset();
-    mDevice.Reset();
-    mAdapter = {};
-    mDxgiFactory.Reset();
 }
 
 ID3D12Device &D3DDevice::device()

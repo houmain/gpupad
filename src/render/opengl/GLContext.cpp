@@ -2,12 +2,14 @@
 #include <QDebug>
 #include <utility>
 
+GLContext::GLContext(QObject *parent) : QObject(parent) { }
+
 GLContext::~GLContext()
 {
-    Q_ASSERT(!mDebugLogger);
+    Q_ASSERT(!mContext || QOpenGLContext::currentContext() == mContext);
 }
 
-bool GLContext::initialize()
+bool GLContext::initialize(QOpenGLContext *context)
 {
     Q_ASSERT(!mDebugLogger);
     if (!initializeOpenGLFunctions())
@@ -26,20 +28,17 @@ bool GLContext::initialize()
         this, &GLContext::handleDebugMessage);
     mDebugLogger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
 
-    mVertexArrayObject.create();
-    return true;
-}
+    mVertexArrayObject = std::make_unique<QOpenGLVertexArrayObject>();
+    if (!mVertexArrayObject->create())
+        return false;
 
-void GLContext::release()
-{
-    Q_ASSERT(QOpenGLContext::currentContext() == this);
-    mVertexArrayObject.destroy();
-    mDebugLogger.reset();
+    mContext = context;
+    return true;
 }
 
 QOpenGLVertexArrayObject::Binder GLContext::bindVertexArrayObject()
 {
-    return QOpenGLVertexArrayObject::Binder(&mVertexArrayObject);
+    return QOpenGLVertexArrayObject::Binder(mVertexArrayObject.get());
 }
 
 QString GLContext::getLastGLError()

@@ -1,9 +1,7 @@
 #include "GLWindow.h"
-
 #include <QOffscreenSurface>
+#include <QPlatformSurfaceEvent>
 #include <QScopeGuard>
-#include <algorithm>
-#include <thread>
 
 AdapterIdentity GLWindow::getAdapterIdentity()
 {
@@ -54,71 +52,74 @@ AdapterIdentity GLWindow::getAdapterIdentity()
     return identity;
 }
 
-GLWindow::GLWindow(int syncInterval)
-    : mSyncInterval(syncInterval)
+//-------------------------------------------------------------------------
+
+GLWindow::GLWindow(bool enableVSync, QWindow *parent)
+    : QWindow(parent)
+    , mEnableVSync(enableVSync)
 {
     setSurfaceType(QWindow::OpenGLSurface);
-
-    auto format = QSurfaceFormat::defaultFormat();
-    format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
-    format.setSwapInterval(syncInterval);
-    setFormat(format);
 }
 
 GLWindow::~GLWindow()
 {
-    if (mContext && mContext->makeCurrent(this)) {
-        Q_EMIT releasingGpu();
-        mContext->release();
-        mContext.reset();
-    }
-}
-
-void GLWindow::initializeGL()
-{
-    Q_ASSERT(!mContext);
-    auto context = std::make_unique<GLContext>(this);
-    context->setFormat(format());
-
-    if (auto *shareContext = QOpenGLContext::globalShareContext())
-        context->setShareContext(shareContext);
-    if (!context->create())
-        return;
-
-    if (!context->makeCurrent(this))
-        return;
-
-    if (!context->initialize())
-        return;
-
-    mContext = std::move(context);
-    Q_EMIT initializingGpu();
-}
-
-void GLWindow::paintGL()
-{
-    if (!initialized())
-        return;
-
-    auto vaoBinder = context().bindVertexArrayObject();
-    Q_EMIT paintingGpu();
+    Q_ASSERT(!initialized());
 }
 
 bool GLWindow::event(QEvent *event)
 {
-    switch (event->type()) {
-    case QEvent::UpdateRequest: update(); return true;
-    default:                    return QWindow::event(event);
+    if (event->type() == QEvent::PlatformSurface) {
+        auto *surfaceEvent = static_cast<QPlatformSurfaceEvent *>(event);
+
+        if (surfaceEvent->surfaceEventType()
+            == QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed) {
+            releaseGpu();
+        }
+    } else if (event->type() == QEvent::UpdateRequest) {
+        redraw();
+        return true;
     }
+    return QWindow::event(event);
 }
 
-void GLWindow::exposeEvent(QExposeEvent *)
+void GLWindow::exposeEvent(QExposeEvent *event)
 {
+    QWindow::exposeEvent(event);
+
     if (isExposed())
-        update();
+        requestUpdate();
 }
 
-void GLWindow::update()
+bool GLWindow::makeCurrent()
+{
+    if (!mContext) {
+        mContext.reset(new QOpenGLContext());
+        mContext->setShareContext(QOpenGLContext::globalShareContext());
+
+        auto format = requestedFormat();
+        format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
+        format.setSwapInterval(mEnableVSync ? 1 : 0);
+        setFormat(format);
+        mContext->setFormat(format);
+
+        if (!mContext->create())
+            return false;
+    }
+
+    if (!mContext->makeCurrent(this))
+        return false;
+
+    if (!mGL) {
+        mGL = std::make_unique<GLContext>();
+        if (mGL->initialize(mContext.get())) {
+            Q_EMIT initializingGpu();
+            mInitialized = true;
+        }
+    }
+    return mInitialized;
+}
+
+void GLWindow::redraw()
 {
     if (!isExposed())
         return;
@@ -126,30 +127,28 @@ void GLWindow::update()
     if (!makeCurrent())
         return;
 
-    const qreal dpr = devicePixelRatio();
-    auto &gl = context();
-    gl.glViewport(0, 0, width() * dpr, height() * dpr);
-    paintGL();
+    const auto vaoBinder = mGL->bindVertexArrayObject();
+    const auto dpr = devicePixelRatio();
+    mGL->glViewport(0, 0, width() * dpr, height() * dpr);
 
-    const auto start = std::chrono::high_resolution_clock::now();
-    gl.swapBuffers(this);
-    const auto end = std::chrono::high_resolution_clock::now();
+    Q_EMIT paintingGpu();
 
-    // limit refresh rate when swapping is not synchronizing
-    if (mSyncInterval && end - start < std::chrono::milliseconds(2)) {
-        std::this_thread::sleep_for(mLastSwapTime - end
-            + std::chrono::microseconds(16'667 * mSyncInterval));
-        mLastSwapTime = end;
-    }
+    mContext->swapBuffers(this);
+    mContext->doneCurrent();
 }
 
-bool GLWindow::makeCurrent()
+void GLWindow::releaseGpu()
 {
-    Q_ASSERT(onMainThread());
+    if (!mContext || !mInitialized || mReleasing)
+        return;
 
-    if (!initialized())
-        initializeGL();
-
-    return (initialized() && mContext->makeCurrent(this));
+    mReleasing = true;
+    if (mContext->makeCurrent(this)) {
+        Q_EMIT releasingGpu();
+        mGL.reset();
+        mContext->doneCurrent();
+    }
+    mContext.reset();
+    mInitialized = false;
+    mReleasing = false;
 }
-

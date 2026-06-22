@@ -19,26 +19,18 @@ public:
 
     Device *device() const { return mDevice.get(); }
 
-    void moveDeviceToThread(QThread *thread)
-    {
-        if (mDevice)
-            mDevice->moveToThread(thread);
-    }
-
     void handleConfigureTask(RenderTask *renderTask)
     {
         try {
-            if (mDevice && !std::exchange(mInitialized, true)
+            if (!std::exchange(mInitialized, true)
                 && !mDevice->initialize(mAdapterIdentity)) {
                 mRenderer.setFailed();
-                mDevice->shutdown();
+                mDevice.reset();
             }
-
-            if (mDevice && mDevice->isValid())
+            if (mDevice)
                 mRenderer.configureRenderTask(renderTask);
         } catch (const std::exception &ex) {
             mMessages.insert(0, MessageType::RenderingFailed, ex.what());
-            shutdown(true);
         }
         Q_EMIT taskConfigured();
     }
@@ -46,7 +38,7 @@ public:
     void handleRenderTask(RenderTask *renderTask)
     {
         try {
-            if (mDevice && mDevice->isValid())
+            if (mDevice)
                 mRenderer.renderRenderTask(renderTask);
         } catch (const std::exception &ex) {
             mMessages.insert(0, MessageType::RenderingFailed, ex.what());
@@ -56,7 +48,7 @@ public:
 
     void handleReleaseTask(RenderTask *renderTask, void *userData)
     {
-        if (mDevice && mDevice->isValid())
+        if (mDevice)
             mRenderer.releaseRenderTask(renderTask);
         static_cast<QSemaphore *>(userData)->release(1);
     }
@@ -64,7 +56,7 @@ public:
 public Q_SLOTS:
     void stop()
     {
-        shutdown(false);
+        mDevice.reset();
         QThread::currentThread()->exit(0);
     }
 
@@ -73,16 +65,8 @@ Q_SIGNALS:
     void taskRendered();
 
 private:
-    void shutdown(bool failed)
-    {
-        if (mDevice && mDevice->isValid())
-            mDevice->shutdown();
-        if (failed)
-            mRenderer.setFailed();
-    }
-
     Renderer &mRenderer;
-    const std::unique_ptr<Device> mDevice;
+    std::unique_ptr<Device> mDevice;
     const AdapterIdentity mAdapterIdentity;
     bool mInitialized{};
     MessagePtrSet mMessages;
@@ -102,10 +86,9 @@ Renderer::Renderer(Type type, std::unique_ptr<Device> device,
     , mType(type)
 {
     Q_ASSERT(device);
-
+    device->moveToThread(&mThread);
     mWorker =
         std::make_unique<Worker>(*this, std::move(device), adapterIdentity);
-    mWorker->moveDeviceToThread(&mThread);
     mWorker->moveToThread(&mThread);
 
     connect(this, &Renderer::configureTaskRequested, mWorker.get(),

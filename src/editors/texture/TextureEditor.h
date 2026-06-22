@@ -11,7 +11,7 @@ class TextureEditorItem;
 class TextureEditorBackground;
 class TextureEditorToolBar;
 class TextureInfoBar;
-class GpuWindow;
+class RenderWidget;
 
 class TextureEditor final : public QAbstractScrollArea, public IEditor
 {
@@ -43,7 +43,7 @@ public:
     void replace(TextureData texture, bool emitFileChanged = true);
     void setFlipVertically(bool flipVertically);
     void copySharedTexture(ShareHandle textureHandle, int samples = 1);
-    void recreateGpuWindow();
+    void recreateRenderWidget();
     const TextureData &texture() const { return mTexture; }
 
 Q_SIGNALS:
@@ -53,7 +53,6 @@ Q_SIGNALS:
     void zoomToFitChanged(bool fit);
 
 protected:
-    bool eventFilter(QObject *watched, QEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
@@ -65,9 +64,8 @@ protected:
     void paintEvent(QPaintEvent *event) override;
 
 private:
-    bool createGpuWindow();
-    void destroyGpuWindow();
-    void setupGpuWindow();
+    bool initializeRenderWidget();
+    void releaseRenderWidget();
     void paintGpu();
     void updateMousePosition(const QPoint &position);
     void setBounds(QRect bounds);
@@ -83,8 +81,9 @@ private:
     QPointF mapToScene(const QPointF &position) const;
     QPointF mapFromScene(const QPointF &position) const;
 
-    GpuWindow *mGpuWindow{};
-    WindowWidget *mGpuWidget{};
+    RenderWidget *mRenderWidget{};
+    TextureEditorItem *mTextureItem{};
+    TextureEditorBackground *mBackground{};
     TextureEditorToolBar &mEditorToolBar;
     TextureInfoBar &mTextureInfoBar;
     QString mFileName;
@@ -98,6 +97,4 @@ private:
     bool mZoomToFit{};
     int mZoom{ 100 };
     QPoint mPanStart{};
-    TextureEditorItem *mTextureItem{};
-    TextureEditorBackground *mBackground{};
 };

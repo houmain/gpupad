@@ -34,8 +34,6 @@ public:
     bool initialize(const AdapterIdentity &adapterIdentity) override;
     bool initialize(KDGpu::Surface &surface,
         const AdapterIdentity &adapterIdentity);
-    void shutdown() override;
-    bool isValid() const override { return mDevice.isValid(); }
 
     bool hasAdapters();
 

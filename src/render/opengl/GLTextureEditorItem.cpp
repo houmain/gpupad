@@ -47,7 +47,7 @@ GLTextureEditorItem::~GLTextureEditorItem()
 void GLTextureEditorItem::releaseGpu()
 {
     if (window().initialized()) {
-        auto &gl = window().context();
+        auto &gl = window().gl();
         if (mImageTextureId)
             gl.glDeleteTextures(1, &mImageTextureId);
 
@@ -77,11 +77,10 @@ bool GLTextureEditorItem::downloadImage(TextureData *image)
     if (!mSharedTextureId)
         return TextureEditorItem::downloadImage(image);
 
-    if (!window().makeCurrent())
-        return false;
+    window().makeCurrent();
 
     auto data = mImage;
-    auto &gl = window().context();
+    auto &gl = window().gl();
     const auto target = data.getTarget(mTextureSamples);
 
     if (!gl.glIsTexture(mSharedTextureId))
@@ -104,19 +103,19 @@ void GLTextureEditorItem::copySharedTexture(ShareHandle textureHandle,
     mSharedTextureId = GL_NONE;
     if (textureHandle.type != ShareHandleType::OPENGL_TEXTURE_ID
         || !textureHandle) {
-        render();
+        update();
         return;
     }
 
     mSharedTextureId = static_cast<GLuint>(
         reinterpret_cast<std::uintptr_t>(textureHandle.handle));
     mTextureSamples = std::max(samples, 1);
-    render();
+    update();
 }
 
 GLWindow &GLTextureEditorItem::window()
 {
-    return static_cast<GLWindow &>(TextureEditorItem::window());
+    return *static_cast<GLWindow *>(parent());
 }
 
 bool GLTextureEditorItem::uploadTexture()
@@ -125,7 +124,7 @@ bool GLTextureEditorItem::uploadTexture()
         return false;
 
     if (!mSharedTextureId && std::exchange(mUpload, false)) {
-        auto &gl = window().context();
+        auto &gl = window().gl();
         gl.glDeleteTextures(1, &mImageTextureId);
         mImageTextureId = GL_NONE;
 
@@ -141,7 +140,7 @@ bool GLTextureEditorItem::uploadTexture()
 bool GLTextureEditorItem::renderTexture(const QMatrix4x4 &transform)
 {
     Q_ASSERT(glGetError() == GL_NO_ERROR);
-    auto &gl = window().context();
+    auto &gl = window().gl();
 
     if (mSharedTextureId && !gl.glIsTexture(mSharedTextureId))
         mSharedTextureId = GL_NONE;

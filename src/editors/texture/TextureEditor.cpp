@@ -8,7 +8,7 @@
 #include "TextureInfoBar.h"
 #include "TextureEditorItem.h"
 #include "getEventPosition.h"
-#include "render/GpuWindow.h"
+#include "render/RenderWidget.h"
 #include "render/opengl/GLTextureEditorBackground.h"
 #include "render/opengl/GLTextureEditorItem.h"
 #include "render/opengl/GLWindow.h"
@@ -44,103 +44,100 @@ TextureEditor::TextureEditor(QString fileName,
     TextureEditorToolBar *editorToolBar, TextureInfoBar *textureInfoBar,
     QWidget *parent)
     : QAbstractScrollArea(parent)
-    , mGpuWidget(new WindowWidget(this))
+    , mRenderWidget(new RenderWidget(false, this))
     , mEditorToolBar(*editorToolBar)
     , mTextureInfoBar(*textureInfoBar)
     , mFileName(fileName)
 {
-    if (!createGpuWindow()) {
+    setFrameStyle(QFrame::NoFrame);
+    if (!initializeRenderWidget()) {
         setEnabled(false);
         return;
     }
     setAcceptDrops(false);
     setMouseTracking(true);
-    setFrameStyle(QFrame::NoFrame);
     setAutoFillBackground(false);
 
     auto *viewportWidget = new QWidget();
     auto *layout = new QVBoxLayout(viewportWidget);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
-    layout->addWidget(mGpuWidget);
+    layout->addWidget(mRenderWidget);
     setViewport(viewportWidget);
-
-    setupGpuWindow();
 }
 
 TextureEditor::~TextureEditor()
 {
-    destroyGpuWindow();
+    releaseRenderWidget();
 
     Singletons::fileCache().invalidateFile(mFileName);
 }
 
-bool TextureEditor::createGpuWindow()
+bool TextureEditor::initializeRenderWidget()
 {
 #if defined(VULKAN_ENABLED)
     if (VKWindow::isSupported()) {
         auto *window = new VKWindow();
-        mGpuWindow = window;
+        mRenderWidget->setWidgetWindow(window);
         mTextureItem = new VKTextureEditorItem(window);
         mBackground = new VKTextureEditorBackground(window);
+
+        connect(window, &VKWindow::releasingGpu, mTextureItem,
+            &TextureEditorItem::releaseGpu);
+        connect(window, &VKWindow::releasingGpu, mBackground,
+            &TextureEditorBackground::releaseGpu);
+        connect(window, &VKWindow::preparingGpu, mTextureItem,
+            &TextureEditorItem::prepareGpu);
+        connect(window, &VKWindow::paintingGpu, this, [this] {
+            if (QObject::sender() == mRenderWidget->widgetWindow())
+                paintGpu();
+        });
+        connect(window, &VKWindow::submittedGpu, mTextureItem,
+            &TextureEditorItem::submittedGpu);
+
         return true;
     }
 #endif // defined(VULKAN_ENABLED)
 
 #if defined(OPENGL_ENABLED)
     auto *window = new GLWindow();
-    mGpuWindow = window;
+    mRenderWidget->setWidgetWindow(window);
     mTextureItem = new GLTextureEditorItem(window);
     mBackground = new GLTextureEditorBackground(window);
+
+    connect(window, &GLWindow::releasingGpu, mTextureItem,
+        &TextureEditorItem::releaseGpu);
+    connect(window, &GLWindow::releasingGpu, mBackground,
+        &TextureEditorBackground::releaseGpu);
+    connect(window, &GLWindow::paintingGpu, this, [this] {
+        if (QObject::sender() == mRenderWidget->widgetWindow())
+            paintGpu();
+    });
     return true;
 #else
     return false;
 #endif // defined(OPENGL_ENABLED)
 }
 
-void TextureEditor::destroyGpuWindow()
+void TextureEditor::releaseRenderWidget()
 {
-    mGpuWidget->setWindow(nullptr);
-    mGpuWindow = nullptr;
+    mRenderWidget->setWidgetWindow(nullptr);
     mTextureItem = nullptr;
     mBackground = nullptr;
 }
 
-void TextureEditor::setupGpuWindow()
-{
-    connect(mGpuWindow, &GpuWindow::releasingGpu, mTextureItem,
-        &TextureEditorItem::releaseGpu);
-    connect(mGpuWindow, &GpuWindow::releasingGpu, mBackground,
-        &TextureEditorBackground::releaseGpu);
-    connect(mGpuWindow, &GpuWindow::preparingGpu, mTextureItem,
-        &TextureEditorItem::prepareGpu);
-    connect(mGpuWindow, &GpuWindow::paintingGpu, this, [this] {
-        if (QObject::sender() == mGpuWindow)
-            paintGpu();
-    });
-    connect(mGpuWindow, &GpuWindow::submittedGpu, mTextureItem,
-        &TextureEditorItem::submittedGpu);
-
-    mGpuWidget->setWindow(mGpuWindow);
-    mGpuWindow->installEventFilter(this);
-}
-
-void TextureEditor::recreateGpuWindow()
+void TextureEditor::recreateRenderWidget()
 {
     const auto prevTextureItem = mTextureItem;
-    auto *window = mGpuWindow;
-    if (window)
-        window->removeEventFilter(this);
 
-    mGpuWidget->setWindow(nullptr);
-    mGpuWindow = nullptr;
+    mRenderWidget->setWidgetWindow(nullptr);
     mTextureItem = nullptr;
     mBackground = nullptr;
-    if (window)
-        window->deleteLater();
+    if (prevTextureItem)
+        prevTextureItem->deleteLater();
 
     setEnabled(false);
-    if (!createGpuWindow())
+    if (!initializeRenderWidget())
         return;
     setEnabled(true);
 
@@ -155,9 +152,7 @@ void TextureEditor::recreateGpuWindow()
         mTextureItem->setMappingRange(prevTextureItem->mappingRange());
         mTextureItem->setColorMask(prevTextureItem->colorMask());
     }
-
     setBounds(mTextureItem->boundingRect().toRect());
-    setupGpuWindow();
 }
 
 void TextureEditor::resizeEvent(QResizeEvent *event)
@@ -172,8 +167,8 @@ void TextureEditor::resizeEvent(QResizeEvent *event)
 
 void TextureEditor::paintEvent(QPaintEvent *event)
 {
-    if (mGpuWindow)
-        mGpuWindow->update();
+    if (mRenderWidget)
+        mRenderWidget->redraw();
 }
 
 QList<QMetaObject::Connection> TextureEditor::connectEditActions(
@@ -379,9 +374,8 @@ void TextureEditor::copy()
 
 void TextureEditor::copySharedTexture(ShareHandle textureHandle, int samples)
 {
-    if (!mGpuWindow->initialized())
-        mGpuWindow->update();
     mTextureItem->copySharedTexture(std::move(textureHandle), samples);
+    mRenderWidget->redraw();
 }
 
 void TextureEditor::setModified()
@@ -395,33 +389,6 @@ void TextureEditor::setModified(bool modified)
         mModified = modified;
         Q_EMIT modificationChanged(modified);
     }
-}
-
-bool TextureEditor::eventFilter(QObject *watched, QEvent *event)
-{
-    switch (event->type()) {
-    case QEvent::Wheel: wheelEvent(static_cast<QWheelEvent *>(event)); break;
-    case QEvent::MouseButtonDblClick:
-        mouseDoubleClickEvent(static_cast<QMouseEvent *>(event));
-        break;
-    case QEvent::MouseButtonPress:
-        mousePressEvent(static_cast<QMouseEvent *>(event));
-        break;
-    case QEvent::MouseMove:
-        mouseMoveEvent(static_cast<QMouseEvent *>(event));
-        break;
-    case QEvent::MouseButtonRelease:
-        mouseReleaseEvent(static_cast<QMouseEvent *>(event));
-        break;
-    case QEvent::KeyPress:
-        keyPressEvent(static_cast<QKeyEvent *>(event));
-        break;
-    case QEvent::KeyRelease:
-        keyReleaseEvent(static_cast<QKeyEvent *>(event));
-        break;
-    default: break;
-    }
-    return QAbstractScrollArea::eventFilter(watched, event);
 }
 
 void TextureEditor::wheelEvent(QWheelEvent *event)
@@ -663,12 +630,12 @@ void TextureEditor::updateScrollBars()
     const auto sy = (mZoomToFit ? 0 : std::max(bounds.height() - height, 0.0));
     horizontalScrollBar()->setRange(-sx, sx);
     verticalScrollBar()->setRange(-sy, sy);
-    mGpuWindow->requestUpdate();
+    mRenderWidget->redraw();
 }
 
 void TextureEditor::paintGpu()
 {
-    if (!mGpuWindow || !mBackground || !mTextureItem)
+    if (!mRenderWidget || !mBackground || !mTextureItem)
         return;
 
     const auto dpr = devicePixelRatioF();

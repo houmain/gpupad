@@ -338,8 +338,7 @@ void GLCall::executeDraw(GLContext &gl, MessagePtrSet &messages,
         }
     } else if (mCall.callType == Call::CallType::DrawMeshTasks) {
         static auto glDrawMeshTasksNV =
-            reinterpret_cast<PFNGLDRAWMESHTASKSNVPROC>(
-                gl.getProcAddress("glDrawMeshTasksNV"));
+            gl.getProcAddress<PFNGLDRAWMESHTASKSNVPROC>("glDrawMeshTasksNV");
         if (glDrawMeshTasksNV) {
             glDrawMeshTasksNV(0,
                 scriptEngine.evaluateUInt(mCall.workGroupsX, mCall.id));
@@ -348,11 +347,9 @@ void GLCall::executeDraw(GLContext &gl, MessagePtrSet &messages,
         }
     } else if (mCall.callType == Call::CallType::DrawMeshTasksIndirect) {
         static auto glDrawMeshTasksIndirectNV =
-            reinterpret_cast<PFNGLDRAWMESHTASKSINDIRECTNVPROC>(
-                gl.getProcAddress("glDrawMeshTasksIndirectNV"));
+            gl.getProcAddress<PFNGLDRAWMESHTASKSINDIRECTNVPROC>("glDrawMeshTasksIndirectNV");
         static auto glMultiDrawMeshTasksIndirectNV =
-            reinterpret_cast<PFNGLMULTIDRAWMESHTASKSINDIRECTNVPROC>(
-                gl.getProcAddress("glMultiDrawMeshTasksIndirectNV"));
+            gl.getProcAddress<PFNGLMULTIDRAWMESHTASKSINDIRECTNVPROC>("glMultiDrawMeshTasksIndirectNV");
         const auto offset = static_cast<intptr_t>(indirectOffset);
         if (drawCount == 1 && glDrawMeshTasksIndirectNV) {
             glDrawMeshTasksIndirectNV(offset);

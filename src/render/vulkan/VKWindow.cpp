@@ -1,31 +1,7 @@
 #include "VKWindow.h"
 #include "VKDevice.h"
 #include "Singletons.h"
-
-#include <QDebug>
-#include <QEvent>
-#include <algorithm>
-#include <array>
-#include <optional>
-
-#include <KDGpu/adapter.h>
-#include <KDGpu/adapter_swapchain_properties.h>
-#include <KDGpu/command_buffer.h>
-#include <KDGpu/command_recorder.h>
-#include <KDGpu/device.h>
-#include <KDGpu/fence.h>
-#include <KDGpu/gpu_semaphore.h>
-#include <KDGpu/instance.h>
-#include <KDGpu/queue.h>
-#include <KDGpu/render_pass_command_recorder.h>
-#include <KDGpu/render_pass_command_recorder_options.h>
-#include <KDGpu/surface.h>
-#include <KDGpu/surface_options.h>
-#include <KDGpu/swapchain.h>
 #include <KDGpu/swapchain_options.h>
-#include <KDGpu/texture.h>
-#include <KDGpu/texture_view.h>
-#include <KDGpu/texture_view_options.h>
 
 namespace {
     constexpr auto MaxFramesInFlight = 2u;
@@ -153,7 +129,11 @@ QList<AdapterIdentity> VKWindow::getAdapterIdentities()
     return result;
 }
 
-VKWindow::VKWindow(int syncInterval) : mSyncInterval(syncInterval)
+//-------------------------------------------------------------------------
+
+VKWindow::VKWindow(bool enableVSync, QWindow *parent)
+    : QWindow(parent)
+    , mEnableVSync(enableVSync)
 {
     setSurfaceType(QWindow::VulkanSurface);
 }
@@ -201,7 +181,7 @@ KDGpu::Extent2D VKWindow::swapchainExtent() const
 
 void VKWindow::initializeGpu()
 {
-    if (mInitialized)
+    if (mState)
         return;
 
     auto state = std::make_unique<State>();
@@ -211,10 +191,8 @@ void VKWindow::initializeGpu()
 
     state->surface =
         state->shared->instance().createSurface(surfaceOptions(*this));
-    if (!state->surface.isValid()) {
-        qWarning() << "Creating KDGpu Vulkan window surface failed";
+    if (!state->surface.isValid())
         return;
-    }
 
     if (!state->shared->initialize(state->surface,
             Singletons::selectedAdapter()))
@@ -223,15 +201,13 @@ void VKWindow::initializeGpu()
     const auto swapchainProperties =
         state->shared->adapter().swapchainProperties(state->surface);
     if (swapchainProperties.formats.empty()
-        || swapchainProperties.presentModes.empty()) {
-        qWarning() << "KDGpu Vulkan surface has no swapchain support";
+        || swapchainProperties.presentModes.empty())
         return;
-    }
 
     state->swapchainFormat =
         chooseSwapchainFormat(swapchainProperties.formats, &state->colorSpace);
     state->presentMode =
-        choosePresentMode(swapchainProperties.presentModes, mSyncInterval != 0);
+        choosePresentMode(swapchainProperties.presentModes, mEnableVSync);
     state->compositeAlpha = chooseCompositeAlpha(
         swapchainProperties.capabilities.supportedCompositeAlpha);
 
@@ -244,36 +220,22 @@ void VKWindow::initializeGpu()
     }
 
     mState = std::move(state);
-    mInitialized = true;
     Q_EMIT initializingGpu();
 }
 
 void VKWindow::releaseGpu()
 {
-    if (!mInitialized)
-        return;
-
-    if (mState && mState->shared->isValid())
+    if (mState) {
         mState->shared->device().waitUntilIdle();
-
-    Q_EMIT releasingGpu();
-
+        Q_EMIT releasingGpu();
+    }
     mState.reset();
-    mInitialized = false;
-}
-
-void VKWindow::paintGpu()
-{
-    if (!mInitialized)
-        return;
-
-    Q_EMIT paintingGpu();
 }
 
 bool VKWindow::event(QEvent *event)
 {
     switch (event->type()) {
-    case QEvent::UpdateRequest: update(); return true;
+    case QEvent::UpdateRequest: redraw(); return true;
     case QEvent::Resize:
         if (mState)
             mState->swapchainDirty = true;
@@ -286,26 +248,15 @@ bool VKWindow::event(QEvent *event)
 
 void VKWindow::exposeEvent(QExposeEvent *)
 {
-    if (isExposed())
-        update();
+    redraw();
 }
 
-void VKWindow::update()
+void VKWindow::redraw()
 {
-    if (mInitialized && !isExposed())
+    if (!isExposed())
         return;
 
-    if (!mInitialized)
-        initializeGpu();
-
-    if (!initialized())
-        return;
-
-    swapBuffers();
-}
-
-void VKWindow::swapBuffers()
-{
+    initializeGpu();
     if (!mState)
         return;
 
@@ -350,10 +301,8 @@ void VKWindow::swapBuffers()
             .presentMode = state.presentMode,
             .oldSwapchain = state.swapchain,
         });
-        if (!state.swapchain.isValid()) {
-            qWarning() << "Creating KDGpu Vulkan window swapchain failed";
+        if (!state.swapchain.isValid())
             return false;
-        }
 
         const auto &swapchainTextures = state.swapchain.textures();
         state.swapchainViews.reserve(swapchainTextures.size());
@@ -408,7 +357,9 @@ void VKWindow::swapBuffers()
             .framebufferWidth = state.swapchainExtent.width,
             .framebufferHeight = state.swapchainExtent.height,
         }));
-    paintGpu();
+
+    Q_EMIT paintingGpu();
+
     state.renderPass->end();
     state.renderPass.reset();
 

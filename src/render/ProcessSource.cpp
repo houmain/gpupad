@@ -207,7 +207,7 @@ void ProcessSource::render()
 void ProcessSource::validate()
 {
     if (mGLProgram) {
-        auto &gl = renderer().device<GLDevice>().context();
+        auto &gl = renderer().device<GLDevice>().gl();
         mGLProgram->validate(gl);
     } else if (mShader) {
         mShader->validate();
@@ -239,13 +239,13 @@ QString ProcessSource::processString()
         return mShader->generateGLSLangAST();
 
     if (mProcessType == "programBinary" && mGLProgram) {
-        auto &gl = renderer().device<GLDevice>().context();
+        auto &gl = renderer().device<GLDevice>().gl();
         return mGLProgram->tryGetProgramBinary(gl);
     }
 
     if (mProcessType == "json") {
         if (mGLProgram) {
-            auto &gl = renderer().device<GLDevice>().context();
+            auto &gl = renderer().device<GLDevice>().gl();
             if (mGLProgram->validate(gl))
                 return getJsonString(mGLProgram->reflection());
         }

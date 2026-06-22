@@ -1,11 +1,11 @@
 #pragma once
 #if defined(VULKAN_ENABLED)
 
-#include <KDGpu/gpu_core.h>
-#include "render/AdapterIdentity.h"
-#include "render/GpuWindow.h"
-#include <QList>
-#include <memory>
+#  include <QWindow>
+#  include <KDGpu/gpu_core.h>
+#  include "render/AdapterIdentity.h"
+#  include <QList>
+#  include <memory>
 
 struct ktxVulkanDeviceInfo;
 struct VKContext;
@@ -14,19 +14,20 @@ namespace KDGpu {
     class Device;
     class Queue;
     class RenderPassCommandRecorder;
-}
+} // namespace KDGpu
 
-class VKWindow : public GpuWindow
+class VKWindow : public QWindow
 {
     Q_OBJECT
 public:
     static bool isSupported();
     static QList<AdapterIdentity> getAdapterIdentities();
 
-    explicit VKWindow(int syncInterval = 0);
+    explicit VKWindow(bool enableVSync = false, QWindow *parent = nullptr);
+    explicit VKWindow(QWindow *parent) = delete;
     ~VKWindow() override;
 
-    bool initialized() const override { return mInitialized; }
+    bool initialized() const { return static_cast<bool>(mState); }
     KDGpu::Device &device();
     KDGpu::Queue &queue();
     ktxVulkanDeviceInfo &ktxDeviceInfo();
@@ -34,20 +35,24 @@ public:
     KDGpu::Format swapchainFormat() const;
     KDGpu::Extent2D swapchainExtent() const;
 
-    void update() override;
+    void redraw();
+
+Q_SIGNALS:
+    void initializingGpu();
+    void preparingGpu();
+    void paintingGpu();
+    void submittedGpu();
+    void releasingGpu();
 
 private:
     struct State;
 
+    void initializeGpu();
     void releaseGpu();
     bool event(QEvent *event) override;
     void exposeEvent(QExposeEvent *event) override;
-    void initializeGpu();
-    void paintGpu();
-    void swapBuffers();
 
-    const int mSyncInterval{};
-    bool mInitialized{};
+    const bool mEnableVSync;
     std::unique_ptr<State> mState;
 };
 

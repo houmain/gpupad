@@ -1,5 +1,5 @@
 #include "TextureEditorItem.h"
-#include "render/GpuWindow.h"
+#include "render/RenderWidget.h"
 #include <QMatrix4x4>
 #include <QTransform>
 #include <algorithm>
@@ -212,7 +212,7 @@ void main() {
 }
 )";
 
-TextureEditorItem::TextureEditorItem(GpuWindow *window) : QObject(window) { }
+TextureEditorItem::TextureEditorItem(QWindow *window) : QObject(window) { }
 
 TextureEditorItem::~TextureEditorItem() = default;
 
@@ -342,14 +342,9 @@ void TextureEditorItem::setMappingRange(const Range &range)
     }
 }
 
-GpuWindow &TextureEditorItem::window()
+QWindow &TextureEditorItem::window()
 {
-    return *qobject_cast<GpuWindow *>(parent());
-}
-
-void TextureEditorItem::render()
-{
-    window().update();
+    return *static_cast<QWindow *>(parent());
 }
 
 void TextureEditorItem::update()

@@ -281,7 +281,7 @@ namespace ShaderCompiler {
             return compileDXIL_D3DCompiler(session, input, messages, binary,
                 d3dReflection);
 
-        Q_ASSERT(!"unexpected shader compiler");
+        messages.insert(input.itemId, MessageType::UnsupportedShaderType);
         return false;
     }
 

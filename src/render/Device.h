@@ -1,13 +1,14 @@
 #pragma once
 
+#include <QObject>
 #include "session/ItemEnums.h"
 #include "AdapterIdentity.h"
-#include <QtGlobal>
 
 class QThread;
 
-class Device
+class Device : public QObject
 {
+    Q_OBJECT
 public:
     using Type = ItemEnums::Renderer;
 
@@ -16,10 +17,7 @@ public:
 
     Type type() const { return mType; }
 
-    virtual void moveToThread(QThread *thread) { Q_UNUSED(thread); }
     virtual bool initialize(const AdapterIdentity &adapter) = 0;
-    virtual void shutdown() = 0;
-    virtual bool isValid() const = 0;
 
 private:
     const Type mType;
