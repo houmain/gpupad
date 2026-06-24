@@ -404,7 +404,7 @@ if (GPUPAD_ENABLE_VULKAN)
         GIT_REPOSITORY ${GPUPAD_VMA_GIT_REPOSITORY}
         GIT_TAG ${GPUPAD_VMA_GIT_REVISION}
         CACHE_OPTIONS
-            VMA_ENABLE_INSTALL:BOOL=OFF
+            VMA_ENABLE_INSTALL:BOOL=ON
         SPARSE_EXCLUDE
             docs
     )
@@ -416,7 +416,7 @@ if (GPUPAD_ENABLE_VULKAN)
         GIT_REPOSITORY ${GPUPAD_SPDLOG_GIT_REPOSITORY}
         GIT_TAG ${GPUPAD_SPDLOG_GIT_REVISION}
         CACHE_OPTIONS
-            SPDLOG_INSTALL:BOOL=OFF
+            SPDLOG_INSTALL:BOOL=ON
             SPDLOG_BUILD_EXAMPLE:BOOL=OFF
             SPDLOG_BUILD_TESTS:BOOL=OFF
             SPDLOG_BUILD_BENCH:BOOL=OFF
@@ -426,9 +426,10 @@ if (GPUPAD_ENABLE_VULKAN)
     )
 
     include(FeatureSummary)
-    set(CMAKE_SKIP_INSTALL_RULES TRUE)
+    # TODO: could not get shared library to istall
+    set(BUILD_SHARED_LIBS OFF)
     add_subdirectory(libs/KDGpu/src/KDGpu EXCLUDE_FROM_ALL)
-    set(CMAKE_SKIP_INSTALL_RULES FALSE)
+    set(BUILD_SHARED_LIBS ON)
     target_include_directories(KDGpu PUBLIC "$<BUILD_INTERFACE:${spdlog_SOURCE_DIR}/include/spdlog>")
 
     target_link_libraries(${PROJECT_NAME} PRIVATE KDGpu spdlog::spdlog)
@@ -452,8 +453,8 @@ if (WIN32)
     if(GPUPAD_ENABLE_DXC)
         target_link_libraries(${PROJECT_NAME} PRIVATE 
             Microsoft::DirectXShaderCompiler)      
+        target_compile_definitions(${PROJECT_NAME} PRIVATE DXC_ENABLED)
     endif()
-    target_compile_definitions(${PROJECT_NAME} PRIVATE DXC_ENABLED)
 endif()
 
 # QtMultimedia -------------------------
@@ -504,17 +505,14 @@ if (GPUPAD_ENABLE_GLSLANG)
         GIT_TAG ${GPUPAD_SPIRV_TOOLS_GIT_REVISION}
         CACHE_OPTIONS
             SPIRV-Headers_SOURCE_DIR:PATH=${GPUPAD_SPIRV_HEADERS_SOURCE_DIR}
-            SKIP_SPIRV_TOOLS_INSTALL:BOOL=ON
+            SKIP_SPIRV_TOOLS_INSTALL:BOOL=OFF
             SPIRV_SKIP_EXECUTABLES:BOOL=ON
             SPIRV_SKIP_TESTS:BOOL=ON
             SPIRV_WERROR:BOOL=OFF
             SPIRV_TOOLS_USE_MIMALLOC:BOOL=OFF
-            SPIRV_TOOLS_BUILD_STATIC:BOOL=OFF
+            SPIRV_TOOLS_BUILD_STATIC:BOOL=ON
     )
-    target_link_libraries(${PROJECT_NAME} PRIVATE SPIRV-Tools-opt)
 
-    # glslang (static because of undefined symbol: glslang::TPoolAllocator::allocate)
-    set(BUILD_SHARED_LIBS OFF)
     set(GPUPAD_GLSLANG_GIT_REPOSITORY "https://github.com/KhronosGroup/glslang.git" CACHE STRING "glslang Git repository")
     set(GPUPAD_GLSLANG_GIT_REVISION "7801882058ce876e7708f941f0825a58eb94351a" CACHE STRING "glslang Git revision")
     FetchSparse(glslang
@@ -522,7 +520,7 @@ if (GPUPAD_ENABLE_GLSLANG)
         GIT_TAG ${GPUPAD_GLSLANG_GIT_REVISION}
         CACHE_OPTIONS
             GLSLANG_TESTS:BOOL=OFF
-            GLSLANG_ENABLE_INSTALL:BOOL=OFF
+            GLSLANG_ENABLE_INSTALL:BOOL=ON
             ENABLE_GLSLANG_BINARIES:BOOL=OFF
             ENABLE_GLSLANG_JS:BOOL=OFF
             ENABLE_OPT:BOOL=ON
@@ -531,7 +529,6 @@ if (GPUPAD_ENABLE_GLSLANG)
     )
     target_link_libraries(${PROJECT_NAME} PRIVATE glslang::glslang
         glslang::glslang-default-resource-limits glslang::SPIRV)
-    set(BUILD_SHARED_LIBS ON)
 
     # SPIRV-Cross
     set(CMAKE_FOLDER SPIRV-Cross)
