@@ -397,6 +397,9 @@ endif()
 
 # KDGpu -------------------------
 if (GPUPAD_ENABLE_VULKAN)
+    # TODO: could not get shared library to istall
+    set(BUILD_SHARED_LIBS OFF)
+
     set(CMAKE_FOLDER KDGpu)
     set(GPUPAD_VMA_GIT_REPOSITORY "https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git" CACHE STRING "VulkanMemoryAllocator Git repository")
     set(GPUPAD_VMA_GIT_REVISION "3aa921224c154a0d2c43912bc88e1c42ce1f7607" CACHE STRING "VulkanMemoryAllocator Git revision")
@@ -426,14 +429,12 @@ if (GPUPAD_ENABLE_VULKAN)
     )
 
     include(FeatureSummary)
-    # TODO: could not get shared library to istall
-    set(BUILD_SHARED_LIBS OFF)
     add_subdirectory(libs/KDGpu/src/KDGpu EXCLUDE_FROM_ALL)
-    set(BUILD_SHARED_LIBS ON)
     target_include_directories(KDGpu PUBLIC "$<BUILD_INTERFACE:${spdlog_SOURCE_DIR}/include/spdlog>")
-
     target_link_libraries(${PROJECT_NAME} PRIVATE KDGpu spdlog::spdlog)
     target_compile_definitions(${PROJECT_NAME} PRIVATE VULKAN_ENABLED)
+
+    set(BUILD_SHARED_LIBS ON)
 endif()
 
 # D3D -------------------------
@@ -513,6 +514,8 @@ if (GPUPAD_ENABLE_GLSLANG)
             SPIRV_TOOLS_BUILD_STATIC:BOOL=ON
     )
 
+    # TODO: linking static because of LiveTraverser
+    set(BUILD_SHARED_LIBS OFF)
     set(GPUPAD_GLSLANG_GIT_REPOSITORY "https://github.com/KhronosGroup/glslang.git" CACHE STRING "glslang Git repository")
     set(GPUPAD_GLSLANG_GIT_REVISION "7801882058ce876e7708f941f0825a58eb94351a" CACHE STRING "glslang Git revision")
     FetchSparse(glslang
@@ -529,6 +532,7 @@ if (GPUPAD_ENABLE_GLSLANG)
     )
     target_link_libraries(${PROJECT_NAME} PRIVATE glslang::glslang
         glslang::glslang-default-resource-limits glslang::SPIRV)
+    set(BUILD_SHARED_LIBS ON)
 
     # SPIRV-Cross
     set(CMAKE_FOLDER SPIRV-Cross)
@@ -647,6 +651,11 @@ set(CPACK_STRIP_FILES TRUE)
 set(CPACK_COMPONENT_APPLICATION_HIDDEN TRUE)
 set(CPACK_COMPONENT_APPLICATION_REQUIRED TRUE)
 
+# added because of KTX (which has a dev and a library component)
+set(CPACK_COMPONENTS_ALL Application Samples Themes Actions library)
+set(CPACK_COMPONENT_LIBRARY_HIDDEN TRUE)
+set(CPACK_COMPONENT_LIBRARY_REQUIRED TRUE)
+
 if(VERSION MATCHES "^[0-9]+\.[0-9]+\.[0-9]+")
     string(REGEX MATCHALL "[0-9]+" VERSION_LIST "${VERSION}")
     list(GET VERSION_LIST 0 CPACK_PACKAGE_VERSION_MAJOR)
@@ -659,6 +668,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
     set(CPACK_GENERATOR WIX)
+    set(CPACK_WIX_VERSION 4)
 
     file(READ  "${CMAKE_SOURCE_DIR}/LICENSE" LICENSE_RTF)
     string(REPLACE "\n" "\\par" LICENSE_RTF "${LICENSE_RTF}")

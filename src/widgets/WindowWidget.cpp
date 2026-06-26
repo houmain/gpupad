@@ -32,8 +32,10 @@ void WindowWidget::showEvent(QShowEvent *event)
 
     if (mWindow && !mWindowContainer) {
         mWindowContainer = QWidget::createWindowContainer(mWindow, this);
-        if (mForwardInputEvents)
+        if (mForwardInputEvents) {
             mWindow->installEventFilter(this);
+            parentWidget()->setMouseTracking(true);
+        }
         scheduleResize();
     }
 }

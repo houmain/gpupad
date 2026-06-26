@@ -319,8 +319,13 @@ void SessionProperties::updateShaderCompiler()
                         Session::ShaderCompiler::glslang },
                 };
             return {
+#if defined(DXC_ENABLED)
                 { "DXC", Session::ShaderCompiler::DXC },
+#endif
                 { "D3DCompiler", Session::ShaderCompiler::D3DCompiler },
+#if !defined(DXC_ENABLED)
+                { "DXC", Session::ShaderCompiler::DXC },
+#endif
             };
         }
         return {};

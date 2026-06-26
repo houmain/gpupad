@@ -152,7 +152,7 @@ void TextureEditor::recreateRenderWidget()
         mTextureItem->setMappingRange(prevTextureItem->mappingRange());
         mTextureItem->setColorMask(prevTextureItem->colorMask());
     }
-    setBounds(mTextureItem->boundingRect().toRect());
+    updateGeometry();
 }
 
 void TextureEditor::resizeEvent(QResizeEvent *event)

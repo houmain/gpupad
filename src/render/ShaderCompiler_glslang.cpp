@@ -16,7 +16,7 @@
 #include <glslang/SPIRV/GlslangToSpv.h>
 #include <glslang/SPIRV/disassemble.h>
 
-#if 0 && __has_include(<glslang/MachineIndependent/LiveTraverser.h>)
+#if __has_include(<glslang/MachineIndependent/LiveTraverser.h>)
 #  include <glslang/MachineIndependent/LiveTraverser.h>
 #endif
 
@@ -232,7 +232,7 @@ namespace ShaderCompiler {
 
         void patchHLSLGlobalUniformBindingSet(glslang::TShader &shader)
         {
-#if 0 && __has_include(<glslang/MachineIndependent/LiveTraverser.h>)
+#if __has_include(<glslang/MachineIndependent/LiveTraverser.h>)
             struct Traverser : glslang::TLiveTraverser
             {
                 using glslang::TLiveTraverser::TLiveTraverser;
