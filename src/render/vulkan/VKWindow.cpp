@@ -1,6 +1,8 @@
 #include "VKWindow.h"
 #include "VKDevice.h"
 #include "Singletons.h"
+#include <QPlatformSurfaceEvent>
+#include <QGuiApplication>
 #include <KDGpu/swapchain_options.h>
 
 namespace {
@@ -11,8 +13,23 @@ namespace {
         auto options = KDGpu::SurfaceOptions{};
 #if defined(Q_OS_WIN)
         options.hWnd = reinterpret_cast<HWND>(window.winId());
+#elif defined(Q_OS_LINUX)
+#  if QT_CONFIG(wayland)
+        if (auto *app = qApp->nativeInterface<QNativeInterface::QWaylandApplication>()) {
+            options.display = app->display();
+            options.surface = reinterpret_cast<wl_surface*>(window.winId());
+            return options;
+        }
+#  endif
+#  if QT_CONFIG(xcb)
+        if (auto *app = qApp->nativeInterface<QNativeInterface::QX11Application>()) {
+            options.connection = app->connection();
+            options.window = static_cast<xcb_window_t>(static_cast<std::uintptr_t>(window.winId()));
+            return options;
+        }
+#  endif
 #else
-        Q_UNUSED(window);
+#  error "not handled platform"
 #endif
         return options;
     }
@@ -140,7 +157,7 @@ VKWindow::VKWindow(bool enableVSync, QWindow *parent)
 
 VKWindow::~VKWindow()
 {
-    releaseGpu();
+    Q_ASSERT(!initialized());
 }
 
 KDGpu::Device &VKWindow::device()
@@ -235,6 +252,12 @@ void VKWindow::releaseGpu()
 bool VKWindow::event(QEvent *event)
 {
     switch (event->type()) {
+    case QEvent::PlatformSurface:
+        if (auto *surfaceEvent = static_cast<QPlatformSurfaceEvent *>(event);
+            surfaceEvent->surfaceEventType()
+            == QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed)
+            releaseGpu();
+        break;
     case QEvent::UpdateRequest: redraw(); return true;
     case QEvent::Resize:
         if (mState)

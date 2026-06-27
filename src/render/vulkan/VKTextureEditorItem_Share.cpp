@@ -5,6 +5,8 @@
 
 #if defined(_WIN32)
 #  include <vulkan/vulkan_win32.h>
+#else
+#  include <unistd.h>
 #endif
 
 namespace {
