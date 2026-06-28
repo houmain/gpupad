@@ -355,7 +355,8 @@ void VKWindow::redraw()
         state.swapchainDirty = true;
         return;
     }
-    if (acquireResult != KDGpu::AcquireImageResult::Success)
+    if (acquireResult != KDGpu::AcquireImageResult::Success
+        && acquireResult != KDGpu::AcquireImageResult::SubOptimal)
         return;
 
     frameFence.reset();
@@ -406,9 +407,8 @@ void VKWindow::redraw()
         },
     });
     if (presentResult == KDGpu::PresentResult::OutOfDate
-        || presentResult == KDGpu::PresentResult::SurfaceLost) {
+        || presentResult == KDGpu::PresentResult::SurfaceLost)
         state.swapchainDirty = true;
-    }
 
     state.inFlightIndex = (state.inFlightIndex + 1) % MaxFramesInFlight;
 }
