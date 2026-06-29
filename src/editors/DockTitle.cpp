@@ -334,6 +334,8 @@ void DockTitle::paintEvent(QPaintEvent *event)
         }
         return tabs;
     }();
+    if (!tabs.size())
+        return;
 
     // paint tabs, current last because it may overlap others
     auto painter = QStylePainter(this);

@@ -773,9 +773,17 @@ QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)
         QString::number(QRandomGenerator::global()->generate64(), 16));
 
     dock->setFeatures(QDockWidget::DockWidgetMovable
-        | QDockWidget::DockWidgetClosable | QDockWidget::DockWidgetFloatable);
+        | QDockWidget::DockWidgetClosable);
     dock->toggleViewAction()->setVisible(false);
     dock->installEventFilter(this);
+
+    connect(dock, &QDockWidget::topLevelChanged,
+        [dock](bool topLevel) {
+            if (topLevel)
+                dock->hide();
+            else
+                dock->show();
+        });
 
     if (const auto tabDock = findDockToAddTab(editor->tabifyGroup())) {
         tabifyDockWidget(tabDock, dock);

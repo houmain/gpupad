@@ -124,8 +124,6 @@ MainWindow::MainWindow(QWidget *parent)
     dock = new QDockWidget(tr("Session"), this);
     dock->setObjectName("Session");
     dock->setTitleBarWidget(new WindowTitle(dock));
-    dock->setFeatures(QDockWidget::DockWidgetClosable
-        | QDockWidget::DockWidgetMovable);
     dock->setWidget(mSessionSplitter);
     dock->setVisible(false);
     dock->setMinimumSize(200, 150);
@@ -143,8 +141,6 @@ MainWindow::MainWindow(QWidget *parent)
     dock = new QDockWidget(tr("File-Browser"), this);
     dock->setObjectName("FileBrowser");
     dock->setTitleBarWidget(mFileBrowserWindow->titleBar());
-    dock->setFeatures(QDockWidget::DockWidgetClosable
-        | QDockWidget::DockWidgetMovable);
     dock->setWidget(mFileBrowserWindow.get());
     dock->setVisible(false);
     dock->setMinimumSize(150, 150);
@@ -160,8 +156,6 @@ MainWindow::MainWindow(QWidget *parent)
     dock = new QDockWidget(tr("Messages"), this);
     dock->setObjectName("Messages");
     dock->setTitleBarWidget(mMessageWindow->titleBar());
-    dock->setFeatures(QDockWidget::DockWidgetClosable
-        | QDockWidget::DockWidgetMovable);
     dock->setWidget(mMessageWindow.get());
     dock->setVisible(false);
     dock->setMinimumSize(150, 150);
@@ -177,8 +171,6 @@ MainWindow::MainWindow(QWidget *parent)
     dock = new QDockWidget(tr("Output"), this);
     dock->setObjectName("Output");
     dock->setTitleBarWidget(mOutputWindow->titleBar());
-    dock->setFeatures(QDockWidget::DockWidgetClosable
-        | QDockWidget::DockWidgetMovable);
     dock->setWidget(mOutputWindow.get());
     dock->setVisible(false);
     dock->setMinimumSize(150, 150);
@@ -342,6 +334,19 @@ MainWindow::MainWindow(QWidget *parent)
             tb->showMenu();
         }
     });
+    
+    for (auto dock : findChildren<QDockWidget*>()) {
+        if (dock != editorsDock)
+            dock->setFeatures(QDockWidget::DockWidgetMovable
+                | QDockWidget::DockWidgetClosable);
+        connect(dock, &QDockWidget::topLevelChanged,
+            [dock](bool topLevel) {
+                if (topLevel)
+                    dock->hide();
+                else
+                    dock->show();
+            });
+    }
 
     auto *customActionsButton = static_cast<QToolButton *>(
         mUi->toolBarMain->widgetForAction(mUi->actionCustomActions));
