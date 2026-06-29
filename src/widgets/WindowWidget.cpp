@@ -70,7 +70,14 @@ void WindowWidget::resizeWindow()
 
 bool WindowWidget::eventFilter(QObject *watched, QEvent *event)
 {
+    if (mInEventFilter)
+        return QWidget::eventFilter(watched, event);;
+    mInEventFilter = true;
+    const auto guard = qScopeGuard([&]() { mInEventFilter = false; });
+
     switch (event->type()) {
+    case QEvent::Enter:
+    case QEvent::Leave:
     case QEvent::Wheel:
     case QEvent::MouseButtonDblClick:
     case QEvent::MouseButtonPress:
@@ -78,6 +85,10 @@ bool WindowWidget::eventFilter(QObject *watched, QEvent *event)
     case QEvent::MouseButtonRelease:
     case QEvent::KeyPress:
     case QEvent::KeyRelease:
+    case QEvent::DragEnter:
+    case QEvent::DragMove:
+    case QEvent::DragLeave:
+    case QEvent::Drop:
         if (QWidget *p = parentWidget())
             QApplication::sendEvent(p, event);
         return true;

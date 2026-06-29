@@ -135,7 +135,7 @@ QmlView::QmlView(QString fileName, QScriptEnginePtr enginePtr, QWidget *parent)
     : QFrame(parent)
     , mFileName(fileName)
     , mEnginePtr(std::move(enginePtr))
-    , mQuickWidget(new WindowWidget(false, this))
+    , mQuickWidget(new WindowWidget(true, this))
 {
     Q_ASSERT(onMainThread());
     [[maybe_unused]] static const auto once = []() {
