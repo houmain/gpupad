@@ -30,6 +30,7 @@ protected:
     void mouseDoubleClickEvent(QMouseEvent *event) override;
 
 private:
+    void resetTabBar();
     void paintTab(QStylePainter &painter, const QRect &rect,
         const QString &text, int index, int current, int last);
     void paintCloseButton(QStylePainter &painter);

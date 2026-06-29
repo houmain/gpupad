@@ -28,10 +28,20 @@ QSize DockTitle::sizeHint() const
 
 void DockTitle::setTabBar(QTabBar *tabBar)
 {
-    if (mTabBar != tabBar) {
-        mTabBar = tabBar;
-        update();
-    }
+    if (mTabBar == tabBar)
+        return;
+
+    if (mTabBar)
+        disconnect(mTabBar, &QWidget::destroyed, this, &DockTitle::resetTabBar);
+    mTabBar = tabBar;
+    if (mTabBar)
+        connect(mTabBar, &QWidget::destroyed, this, &DockTitle::resetTabBar);
+    update();
+}
+
+void DockTitle::resetTabBar()
+{
+    mTabBar = nullptr;
 }
 
 int DockTitle::tabCount() const

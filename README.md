@@ -208,7 +208,7 @@ The following libraries are optional an can be installed using the system's pack
 
 ```bash
 # install dependencies
-sudo pacman -S qt6-declarative libdrm vulkan-headers
+sudo pacman -S qt6-declarative libdrm vulkan-headers qt6-wayland
 
 # install optional dependencies
 sudo pacman -S qt6-multimedia openimageio
@@ -228,7 +228,7 @@ cmake --build build -j4
 
 ```bash
 # install dependencies
-sudo apt install build-essential git cmake pkg-config qt6-base-dev qt6-declarative-dev libqt6svg6-dev qt6-image-formats-plugins libgl1-mesa-dev libxcb*-dev libx11-dev libxrandr-dev
+sudo apt install build-essential git cmake pkg-config qt6-base-dev qt6-declarative-dev libqt6svg6-dev qt6-image-formats-plugins libgl1-mesa-dev libxcb*-dev libx11-dev qtwayland6 libxrandr-dev
 
 # install optional dependencies
 sudo apt install qt6-multimedia-dev libopenimageio-dev libopenexr-dev libz-dev openimageio-tools
