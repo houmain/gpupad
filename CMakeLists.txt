@@ -233,11 +233,6 @@ file(GLOB_RECURSE HEADERS include src/*.h)
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
 
 # build options -------------------------
-option(ENABLE_UNITY_BUILD "Enable Unity Build" OFF)
-if (ENABLE_UNITY_BUILD)
-    set(CMAKE_UNITY_BUILD TRUE)
-endif()
-
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -303,6 +298,11 @@ else()
 endif()
 set(CMAKE_AUTORCC ON)
 
+option(GPUPAD_UNITY_BUILD "Unity Build GPUpad" OFF)
+if (GPUPAD_UNITY_BUILD)
+    set(CMAKE_UNITY_BUILD TRUE)
+endif()
+
 qt_add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 set_target_properties(${PROJECT_NAME} PROPERTIES
     WIN32_EXECUTABLE TRUE
@@ -328,6 +328,13 @@ foreach(ACTION_PATH IN LISTS ACTION_PATHS)
     add_dependencies(${PROJECT_NAME} ${ACTION})
   endif()
 endforeach()
+
+option(GPUPAD_UNITY_BUILD_LIBRARIES "Unity Build Libraries" ON)
+if (GPUPAD_UNITY_BUILD_LIBRARIES)
+    set(CMAKE_UNITY_BUILD TRUE)
+else()
+    set(CMAKE_UNITY_BUILD FALSE)
+endif()
 
 # Qt6 -------------------------
 find_package(Qt6 REQUIRED COMPONENTS Widgets Qml)
@@ -397,7 +404,7 @@ endif()
 
 # KDGpu -------------------------
 if (GPUPAD_ENABLE_VULKAN)
-    # TODO: could not get shared library to istall
+    # TODO: could not get shared library to install
     set(BUILD_SHARED_LIBS OFF)
 
     set(CMAKE_FOLDER KDGpu)
@@ -559,6 +566,11 @@ if (GPUPAD_ENABLE_GLSLANG)
         spirv-cross-hlsl
         spirv-cross-reflect
     )
+
+    # TODO: unity build does not work yet
+    if (WIN32)
+        set_target_properties(glslang PROPERTIES UNITY_BUILD OFF)
+    endif()
 endif()
 
 # OpenImageIO -------------------------
