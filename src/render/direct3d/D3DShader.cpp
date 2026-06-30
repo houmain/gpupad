@@ -32,7 +32,11 @@ bool D3DShader::compile(PrintfBase &printf)
         if (hlsl.isEmpty())
             return false;
         auto session = mSession;
+#if defined(DXC_ENABLED)
         session.shaderCompiler = Session::ShaderCompiler::DXC;
+#else
+        session.shaderCompiler = Session::ShaderCompiler::D3DCompiler;
+#endif
         session.shaderLanguage = Session::ShaderLanguage::HLSL;
         if (!compile(session, hlsl))
             return false;

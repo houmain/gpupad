@@ -2,9 +2,8 @@
 
 #include "RenderSessionBase.h"
 #include "Singletons.h"
-#include "editors/EditorManager.h"
-#include "editors/texture/TextureEditor.h"
-#include "editors/binary/BinaryEditor.h"
+#include "SynchronizeLogic.h"
+#include <QStack>
 
 template <typename T>
 void replaceEqual(std::map<ItemId, T> &to, std::map<ItemId, T> &from)
@@ -403,32 +402,21 @@ template <typename CommandQueue>
 void RenderSessionBase::finishCommandQueue(CommandQueue &commandQueue) noexcept
 {
     Q_ASSERT(onMainThread());
-    auto &editors = Singletons::editorManager();
-    auto &sessionModel = Singletons::sessionModel();
+    auto &synchronizeLogic = Singletons::synchronizeLogic();
 
     for (auto &[itemId, program] : commandQueue.programs)
         if (program.printf().isUsed())
             mMessages += program.printf().finishDownload(program.itemId());
 
-    editors.setAutoRaise(false);
-
     for (auto &[itemId, texture] : commandQueue.textures)
         if (texture.deviceCopyModified())
-            if (const auto fileItem = sessionModel.findItem<FileItem>(itemId))
-                if (auto editor =
-                        editors.openTextureEditor(fileItem->fileName, true)) {
-                    editor->copySharedTexture(texture.getShareHandle(),
-                        texture.samples());
-                }
+            synchronizeLogic.handleTextureDeviceDataChanged(texture.itemId(),
+                texture.data(), texture.getShareHandle(), texture.samples());
 
     for (auto &[itemId, buffer] : commandQueue.buffers)
         if (buffer.finishDownload())
-            if (auto fileItem = sessionModel.findItem<FileItem>(itemId))
-                if (auto editor =
-                        editors.openBinaryEditor(fileItem->fileName, true))
-                    editor->replace(buffer.data(), false);
-
-    editors.setAutoRaise(true);
+            synchronizeLogic.handleBufferDataChanged(buffer.itemId(),
+                buffer.data());
 
     mPrevMessages.clear();
     if (mEvaluationType == EvaluationType::Reset)

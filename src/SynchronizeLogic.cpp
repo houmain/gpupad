@@ -558,6 +558,35 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
     editor.setBlocks(blocks);
 }
 
+void SynchronizeLogic::handleTextureDeviceDataChanged(ItemId itemId,
+    const TextureData &data, const ShareHandle &shareHandle, int samples)
+{
+    auto &editors = Singletons::editorManager();
+    auto &sessionModel = Singletons::sessionModel();
+
+    if (const auto fileItem = sessionModel.findItem<FileItem>(itemId))
+        if (auto editor = editors.openTextureEditor(fileItem->fileName, true)) {
+            editors.setAutoRaise(false);
+            editor->replace(data, false);
+            editor->copySharedTexture(shareHandle, samples);
+            editors.setAutoRaise(false);
+        }
+}
+
+void SynchronizeLogic::handleBufferDataChanged(ItemId itemId,
+    const QByteArray &data)
+{
+    auto &editors = Singletons::editorManager();
+    auto &sessionModel = Singletons::sessionModel();
+
+    if (auto fileItem = sessionModel.findItem<FileItem>(itemId))
+        if (auto editor = editors.openBinaryEditor(fileItem->fileName, true)) {
+            editors.setAutoRaise(false);
+            editor->replace(data, false);
+            editors.setAutoRaise(true);
+        }
+}
+
 void SynchronizeLogic::processSource()
 {
     if (!mValidateSource && mProcessSourceType.isEmpty()) {

@@ -11,6 +11,8 @@ class TextureEditor;
 class BinaryEditor;
 class RenderSessionBase;
 class ProcessSource;
+class TextureData;
+struct ShareHandle;
 
 class SynchronizeLogic final : public QObject
 {
@@ -37,6 +39,9 @@ public:
     void setCurrentEditorFileName(QString fileName);
     void setCurrentEditorSourceType(SourceType sourceType);
 
+    void handleTextureDeviceDataChanged(ItemId itemId, const TextureData &data,
+        const ShareHandle &shareHandle, int samples);
+    void handleBufferDataChanged(ItemId itemId, const QByteArray &data);
     void handleSessionFileNameChanged(const QString &fileName);
 
     void evaluateBlockProperties(const Block &block, int *offset,
