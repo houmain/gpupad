@@ -3,18 +3,12 @@
 
 #  include <QWindow>
 #  include <KDGpu/gpu_core.h>
+#  include "VKContext.h"
 #  include "render/AdapterIdentity.h"
 #  include <QList>
 #  include <memory>
 
 struct ktxVulkanDeviceInfo;
-struct VKContext;
-
-namespace KDGpu {
-    class Device;
-    class Queue;
-    class RenderPassCommandRecorder;
-} // namespace KDGpu
 
 class VKWindow : public QWindow
 {

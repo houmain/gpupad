@@ -1,22 +1,9 @@
 #include "VKTextureEditorItem.h"
 #include "VKTexture.h"
-#include "render/vulkan/VKWindow.h"
+#include "VKWindow.h"
 #include "render/ShaderCompiler.h"
-#include <KDGpu/bind_group.h>
-#include <KDGpu/bind_group_layout_options.h>
-#include <KDGpu/bind_group_options.h>
-#include <KDGpu/command_recorder.h>
-#include <KDGpu/device.h>
-#include <KDGpu/graphics_pipeline_options.h>
-#include <KDGpu/pipeline_layout_options.h>
-#include <KDGpu/queue.h>
-#include <KDGpu/render_pass_command_recorder.h>
-#include <KDGpu/sampler.h>
-#include <KDGpu/sampler_options.h>
-#include <KDGpu/texture_view.h>
 #include <QMatrix4x4>
 #include <QVector4D>
-#include <map>
 
 namespace {
     struct PipelineDesc

@@ -1,13 +1,6 @@
 #include "VKTextureEditorBackground.h"
 #include "VKWindow.h"
 #include "render/ShaderCompiler.h"
-#include <KDGpu/device.h>
-#include <KDGpu/graphics_pipeline.h>
-#include <KDGpu/graphics_pipeline_options.h>
-#include <KDGpu/pipeline_layout.h>
-#include <KDGpu/pipeline_layout_options.h>
-#include <KDGpu/render_pass_command_recorder.h>
-#include <KDGpu/shader_module.h>
 
 struct VKTextureEditorBackground::Pipeline
 {

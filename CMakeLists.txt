@@ -236,18 +236,6 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_definitions(-DQT_NO_CAST_TO_ASCII
-                #-DQT_NO_CAST_FROM_ASCII
-                -DQT_NO_URL_CAST_FROM_STRING
-                -DQT_NO_CAST_FROM_BYTEARRAY
-                -DQT_NO_SIGNALS_SLOTS_KEYWORDS
-                -DQT_USE_QSTRINGBUILDER
-                -DQT_NO_NARROWING_CONVERSIONS_IN_CONNECT
-                #-DQT_STRICT_ITERATORS
-                -DQT_NO_KEYWORDS
-                -DQT_DISABLE_DEPRECATED_BEFORE=0x060500
-                -DQT_NO_FOREACH)
-
 if (MSVC)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
     add_compile_options(/W3 /MP)
@@ -311,6 +299,19 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 target_include_directories(${PROJECT_NAME} PRIVATE src libs)
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE 
+    -DQT_NO_CAST_TO_ASCII
+    #-DQT_NO_CAST_FROM_ASCII
+    -DQT_NO_URL_CAST_FROM_STRING
+    -DQT_NO_CAST_FROM_BYTEARRAY
+    -DQT_NO_SIGNALS_SLOTS_KEYWORDS
+    -DQT_USE_QSTRINGBUILDER
+    -DQT_NO_NARROWING_CONVERSIONS_IN_CONNECT
+    #-DQT_STRICT_ITERATORS
+    -DQT_NO_KEYWORDS
+    -DQT_DISABLE_DEPRECATED_BEFORE=0x060500
+    -DQT_NO_FOREACH)
+
 set(CMAKE_AUTOMOC OFF)
 set(CMAKE_AUTOUIC OFF)
 set(CMAKE_AUTORCC OFF)
@@ -328,6 +329,16 @@ foreach(ACTION_PATH IN LISTS ACTION_PATHS)
     add_dependencies(${PROJECT_NAME} ${ACTION})
   endif()
 endforeach()
+
+# build options of third party libraries ------------------
+if (MSVC)
+    add_compile_options(
+        /wd4005 # macro redefinition
+        /wd4701 # potentially uninitialized local variable '...' used
+        /wd4244 # conversion from 'int64_t' to 'int', possible loss of data
+        /wd4267 # conversion from 'size_t' to 'int', possible loss of data
+    )
+endif()
 
 option(GPUPAD_UNITY_BUILD_LIBRARIES "Unity Build Libraries" ON)
 if (GPUPAD_UNITY_BUILD_LIBRARIES)
@@ -534,6 +545,7 @@ if (GPUPAD_ENABLE_GLSLANG)
             ENABLE_GLSLANG_BINARIES:BOOL=OFF
             ENABLE_GLSLANG_JS:BOOL=OFF
             ENABLE_OPT:BOOL=ON
+            ENABLE_EXCEPTIONS::BOOL=ON
         SPARSE_EXCLUDE
             Test
     )
