@@ -44,7 +44,7 @@ public:
 
     SessionModel &model() { return mModel; }
     void updateModel();
-    QModelIndex currentModelIndex(int column = 0) const;
+    QModelIndex currentModelIndex() const;
     QString currentItemName() const;
     QString currentItemFileName() const;
     IEditor *openItemEditor(const QModelIndex &index);

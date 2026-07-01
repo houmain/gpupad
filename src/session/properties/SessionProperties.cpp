@@ -203,9 +203,8 @@ void SessionProperties::submitShaderCompilerSettings()
 {
     mShaderCompilerSettingsMapper->submit();
 
-    mPropertiesEditor.model().setData(
-        mPropertiesEditor.currentModelIndex(
-            SessionModel::SessionShaderCompilerSettings),
+    mPropertiesEditor.model().setData(mPropertiesEditor.currentModelIndex(),
+        SessionModel::SessionShaderCompilerSettings,
         mShaderCompilerSettingsModel->variantMap());
 }
 
@@ -334,10 +333,10 @@ void SessionProperties::updateShaderCompiler()
     fillComboBox<Session::ShaderCompiler>(mUi->shaderCompiler,
         getShaderCompilers());
 
-    const auto currentIndex = mPropertiesEditor.currentModelIndex(
-        SessionModel::SessionShaderCompilerSettings);
-    mShaderCompilerSettingsModel->setVariantMap(
-        mPropertiesEditor.model().data(currentIndex).toMap());
+    mShaderCompilerSettingsModel->setVariantMap(mPropertiesEditor.model()
+            .data(mPropertiesEditor.currentModelIndex(),
+                SessionModel::SessionShaderCompilerSettings)
+            .toMap());
     mShaderCompilerSettingsMapper->revert();
 
     updateAdapters();

@@ -422,7 +422,8 @@ void SessionModel::dropJson(const QJsonArray &jsonArray, int row,
     for (ItemId prevId : keys)
         for (const QModelIndex &reference : std::as_const(mDroppedReferences))
             if (data(reference).toInt() == prevId)
-                setData(reference, mDroppedIdsReplaced[prevId]);
+                SessionModelCore::setData(reference,
+                    mDroppedIdsReplaced[prevId]);
     mDroppedIdsReplaced.clear();
     mDroppedReferences.clear();
 }
@@ -463,34 +464,34 @@ void SessionModel::deserialize(const QJsonObject &object,
 
     // preserve untitled filenames when dragging/copying
     if (!untitledFileName.isEmpty())
-        setData(getIndex(index, FileName), untitledFileName);
+        setData(index, FileName, untitledFileName);
 
-    const auto dropColumn = [&](const QString &property,
-                                const QModelIndex &index,
-                                const QVariant &value) {
-        if (property.endsWith("Id")) {
-            // reference to an already patched id?
-            auto it = mDroppedIdsReplaced.find(value.toInt());
-            if (it != mDroppedIdsReplaced.end()) {
-                setData(index, it.value());
-                return;
+    const auto dropColumn =
+        [&](const QString &property, const QModelIndex &index,
+            SessionModel::ColumnType column, const QVariant &value) {
+            if (property.endsWith("Id")) {
+                // reference to an already patched id?
+                auto it = mDroppedIdsReplaced.find(value.toInt());
+                if (it != mDroppedIdsReplaced.end()) {
+                    setData(index, column, it.value());
+                    return;
+                }
+                // otherwise remember reference for fixup
+                mDroppedReferences.append(index);
             }
-            // otherwise remember reference for fixup
-            mDroppedReferences.append(index);
-        }
-        setData(index, value);
-    };
+            setData(index, column, value);
+        };
 
     const auto keys = object.keys();
     for (const QString &property : keys) {
         auto value = object[property].toVariant();
 
         if (property == "name") {
-            setData(getIndex(index, Name), value);
+            setData(index, Name, value);
         } else if (property == "custom") {
-            setData(getIndex(index, Custom), value);
+            setData(index, Custom, value);
         } else if (property == "fileName") {
-            setData(getIndex(index, FileName),
+            setData(index, FileName,
                 toNativeCanonicalAbsoluteFilePath(value.toString()));
         } else if (property == "target") {
             // TODO: remove, added for backward compatibility
@@ -498,7 +499,7 @@ void SessionModel::deserialize(const QJsonObject &object,
                 value = "Target2D";
             if (value == "Target2DMultisampleArray")
                 value = "Target2DArray";
-            dropColumn(property, getIndex(index, TextureTarget), value);
+            dropColumn(property, index, TextureTarget, value);
         } else {
             static const auto sPropertyNameColumnTypeMap =
                 std::map<std::pair<Item::Type, QString>, ColumnType>{
@@ -509,7 +510,7 @@ void SessionModel::deserialize(const QJsonObject &object,
                 };
             const auto it = sPropertyNameColumnTypeMap.find({ type, property });
             if (it != sPropertyNameColumnTypeMap.end())
-                dropColumn(property, getIndex(index, it->second), value);
+                dropColumn(property, index, it->second, value);
         }
     }
 
@@ -531,8 +532,7 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
     if (auto fileItem = castItem<FileItem>(item)) {
         const auto &fileName = fileItem->fileName;
         if (!fileName.isEmpty()) {
-            if (FileDialog::isUntitled(fileName)
-                && !serializingScriptItem) {
+            if (FileDialog::isUntitled(fileName) && !serializingScriptItem) {
                 mDraggedUntitledFileNames[item.id] = fileName;
             } else {
                 object["fileName"] = (relativeFilePaths
@@ -553,7 +553,8 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
     ADD_EACH_COLUMN_TYPE()
 #undef ADD
 
-    if (!serializingScriptItem && !item.items.empty() && !isDynamicGroup(item)) {
+    if (!serializingScriptItem && !item.items.empty()
+        && !isDynamicGroup(item)) {
         auto items = QJsonArray();
         for (const Item *item : item.items) {
             auto sub = QJsonObject();

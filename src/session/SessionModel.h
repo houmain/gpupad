@@ -47,6 +47,18 @@ public:
     bool save(const QString &fileName);
     bool load(const QString &fileName);
 
+    void setData(const Item *item, ColumnType column, const QVariant &value,
+        int role = Qt::EditRole)
+    {
+        SessionModelCore::setData(getIndex(item, column), value, role);
+    }
+
+    void setData(const QModelIndex &index, ColumnType column,
+        const QVariant &value, int role = Qt::EditRole)
+    {
+        SessionModelCore::setData(getIndex(index, column), value, role);
+    }
+
     template <typename F> // F(const Item&)
     void forEachItemDirect(const QModelIndex &parent, const F &function) const
     {

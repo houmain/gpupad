@@ -565,7 +565,7 @@ void MainWindow::waitForSync()
     const auto syncInterval = Singletons::settings().syncInterval();
     if (!syncInterval)
         return;
-        
+
     if (!mSyncWidget) {
         mSyncWidget = new RenderWidget(true, this);
         mSyncWidget->setAutoFillBackground(false);
@@ -978,8 +978,7 @@ bool MainWindow::copySessionFiles(const QString &fromPath,
             const auto newFileName = toNativeCanonicalFilePath(
                 toPath + prevFileName.mid(fromPath.length()));
 
-            model.setData(model.getIndex(&fileItem, SessionModel::FileName),
-                newFileName);
+            model.setData(&fileItem, SessionModel::FileName, newFileName);
 
             // rename editor filenames
             Singletons::editorManager().renameEditors(prevFileName,

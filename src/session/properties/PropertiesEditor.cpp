@@ -272,9 +272,9 @@ void PropertiesEditor::updateModel()
     mMapper->submit();
 }
 
-QModelIndex PropertiesEditor::currentModelIndex(int column) const
+QModelIndex PropertiesEditor::currentModelIndex() const
 {
-    return mModel.index(mMapper->currentIndex(), column, mMapper->rootIndex());
+    return mModel.index(mMapper->currentIndex(), 0, mMapper->rootIndex());
 }
 
 void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
@@ -415,8 +415,7 @@ IEditor *PropertiesEditor::openEditor(const FileItem &fileItem)
     if (fileItem.fileName.isEmpty()) {
         const auto fileName =
             FileDialog::generateNextUntitledFileName(fileItem.name);
-        mModel.setData(mModel.getIndex(&fileItem, SessionModel::FileName),
-            fileName);
+        mModel.setData(&fileItem, SessionModel::FileName, fileName);
     }
     return Singletons::editorManager().openEditor(fileItem);
 }
@@ -535,12 +534,12 @@ IEditor *PropertiesEditor::openItemEditor(const QModelIndex &index)
 
 QString PropertiesEditor::currentItemName() const
 {
-    return mModel.data(currentModelIndex(SessionModel::Name)).toString();
+    return mModel.data(currentModelIndex(), SessionModel::Name).toString();
 }
 
 QString PropertiesEditor::currentItemFileName() const
 {
-    return mModel.data(currentModelIndex(SessionModel::FileName)).toString();
+    return mModel.data(currentModelIndex(), SessionModel::FileName).toString();
 }
 
 void PropertiesEditor::switchToCurrentFileItemDirectory()
@@ -552,7 +551,7 @@ void PropertiesEditor::switchToCurrentFileItemDirectory()
 
 void PropertiesEditor::setCurrentItemFile(const QString &fileName)
 {
-    mModel.setData(currentModelIndex(SessionModel::FileName), fileName);
+    mModel.setData(currentModelIndex(), SessionModel::FileName, fileName);
 }
 
 void PropertiesEditor::saveCurrentItemFileAs(FileDialog::Options options)
@@ -695,9 +694,7 @@ void PropertiesEditor::deduceBlockOffset()
         offset = std::max(offset, prevOffset)
             + getBlockStride(prevBlock) * prevRowCount;
     }
-    mModel.setData(
-        mModel.getIndex(currentModelIndex(), SessionModel::BlockOffset),
-        offset);
+    mModel.setData(currentModelIndex(), SessionModel::BlockOffset, offset);
 }
 
 void PropertiesEditor::deduceBlockRowCount()
@@ -711,8 +708,7 @@ void PropertiesEditor::deduceBlockRowCount()
             &rowCount);
         auto binary = QByteArray();
         if (Singletons::fileCache().getBinary(buffer.fileName, &binary))
-            mModel.setData(mModel.getIndex(currentModelIndex(),
-                               SessionModel::BlockRowCount),
+            mModel.setData(currentModelIndex(), SessionModel::BlockRowCount,
                 (binary.size() - offset) / stride);
     }
 }
@@ -730,8 +726,7 @@ void PropertiesEditor::deduceShaderType()
         const auto sourceType =
             deduceSourceType(currentSourceType, extension, source);
         if (sourceType != currentSourceType)
-            mModel.setData(
-                mModel.getIndex(currentModelIndex(), SessionModel::ShaderType),
+            mModel.setData(currentModelIndex(), SessionModel::ShaderType,
                 getShaderType(sourceType));
     }
 }
