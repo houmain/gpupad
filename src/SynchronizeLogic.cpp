@@ -558,14 +558,13 @@ void SynchronizeLogic::handleTextureDeviceDataChanged(ItemId itemId,
 {
     auto &editors = Singletons::editorManager();
     auto &sessionModel = Singletons::sessionModel();
-
+    editors.setAutoRaise(false);
     if (const auto fileItem = sessionModel.findItem<FileItem>(itemId))
         if (auto editor = editors.openTextureEditor(fileItem->fileName, true)) {
-            editors.setAutoRaise(false);
             editor->replace(data, false);
             editor->copySharedTexture(shareHandle, samples);
-            editors.setAutoRaise(false);
         }
+    editors.setAutoRaise(true);
 }
 
 void SynchronizeLogic::handleBufferDataChanged(ItemId itemId,
@@ -573,13 +572,11 @@ void SynchronizeLogic::handleBufferDataChanged(ItemId itemId,
 {
     auto &editors = Singletons::editorManager();
     auto &sessionModel = Singletons::sessionModel();
-
+    editors.setAutoRaise(false);
     if (auto fileItem = sessionModel.findItem<FileItem>(itemId))
-        if (auto editor = editors.openBinaryEditor(fileItem->fileName, true)) {
-            editors.setAutoRaise(false);
+        if (auto editor = editors.openBinaryEditor(fileItem->fileName, true))
             editor->replace(data, false);
-            editors.setAutoRaise(true);
-        }
+    editors.setAutoRaise(true);
 }
 
 void SynchronizeLogic::processSource()

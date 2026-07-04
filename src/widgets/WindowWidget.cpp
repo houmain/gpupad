@@ -50,11 +50,12 @@ void WindowWidget::scheduleResize()
 {
     // reduce buffer resizes on Windows, which glitches heavily
 #if defined(_WIN32)
-    const auto delay = 20;
+    const auto delay = 50;
 #else
     const auto delay = 1;
 #endif
-    mResizeTimer.start(delay);
+    if (!mResizeTimer.isActive())
+        mResizeTimer.start(delay);
 }
 
 void WindowWidget::resizeWindow()
@@ -71,7 +72,7 @@ void WindowWidget::resizeWindow()
 bool WindowWidget::eventFilter(QObject *watched, QEvent *event)
 {
     if (mInEventFilter)
-        return QWidget::eventFilter(watched, event);;
+        return QWidget::eventFilter(watched, event);
     mInEventFilter = true;
     const auto guard = qScopeGuard([&]() { mInEventFilter = false; });
 
