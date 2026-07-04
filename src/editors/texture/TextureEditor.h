@@ -4,16 +4,16 @@
 #include "editors/IEditor.h"
 #include "render/ShareHandle.h"
 #include "widgets/WindowWidget.h"
-#include <QOpenGLTexture>
-#include <QAbstractScrollArea>
+#include <QFrame>
 
+class QScrollBar;
 class TextureEditorItem;
 class TextureEditorBackground;
 class TextureEditorToolBar;
 class TextureInfoBar;
 class RenderWidget;
 
-class TextureEditor final : public QAbstractScrollArea, public IEditor
+class TextureEditor final : public QFrame, public IEditor
 {
     Q_OBJECT
 public:
@@ -53,6 +53,9 @@ Q_SIGNALS:
     void zoomToFitChanged(bool fit);
 
 protected:
+    RenderWidget* viewport() const { return mRenderWidget; }
+    QScrollBar* horizontalScrollBar() const { return mHorizontalScrollBar; }
+    QScrollBar* verticalScrollBar() const { return mVerticalScrollBar; }
     void wheelEvent(QWheelEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
@@ -82,6 +85,8 @@ private:
     QPointF mapFromScene(const QPointF &position) const;
 
     RenderWidget *mRenderWidget{};
+    QScrollBar* mHorizontalScrollBar{};
+    QScrollBar* mVerticalScrollBar{};
     TextureEditorItem *mTextureItem{};
     TextureEditorBackground *mBackground{};
     TextureEditorToolBar &mEditorToolBar;

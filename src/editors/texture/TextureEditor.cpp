@@ -43,13 +43,14 @@ bool createFromRaw(const QByteArray &binary, const TextureEditor::RawFormat &r,
 TextureEditor::TextureEditor(QString fileName,
     TextureEditorToolBar *editorToolBar, TextureInfoBar *textureInfoBar,
     QWidget *parent)
-    : QAbstractScrollArea(parent)
+    : QFrame(parent)
     , mRenderWidget(new RenderWidget(false, this))
+    , mHorizontalScrollBar(new QScrollBar(Qt::Horizontal, this))
+    , mVerticalScrollBar(new QScrollBar(Qt::Vertical, this))
     , mEditorToolBar(*editorToolBar)
     , mTextureInfoBar(*textureInfoBar)
     , mFileName(fileName)
 {
-    setFrameStyle(QFrame::NoFrame);
     if (!initializeRenderWidget()) {
         setEnabled(false);
         return;
@@ -58,12 +59,17 @@ TextureEditor::TextureEditor(QString fileName,
     setMouseTracking(true);
     setAutoFillBackground(false);
 
-    auto *viewportWidget = new QWidget();
-    auto *layout = new QVBoxLayout(viewportWidget);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(0);
-    layout->addWidget(mRenderWidget);
-    setViewport(viewportWidget);
+    auto *grid = new QGridLayout(this);
+    grid->setContentsMargins(0, 0, 0, 0);
+    grid->setSpacing(0);
+    grid->addWidget(viewport(),   0, 0);
+    grid->addWidget(verticalScrollBar(), 0, 1);
+    grid->addWidget(horizontalScrollBar(), 1, 0);
+    grid->setRowStretch(0, 1);
+    grid->setColumnStretch(0, 1);
+    
+    verticalScrollBar()->hide();
+    horizontalScrollBar()->hide();
 }
 
 TextureEditor::~TextureEditor()
@@ -157,7 +163,7 @@ void TextureEditor::recreateRenderWidget()
 
 void TextureEditor::resizeEvent(QResizeEvent *event)
 {
-    QAbstractScrollArea::resizeEvent(event);
+    QFrame::resizeEvent(event);
 
     if (mZoomToFit)
         zoomToFit();
@@ -424,7 +430,7 @@ void TextureEditor::wheelEvent(QWheelEvent *event)
     } else {
         event->setModifiers(event->modifiers()
             & ~(Qt::ShiftModifier | Qt::ControlModifier));
-        QAbstractScrollArea::wheelEvent(event);
+        QFrame::wheelEvent(event);
     }
     updateMousePosition(event->position().toPoint());
 }
@@ -432,7 +438,7 @@ void TextureEditor::wheelEvent(QWheelEvent *event)
 void TextureEditor::mouseDoubleClickEvent(QMouseEvent *event)
 {
     setZoom(100);
-    QAbstractScrollArea::mouseDoubleClickEvent(event);
+    QFrame::mouseDoubleClickEvent(event);
 }
 
 void TextureEditor::mousePressEvent(QMouseEvent *event)
@@ -445,7 +451,7 @@ void TextureEditor::mousePressEvent(QMouseEvent *event)
         setCursor(Qt::ClosedHandCursor);
         return;
     }
-    QAbstractScrollArea::mousePressEvent(event);
+    QFrame::mousePressEvent(event);
     updateMousePosition(getEventPosition(event));
     Singletons::inputState().setMouseButtonPressed(event->button());
 }
@@ -462,7 +468,7 @@ void TextureEditor::mouseMoveEvent(QMouseEvent *event)
         mPanStart = pos;
         return;
     }
-    QAbstractScrollArea::mouseMoveEvent(event);
+    QFrame::mouseMoveEvent(event);
     updateMousePosition(getEventPosition(event));
 }
 
@@ -532,7 +538,7 @@ void TextureEditor::mouseReleaseEvent(QMouseEvent *event)
         return;
     }
     Singletons::inputState().setMouseButtonReleased(event->button());
-    QAbstractScrollArea::mouseReleaseEvent(event);
+    QFrame::mouseReleaseEvent(event);
 }
 
 void TextureEditor::keyPressEvent(QKeyEvent *event)
@@ -544,7 +550,7 @@ void TextureEditor::keyPressEvent(QKeyEvent *event)
         Singletons::inputState().setKeyPressed(
             static_cast<Qt::Key>(event->key()));
 
-    QAbstractScrollArea::keyPressEvent(event);
+    QFrame::keyPressEvent(event);
 }
 
 void TextureEditor::keyReleaseEvent(QKeyEvent *event)
@@ -553,7 +559,7 @@ void TextureEditor::keyReleaseEvent(QKeyEvent *event)
         Singletons::inputState().setKeyReleased(
             static_cast<Qt::Key>(event->key()));
 
-    QAbstractScrollArea::keyReleaseEvent(event);
+    QFrame::keyReleaseEvent(event);
 }
 
 void TextureEditor::setBounds(QRect bounds)
@@ -630,6 +636,8 @@ void TextureEditor::updateScrollBars()
     const auto sy = (mZoomToFit ? 0 : std::max(bounds.height() - height, 0.0));
     horizontalScrollBar()->setRange(-sx, sx);
     verticalScrollBar()->setRange(-sy, sy);
+    horizontalScrollBar()->setVisible(sx != 0);
+    verticalScrollBar()->setVisible(sy != 0);
     mRenderWidget->redraw();
 }
 
