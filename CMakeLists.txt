@@ -580,9 +580,11 @@ if (GPUPAD_ENABLE_GLSLANG)
     )
 
     # TODO: unity build does not work yet
-    if (WIN32)
-        set_target_properties(glslang PROPERTIES UNITY_BUILD OFF)
-    endif()
+    set_target_properties(SPIRV-Tools-shared PROPERTIES UNITY_BUILD OFF)
+    set_target_properties(SPIRV-Tools-static PROPERTIES UNITY_BUILD OFF)
+    set_target_properties(SPIRV-Tools-opt PROPERTIES UNITY_BUILD OFF)
+    set_target_properties(SPIRV-Tools-reduce PROPERTIES UNITY_BUILD OFF)
+    set_target_properties(glslang PROPERTIES UNITY_BUILD OFF)
 endif()
 
 # OpenImageIO -------------------------
