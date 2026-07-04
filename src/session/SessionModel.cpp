@@ -422,8 +422,7 @@ void SessionModel::dropJson(const QJsonArray &jsonArray, int row,
     for (ItemId prevId : keys)
         for (const QModelIndex &reference : std::as_const(mDroppedReferences))
             if (data(reference).toInt() == prevId)
-                SessionModelCore::setData(reference,
-                    mDroppedIdsReplaced[prevId]);
+                setData(reference, mDroppedIdsReplaced[prevId]);
     mDroppedIdsReplaced.clear();
     mDroppedReferences.clear();
 }
@@ -464,7 +463,7 @@ void SessionModel::deserialize(const QJsonObject &object,
 
     // preserve untitled filenames when dragging/copying
     if (!untitledFileName.isEmpty())
-        setData(index, FileName, untitledFileName);
+        setField(index, FileName, untitledFileName);
 
     const auto dropColumn =
         [&](const QString &property, const QModelIndex &index,
@@ -479,7 +478,7 @@ void SessionModel::deserialize(const QJsonObject &object,
                 // otherwise remember reference for fixup
                 mDroppedReferences.append(index);
             }
-            setData(index, column, value);
+            setField(index, column, value);
         };
 
     const auto keys = object.keys();
@@ -487,11 +486,11 @@ void SessionModel::deserialize(const QJsonObject &object,
         auto value = object[property].toVariant();
 
         if (property == "name") {
-            setData(index, Name, value);
+            setField(index, Name, value);
         } else if (property == "custom") {
-            setData(index, Custom, value);
+            setField(index, Custom, value);
         } else if (property == "fileName") {
-            setData(index, FileName,
+            setField(index, FileName,
                 toNativeCanonicalAbsoluteFilePath(value.toString()));
         } else if (property == "target") {
             // TODO: remove, added for backward compatibility

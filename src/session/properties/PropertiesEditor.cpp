@@ -415,7 +415,7 @@ IEditor *PropertiesEditor::openEditor(const FileItem &fileItem)
     if (fileItem.fileName.isEmpty()) {
         const auto fileName =
             FileDialog::generateNextUntitledFileName(fileItem.name);
-        mModel.setData(&fileItem, SessionModel::FileName, fileName);
+        mModel.setField(&fileItem, SessionModel::FileName, fileName);
     }
     return Singletons::editorManager().openEditor(fileItem);
 }
@@ -551,7 +551,7 @@ void PropertiesEditor::switchToCurrentFileItemDirectory()
 
 void PropertiesEditor::setCurrentItemFile(const QString &fileName)
 {
-    mModel.setData(currentModelIndex(), SessionModel::FileName, fileName);
+    mModel.setField(currentModelIndex(), SessionModel::FileName, fileName);
 }
 
 void PropertiesEditor::saveCurrentItemFileAs(FileDialog::Options options)
@@ -694,7 +694,7 @@ void PropertiesEditor::deduceBlockOffset()
         offset = std::max(offset, prevOffset)
             + getBlockStride(prevBlock) * prevRowCount;
     }
-    mModel.setData(currentModelIndex(), SessionModel::BlockOffset, offset);
+    mModel.setField(currentModelIndex(), SessionModel::BlockOffset, offset);
 }
 
 void PropertiesEditor::deduceBlockRowCount()
@@ -708,7 +708,7 @@ void PropertiesEditor::deduceBlockRowCount()
             &rowCount);
         auto binary = QByteArray();
         if (Singletons::fileCache().getBinary(buffer.fileName, &binary))
-            mModel.setData(currentModelIndex(), SessionModel::BlockRowCount,
+            mModel.setField(currentModelIndex(), SessionModel::BlockRowCount,
                 (binary.size() - offset) / stride);
     }
 }
@@ -726,7 +726,7 @@ void PropertiesEditor::deduceShaderType()
         const auto sourceType =
             deduceSourceType(currentSourceType, extension, source);
         if (sourceType != currentSourceType)
-            mModel.setData(currentModelIndex(), SessionModel::ShaderType,
+            mModel.setField(currentModelIndex(), SessionModel::ShaderType,
                 getShaderType(sourceType));
     }
 }

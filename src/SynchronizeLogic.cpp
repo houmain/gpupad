@@ -278,7 +278,7 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
     if (auto call = castItem<Call>(item))
         if (index.column() == SessionModel::CallType
             && hasDefaultName<Call::CallType>(*call))
-            mModel.setData(index, SessionModel::Name,
+            mModel.setField(index, SessionModel::Name,
                 getValueName(call->callType));
 
     if (auto buffer = castItem<Buffer>(item)) {
@@ -319,13 +319,13 @@ void SynchronizeLogic::handleEditorFileRenamed(const QString &prevFileName,
     if (FileDialog::isUntitled(prevFileName))
         mModel.forEachFileItem([&](const FileItem &item) {
             if (item.fileName == prevFileName) {
-                mModel.setData(&item, SessionModel::FileName, fileName);
+                mModel.setField(&item, SessionModel::FileName, fileName);
 
                 // also synchronize shader type
                 if (item.type == Item::Type::Shader) {
                     auto &editorManager = Singletons::editorManager();
                     if (auto editor = editorManager.getSourceEditor(fileName))
-                        mModel.setData(&item, SessionModel::ShaderType,
+                        mModel.setField(&item, SessionModel::ShaderType,
                             getShaderType(editor->sourceType()));
                 }
             }
@@ -343,7 +343,7 @@ void SynchronizeLogic::handleFileItemFileChanged(const FileItem &item)
         name = mModel.getTypeName(item.type);
     }
     if (name != item.name)
-        mModel.setData(&item, SessionModel::Name, name);
+        mModel.setField(&item, SessionModel::Name, name);
 }
 
 void SynchronizeLogic::handleFileItemRenamed(const FileItem &item,
@@ -362,7 +362,7 @@ void SynchronizeLogic::handleFileItemRenamed(const FileItem &item,
         != FileDialog::isSequenceFileName(prevName)) {
         const auto fileName = toNativeCanonicalFilePath(
             QFileInfo(item.fileName).dir().filePath(item.name));
-        mModel.setData(&item, SessionModel::FileName, fileName);
+        mModel.setField(&item, SessionModel::FileName, fileName);
     }
 
     mModel.beginUndoMacro("Update filename");
@@ -400,17 +400,17 @@ void SynchronizeLogic::handleFileItemRenamed(const FileItem &item,
         if (prevFile.exists() && !mergeRenameOrCopy()) {
             // failed, rename item back
             const auto name = QFileInfo(item.fileName).fileName();
-            mModel.setData(&item, SessionModel::Name, name);
+            mModel.setField(&item, SessionModel::Name, name);
             return;
         }
 
         // update item filename
-        mModel.setData(&item, SessionModel::FileName, fileName);
+        mModel.setField(&item, SessionModel::FileName, fileName);
     } else {
         // update item filename
         const auto fileName =
             FileDialog::generateNextUntitledFileName(item.name);
-        mModel.setData(&item, SessionModel::FileName, fileName);
+        mModel.setField(&item, SessionModel::FileName, fileName);
     }
 
     mModel.endUndoMacro();

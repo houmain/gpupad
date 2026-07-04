@@ -978,7 +978,7 @@ bool MainWindow::copySessionFiles(const QString &fromPath,
             const auto newFileName = toNativeCanonicalFilePath(
                 toPath + prevFileName.mid(fromPath.length()));
 
-            model.setData(&fileItem, SessionModel::FileName, newFileName);
+            model.setField(&fileItem, SessionModel::FileName, newFileName);
 
             // rename editor filenames
             Singletons::editorManager().renameEditors(prevFileName,

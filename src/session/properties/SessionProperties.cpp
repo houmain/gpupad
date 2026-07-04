@@ -203,7 +203,7 @@ void SessionProperties::submitShaderCompilerSettings()
 {
     mShaderCompilerSettingsMapper->submit();
 
-    mPropertiesEditor.model().setData(mPropertiesEditor.currentModelIndex(),
+    mPropertiesEditor.model().setField(mPropertiesEditor.currentModelIndex(),
         SessionModel::SessionShaderCompilerSettings,
         mShaderCompilerSettingsModel->variantMap());
 }

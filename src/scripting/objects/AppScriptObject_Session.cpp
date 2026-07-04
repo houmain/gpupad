@@ -276,7 +276,7 @@ namespace {
             fileName = *hint;
         if (fileName.isEmpty())
             fileName = FileDialog::generateNextUntitledFileName(item.name);
-        session.setData(&item, SessionModel::FileName, fileName);
+        session.setField(&item, SessionModel::FileName, fileName);
         if (hint)
             *hint = fileName;
     }
@@ -897,7 +897,7 @@ void AppScriptObject::setBufferData(QJSValue itemIdent, QJSValue data)
         if (auto buffer = session.findItem<Buffer>(bufferId)) {
             if (buffer->items.size() == 1) {
                 const auto block = castItem<Block>(buffer->items[0]);
-                session.setData(block, SessionModel::BlockRowCount, rowCount);
+                session.setField(block, SessionModel::BlockRowCount, rowCount);
             }
             ensureFileName(session, *buffer, &fileName);
             if (onMainThread())
@@ -923,7 +923,7 @@ void AppScriptObject::setBlockData(QJSValue itemIdent, QJSValue data)
                          fileName = QString()](SessionModel &session) mutable {
         if (auto block = session.findItem<Block>(blockId))
             if (auto buffer = castItem<Buffer>(block->parent)) {
-                session.setData(block, SessionModel::BlockRowCount, rowCount);
+                session.setField(block, SessionModel::BlockRowCount, rowCount);
                 ensureFileName(session, *buffer, &fileName);
                 if (onMainThread()) {
                     auto offset = 0, rowCount = 0;

@@ -47,16 +47,15 @@ public:
     bool save(const QString &fileName);
     bool load(const QString &fileName);
 
-    void setData(const Item *item, ColumnType column, const QVariant &value,
-        int role = Qt::EditRole)
+    void setField(const Item *item, ColumnType column, const QVariant &value)
     {
-        SessionModelCore::setData(getIndex(item, column), value, role);
+        setData(getIndex(item, column), value, Qt::EditRole);
     }
 
-    void setData(const QModelIndex &index, ColumnType column,
-        const QVariant &value, int role = Qt::EditRole)
+    void setField(const QModelIndex &index, ColumnType column,
+        const QVariant &value)
     {
-        SessionModelCore::setData(getIndex(index, column), value, role);
+        setData(getIndex(index, column), value, Qt::EditRole);
     }
 
     template <typename F> // F(const Item&)
