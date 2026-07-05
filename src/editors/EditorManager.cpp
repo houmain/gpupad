@@ -772,18 +772,25 @@ QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)
     dock->setObjectName(
         QString::number(QRandomGenerator::global()->generate64(), 16));
 
-    dock->setFeatures(QDockWidget::DockWidgetMovable
-        | QDockWidget::DockWidgetClosable);
     dock->toggleViewAction()->setVisible(false);
     dock->installEventFilter(this);
 
-    connect(dock, &QDockWidget::topLevelChanged,
-        [dock](bool topLevel) {
-            if (topLevel)
-                dock->hide();
-            else
-                dock->show();
-        });
+    auto features = QDockWidget::DockWidgetMovable
+        | QDockWidget::DockWidgetClosable | QDockWidget::DockWidgetFloatable;
+
+    // TODO: disabled floating docks on Wayland for now
+    if (QGuiApplication::platformName().toLower().contains("wayland")) {
+        features &= ~QDockWidget::DockWidgetFloatable;
+
+        connect(dock, &QDockWidget::topLevelChanged,
+            [dock](bool topLevel) {
+                if (topLevel)
+                    dock->hide();
+                else
+                    dock->show();
+            });
+    }
+    dock->setFeatures(features);
 
     if (const auto tabDock = findDockToAddTab(editor->tabifyGroup())) {
         tabifyDockWidget(tabDock, dock);

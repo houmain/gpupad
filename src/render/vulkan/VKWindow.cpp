@@ -203,20 +203,20 @@ void VKWindow::initializeGpu()
 
     auto state = std::make_unique<State>();
     state->shared = sharedVKDevice();
-    if (!state->shared->hasAdapters())
+    auto &shared = *state->shared;
+    if (!shared.hasAdapters())
         return;
 
     state->surface =
-        state->shared->instance().createSurface(surfaceOptions(*this));
+        shared.instance().createSurface(surfaceOptions(*this));
     if (!state->surface.isValid())
         return;
 
-    if (!state->shared->initialize(state->surface,
-            Singletons::selectedAdapter()))
+    if (!shared.initialize(state->surface, Singletons::selectedAdapter()))
         return;
 
     const auto swapchainProperties =
-        state->shared->adapter().swapchainProperties(state->surface);
+        shared.adapter().swapchainProperties(state->surface);
     if (swapchainProperties.formats.empty()
         || swapchainProperties.presentModes.empty())
         return;
@@ -230,8 +230,8 @@ void VKWindow::initializeGpu()
 
     for (auto i = 0u; i < MaxFramesInFlight; ++i) {
         state->presentCompleteSemaphores[i] =
-            state->shared->device().createGpuSemaphore();
-        state->frameFences[i] = state->shared->device().createFence({
+            shared.device().createGpuSemaphore();
+        state->frameFences[i] = shared.device().createFence({
             .createSignalled = true,
         });
     }
@@ -274,6 +274,67 @@ void VKWindow::exposeEvent(QExposeEvent *)
     redraw();
 }
 
+bool VKWindow::ensureSwapchain()
+{
+    auto &state = *mState;
+    auto &shared = *state.shared;
+    if (!state.swapchainDirty)
+        return true;
+    
+    const auto dpr = devicePixelRatio();
+    const auto requestedWidth =
+        std::max(1u, static_cast<uint32_t>(width() * dpr + 0.5));
+    const auto requestedHeight =
+        std::max(1u, static_cast<uint32_t>(height() * dpr + 0.5));
+
+    const auto swapchainProperties =
+        shared.adapter().swapchainProperties(state.surface);
+    const auto &capabilities = swapchainProperties.capabilities;
+    state.swapchainExtent = {
+        .width = std::clamp(requestedWidth,
+            capabilities.minImageExtent.width,
+            capabilities.maxImageExtent.width),
+        .height = std::clamp(requestedHeight,
+            capabilities.minImageExtent.height,
+            capabilities.maxImageExtent.height),
+    };
+
+    shared.device().waitUntilIdle();
+    state.renderPass.reset();
+    for (auto &commandBuffer : state.commandBuffers)
+        commandBuffer = {};
+    state.swapchainViews.clear();
+    state.renderCompleteSemaphores.clear();
+
+    state.swapchain = shared.device().createSwapchain({
+        .surface = state.surface,
+        .format = state.swapchainFormat,
+        .colorSpace = state.colorSpace,
+        .minImageCount =
+            KDGpu::getSuitableImageCount(swapchainProperties.capabilities),
+        .imageExtent = state.swapchainExtent,
+        .imageUsageFlags = KDGpu::TextureUsageFlagBits::ColorAttachmentBit,
+        .compositeAlpha = state.compositeAlpha,
+        .presentMode = state.presentMode,
+        .oldSwapchain = state.swapchain,
+    });
+    if (!state.swapchain.isValid())
+        return false;
+
+    const auto &swapchainTextures = state.swapchain.textures();
+    state.swapchainViews.reserve(swapchainTextures.size());
+    state.renderCompleteSemaphores.reserve(swapchainTextures.size());
+    for (const auto &texture : swapchainTextures) {
+        state.swapchainViews.emplace_back(
+            texture.createView({ .format = state.swapchainFormat }));
+        state.renderCompleteSemaphores.emplace_back(
+            shared.device().createGpuSemaphore());
+    }
+
+    state.swapchainDirty = false;
+    return true;
+}
+
 void VKWindow::redraw()
 {
     if (!isExposed())
@@ -283,67 +344,11 @@ void VKWindow::redraw()
     if (!mState)
         return;
 
-    auto &state = *mState;
-    auto &shared = *state.shared;
-
-    const auto recreateSwapchain = [&]() {
-        const auto dpr = devicePixelRatio();
-        const auto requestedWidth =
-            std::max(1u, static_cast<uint32_t>(width() * dpr + 0.5));
-        const auto requestedHeight =
-            std::max(1u, static_cast<uint32_t>(height() * dpr + 0.5));
-
-        const auto swapchainProperties =
-            shared.adapter().swapchainProperties(state.surface);
-        const auto &capabilities = swapchainProperties.capabilities;
-        state.swapchainExtent = {
-            .width = std::clamp(requestedWidth,
-                capabilities.minImageExtent.width,
-                capabilities.maxImageExtent.width),
-            .height = std::clamp(requestedHeight,
-                capabilities.minImageExtent.height,
-                capabilities.maxImageExtent.height),
-        };
-
-        shared.device().waitUntilIdle();
-        state.renderPass.reset();
-        for (auto &commandBuffer : state.commandBuffers)
-            commandBuffer = {};
-        state.swapchainViews.clear();
-        state.renderCompleteSemaphores.clear();
-
-        state.swapchain = shared.device().createSwapchain({
-            .surface = state.surface,
-            .format = state.swapchainFormat,
-            .colorSpace = state.colorSpace,
-            .minImageCount =
-                KDGpu::getSuitableImageCount(swapchainProperties.capabilities),
-            .imageExtent = state.swapchainExtent,
-            .imageUsageFlags = KDGpu::TextureUsageFlagBits::ColorAttachmentBit,
-            .compositeAlpha = state.compositeAlpha,
-            .presentMode = state.presentMode,
-            .oldSwapchain = state.swapchain,
-        });
-        if (!state.swapchain.isValid())
-            return false;
-
-        const auto &swapchainTextures = state.swapchain.textures();
-        state.swapchainViews.reserve(swapchainTextures.size());
-        state.renderCompleteSemaphores.reserve(swapchainTextures.size());
-        for (const auto &texture : swapchainTextures) {
-            state.swapchainViews.emplace_back(
-                texture.createView({ .format = state.swapchainFormat }));
-            state.renderCompleteSemaphores.emplace_back(
-                shared.device().createGpuSemaphore());
-        }
-
-        state.swapchainDirty = false;
-        return true;
-    };
-
-    if (state.swapchainDirty && !recreateSwapchain())
+    if (!ensureSwapchain())
         return;
 
+    auto &state = *mState;
+    auto &shared = *state.shared;
     auto &frameFence = state.frameFences[state.inFlightIndex];
     frameFence.wait();
 
@@ -351,6 +356,11 @@ void VKWindow::redraw()
         state.presentCompleteSemaphores[state.inFlightIndex];
     const auto acquireResult = state.swapchain.getNextImageIndex(
         state.currentSwapchainImageIndex, presentComplete);
+        
+    if (acquireResult == KDGpu::AcquireImageResult::SurfaceLost) {
+        releaseGpu();
+        return;
+    }
     if (acquireResult == KDGpu::AcquireImageResult::OutOfDate) {
         state.swapchainDirty = true;
         return;
@@ -397,7 +407,7 @@ void VKWindow::redraw()
     });
     Q_EMIT submittedGpu();
 
-    const auto presentResult = shared.queue().present({
+    shared.queue().present({
         .waitSemaphores = { renderComplete },
         .swapchainInfos = {
             {
@@ -406,9 +416,6 @@ void VKWindow::redraw()
             },
         },
     });
-    if (presentResult == KDGpu::PresentResult::OutOfDate
-        || presentResult == KDGpu::PresentResult::SurfaceLost)
-        state.swapchainDirty = true;
 
     state.inFlightIndex = (state.inFlightIndex + 1) % MaxFramesInFlight;
 }

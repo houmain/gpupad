@@ -45,6 +45,7 @@ private:
     void releaseGpu();
     bool event(QEvent *event) override;
     void exposeEvent(QExposeEvent *event) override;
+    bool ensureSwapchain();
 
     const bool mEnableVSync;
     std::unique_ptr<State> mState;
