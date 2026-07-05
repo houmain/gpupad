@@ -13,8 +13,8 @@
 #define ENABLE_HLSL
 #include <glslang/Public/ResourceLimits.h>
 #include <glslang/Public/ShaderLang.h>
-#include <glslang/SPIRV/GlslangToSpv.h>
-#include <glslang/SPIRV/disassemble.h>
+#include <SPIRV/GlslangToSpv.h>
+#include <SPIRV/disassemble.h>
 
 #if __has_include(<glslang/MachineIndependent/LiveTraverser.h>)
 #  include <glslang/MachineIndependent/LiveTraverser.h>

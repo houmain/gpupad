@@ -13,7 +13,6 @@
 
 #if defined(GLSLANG_ENABLED)
 #  include <glslang/build_info.h>
-#  include <spirv_cross/spirv_cross_c.h>
 #endif
 
 namespace {
@@ -60,14 +59,6 @@ namespace {
             .arg(GLSLANG_VERSION_MAJOR)
             .arg(GLSLANG_VERSION_MINOR)
             .arg(GLSLANG_VERSION_PATCH);
-    }
-
-    QString spirvCrossVersionString()
-    {
-        return QStringLiteral("%1.%2.%3")
-            .arg(SPVC_C_API_VERSION_MAJOR)
-            .arg(SPVC_C_API_VERSION_MINOR)
-            .arg(SPVC_C_API_VERSION_PATCH);
     }
 #endif
 } // namespace
@@ -126,10 +117,6 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent)
     const auto glslangHeader = QString("## glslang");
     licenses.replace(glslangHeader,
         glslangHeader + " v" + glslangVersionString());
-
-    const auto spirvCrossHeader = QString("## SPIRV-Cross");
-    licenses.replace(spirvCrossHeader,
-        spirvCrossHeader + " v" + spirvCrossVersionString());
 #endif
 
     addTab(tr("Third-Party Libraries"), licenses);

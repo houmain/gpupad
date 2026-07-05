@@ -16,19 +16,6 @@ namespace {
         return static_cast<KDGpu::VulkanDevice *>(rm.getDevice(device));
     }
 
-    KDGpu::TextureType getKDTextureType(const TextureKind &kind)
-    {
-        if (kind.cubeMap)
-            return KDGpu::TextureType::TextureTypeCube;
-
-        switch (kind.dimensions) {
-        case 1: return KDGpu::TextureType::TextureType1D;
-        case 2: return KDGpu::TextureType::TextureType2D;
-        case 3: return KDGpu::TextureType::TextureType3D;
-        }
-        return {};
-    }
-
     std::optional<VkExternalMemoryHandleTypeFlagBits> toVkHandleType(
         ShareHandleType type)
     {
@@ -74,12 +61,6 @@ namespace {
             .depth = static_cast<uint32_t>(
                 kind.dimensions == 3 ? std::max(depth, 1) : 1),
         };
-    }
-
-    uint32_t vkArrayLayerCount(const TextureKind &kind, int layers)
-    {
-        return static_cast<uint32_t>(
-            std::max(layers, 1) * (kind.cubeMap ? 6 : 1));
     }
 
     uint32_t findMemoryType(VkPhysicalDevice physicalDevice,

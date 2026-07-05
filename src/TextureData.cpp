@@ -2,6 +2,7 @@
 #include "session/Item.h"
 #include <QImageReader>
 #include <QFileInfo>
+#include <QtEndian>
 #include <cstring>
 #include <limits>
 

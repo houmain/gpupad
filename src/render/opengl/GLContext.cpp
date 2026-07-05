@@ -16,7 +16,7 @@ bool GLContext::initialize(QOpenGLContext *context)
         return false;
 
     mDebugLogger = std::make_unique<QOpenGLDebugLogger>();
-    Q_ASSERT(mDebugLogger->initialize());
+    mDebugLogger->initialize();
 
     mDebugLogger->disableMessages(QOpenGLDebugMessage::AnySource,
         QOpenGLDebugMessage::AnyType,

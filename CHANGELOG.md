@@ -3,13 +3,13 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Version 4.0.0] - UNRELEASED
+## [Version 4.0.0] - 2026-07-05
 
 ### Added
 
 - Rendering texture editors with Vulkan when available.
 - Added adapter selection to session properties.
-- Allow to build without Vulkan/OpenGL/Direct3D.
+- Allow to build without OpenGL/Vulkan/Direct3D.
 
 ### Changed 
 
@@ -21,7 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Prevent scrolling to selected session item when expanding a group [#45].
 - Fixed unintentionally collapsing of menu bar [#46].
-- Fixed disabling QmlView support.
+- Fixed building without QML view support.
 - Several other things.
 
 ## [Version 3.4.1] - 2026-05-01

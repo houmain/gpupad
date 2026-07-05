@@ -198,9 +198,9 @@ The build script generator automatically fetches the additionally required libra
 
 The following libraries are optional an can be installed using the system's package manager or a platform independent one like [vcpkg](https://github.com/microsoft/vcpkg/):
 
+- [Vulkan](https://www.vulkan.org/)
 - [DirectX Shader Compiler](https://github.com/microsoft/DirectXShaderCompiler)
 - [OpenImageIO](https://github.com/AcademySoftwareFoundation/OpenImageIO)
-- [Slang](https://https://shader-slang.org)
 
 ### Build instructions:
 <details>
@@ -258,7 +258,7 @@ cd gpupad
 # install optional dependencies using vcpkg
 git clone --depth=1 https://github.com/microsoft/vcpkg.git
 vcpkg\bootstrap-vcpkg -disableMetrics
-vcpkg\vcpkg install directx-dxc openimageio shader-slang
+vcpkg\vcpkg install vulkan directx-dxc openimageio
 
 # generate Visual Studio solution (set correct path to Qt installation)
 cmake -B build -DCMAKE_PREFIX_PATH=C:\Qt\6.9.0\msvc2022_64 -DCMAKE_TOOLCHAIN_FILE=vcpkg\scripts\buildsystems\vcpkg.cmake

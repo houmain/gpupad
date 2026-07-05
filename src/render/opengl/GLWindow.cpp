@@ -5,6 +5,7 @@
 
 AdapterIdentity GLWindow::getAdapterIdentity()
 {
+    Q_ASSERT(onMainThread());
     auto glContext = QOpenGLContext();
     glContext.setShareContext(QOpenGLContext::globalShareContext());
     auto surface = QOffscreenSurface();

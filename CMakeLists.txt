@@ -297,6 +297,14 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     MACOSX_BUNDLE TRUE
 )
 
+if (WIN32 AND GPUPAD_UNITY_BUILD)
+    set_target_properties(${PROJECT_NAME} PROPERTIES UNITY_BUILD_CODE_BEFORE_INCLUDE [[
+#if !defined(NOMINMAX)
+#define NOMINMAX
+#endif
+    ]])
+endif()
+
 target_include_directories(${PROJECT_NAME} PRIVATE src libs)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE 
@@ -316,7 +324,7 @@ set(CMAKE_AUTOMOC OFF)
 set(CMAKE_AUTOUIC OFF)
 set(CMAKE_AUTORCC OFF)
 set(BUILD_TESTING OFF)
-set(BUILD_SHARED_LIBS ON)
+set(BUILD_SHARED_LIBS OFF)
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
 # Actions -------------------------
@@ -415,9 +423,6 @@ endif()
 
 # KDGpu -------------------------
 if (GPUPAD_ENABLE_VULKAN)
-    # TODO: could not get shared library to install
-    set(BUILD_SHARED_LIBS OFF)
-
     set(CMAKE_FOLDER KDGpu)
     set(GPUPAD_VMA_GIT_REPOSITORY "https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git" CACHE STRING "VulkanMemoryAllocator Git repository")
     set(GPUPAD_VMA_GIT_REVISION "3aa921224c154a0d2c43912bc88e1c42ce1f7607" CACHE STRING "VulkanMemoryAllocator Git revision")
@@ -450,9 +455,14 @@ if (GPUPAD_ENABLE_VULKAN)
     add_subdirectory(libs/KDGpu/src/KDGpu EXCLUDE_FROM_ALL)
     target_include_directories(KDGpu PUBLIC "$<BUILD_INTERFACE:${spdlog_SOURCE_DIR}/include/spdlog>")
     target_link_libraries(${PROJECT_NAME} PRIVATE KDGpu spdlog::spdlog)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE VULKAN_ENABLED)
 
-    set(BUILD_SHARED_LIBS ON)
+    # added for fallback in VKWindow to allow building on Ubuntu 22.04
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND Qt6_VERSION VERSION_LESS "6.5.0")
+        target_include_directories(${PROJECT_NAME} PRIVATE
+            "/usr/include/${CMAKE_LIBRARY_ARCHITECTURE}/qt6/QtGui/${Qt6_VERSION}/QtGui")
+    endif()
+
+    target_compile_definitions(${PROJECT_NAME} PRIVATE VULKAN_ENABLED)
 endif()
 
 # D3D -------------------------
@@ -532,8 +542,6 @@ if (GPUPAD_ENABLE_GLSLANG)
             SPIRV_TOOLS_BUILD_STATIC:BOOL=ON
     )
 
-    # TODO: linking static because of LiveTraverser
-    set(BUILD_SHARED_LIBS OFF)
     set(GPUPAD_GLSLANG_GIT_REPOSITORY "https://github.com/KhronosGroup/glslang.git" CACHE STRING "glslang Git repository")
     set(GPUPAD_GLSLANG_GIT_REVISION "7801882058ce876e7708f941f0825a58eb94351a" CACHE STRING "glslang Git revision")
     FetchSparse(glslang
@@ -551,7 +559,6 @@ if (GPUPAD_ENABLE_GLSLANG)
     )
     target_link_libraries(${PROJECT_NAME} PRIVATE glslang::glslang
         glslang::glslang-default-resource-limits glslang::SPIRV)
-    set(BUILD_SHARED_LIBS ON)
 
     # SPIRV-Cross
     set(CMAKE_FOLDER SPIRV-Cross)
@@ -694,7 +701,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
     set(CPACK_GENERATOR WIX)
-    set(CPACK_WIX_VERSION 4)
+    set(CPACK_WIX_VERSION 3)
 
     file(READ  "${CMAKE_SOURCE_DIR}/LICENSE" LICENSE_RTF)
     string(REPLACE "\n" "\\par" LICENSE_RTF "${LICENSE_RTF}")

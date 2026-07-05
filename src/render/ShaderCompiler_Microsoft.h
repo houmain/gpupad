@@ -5,7 +5,9 @@
 #  include "ShaderCompiler.h"
 
 #  define WIN32_LEAN_AND_MEAN
-#  define NOMINMAX
+#  if !defined(NOMINMAX)
+#    define NOMINMAX
+#  endif
 #  include <windows.h>
 #  include <wrl.h>
 #  include <d3d12shader.h>

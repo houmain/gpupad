@@ -18,3 +18,5 @@ KDGpu::StencilOperation toKDGpu(Attachment::StencilOperation op);
 KDGpu::SampleCountFlagBits getKDSampleCount(int samples);
 int getKDSamples(KDGpu::SampleCountFlags sampleCounts);
 std::optional<KDGpu::IndexType> getKDIndexType(int size);
+KDGpu::TextureType getKDTextureType(const TextureKind &kind);
+KDGpu::ViewType getKDViewType(const TextureKind &kind);

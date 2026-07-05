@@ -5,6 +5,13 @@
 #include <QGuiApplication>
 #include <KDGpu/swapchain_options.h>
 
+#if defined(Q_OS_LINUX)
+#    include <QtGui/qguiapplication_platform.h>
+#    if QT_VERSION < QT_VERSION_CHECK(6, 5, 0)
+#        include <qpa/qplatformnativeinterface.h>
+#    endif
+#endif
+
 namespace {
     constexpr auto MaxFramesInFlight = 2u;
 
@@ -14,22 +21,37 @@ namespace {
 #if defined(Q_OS_WIN)
         options.hWnd = reinterpret_cast<HWND>(window.winId());
 #elif defined(Q_OS_LINUX)
-#  if QT_CONFIG(wayland)
+#    if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0) && QT_CONFIG(wayland)
         if (auto *app = qApp->nativeInterface<QNativeInterface::QWaylandApplication>()) {
             options.display = app->display();
             options.surface = reinterpret_cast<wl_surface*>(window.winId());
-            return options;
+            if (options.display && options.surface)
+                return options;
         }
-#  endif
-#  if QT_CONFIG(xcb)
+#    else
+        if (QGuiApplication::platformName().contains(
+                QStringLiteral("wayland"), Qt::CaseInsensitive)) {
+            if (auto *native = QGuiApplication::platformNativeInterface()) {
+                options.display = static_cast<wl_display *>(
+                    native->nativeResourceForIntegration(
+                        QByteArrayLiteral("display")));
+                options.surface = static_cast<wl_surface *>(
+                    native->nativeResourceForWindow(
+                        QByteArrayLiteral("surface"), &window));
+                if (options.display && options.surface)
+                    return options;
+            }
+        }
+#    endif
+#    if QT_CONFIG(xcb)
         if (auto *app = qApp->nativeInterface<QNativeInterface::QX11Application>()) {
             options.connection = app->connection();
             options.window = static_cast<xcb_window_t>(static_cast<std::uintptr_t>(window.winId()));
             return options;
         }
-#  endif
+#    endif
 #else
-#  error "not handled platform"
+#    error "not handled platform"
 #endif
         return options;
     }

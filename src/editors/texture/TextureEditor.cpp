@@ -16,6 +16,7 @@
 #include "render/vulkan/VKTextureEditorItem.h"
 #include "render/vulkan/VKWindow.h"
 #include <QApplication>
+#include <QAction>
 #include <QClipboard>
 #include <QMimeData>
 #include <QScrollBar>

@@ -342,3 +342,30 @@ std::optional<KDGpu::IndexType> getKDIndexType(int size)
     default: return {};
     }
 }
+
+KDGpu::TextureType getKDTextureType(const TextureKind &kind)
+{
+    if (kind.cubeMap)
+        return KDGpu::TextureType::TextureTypeCube;
+
+    switch (kind.dimensions) {
+    case 1: return KDGpu::TextureType::TextureType1D;
+    case 2: return KDGpu::TextureType::TextureType2D;
+    case 3: return KDGpu::TextureType::TextureType3D;
+    }
+    return {};
+}
+
+KDGpu::ViewType getKDViewType(const TextureKind &kind)
+{
+    using KD = KDGpu::ViewType;
+    if (kind.cubeMap)
+        return (kind.array ? KD::ViewTypeCubeArray : KD::ViewTypeCube);
+
+    switch (kind.dimensions) {
+    case 1: return (kind.array ? KD::ViewType1DArray : KD::ViewType1D);
+    case 2: return (kind.array ? KD::ViewType2DArray : KD::ViewType2D);
+    case 3: return KD::ViewType3D;
+    }
+    return {};
+}

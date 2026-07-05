@@ -23,8 +23,6 @@ jobs:
         - {
            name: "Linux-x64"
            , os: ubuntu-22.04
-           , VCPKG_TRIPLET: "x64-linux-release"
-           , VCPKG_PACKAGES: ""
           }
         - {
             # Available Qt versions: https://ddalcino.github.io/aqt-list-server/
@@ -32,7 +30,7 @@ jobs:
             , os: windows-2022
             , QT_VERSION: 6.10.3, QT_INST_DIR: "C:/", QTDIR: "C:/Qt/6.10.3/msvc2022_64", QT_ARCH: win64_msvc2022_64
             , VCPKG_TRIPLET: "x64-windows-release"
-            , VCPKG_PACKAGES: "OpenImageIO directx-dxc"
+            , VCPKG_PACKAGES: "vulkan OpenImageIO directx-dxc"
           }
 #        - {
 #            name: "MacOS-x64"
@@ -52,7 +50,8 @@ jobs:
     - name: Setup Linux
       if: runner.os == 'Linux'
       run: |
-        sudo apt install build-essential git cmake pkg-config qt6-base-dev qt6-declarative-dev libqt6svg6-dev qt6-image-formats-plugins libgl1-mesa-dev libxcb*-dev libx11-dev libxrandr-dev
+        sudo apt install build-essential git cmake pkg-config qt6-base-dev qt6-declarative-dev libqt6svg6-dev qt6-image-formats-plugins
+        sudo apt install libgl1-mesa-dev libxcb*-dev libx11-dev libxrandr-dev qt6-wayland qt6-wayland-dev qt6-base-private-dev libvulkan-dev
         sudo apt install qml6-module-qtqml qml6-module-qtqml-workerscript qml6-module-qtqml-models 
         sudo apt install qml6-module-qtquick qml6-module-qtquick-controls qml6-module-qtquick-shapes qml6-module-qtquick-layouts qml6-module-qtquick-templates qml6-module-qtquick-window
         # to fix OIIO: https://github.com/colmap/colmap/issues/3811
@@ -78,10 +77,11 @@ jobs:
         submodules: recursive
 
     - name: Install vcpkg packages
+      if: matrix.config.VCPKG_TRIPLET != ''
       uses: johnwason/vcpkg-action@v7
       with:
           revision: '56bb2411609227288b70117ead2c47585ba07713'
-          pkgs: 'vulkan "ktx[vulkan]" glslang spirv-cross spirv-tools vulkan-memory-allocator spdlog ${{ matrix.config.VCPKG_PACKAGES }}'
+          pkgs: '${{ matrix.config.VCPKG_PACKAGES }}'
           triplet: '${{ matrix.config.VCPKG_TRIPLET }}'
           token: ${{ github.token }}
 
@@ -90,8 +90,12 @@ jobs:
       with:
         max-size: 250M
 
-    - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_INSTALL_PREFIX=dist -DENABLE_UNITY_BUILD=ON -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.config.VCPKG_TRIPLET }}
+    - name: Configure CMake (with vcpkg)
+      if: matrix.config.VCPKG_TRIPLET != ''
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_INSTALL_PREFIX=dist -DGPUPAD_UNITY_BUILD=ON -DCMAKE_TOOLCHAIN_FILE=${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.config.VCPKG_TRIPLET }}
+    - name: Configure CMake (without vcpkg)
+      if: matrix.config.VCPKG_TRIPLET == ''
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_INSTALL_PREFIX=dist -DGPUPAD_UNITY_BUILD=ON
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Release
     - name: Install
@@ -114,7 +118,8 @@ jobs:
         wget --no-verbose "https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage"
         chmod +x linuxdeploy*.AppImage
         export OUTPUT=GPUpad-${{ github.ref_name }}-Linux.AppImage
-        export EXTRA_QT_MODULES="svg;qml;waylandcompositor"
+        export EXTRA_QT_MODULES="svg;qml"
+        export EXTRA_PLATFORM_PLUGINS="libqwayland-egl.so;libqwayland-generic.so"
         ./linuxdeploy-x86_64.AppImage --appdir AppDir --plugin qt --output appimage        
 
     - name: Upload to Github release
