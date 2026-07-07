@@ -23,6 +23,7 @@ namespace {
     // TODO: remove when libKTX is fixed
     void fixFormat(ktxTexture1 &texture)
     {
+#if defined(OPENGL_ENABLED)
         auto glGetFormatFromInternalFormat = [](const GLenum internalFormat) {
             switch (internalFormat) {
             case GL_R8UI:
@@ -84,6 +85,7 @@ namespace {
             default: return GL_NONE;
             }
         };
+#endif // defined(OPENGL_ENABLED)
         if (auto format =
                 glGetFormatFromInternalFormat(texture.glInternalformat))
             texture.glFormat = format;

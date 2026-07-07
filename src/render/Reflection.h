@@ -101,7 +101,6 @@ int getBufferMemberRowCount(const SpvReflectBlockVariable &variable);
 int getBufferMemberColumnStride(const SpvReflectBlockVariable &variable);
 int getBufferMemberArraySize(const SpvReflectBlockVariable &variable);
 int getBufferMemberArrayStride(const SpvReflectBlockVariable &variable);
-GLenum getBufferMemberGLType(const SpvReflectBlockVariable &variable);
 
 QString getJsonString(const Reflection &reflection);
 

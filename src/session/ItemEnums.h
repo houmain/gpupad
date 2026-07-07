@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QObject>
-#include <qopengl.h>
 
 namespace ItemEnums {
     Q_NAMESPACE
@@ -196,30 +195,30 @@ namespace ItemEnums {
     Q_ENUM_NS(TextureFilter)
 
     enum DataType {
-        Int8 = GL_BYTE,
-        Int16 = GL_SHORT,
-        Int32 = GL_INT,
+        Int8 = 0x1400, // GL_BYTE
+        Int16 = 0x1402, // GL_SHORT
+        Int32 = 0x1404, // GL_INT
         Int64 = 0x140E, // GL_INT64_ARB
-        Uint8 = GL_UNSIGNED_BYTE,
-        Uint16 = GL_UNSIGNED_SHORT,
-        Uint32 = GL_UNSIGNED_INT,
+        Uint8 = 0x1401, // GL_UNSIGNED_BYTE
+        Uint16 = 0x1403, // GL_UNSIGNED_SHORT
+        Uint32 = 0x1405, // GL_UNSIGNED_INT
         Uint64 = 0x140F, // GL_UNSIGNED_INT64_ARB
-        Float = GL_FLOAT,
-        Double = GL_DOUBLE,
+        Float = 0x1406, // GL_FLOAT
+        Double = 0x140A, // GL_DOUBLE
     };
     Q_ENUM_NS(DataType)
 
     enum ShaderType {
         Includable = 0,
 
-        Vertex = GL_VERTEX_SHADER,
-        Fragment = GL_FRAGMENT_SHADER,
-        Geometry = GL_GEOMETRY_SHADER,
-        TessControl = GL_TESS_CONTROL_SHADER,
-        TessEvaluation = GL_TESS_EVALUATION_SHADER,
-        Compute = GL_COMPUTE_SHADER,
-        Task = GL_TASK_SHADER_NV,
-        Mesh = GL_MESH_SHADER_NV,
+        Vertex = 0x8B31, // GL_VERTEX_SHADER
+        Fragment = 0x8B30, // GL_FRAGMENT_SHADER
+        Geometry = 0x8DD9, // GL_GEOMETRY_SHADER
+        TessControl = 0x8E88, // GL_TESS_CONTROL_SHADER
+        TessEvaluation = 0x8E87, // GL_TESS_EVALUATION_SHADER
+        Compute = 0x91B9, // GL_COMPUTE_SHADER
+        Task = 0x955A, // GL_TASK_SHADER_NV
+        Mesh = 0x9559, // GL_MESH_SHADER_NV
 
         RayGeneration = 0x10000,
         RayIntersection,
@@ -250,15 +249,15 @@ namespace ItemEnums {
     Q_ENUM_NS(BindingType)
 
     enum ComparisonFunc {
-        NoComparisonFunc = GL_NONE,
-        LessEqual = GL_LEQUAL,
-        GreaterEqual = GL_GEQUAL,
-        Less = GL_LESS,
-        Greater = GL_GREATER,
-        Equal = GL_EQUAL,
-        NotEqual = GL_NOTEQUAL,
-        Always = GL_ALWAYS,
-        Never = GL_NEVER,
+        NoComparisonFunc = 0, // GL_NONE
+        LessEqual = 0x0203, // GL_LEQUAL
+        GreaterEqual = 0x0206, // GL_GEQUAL
+        Less = 0x0201, // GL_LESS
+        Greater = 0x0204, // GL_GREATER
+        Equal = 0x0202, // GL_EQUAL
+        NotEqual = 0x0205, // GL_NOTEQUAL
+        Always = 0x0207, // GL_ALWAYS
+        Never = 0x0200, // GL_NEVER
     };
     Q_ENUM_NS(ComparisonFunc)
 
@@ -281,146 +280,146 @@ namespace ItemEnums {
     Q_ENUM_NS(BindingEditor)
 
     enum ImageBindingFormat {
-        Internal = GL_NONE,
+        Internal = 0, // GL_NONE
 
         // 8 bit
-        r8 = GL_R8,
-        r8ui = GL_R8UI,
-        r8i = GL_R8I,
+        r8 = 0x8229, // GL_R8
+        r8ui = 0x8232, // GL_R8UI
+        r8i = 0x8231, // GL_R8I
 
         // 16 bit
-        r16 = GL_R16,
-        r16_snorm = GL_R16_SNORM, // not supported by glTexBuffer
-        r16f = GL_R16F,
-        r16ui = GL_R16UI,
-        r16i = GL_R16I,
-        rg8 = GL_RG8,
-        rg8_snorm = GL_RG8_SNORM, // not supported by glTexBuffer
-        rg8ui = GL_RG8UI,
-        rg8i = GL_RG8I,
+        r16 = 0x822A, // GL_R16
+        r16_snorm = 0x8F98, // GL_R16_SNORM, not supported by glTexBuffer
+        r16f = 0x822D, // GL_R16F
+        r16ui = 0x8234, // GL_R16UI
+        r16i = 0x8233, // GL_R16I
+        rg8 = 0x822B, // GL_RG8
+        rg8_snorm = 0x8F95, // GL_RG8_SNORM, not supported by glTexBuffer
+        rg8ui = 0x8238, // GL_RG8UI
+        rg8i = 0x8237, // GL_RG8I
 
         // 24 bit - not supported by glBindImageTexture
-        rgb32f = GL_RGB32F,
-        rgb32i = GL_RGB32I,
-        rgb32ui = GL_RGB32UI,
+        rgb32f = 0x8815, // GL_RGB32F
+        rgb32i = 0x8D83, // GL_RGB32I
+        rgb32ui = 0x8D71, // GL_RGB32UI
 
         // 32 bit
-        r32f = GL_R32F,
-        r32ui = GL_R32UI,
-        r32i = GL_R32I,
-        rg16 = GL_RG16,
-        rg16_snorm = GL_RG16_SNORM, // not supported by glTexBuffer
-        rg16ui = GL_RG16UI,
-        rg16i = GL_RG16I,
-        rg16f = GL_RG16F,
-        rgba8 = GL_RGBA8,
-        rgba8_snorm = GL_RGBA8_SNORM, // not supported by glTexBuffer
-        rgba8ui = GL_RGBA8UI,
-        rgba8i = GL_RGBA8I,
-        rgb10_a2 = GL_RGB10_A2, // not supported by glTexBuffer
-        rgb10_a2ui = GL_RGB10_A2UI, // not supported by glTexBuffer
-        r11f_g11f_b10f = GL_R11F_G11F_B10F, // not supported by glTexBuffer
+        r32f = 0x822E, // GL_R32F
+        r32ui = 0x8236, // GL_R32UI
+        r32i = 0x8235, // GL_R32I
+        rg16 = 0x822C, // GL_RG16
+        rg16_snorm = 0x8F99, // GL_RG16_SNORM, not supported by glTexBuffer
+        rg16ui = 0x823A, // GL_RG16UI
+        rg16i = 0x8239, // GL_RG16I
+        rg16f = 0x822F, // GL_RG16F
+        rgba8 = 0x8058, // GL_RGBA8
+        rgba8_snorm = 0x8F97, // GL_RGBA8_SNORM, not supported by glTexBuffer
+        rgba8ui = 0x8D7C, // GL_RGBA8UI
+        rgba8i = 0x8D8E, // GL_RGBA8I
+        rgb10_a2 = 0x8059, // GL_RGB10_A2, not supported by glTexBuffer
+        rgb10_a2ui = 0x906F, // GL_RGB10_A2UI, not supported by glTexBuffer
+        r11f_g11f_b10f = 0x8C3A, // GL_R11F_G11F_B10F, not supported by glTexBuffer
 
         // 64 bit
-        rg32f = GL_RG32F,
-        rg32ui = GL_RG32UI,
-        rg32i = GL_RG32I,
-        rgba16 = GL_RGBA16,
-        rgba16_snorm = GL_RGBA16_SNORM, // not supported by glTexBuffer
-        rgba16f = GL_RGBA16F,
-        rgba16ui = GL_RGBA16UI,
-        rgba16i = GL_RGBA16I,
+        rg32f = 0x8230, // GL_RG32F
+        rg32ui = 0x823C, // GL_RG32UI
+        rg32i = 0x823B, // GL_RG32I
+        rgba16 = 0x805B, // GL_RGBA16
+        rgba16_snorm = 0x8F9B, // GL_RGBA16_SNORM, not supported by glTexBuffer
+        rgba16f = 0x881A, // GL_RGBA16F
+        rgba16ui = 0x8D76, // GL_RGBA16UI
+        rgba16i = 0x8D88, // GL_RGBA16I
 
         // 128 bit
-        rgba32f = GL_RGBA32F,
-        rgba32i = GL_RGBA32I,
-        rgba32ui = GL_RGBA32UI,
+        rgba32f = 0x8814, // GL_RGBA32F
+        rgba32i = 0x8D82, // GL_RGBA32I
+        rgba32ui = 0x8D70, // GL_RGBA32UI
     };
     Q_ENUM_NS(ImageBindingFormat)
 
     enum FrontFace {
-        CCW = GL_CCW,
-        CW = GL_CW,
+        CCW = 0x0901, // GL_CCW
+        CW = 0x0900, // GL_CW
     };
     Q_ENUM_NS(FrontFace)
 
     enum CullMode {
-        NoCulling = GL_NONE,
-        Back = GL_BACK,
-        Front = GL_FRONT,
-        FrontAndBack = GL_FRONT_AND_BACK
+        NoCulling = 0, // GL_NONE
+        Back = 0x0405, // GL_BACK
+        Front = 0x0404, // GL_FRONT
+        FrontAndBack = 0x0408 // GL_FRONT_AND_BACK
     };
     Q_ENUM_NS(CullMode)
 
     enum PolygonMode {
-        Fill = GL_FILL,
-        Line = GL_LINE,
-        Point = GL_POINT,
+        Fill = 0x1B02, // GL_FILL
+        Line = 0x1B01, // GL_LINE
+        Point = 0x1B00, // GL_POINT
     };
     Q_ENUM_NS(PolygonMode)
 
     enum LogicOperation {
-        NoLogicOperation = GL_NONE,
-        Copy = GL_COPY,
-        Clear = GL_CLEAR,
-        Set = GL_SET,
-        CopyInverted = GL_COPY_INVERTED,
-        NoOp = GL_NOOP,
-        Invert = GL_INVERT,
-        And = GL_AND,
-        Nand = GL_NAND,
-        Or = GL_OR,
-        Nor = GL_NOR,
-        Xor = GL_XOR,
-        Equiv = GL_EQUIV,
-        AndReverse = GL_AND_REVERSE,
-        AndInverted = GL_AND_INVERTED,
-        OrReverse = GL_OR_REVERSE,
-        OrInverted = GL_OR_INVERTED,
+        NoLogicOperation = 0, // GL_NONE
+        Copy = 0x1503, // GL_COPY
+        Clear = 0x1500, // GL_CLEAR
+        Set = 0x150F, // GL_SET
+        CopyInverted = 0x150C, // GL_COPY_INVERTED
+        NoOp = 0x1505, // GL_NOOP
+        Invert = 0x150A, // GL_INVERT
+        And = 0x1501, // GL_AND
+        Nand = 0x150E, // GL_NAND
+        Or = 0x1507, // GL_OR
+        Nor = 0x1508, // GL_NOR
+        Xor = 0x1506, // GL_XOR
+        Equiv = 0x1509, // GL_EQUIV
+        AndReverse = 0x1502, // GL_AND_REVERSE
+        AndInverted = 0x1504, // GL_AND_INVERTED
+        OrReverse = 0x150B, // GL_OR_REVERSE
+        OrInverted = 0x150D, // GL_OR_INVERTED
     };
     Q_ENUM_NS(LogicOperation)
 
     enum BlendEquation {
-        Add = GL_FUNC_ADD,
-        Min = GL_MIN,
-        Max = GL_MAX,
-        Subtract = GL_FUNC_SUBTRACT,
-        ReverseSubtract = GL_FUNC_REVERSE_SUBTRACT,
+        Add = 0x8006, // GL_FUNC_ADD
+        Min = 0x8007, // GL_MIN
+        Max = 0x8008, // GL_MAX
+        Subtract = 0x800A, // GL_FUNC_SUBTRACT
+        ReverseSubtract = 0x800B, // GL_FUNC_REVERSE_SUBTRACT
     };
     Q_ENUM_NS(BlendEquation)
 
     enum BlendFactor {
-        Zero = GL_ZERO,
-        One = GL_ONE,
-        SrcColor = GL_SRC_COLOR,
-        OneMinusSrcColor = GL_ONE_MINUS_SRC_COLOR,
-        SrcAlpha = GL_SRC_ALPHA,
-        OneMinusSrcAlpha = GL_ONE_MINUS_SRC_ALPHA,
-        DstAlpha = GL_DST_ALPHA,
-        OneMinusDstAlpha = GL_ONE_MINUS_DST_ALPHA,
-        DstColor = GL_DST_COLOR,
-        OneMinusDstColor = GL_ONE_MINUS_DST_COLOR,
-        SrcAlphaSaturate = GL_SRC_ALPHA_SATURATE,
-        ConstantColor = GL_CONSTANT_COLOR,
-        OneMinusConstantColor = GL_ONE_MINUS_CONSTANT_COLOR,
-        ConstantAlpha = GL_CONSTANT_ALPHA,
-        OneMinusConstantAlpha = GL_ONE_MINUS_CONSTANT_ALPHA,
+        Zero = 0, // GL_ZERO
+        One = 1, // GL_ONE
+        SrcColor = 0x0300, // GL_SRC_COLOR
+        OneMinusSrcColor = 0x0301, // GL_ONE_MINUS_SRC_COLOR
+        SrcAlpha = 0x0302, // GL_SRC_ALPHA
+        OneMinusSrcAlpha = 0x0303, // GL_ONE_MINUS_SRC_ALPHA
+        DstAlpha = 0x0304, // GL_DST_ALPHA
+        OneMinusDstAlpha = 0x0305, // GL_ONE_MINUS_DST_ALPHA
+        DstColor = 0x0306, // GL_DST_COLOR
+        OneMinusDstColor = 0x0307, // GL_ONE_MINUS_DST_COLOR
+        SrcAlphaSaturate = 0x0308, // GL_SRC_ALPHA_SATURATE
+        ConstantColor = 0x8001, // GL_CONSTANT_COLOR
+        OneMinusConstantColor = 0x8002, // GL_ONE_MINUS_CONSTANT_COLOR
+        ConstantAlpha = 0x8003, // GL_CONSTANT_ALPHA
+        OneMinusConstantAlpha = 0x8004, // GL_ONE_MINUS_CONSTANT_ALPHA
     };
     Q_ENUM_NS(BlendFactor)
 
     enum PrimitiveType {
-        Points = GL_POINTS,
-        LineStrip = GL_LINE_STRIP,
-        //LineLoop = GL_LINE_LOOP,
-        Lines = GL_LINES,
-        LineStripAdjacency = GL_LINE_STRIP_ADJACENCY,
-        LinesAdjacency = GL_LINES_ADJACENCY,
-        TriangleStrip = GL_TRIANGLE_STRIP,
-        TriangleFan = GL_TRIANGLE_FAN,
-        Triangles = GL_TRIANGLES,
-        TriangleStripAdjacency = GL_TRIANGLE_STRIP_ADJACENCY,
-        TrianglesAdjacency = GL_TRIANGLES_ADJACENCY,
-        Patches = GL_PATCHES
+        Points = 0x0000, // GL_POINTS
+        LineStrip = 0x0003, // GL_LINE_STRIP
+        //LineLoop = 0x0002, // GL_LINE_LOOP
+        Lines = 0x0001, // GL_LINES
+        LineStripAdjacency = 0x000B, // GL_LINE_STRIP_ADJACENCY
+        LinesAdjacency = 0x000A, // GL_LINES_ADJACENCY
+        TriangleStrip = 0x0005, // GL_TRIANGLE_STRIP
+        TriangleFan = 0x0006, // GL_TRIANGLE_FAN
+        Triangles = 0x0004, // GL_TRIANGLES
+        TriangleStripAdjacency = 0x000D, // GL_TRIANGLE_STRIP_ADJACENCY
+        TrianglesAdjacency = 0x000C, // GL_TRIANGLES_ADJACENCY
+        Patches = 0x000E // GL_PATCHES
     };
     Q_ENUM_NS(PrimitiveType)
 
@@ -464,14 +463,14 @@ namespace ItemEnums2 {
     Q_ENUM_NS(CallType)
 
     enum StencilOperation {
-        Keep = GL_KEEP,
-        Zero = GL_ZERO,
-        Replace = GL_REPLACE,
-        Increment = GL_INCR,
-        IncrementWrap = GL_INCR_WRAP,
-        Decrement = GL_DECR,
-        DecrementWrap = GL_DECR_WRAP,
-        Invert = GL_INVERT,
+        Keep = 0x1E00, // GL_KEEP
+        Zero = 0, // GL_ZERO
+        Replace = 0x1E01, // GL_REPLACE
+        Increment = 0x1E02, // GL_INCR
+        IncrementWrap = 0x8507, // GL_INCR_WRAP
+        Decrement = 0x1E03, // GL_DECR
+        DecrementWrap = 0x8508, // GL_DECR_WRAP
+        Invert = 0x150A, // GL_INVERT
     };
     Q_ENUM_NS(StencilOperation)
 

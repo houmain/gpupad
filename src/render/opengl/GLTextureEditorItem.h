@@ -1,6 +1,7 @@
 #pragma once
 
 #include "editors/texture/TextureEditorItem.h"
+#include <QOpenGLTexture>
 #include <memory>
 
 class GLWindow;
@@ -24,6 +25,7 @@ private:
     bool renderTexture(const QMatrix4x4 &transform);
 
     std::unique_ptr<ProgramCache> mProgramCache;
+    QOpenGLTexture mPickerTexture{ QOpenGLTexture::Target1D };
     GLuint mImageTextureId{};
     GLuint mSharedTextureId{};
 };

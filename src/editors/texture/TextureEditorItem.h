@@ -4,14 +4,12 @@
 #include "TextureData.h"
 #include "render/ShareHandle.h"
 #include <QObject>
-#include <QOpenGLTexture>
 #include <QPointF>
 #include <QSizeF>
+#include <QRect>
 #include <QString>
 #include <array>
 #include <cstdint>
-#include <memory>
-#include <tuple>
 
 class QMatrix4x4;
 class QWindow;
@@ -131,7 +129,6 @@ protected:
     int mSample{ -1 };
     bool mFlipVertically{};
     bool mPickerEnabled{};
-    QOpenGLTexture mPickerTexture{ QOpenGLTexture::Target1D };
     Range mMappingRange{ 0, 1 };
     QPointF mMousePosition{};
     bool mUpload{};

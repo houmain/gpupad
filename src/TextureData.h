@@ -6,6 +6,10 @@
 #include <cstdint>
 #include <memory>
 
+#if defined(OPENGL_ENABLED)
+#  include <qopengl.h>
+#endif
+
 #if defined(VULKAN_ENABLED)
 #  include <vulkan/vulkan.h>
 #  include <ktxvulkan.h>
