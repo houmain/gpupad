@@ -217,8 +217,8 @@ QJsonArray SessionModel::generateJsonFromUrls(QModelIndex target,
             && FileDialog::isShaderFileName(fileName)) {
             auto item = Shader();
             item.type = Item::Type::Shader;
-            const auto sourceType = deduceSourceType(SourceType::PlainText,
-                FileDialog::getFileExtension(fileName), "");
+            const auto sourceType =
+                deduceSourceType(SourceType::PlainText, fileName, "");
             item.shaderType = getShaderType(sourceType);
             addFileItem(item, url);
         } else if (canContainType(target, Item::Type::Script)

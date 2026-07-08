@@ -722,9 +722,8 @@ void PropertiesEditor::deduceShaderType()
         const auto currentSourceType = (shader.fileName.isEmpty()
                 ? SourceType::PlainText
                 : getSourceType(shader));
-        const auto extension = FileDialog::getFileExtension(fileName);
         const auto sourceType =
-            deduceSourceType(currentSourceType, extension, source);
+            deduceSourceType(currentSourceType, fileName, source);
         if (sourceType != currentSourceType)
             mModel.setField(currentModelIndex(), SessionModel::ShaderType,
                 getShaderType(sourceType));

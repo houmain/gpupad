@@ -37,5 +37,5 @@ enum class SourceType {
     JavaScript,
 };
 
-SourceType deduceSourceType(SourceType current, const QString &extension,
+SourceType deduceSourceType(SourceType current, const QString &fileName,
     const QString &text);

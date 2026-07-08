@@ -1,9 +1,12 @@
 
 #include "session/Item.h"
+#include "FileDialog.h"
 
-SourceType deduceSourceType(SourceType current, const QString &extension,
+SourceType deduceSourceType(SourceType current, const QString &fileName,
     const QString &source)
 {
+    const auto extension = FileDialog::getFileExtension(fileName);
+
     if (extension == "vs" || extension == "vert")
         return SourceType::GLSL_VertexShader;
     if (extension == "fs" || extension == "frag")
@@ -70,8 +73,11 @@ SourceType deduceSourceType(SourceType current, const QString &extension,
     if (extension == "slang")
         return SourceType::Slang;
 
-    if (extension == "txt" || extension == "log" || extension == "csv")
+    if (extension == "txt" || extension == "log" || extension == "csv") {
+        if (QFileInfo(fileName).fileName() == "CMakeLists.txt")
+            return SourceType::Generic;
         return SourceType::PlainText;
+    }
 
     if (extension == "cfg" || extension == "conf" || source.startsWith("#!"))
         return SourceType::Generic;

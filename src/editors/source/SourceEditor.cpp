@@ -333,8 +333,7 @@ void SourceEditor::paste()
 
 void SourceEditor::deduceSourceType()
 {
-    const auto extension = FileDialog::getFileExtension(mFileName);
-    setSourceType(::deduceSourceType(sourceType(), extension, toPlainText()));
+    setSourceType(::deduceSourceType(sourceType(), mFileName, toPlainText()));
 }
 
 void SourceEditor::emitNavigationPositionChanged()
