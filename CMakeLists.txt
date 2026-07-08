@@ -324,7 +324,6 @@ set(CMAKE_AUTOMOC OFF)
 set(CMAKE_AUTOUIC OFF)
 set(CMAKE_AUTORCC OFF)
 set(BUILD_TESTING OFF)
-set(BUILD_SHARED_LIBS OFF)
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
 # Actions -------------------------
@@ -346,6 +345,14 @@ if (MSVC)
         /wd4244 # conversion from 'int64_t' to 'int', possible loss of data
         /wd4267 # conversion from 'size_t' to 'int', possible loss of data
     )
+endif()
+
+option(GPUPAD_SHARED_LIBRARIES "Dynamically Link Shared Libraries" ON)
+set(BUILD_SHARED_LIBS ${GPUPAD_SHARED_LIBRARIES})
+if(GPUPAD_SHARED_LIBRARIES)
+  set(GPUPAD_STATIC_LIBRARIES OFF)
+else()
+  set(GPUPAD_STATIC_LIBRARIES ON)
 endif()
 
 option(GPUPAD_UNITY_BUILD_LIBRARIES "Unity Build Libraries" ON)
@@ -539,9 +546,11 @@ if (GPUPAD_ENABLE_GLSLANG)
             SPIRV_SKIP_TESTS:BOOL=ON
             SPIRV_WERROR:BOOL=OFF
             SPIRV_TOOLS_USE_MIMALLOC:BOOL=OFF
-            SPIRV_TOOLS_BUILD_STATIC:BOOL=ON
+            SPIRV_TOOLS_BUILD_STATIC:BOOL=${GPUPAD_STATIC_LIBRARIES}
     )
 
+    # TODO: linking static because of LiveTraverser
+    set(BUILD_SHARED_LIBS OFF)
     set(GPUPAD_GLSLANG_GIT_REPOSITORY "https://github.com/KhronosGroup/glslang.git" CACHE STRING "glslang Git repository")
     set(GPUPAD_GLSLANG_GIT_REVISION "7801882058ce876e7708f941f0825a58eb94351a" CACHE STRING "glslang Git revision")
     FetchSparse(glslang
@@ -559,6 +568,7 @@ if (GPUPAD_ENABLE_GLSLANG)
     )
     target_link_libraries(${PROJECT_NAME} PRIVATE glslang::glslang
         glslang::glslang-default-resource-limits glslang::SPIRV)
+    set(BUILD_SHARED_LIBS ${GPUPAD_SHARED_LIBRARIES})
 
     # SPIRV-Cross
     set(CMAKE_FOLDER SPIRV-Cross)
@@ -569,6 +579,8 @@ if (GPUPAD_ENABLE_GLSLANG)
         GIT_TAG ${GPUPAD_SPIRV_CROSS_GIT_REVISION}
         CACHE_OPTIONS
             SPIRV_CROSS_CLI:BOOL=OFF
+            SPIRV_CROSS_SHARED:BOOL=OFF
+            SPIRV_CROSS_STATIC:BOOL=ON
             SPIRV_CROSS_ENABLE_TESTS:BOOL=OFF
             SPIRV_CROSS_SKIP_INSTALL:BOOL=ON
             SPIRV_CROSS_ENABLE_CPP:BOOL=OFF
@@ -588,7 +600,9 @@ if (GPUPAD_ENABLE_GLSLANG)
 
     # TODO: unity build does not work yet
     set_target_properties(SPIRV-Tools-shared PROPERTIES UNITY_BUILD OFF)
-    set_target_properties(SPIRV-Tools-static PROPERTIES UNITY_BUILD OFF)
+    if(GPUPAD_STATIC_LIBRARIES)
+        set_target_properties(SPIRV-Tools-static PROPERTIES UNITY_BUILD OFF)
+    endif()
     set_target_properties(SPIRV-Tools-opt PROPERTIES UNITY_BUILD OFF)
     set_target_properties(SPIRV-Tools-reduce PROPERTIES UNITY_BUILD OFF)
     set_target_properties(glslang PROPERTIES UNITY_BUILD OFF)
@@ -685,9 +699,7 @@ set(CPACK_COMPONENT_APPLICATION_HIDDEN TRUE)
 set(CPACK_COMPONENT_APPLICATION_REQUIRED TRUE)
 
 # added because of KTX (which has a dev and a library component)
-set(CPACK_COMPONENTS_ALL Application Samples Themes Actions library)
-set(CPACK_COMPONENT_LIBRARY_HIDDEN TRUE)
-set(CPACK_COMPONENT_LIBRARY_REQUIRED TRUE)
+set(CPACK_COMPONENTS_ALL Application Samples Themes Actions)
 
 if(VERSION MATCHES "^[0-9]+\.[0-9]+\.[0-9]+")
     string(REGEX MATCHALL "[0-9]+" VERSION_LIST "${VERSION}")
@@ -700,8 +712,8 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(CPACK_GENERATOR TGZ)
     
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
+    # TODO: automatically set CPACK_WIX_VERSION 4 if candle is not found
     set(CPACK_GENERATOR WIX)
-    set(CPACK_WIX_VERSION 3)
 
     file(READ  "${CMAKE_SOURCE_DIR}/LICENSE" LICENSE_RTF)
     string(REPLACE "\n" "\\par" LICENSE_RTF "${LICENSE_RTF}")
