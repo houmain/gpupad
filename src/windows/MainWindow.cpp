@@ -58,6 +58,7 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowIcon(icon);
 
     mUi->toolBarMain->toggleViewAction()->setVisible(false);
+    mUi->toolBarEditor->toggleViewAction()->setVisible(false);
 
     setDockOptions(QMainWindow::AllowNestedDocks);
     takeCentralWidget();
@@ -83,7 +84,7 @@ MainWindow::MainWindow(QWidget *parent)
     mFullScreenBar->setStyleSheet("* { margin:0 }");
     mUi->menubar->setCornerWidget(mFullScreenBar);
 
-    mEditorManager.createEditorToolBars(mUi->toolBarMain);
+    mEditorManager.createEditorToolBars(mUi->toolBarEditor);
 
     auto menuHamburger = new QMenu(this);
     for (auto action : mUi->menuFile->actions())

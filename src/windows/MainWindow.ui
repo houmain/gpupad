@@ -27,6 +27,14 @@
   </property>
   <widget class="QWidget" name="centralwidget"/>
   <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>494</width>
+     <height>22</height>
+    </rect>
+   </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>&amp;File</string>
@@ -202,7 +210,20 @@
    <addaction name="actionEvalManual"/>
    <addaction name="actionEvalAuto"/>
    <addaction name="actionEvalSteady"/>
-   <addaction name="separator"/>
+  </widget>
+  <widget class="QToolBar" name="toolBarEditor">
+   <property name="windowTitle">
+    <string>Editor ToolBar</string>
+   </property>
+   <property name="floatable">
+    <bool>false</bool>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
   </widget>
   <action name="actionOpen">
    <property name="icon">
