@@ -1,12 +1,23 @@
 #include "GLTextureEditorItem.h"
 #include "GLTexture.h"
 #include "GLWindow.h"
-
 #include <QMatrix4x4>
 #include <QOpenGLShaderProgram>
-#include <algorithm>
-#include <cstdint>
 #include <map>
+
+namespace {
+    GLenum toGLWrapMode(TextureEditorItem::WrapMode wrapMode)
+    {
+        using WM = TextureEditorItem::WrapMode;
+        switch (wrapMode) {
+        case WM::ClampToBorder:  return GL_CLAMP_TO_BORDER;
+        case WM::ClampToEdge:    return GL_CLAMP_TO_EDGE;
+        case WM::Repeat:         return GL_REPEAT;
+        case WM::MirroredRepeat: return GL_MIRRORED_REPEAT;
+        }
+        return GL_CLAMP_TO_BORDER;
+    }
+} // namespace
 
 class GLTextureEditorItem::ProgramCache
 {
@@ -158,9 +169,10 @@ bool GLTextureEditorItem::renderTexture(const QMatrix4x4 &transform)
     if (target != Texture::Target::Target2DMultisample
         && target != Texture::Target::Target2DMultisampleArray) {
 
-        gl.glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        gl.glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        gl.glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        const auto wrapMode = toGLWrapMode(static_cast<WrapMode>(mWrapMode));
+        gl.glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapMode);
+        gl.glTexParameteri(target, GL_TEXTURE_WRAP_T, wrapMode);
+        gl.glTexParameteri(target, GL_TEXTURE_WRAP_R, wrapMode);
         if (mMagnifyLinear) {
             gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER,

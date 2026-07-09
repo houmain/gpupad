@@ -120,6 +120,18 @@ namespace {
         KDGpu::PipelineLayout pipelineLayout;
         KDGpu::GraphicsPipeline pipeline;
     };
+
+    KDGpu::AddressMode toKDGpuAddressMode(TextureEditorItem::WrapMode wrapMode)
+    {
+        using WM = TextureEditorItem::WrapMode;
+        switch (wrapMode) {
+        case WM::ClampToBorder:  return KDGpu::AddressMode::ClampToBorder;
+        case WM::ClampToEdge:    return KDGpu::AddressMode::ClampToEdge;
+        case WM::Repeat:         return KDGpu::AddressMode::Repeat;
+        case WM::MirroredRepeat: return KDGpu::AddressMode::MirroredRepeat;
+        }
+        return KDGpu::AddressMode::ClampToBorder;
+    }
 } // namespace
 
 struct VKTextureEditorItem::PipelineCache
@@ -184,16 +196,18 @@ struct VKTextureEditorItem::TextureBinding
     }
 
     bool ensureBindGroup(KDGpu::Device &device, KDGpu::Queue &queue,
-        const Pipeline &pipeline, VKTexture &texture, bool linear)
+        const Pipeline &pipeline, VKTexture &texture, bool linear,
+        TextureEditorItem::WrapMode wrapMode)
     {
         if (bindGroup.isValid()
             && bindGroupLayout == pipeline.bindGroupLayout.handle()
-            && samplerLinear == linear)
+            && samplerLinear == linear && mWrapMode == wrapMode)
             return true;
 
         if (bindGroup.isValid() || sampler.isValid())
             queue.waitUntilIdle();
         bindGroup = {};
+        const auto addressMode = toKDGpuAddressMode(wrapMode);
         sampler = device.createSampler({
             .magFilter = linear ? KDGpu::FilterMode::Linear
                                 : KDGpu::FilterMode::Nearest,
@@ -201,9 +215,9 @@ struct VKTextureEditorItem::TextureBinding
                                 : KDGpu::FilterMode::Nearest,
             .mipmapFilter = linear ? KDGpu::MipmapFilterMode::Linear
                                    : KDGpu::MipmapFilterMode::Nearest,
-            .u = KDGpu::AddressMode::ClampToEdge,
-            .v = KDGpu::AddressMode::ClampToEdge,
-            .w = KDGpu::AddressMode::ClampToEdge,
+            .u = addressMode,
+            .v = addressMode,
+            .w = addressMode,
             .lodMinClamp = 0.0f,
             .lodMaxClamp =
                 static_cast<float>(std::max(texture.levels(), 1) - 1),
@@ -249,6 +263,7 @@ struct VKTextureEditorItem::TextureBinding
 
         bindGroupLayout = pipeline.bindGroupLayout.handle();
         samplerLinear = linear;
+        mWrapMode = wrapMode;
         return true;
     }
 
@@ -258,6 +273,7 @@ struct VKTextureEditorItem::TextureBinding
     std::unique_ptr<VKTexture> pickerTexture;
     bool pickerColorWritten{};
     bool samplerLinear{};
+    WrapMode mWrapMode{};
 };
 
 void VKTextureEditorItem::resetTextureBinding()
@@ -494,7 +510,7 @@ bool VKTextureEditorItem::renderTexture(const QMatrix4x4 &transform)
     if (!mTextureBinding)
         mTextureBinding = std::make_unique<TextureBinding>();
     if (!mTextureBinding->ensureBindGroup(gpuWindow.device(), gpuWindow.queue(),
-            *pipeline, *mTexture, linear))
+            *pipeline, *mTexture, linear, static_cast<WrapMode>(mWrapMode)))
         return false;
 
     const auto constants = getParams(transform, mTexture->samples());

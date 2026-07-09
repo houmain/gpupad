@@ -53,8 +53,7 @@
         <string>Fit Window</string>
        </property>
        <property name="icon">
-        <iconset theme="zoom-fit-best">
-         <normaloff>.</normaloff>.</iconset>
+        <iconset theme="zoom-fit-best"/>
        </property>
        <property name="checkable">
         <bool>true</bool>
@@ -224,12 +223,52 @@
     </widget>
    </item>
    <item>
+    <widget class="QLabel" name="labelWrap">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>27</height>
+      </size>
+     </property>
+     <property name="text">
+      <string>  Wrap</string>
+     </property>
+     <property name="buddy">
+      <cstring>face</cstring>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QComboBox" name="wrap">
+     <item>
+      <property name="text">
+       <string>Clamp to Border</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Clamp to Edge</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Repeat</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Repeat Mirror</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item>
     <spacer name="horizontalSpacer_2">
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
      <property name="sizeType">
-      <enum>QSizePolicy::Fixed</enum>
+      <enum>QSizePolicy::Policy::Fixed</enum>
      </property>
      <property name="sizeHint" stdset="0">
       <size>
@@ -242,7 +281,7 @@
    <item>
     <spacer name="horizontalSpacer">
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
      <property name="sizeHint" stdset="0">
       <size>

@@ -32,6 +32,8 @@ TextureEditorToolBar::TextureEditorToolBar(QWidget *parent)
 #endif
     connect(mUi->filter, &QCheckBox::checkStateChanged, this,
         &TextureEditorToolBar::filterStateChanged);
+    connect(mUi->wrap, &QComboBox::currentIndexChanged, this,
+        &TextureEditorToolBar::wrapModeChanged);
     connect(mUi->flipVertically, &QCheckBox::checkStateChanged,
         [&](int state) { Q_EMIT flipVerticallyChanged(state != 0); });
 }
@@ -106,11 +108,18 @@ void TextureEditorToolBar::setFace(int face)
 void TextureEditorToolBar::setCanFilter(bool canFilter)
 {
     mUi->filter->setVisible(canFilter);
+    mUi->labelWrap->setVisible(canFilter);
+    mUi->wrap->setVisible(canFilter);
 }
 
 void TextureEditorToolBar::setFilter(bool filter)
 {
     mUi->filter->setChecked(filter);
+}
+
+void TextureEditorToolBar::setWrapMode(int wrapMode)
+{
+    mUi->wrap->setCurrentIndex(wrapMode);
 }
 
 void TextureEditorToolBar::setCanFlipVertically(bool canFlip)

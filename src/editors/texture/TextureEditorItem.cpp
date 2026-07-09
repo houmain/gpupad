@@ -68,17 +68,18 @@ void main() {
 #else
   vec2 pos = data[gl_VertexID];
 #endif
-  vTexCoord = (pos + 1.0) / 2.0;
-  if (pc.flipVertically == 0)
-    pos.y *= -1;
 
   mat4 transform = pc.transform;
 #if !defined(VULKAN)
   transform[1][1] *= -1;
   transform[3][1] *= -1;
 #endif
+  vTexCoord = ((transform * vec4(pos, 0.0, 1.0)).xy + 1.0) / 2.0;
 
-  gl_Position = transform * vec4(pos, 0.0, 1.0);
+  if (pc.flipVertically == 0)
+    vTexCoord.y = 1 - vTexCoord.y;
+
+  gl_Position = vec4(pos, 0.0, 1.0);
 }
 )";
 
@@ -359,10 +360,10 @@ QMatrix4x4 TextureEditorItem::getTransform(const QSizeF &bounds,
     const auto renderSize = QSizeF(window().size());
     const auto width = std::max(renderSize.width() * dpr, 1.0);
     const auto height = std::max(renderSize.height() * dpr, 1.0);
-    const auto sx = bounds.width() / width;
-    const auto sy = bounds.height() / height;
-    const auto x = (offset.x() + bounds.width()) / width - 1.0;
-    const auto y = (offset.y() + bounds.height()) / height - 1.0;
+    const auto sx = width / bounds.width();
+    const auto sy = height / bounds.height();
+    const auto x = (width - offset.x() - bounds.width()) / bounds.width();
+    const auto y = (height - offset.y() - bounds.height()) / bounds.height();
     return QMatrix4x4(QTransform(sx, 0, 0, 0, sy, 0, x, y, 1));
 }
 

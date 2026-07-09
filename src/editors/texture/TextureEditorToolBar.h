@@ -25,6 +25,7 @@ public:
     void setFace(int face);
     void setCanFilter(bool canFilter);
     void setFilter(bool filter);
+    void setWrapMode(int wrapMode);
     void setCanFlipVertically(bool canFlip);
     void setFlipVertically(bool flip);
 
@@ -36,6 +37,7 @@ Q_SIGNALS:
     void faceChanged(int index);
     void sampleChanged(int index);
     void filterChanged(bool filter);
+    void wrapModeChanged(int wrapMode);
     void flipVerticallyChanged(bool flip);
 
 private:

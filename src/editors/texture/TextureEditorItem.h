@@ -18,6 +18,13 @@ class TextureEditorItem : public QObject
 {
     Q_OBJECT
 public:
+    enum class WrapMode {
+        ClampToBorder,
+        ClampToEdge,
+        Repeat,
+        MirroredRepeat,
+    };
+
     explicit TextureEditorItem(QWindow *parent);
     ~TextureEditorItem() override;
     virtual void releaseGpu() = 0;
@@ -36,6 +43,12 @@ public:
         update();
     }
     bool magnifyLinear() const { return mMagnifyLinear; }
+    void setWrapMode(int wrapMode)
+    {
+        mWrapMode = wrapMode;
+        update();
+    }
+    int wrapMode() const { return mWrapMode; }
     void setLevel(float level)
     {
         mLevel = level;
@@ -123,6 +136,7 @@ protected:
     TextureData mImage;
     int mTextureSamples{ 1 };
     bool mMagnifyLinear{};
+    int mWrapMode{};
     float mLevel{};
     int mFace{};
     float mLayer{};

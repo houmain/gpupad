@@ -151,6 +151,7 @@ void TextureEditor::recreateRenderWidget()
     if (prevTextureItem) {
         mTextureItem->setImage(prevTextureItem->image());
         mTextureItem->setMagnifyLinear(prevTextureItem->magnifyLinear());
+        mTextureItem->setWrapMode(prevTextureItem->wrapMode());
         mTextureItem->setLevel(prevTextureItem->level());
         mTextureItem->setFace(prevTextureItem->face());
         mTextureItem->setLayer(prevTextureItem->layer());
@@ -214,6 +215,8 @@ QList<QMetaObject::Connection> TextureEditor::connectEditActions(
         mTextureItem, &TextureEditorItem::setFace);
     c += connect(&mEditorToolBar, &TextureEditorToolBar::filterChanged,
         mTextureItem, &TextureEditorItem::setMagnifyLinear);
+    c += connect(&mEditorToolBar, &TextureEditorToolBar::wrapModeChanged,
+        mTextureItem, &TextureEditorItem::setWrapMode);
     c += connect(&mEditorToolBar, &TextureEditorToolBar::flipVerticallyChanged,
         mTextureItem, &TextureEditorItem::setFlipVertically);
     c += connect(mTextureItem, &TextureEditorItem::pickerColorChanged,
