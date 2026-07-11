@@ -773,8 +773,11 @@ MessageType VKPipeline::updateBindings(VKContext &context,
 
     case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE: {
         const auto imageBinding = find(mBindings.images, desc.name);
+        if (!imageBinding)
+            return MessageType::ImageNotSet;
+
         const auto texture = static_cast<VKTexture *>(imageBinding->texture);
-        if (!imageBinding || !texture || !texture->prepareStorageImage(context))
+        if (!texture || !texture->prepareStorageImage(context))
             return MessageType::ImageNotSet;
 
         mUsedItems += imageBinding->bindingItemId;
