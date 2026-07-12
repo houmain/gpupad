@@ -2,6 +2,11 @@
 
 #if defined(VULKAN_ENABLED)
 
+// TODO: added because of multiple definitions of fmt::v11::detail::assert_fail
+#  if defined(_WIN32) && !defined(FMT_ASSERT)
+#    define FMT_ASSERT
+#  endif
+
 #  include "render/Device.h"
 #  include <memory>
 #  include <mutex>

@@ -1,29 +1,34 @@
-
-#include "ShaderCompiler.h"
-#include "ShaderBase.h"
-#include "Reflection.h"
-#include <QRegularExpression>
-#include <QFile>
-#include <QTextStream>
-#include <sstream>
-#include <set>
-
 #if defined(GLSLANG_ENABLED)
 
-#define ENABLE_HLSL
-#include <glslang/Public/ResourceLimits.h>
-#include <glslang/Public/ShaderLang.h>
-#include <SPIRV/GlslangToSpv.h>
-#include <SPIRV/disassemble.h>
+#  include "ShaderCompiler.h"
+#  include "ShaderBase.h"
+#  include "Reflection.h"
+#  include <QRegularExpression>
+#  include <QFile>
+#  include <QTextStream>
+#  include <sstream>
+#  include <set>
 
-#if __has_include(<glslang/MachineIndependent/LiveTraverser.h>)
-#  include <glslang/MachineIndependent/LiveTraverser.h>
-#endif
+#  define ENABLE_HLSL
+#  include <glslang/Public/ResourceLimits.h>
+#  include <glslang/Public/ShaderLang.h>
 
-#include <spirv_glsl.hpp>
-#include <spirv_hlsl.hpp>
+#  if __has_include(<glslang/SPIRV/GlslangToSpv.h>)
+#    include <glslang/SPIRV/GlslangToSpv.h>
+#    include <glslang/SPIRV/disassemble.h>
+#  else
+#    include <SPIRV/GlslangToSpv.h>
+#    include <SPIRV/disassemble.h>
+#  endif
 
-#include "spirv-tools/optimizer.hpp"
+#  if __has_include(<glslang/MachineIndependent/LiveTraverser.h>)
+#    include <glslang/MachineIndependent/LiveTraverser.h>
+#  endif
+
+#  include <spirv_glsl.hpp>
+#  include <spirv_hlsl.hpp>
+
+#  include "spirv-tools/optimizer.hpp"
 
 namespace ShaderCompiler {
 
@@ -232,7 +237,7 @@ namespace ShaderCompiler {
 
         void patchHLSLGlobalUniformBindingSet(glslang::TShader &shader)
         {
-#if __has_include(<glslang/MachineIndependent/LiveTraverser.h>)
+#  if __has_include(<glslang/MachineIndependent/LiveTraverser.h>)
             struct Traverser : glslang::TLiveTraverser
             {
                 using glslang::TLiveTraverser::TLiveTraverser;
@@ -256,7 +261,7 @@ namespace ShaderCompiler {
                         true);
                     root->traverse(&traverser);
                 }
-#endif
+#  endif
         }
 
         class Includer : public glslang::TShader::Includer
@@ -506,8 +511,7 @@ namespace ShaderCompiler {
 
 #else // !defined(GLSLANG_ENABLED)
 
-namespace ShaderCompiler
-{
+namespace ShaderCompiler {
     std::map<Shader::ShaderType, Spirv> compileSpirv_glslang(
         const Session &session, const std::vector<Input> &inputs,
         ItemId programItemId, MessagePtrSet &messages)
@@ -529,12 +533,14 @@ namespace ShaderCompiler
     }
 
     QString generateGLSL(const Spirv &spirv, ItemId itemId,
-        MessagePtrSet &messages) {
+        MessagePtrSet &messages)
+    {
         return {};
     }
 
     QString generateHLSL(const Spirv &spirv, ItemId itemId,
-        MessagePtrSet &messages) {
+        MessagePtrSet &messages)
+    {
         return {};
     }
 

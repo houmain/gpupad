@@ -570,6 +570,10 @@ if (GPUPAD_ENABLE_GLSLANG)
             SPIRV_TOOLS_USE_MIMALLOC:BOOL=OFF
             SPIRV_TOOLS_BUILD_STATIC:BOOL=${GPUPAD_BUILD_STATIC}
     )
+    if(NOT TARGET SPIRV-Tools-opt)
+        find_package(SPIRV-Tools-opt REQUIRED)
+        target_link_libraries(${PROJECT_NAME} PRIVATE SPIRV-Tools-opt)
+    endif()
 
     # TODO: linking static because of LiveTraverser
     set(BUILD_SHARED_LIBS OFF)
