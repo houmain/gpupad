@@ -176,7 +176,7 @@ namespace {
                 desc.block.type_description = desc.type_description;
 
                 const auto addBlockMembers =
-                    [&module, &desc](const auto &addBlockMembers,
+                    [&module](const auto &addBlockMembers,
                         SpvReflectBlockVariable &block,
                         const BlockVariable &descBlock) -> void {
                     if (descBlock.members.empty())

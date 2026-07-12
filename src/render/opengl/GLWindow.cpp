@@ -60,6 +60,11 @@ GLWindow::GLWindow(bool enableVSync, QWindow *parent)
     , mEnableVSync(enableVSync)
 {
     setSurfaceType(QWindow::OpenGLSurface);
+
+    auto format = QOpenGLContext::globalShareContext()->format();
+    format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
+    format.setSwapInterval(mEnableVSync ? 1 : 0);
+    setFormat(format);
 }
 
 GLWindow::~GLWindow()
@@ -96,13 +101,6 @@ bool GLWindow::makeCurrent()
     if (!mContext) {
         mContext.reset(new QOpenGLContext());
         mContext->setShareContext(QOpenGLContext::globalShareContext());
-
-        auto format = requestedFormat();
-        format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
-        format.setSwapInterval(mEnableVSync ? 1 : 0);
-        setFormat(format);
-        mContext->setFormat(format);
-
         if (!mContext->create())
             return false;
     }
@@ -134,7 +132,17 @@ void GLWindow::redraw()
 
     Q_EMIT paintingGpu();
 
+    const auto start = std::chrono::high_resolution_clock::now();
     mContext->swapBuffers(this);
+    const auto end = std::chrono::high_resolution_clock::now();
+
+    // limit refresh rate when swapping is not synchronizing
+    static auto sLastSwapTime = end;
+    if (mEnableVSync && end - start < std::chrono::milliseconds(2)) {
+        std::this_thread::sleep_for(sLastSwapTime - end +
+            std::chrono::microseconds(16'667));
+        sLastSwapTime = end;
+    }
     mContext->doneCurrent();
 }
 

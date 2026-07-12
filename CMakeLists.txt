@@ -357,12 +357,12 @@ if (MSVC)
     )
 endif()
 
-option(GPUPAD_SHARED_LIBRARIES "Dynamically Link Shared Libraries" ON)
-set(BUILD_SHARED_LIBS ${GPUPAD_SHARED_LIBRARIES})
-if(GPUPAD_SHARED_LIBRARIES)
-  set(GPUPAD_STATIC_LIBRARIES OFF)
+option(GPUPAD_BUILD_SHARED "Dynamically Link Shared Libraries" ON)
+set(BUILD_SHARED_LIBS ${GPUPAD_BUILD_SHARED})
+if(GPUPAD_BUILD_SHARED)
+  set(GPUPAD_BUILD_STATIC OFF)
 else()
-  set(GPUPAD_STATIC_LIBRARIES ON)
+  set(GPUPAD_BUILD_STATIC ON)
 endif()
 
 option(GPUPAD_UNITY_BUILD_LIBRARIES "Unity Build Libraries" ON)
@@ -561,7 +561,7 @@ if (GPUPAD_ENABLE_GLSLANG)
             SPIRV_SKIP_TESTS:BOOL=ON
             SPIRV_WERROR:BOOL=OFF
             SPIRV_TOOLS_USE_MIMALLOC:BOOL=OFF
-            SPIRV_TOOLS_BUILD_STATIC:BOOL=${GPUPAD_STATIC_LIBRARIES}
+            SPIRV_TOOLS_BUILD_STATIC:BOOL=${GPUPAD_BUILD_STATIC}
     )
 
     # TODO: linking static because of LiveTraverser
@@ -583,7 +583,7 @@ if (GPUPAD_ENABLE_GLSLANG)
     )
     target_link_libraries(${PROJECT_NAME} PRIVATE glslang::glslang
         glslang::glslang-default-resource-limits glslang::SPIRV)
-    set(BUILD_SHARED_LIBS ${GPUPAD_SHARED_LIBRARIES})
+    set(BUILD_SHARED_LIBS ${GPUPAD_BUILD_SHARED})
 
     # SPIRV-Cross
     set(CMAKE_FOLDER SPIRV-Cross)
@@ -615,7 +615,7 @@ if (GPUPAD_ENABLE_GLSLANG)
 
     # TODO: unity build does not work yet
     set_target_properties(SPIRV-Tools-shared PROPERTIES UNITY_BUILD OFF)
-    if(GPUPAD_STATIC_LIBRARIES)
+    if(GPUPAD_BUILD_STATIC)
         set_target_properties(SPIRV-Tools-static PROPERTIES UNITY_BUILD OFF)
     endif()
     set_target_properties(SPIRV-Tools-opt PROPERTIES UNITY_BUILD OFF)
