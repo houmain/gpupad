@@ -98,7 +98,7 @@ function(fetch_sparse_normalize_path out_var path)
 endfunction()
 
 function(fetch_sparse_parse_cache_option name out_name out_type out_value cache_option)
-    if(NOT "${cache_option}" MATCHES "^([^:=]+)(:([^=]+))?=(.*)$")
+    if(NOT "${cache_option}" MATCHES "^([^:=]+)(:([^:=]+))?=(.*)$")
         message(FATAL_ERROR
             "Invalid CACHE_OPTIONS entry for FetchSparse(${name}): ${cache_option}. "
             "Expected NAME:TYPE=VALUE or NAME=VALUE.")
@@ -118,6 +118,7 @@ endfunction()
 
 function(FetchSparse name)
     set(one_value_args
+        FIND_PACKAGE
         GIT_REPOSITORY
         GIT_TAG
         GIT_FILTER
@@ -130,6 +131,22 @@ function(FetchSparse name)
     if(ARG_UNPARSED_ARGUMENTS)
         message(FATAL_ERROR "Unknown arguments for FetchSparse(${name}): ${ARG_UNPARSED_ARGUMENTS}")
     endif()
+
+    if(ARG_FIND_PACKAGE)
+        find_package(${name} QUIET)
+        set(find_package_found_var "${name}_FOUND")
+        if(DEFINED ${find_package_found_var})
+            set(find_package_found "${${find_package_found_var}}")
+        else()
+            set(find_package_found FALSE)
+        endif()
+
+        if(find_package_found)
+            message(STATUS "FetchSparse(${name}): using package ${name}")
+            return()
+        endif()
+    endif()
+
     if(NOT ARG_GIT_REPOSITORY)
         message(FATAL_ERROR "FetchSparse(${name}) requires GIT_REPOSITORY")
     endif()

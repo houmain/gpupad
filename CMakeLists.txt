@@ -340,11 +340,11 @@ set(CMAKE_SHARED_LIBRARY_PREFIX "")
 set(CMAKE_FOLDER Actions)
 file(GLOB ACTION_PATHS LIST_DIRECTORIES true "${CMAKE_CURRENT_SOURCE_DIR}/extra/actions/*")
 foreach(ACTION_PATH IN LISTS ACTION_PATHS)
-  if (EXISTS "${ACTION_PATH}/CMakeLists.txt")
-    get_filename_component(ACTION "${ACTION_PATH}" NAME)
-    add_subdirectory("${ACTION_PATH}" EXCLUDE_FROM_ALL)
-    add_dependencies(${PROJECT_NAME} ${ACTION})
-  endif()
+    if (EXISTS "${ACTION_PATH}/CMakeLists.txt")
+        get_filename_component(ACTION "${ACTION_PATH}" NAME)
+        add_subdirectory("${ACTION_PATH}" EXCLUDE_FROM_ALL)
+        add_dependencies(${PROJECT_NAME} ${ACTION})
+    endif()
 endforeach()
 
 # build options of third party libraries ------------------
@@ -357,7 +357,7 @@ if (MSVC)
     )
 endif()
 
-option(GPUPAD_BUILD_SHARED "Dynamically Link Shared Libraries" ON)
+option(GPUPAD_BUILD_SHARED "Dynamically Link Shared Libraries" OFF)
 set(BUILD_SHARED_LIBS ${GPUPAD_BUILD_SHARED})
 if(GPUPAD_BUILD_SHARED)
   set(GPUPAD_BUILD_STATIC OFF)
@@ -423,9 +423,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE spirv-reflect-static)
 
 # OpenGL -------------------------
 if (GPUPAD_ENABLE_OPENGL)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE OPENGL_ENABLED)
     find_package(Qt6 REQUIRED COMPONENTS OpenGL)
     target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::OpenGL)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE OPENGL_ENABLED)
 
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         target_link_libraries(${PROJECT_NAME} PRIVATE GL)
@@ -440,7 +440,9 @@ endif()
 
 # KDGpu -------------------------
 if (GPUPAD_ENABLE_VULKAN)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE VULKAN_ENABLED)
     set(CMAKE_FOLDER KDGpu)
+
     set(GPUPAD_VMA_GIT_REPOSITORY "https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git" CACHE STRING "VulkanMemoryAllocator Git repository")
     set(GPUPAD_VMA_GIT_REVISION "3aa921224c154a0d2c43912bc88e1c42ce1f7607" CACHE STRING "VulkanMemoryAllocator Git revision")
     FetchSparse(VulkanMemoryAllocator
@@ -453,9 +455,11 @@ if (GPUPAD_ENABLE_VULKAN)
     )
     add_library(vulkan-memory-allocator::vulkan-memory-allocator ALIAS VulkanMemoryAllocator)
 
+    option(GPUPAD_SPDLOG_FIND_PACKAGE "Find spdlog package" ON)
     set(GPUPAD_SPDLOG_GIT_REPOSITORY "https://github.com/gabime/spdlog.git" CACHE STRING "spdlog Git repository")
     set(GPUPAD_SPDLOG_GIT_REVISION "f544fce006850a58063277068948dcda5681a27c" CACHE STRING "spdlog Git revision")
     FetchSparse(spdlog
+        FIND_PACKAGE ${GPUPAD_SPDLOG_FIND_PACKAGE}
         GIT_REPOSITORY ${GPUPAD_SPDLOG_GIT_REPOSITORY}
         GIT_TAG ${GPUPAD_SPDLOG_GIT_REVISION}
         CACHE_OPTIONS
@@ -470,7 +474,9 @@ if (GPUPAD_ENABLE_VULKAN)
 
     include(FeatureSummary)
     add_subdirectory(libs/KDGpu/src/KDGpu EXCLUDE_FROM_ALL)
-    target_include_directories(KDGpu PUBLIC "$<BUILD_INTERFACE:${spdlog_SOURCE_DIR}/include/spdlog>")
+    if(DEFINED spdlog_SOURCE_DIR)
+        target_include_directories(KDGpu PUBLIC "$<BUILD_INTERFACE:${spdlog_SOURCE_DIR}/include/spdlog>")
+    endif()
     target_link_libraries(${PROJECT_NAME} PRIVATE KDGpu spdlog::spdlog)
     if(APPLE)
         target_link_libraries(${PROJECT_NAME} PRIVATE
@@ -483,16 +489,14 @@ if (GPUPAD_ENABLE_VULKAN)
         target_include_directories(${PROJECT_NAME} PRIVATE
             "/usr/include/${CMAKE_LIBRARY_ARCHITECTURE}/qt6/QtGui/${Qt6_VERSION}/QtGui")
     endif()
-
-    target_compile_definitions(${PROJECT_NAME} PRIVATE VULKAN_ENABLED)
 endif()
 
 # D3D -------------------------
 if (GPUPAD_ENABLE_D3D)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE D3D_ENABLED)
     target_link_libraries(${PROJECT_NAME} PRIVATE 
         d3d11
         dxgi)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE D3D_ENABLED)
 endif()
 
 # DXC -------------------------
@@ -502,9 +506,9 @@ if (WIN32)
     find_package(directx-dxc CONFIG)
     option(GPUPAD_ENABLE_DXC "Enable DXC" ${directx-dxc_FOUND})
     if(GPUPAD_ENABLE_DXC)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE DXC_ENABLED)
         target_link_libraries(${PROJECT_NAME} PRIVATE 
             Microsoft::DirectXShaderCompiler)      
-        target_compile_definitions(${PROJECT_NAME} PRIVATE DXC_ENABLED)
     endif()
 endif()
 
@@ -512,8 +516,8 @@ endif()
 find_package(Qt6Multimedia CONFIG)
 option(GPUPAD_ENABLE_VIDEOPLAYER "Enable Video Playback" ${Qt6Multimedia_FOUND})
 if(GPUPAD_ENABLE_VIDEOPLAYER)
-    target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Multimedia)
     target_compile_definitions(${PROJECT_NAME} PRIVATE VIDEOPLAYER_ENABLED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Multimedia)
 endif()
 
 # Qt6Quick -------------------------
@@ -521,8 +525,8 @@ find_package(Qt6Quick CONFIG)
 find_package(Qt6QuickWidgets CONFIG)
 option(GPUPAD_ENABLE_QMLVIEW "Enable QML-View" ${Qt6QuickWidgets_FOUND})
 if(GPUPAD_ENABLE_QMLVIEW)
-    target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Quick Qt6::QuickWidgets)
     target_compile_definitions(${PROJECT_NAME} PRIVATE QMLVIEW_ENABLED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Quick Qt6::QuickWidgets)
 
     find_package(Qt6QuickControls2 CONFIG)
     if(Qt6QuickControls2_FOUND)
@@ -534,12 +538,13 @@ endif()
 option(GPUPAD_ENABLE_GLSLANG "Enable glslang" ${ENABLE_VULKAN_DEFAULT})
 if (GPUPAD_ENABLE_GLSLANG)
     target_compile_definitions(${PROJECT_NAME} PRIVATE GLSLANG_ENABLED)
+    set(CMAKE_FOLDER glslang)
 
     # SPIRV-Headers
-    set(CMAKE_FOLDER SPIRV-Tools)
+    option(GPUPAD_SPIRV_HEADERS_FIND_PACKAGE "Find SPIRV-Headers package" ON)
     set(GPUPAD_SPIRV_HEADERS_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Headers.git" CACHE STRING "SPIRV-Headers Git repository")
     set(GPUPAD_SPIRV_HEADERS_GIT_REVISION "c63848ecf2200425511319fd8bf2c17b751e501e" CACHE STRING "SPIRV-Headers Git revision")
-    FetchSparse(SPIRV-Headers
+    FetchSparse(spirv-headers
         GIT_REPOSITORY ${GPUPAD_SPIRV_HEADERS_GIT_REPOSITORY}
         GIT_TAG ${GPUPAD_SPIRV_HEADERS_GIT_REVISION}
         CACHE_OPTIONS
@@ -549,9 +554,11 @@ if (GPUPAD_ENABLE_GLSLANG)
     FetchContent_GetProperties(SPIRV-Headers SOURCE_DIR GPUPAD_SPIRV_HEADERS_SOURCE_DIR)
 
     # SPIRV-Tools
+    option(GPUPAD_SPIRV_TOOLS_FIND_PACKAGE "Find SPIRV-Tools package" ON)
     set(GPUPAD_SPIRV_TOOLS_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Tools.git" CACHE STRING "SPIRV-Tools Git repository")
     set(GPUPAD_SPIRV_TOOLS_GIT_REVISION "ee4f6beddb14cf6e9259288b86625405b4cdc4e1" CACHE STRING "SPIRV-Tools Git revision")
-    FetchSparse(SPIRV-Tools
+    FetchSparse(spirv-tools
+        FIND_PACKAGE ${GPUPAD_SPIRV_TOOLS_FIND_PACKAGE}
         GIT_REPOSITORY ${GPUPAD_SPIRV_TOOLS_GIT_REPOSITORY}
         GIT_TAG ${GPUPAD_SPIRV_TOOLS_GIT_REVISION}
         CACHE_OPTIONS
@@ -566,9 +573,11 @@ if (GPUPAD_ENABLE_GLSLANG)
 
     # TODO: linking static because of LiveTraverser
     set(BUILD_SHARED_LIBS OFF)
+    option(GPUPAD_GLSLANG_FIND_PACKAGE "Find glslang package" ON)
     set(GPUPAD_GLSLANG_GIT_REPOSITORY "https://github.com/KhronosGroup/glslang.git" CACHE STRING "glslang Git repository")
     set(GPUPAD_GLSLANG_GIT_REVISION "7801882058ce876e7708f941f0825a58eb94351a" CACHE STRING "glslang Git revision")
     FetchSparse(glslang
+        FIND_PACKAGE ${GPUPAD_GLSLANG_FIND_PACKAGE}
         GIT_REPOSITORY ${GPUPAD_GLSLANG_GIT_REPOSITORY}
         GIT_TAG ${GPUPAD_GLSLANG_GIT_REVISION}
         CACHE_OPTIONS
@@ -577,7 +586,7 @@ if (GPUPAD_ENABLE_GLSLANG)
             ENABLE_GLSLANG_BINARIES:BOOL=OFF
             ENABLE_GLSLANG_JS:BOOL=OFF
             ENABLE_OPT:BOOL=ON
-            ENABLE_EXCEPTIONS::BOOL=ON
+            ENABLE_EXCEPTIONS:BOOL=ON
         SPARSE_EXCLUDE
             Test
     )
@@ -586,10 +595,11 @@ if (GPUPAD_ENABLE_GLSLANG)
     set(BUILD_SHARED_LIBS ${GPUPAD_BUILD_SHARED})
 
     # SPIRV-Cross
-    set(CMAKE_FOLDER SPIRV-Cross)
+    option(GPUPAD_SPIRV_CROSS_FIND_PACKAGE "Find SPIRV-Cross package" ON)
     set(GPUPAD_SPIRV_CROSS_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Cross.git" CACHE STRING "SPIRV-Cross Git repository")
     set(GPUPAD_SPIRV_CROSS_GIT_REVISION "146679ff8255a6068518685599d7fb8761d1b570" CACHE STRING "SPIRV-Cross Git revision")
-    FetchSparse(SPIRV-Cross
+    FetchSparse(spirv-cross
+        FIND_PACKAGE ${GPUPAD_SPIRV_CROSS_FIND_PACKAGE}
         GIT_REPOSITORY ${GPUPAD_SPIRV_CROSS_GIT_REPOSITORY}
         GIT_TAG ${GPUPAD_SPIRV_CROSS_GIT_REVISION}
         CACHE_OPTIONS
@@ -614,13 +624,16 @@ if (GPUPAD_ENABLE_GLSLANG)
     )
 
     # TODO: unity build does not work yet
-    set_target_properties(SPIRV-Tools-shared PROPERTIES UNITY_BUILD OFF)
-    if(GPUPAD_BUILD_STATIC)
-        set_target_properties(SPIRV-Tools-static PROPERTIES UNITY_BUILD OFF)
-    endif()
-    set_target_properties(SPIRV-Tools-opt PROPERTIES UNITY_BUILD OFF)
-    set_target_properties(SPIRV-Tools-reduce PROPERTIES UNITY_BUILD OFF)
-    set_target_properties(glslang PROPERTIES UNITY_BUILD OFF)
+    foreach(TARGET IN LISTS 
+            SPIRV-Tools-shared
+            SPIRV-Tools-static
+            SPIRV-Tools-opt
+            SPIRV-Tools-reduce
+            glslang)
+        if(TARGET ${TARGET})
+            set_target_properties(${TARGET} PROPERTIES UNITY_BUILD OFF)
+        endif()
+    endforeach()
 endif()
 
 # OpenImageIO -------------------------
@@ -630,8 +643,8 @@ if (OpenImageIO_FOUND)
 endif()
 option(GPUPAD_ENABLE_OPENIMEAGEIO "Enable OpenImageIO" ${ENABLE_OPENIMEAGEIO_DEFAULT})
 if (GPUPAD_ENABLE_OPENIMEAGEIO)
-    target_link_libraries(${PROJECT_NAME} PRIVATE OpenImageIO::OpenImageIO)
     target_compile_definitions(${PROJECT_NAME} PRIVATE OPENIMAGEIO_ENABLED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE OpenImageIO::OpenImageIO)
 endif()
 
 # Slang -------------------------
@@ -641,8 +654,8 @@ if (Slang_FOUND)
 endif()
 option(GPUPAD_ENABLE_SLANG "Enable Slang" ${ENABLE_SLANG_DEFAULT})
 if (GPUPAD_ENABLE_SLANG)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${Slang_LIBRARY})
     target_compile_definitions(${PROJECT_NAME} PRIVATE SLANG_ENABLED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${Slang_LIBRARY})
 endif()
 
 # install -------------------------
