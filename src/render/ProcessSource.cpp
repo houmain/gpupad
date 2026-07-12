@@ -1,7 +1,6 @@
 #include "ProcessSource.h"
 #include "Singletons.h"
 #include "FileCache.h"
-#include "SynchronizeLogic.h"
 #include "opengl/GLProgram.h"
 #include "opengl/GLDevice.h"
 #include "vulkan/VKShader.h"
@@ -195,9 +194,11 @@ void ProcessSource::render()
             mOutput = binary;
     }
 
+#if defined(OPENGL_ENABLED)
     if (mGLProgram && mValidateSource)
         mMessages += mGLProgram->resetMessages();
     mGLProgram.reset();
+#endif
 
     if (mShader && mValidateSource)
         mMessages += mShader->resetMessages();
@@ -206,10 +207,14 @@ void ProcessSource::render()
 
 void ProcessSource::validate()
 {
+#if defined(OPENGL_ENABLED)
     if (mGLProgram) {
         auto &gl = renderer().device<GLDevice>().gl();
         mGLProgram->validate(gl);
-    } else if (mShader) {
+        return;
+    }
+#endif
+    if (mShader) {
         mShader->validate();
     } else if (mSourceType == SourceType::JavaScript) {
         const auto basePath = QFileInfo(mFileName).absoluteDir();
@@ -238,17 +243,21 @@ QString ProcessSource::processString()
     if (mProcessType == "ast" && mShader)
         return mShader->generateGLSLangAST();
 
+#if defined(OPENGL_ENABLED)
     if (mProcessType == "programBinary" && mGLProgram) {
         auto &gl = renderer().device<GLDevice>().gl();
         return mGLProgram->tryGetProgramBinary(gl);
     }
+#endif
 
     if (mProcessType == "json") {
+#if defined(OPENGL_ENABLED)
         if (mGLProgram) {
             auto &gl = renderer().device<GLDevice>().gl();
             if (mGLProgram->validate(gl))
                 return getJsonString(mGLProgram->reflection());
         }
+#endif
         if (mShader)
             return getJsonString(mShader->getReflection());
     }

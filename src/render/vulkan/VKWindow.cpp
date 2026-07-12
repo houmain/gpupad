@@ -1,15 +1,20 @@
 #include "VKWindow.h"
-#include "VKDevice.h"
 #include "Singletons.h"
 #include <QPlatformSurfaceEvent>
 #include <QGuiApplication>
+#include <KDGpu/surface_options.h>
 #include <KDGpu/swapchain_options.h>
 
 #if defined(Q_OS_LINUX)
-#    include <QtGui/qguiapplication_platform.h>
-#    if QT_VERSION < QT_VERSION_CHECK(6, 5, 0)
-#        include <qpa/qplatformnativeinterface.h>
-#    endif
+#  include <QtGui/qguiapplication_platform.h>
+#  if QT_VERSION < QT_VERSION_CHECK(6, 5, 0)
+#    include <qpa/qplatformnativeinterface.h>
+#  endif
+#endif
+
+#if defined(Q_OS_MACOS)
+CAMetalLayer *gpupadCreateMetalLayer(QWindow &window);
+void gpupadResizeMetalLayer(QWindow &window, uint32_t width, uint32_t height);
 #endif
 
 namespace {
@@ -21,37 +26,42 @@ namespace {
 #if defined(Q_OS_WIN)
         options.hWnd = reinterpret_cast<HWND>(window.winId());
 #elif defined(Q_OS_LINUX)
-#    if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0) && QT_CONFIG(wayland)
-        if (auto *app = qApp->nativeInterface<QNativeInterface::QWaylandApplication>()) {
+#  if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0) && QT_CONFIG(wayland)
+        if (auto *app = qApp
+                ->nativeInterface<QNativeInterface::QWaylandApplication>()) {
             options.display = app->display();
-            options.surface = reinterpret_cast<wl_surface*>(window.winId());
+            options.surface = reinterpret_cast<wl_surface *>(window.winId());
             if (options.display && options.surface)
                 return options;
         }
-#    else
-        if (QGuiApplication::platformName().contains(
-                QStringLiteral("wayland"), Qt::CaseInsensitive)) {
+#  else
+        if (QGuiApplication::platformName().contains(QStringLiteral("wayland"),
+                Qt::CaseInsensitive)) {
             if (auto *native = QGuiApplication::platformNativeInterface()) {
                 options.display = static_cast<wl_display *>(
                     native->nativeResourceForIntegration(
                         QByteArrayLiteral("display")));
-                options.surface = static_cast<wl_surface *>(
-                    native->nativeResourceForWindow(
+                options.surface =
+                    static_cast<wl_surface *>(native->nativeResourceForWindow(
                         QByteArrayLiteral("surface"), &window));
                 if (options.display && options.surface)
                     return options;
             }
         }
-#    endif
-#    if QT_CONFIG(xcb)
-        if (auto *app = qApp->nativeInterface<QNativeInterface::QX11Application>()) {
+#  endif
+#  if QT_CONFIG(xcb)
+        if (auto *app =
+                qApp->nativeInterface<QNativeInterface::QX11Application>()) {
             options.connection = app->connection();
-            options.window = static_cast<xcb_window_t>(static_cast<std::uintptr_t>(window.winId()));
+            options.window = static_cast<xcb_window_t>(
+                static_cast<std::uintptr_t>(window.winId()));
             return options;
         }
-#    endif
+#  endif
+#elif defined(Q_OS_MACOS)
+        options.layer = gpupadCreateMetalLayer(window);
 #else
-#    error "not handled platform"
+#  error "not handled platform"
 #endif
         return options;
     }
@@ -118,7 +128,7 @@ namespace {
 
 struct VKWindow::State
 {
-    std::shared_ptr<VKDevice> shared;
+    VKDevice device;
     KDGpu::Surface surface;
     KDGpu::Swapchain swapchain;
     std::vector<KDGpu::TextureView> swapchainViews;
@@ -140,19 +150,14 @@ struct VKWindow::State
     std::optional<KDGpu::RenderPassCommandRecorder> renderPass;
 };
 
-bool VKWindow::isSupported()
-{
-    return sharedVKDevice()->hasAdapters();
-}
-
 QList<AdapterIdentity> VKWindow::getAdapterIdentities()
 {
-    auto result = QList<AdapterIdentity>();
-    const auto device = sharedVKDevice();
-    if (!device->hasAdapters())
-        return result;
+    auto device = VKDevice{};
+    auto deviceLock = device.lock();
+    auto &instance = deviceLock.instance();
 
-    for (const auto adapter : device->instance().adapters()) {
+    auto result = QList<AdapterIdentity>();
+    for (const auto adapter : instance.adapters()) {
         const auto &properties = adapter->properties();
 
         auto identity = AdapterIdentity{};
@@ -166,6 +171,14 @@ QList<AdapterIdentity> VKWindow::getAdapterIdentities()
         result.append(identity);
     }
     return result;
+}
+
+bool VKWindow::isSupported()
+{
+    auto device = VKDevice{};
+    auto deviceLock = device.lock();
+    auto &instance = deviceLock.instance();
+    return instance.isValid();
 }
 
 //-------------------------------------------------------------------------
@@ -182,22 +195,15 @@ VKWindow::~VKWindow()
     Q_ASSERT(!initialized());
 }
 
-KDGpu::Device &VKWindow::device()
+VKDevice &VKWindow::device()
 {
-    Q_ASSERT(mState && mState->shared);
-    return mState->shared->device();
+    Q_ASSERT(mState);
+    return mState->device;
 }
 
-KDGpu::Queue &VKWindow::queue()
+VKDevice::Lock VKWindow::lockDevice()
 {
-    Q_ASSERT(mState && mState->shared);
-    return mState->shared->queue();
-}
-
-ktxVulkanDeviceInfo &VKWindow::ktxDeviceInfo()
-{
-    Q_ASSERT(mState && mState->shared);
-    return mState->shared->ktxDeviceInfo();
+    return device().lock();
 }
 
 KDGpu::RenderPassCommandRecorder &VKWindow::renderPass()
@@ -224,25 +230,30 @@ void VKWindow::initializeGpu()
         return;
 
     auto state = std::make_unique<State>();
-    state->shared = sharedVKDevice();
-    auto &shared = *state->shared;
-    if (!shared.hasAdapters())
+    auto deviceLock = state->device.lock();
+    auto &instance = deviceLock.instance();
+    if (!instance.isValid())
         return;
 
-    state->surface =
-        shared.instance().createSurface(surfaceOptions(*this));
+    if (!state->device.initialize(Singletons::selectedAdapter()))
+        return;
+
+    state->surface = instance.createSurface(surfaceOptions(*this));
     if (!state->surface.isValid())
         return;
 
-    if (!shared.initialize(state->surface, Singletons::selectedAdapter()))
+    auto &adapter = deviceLock.adapter();
+    auto &queue = deviceLock.queue();
+    if (!adapter.supportsPresentation(state->surface, queue.queueTypeIndex()))
         return;
 
     const auto swapchainProperties =
-        shared.adapter().swapchainProperties(state->surface);
+        adapter.swapchainProperties(state->surface);
     if (swapchainProperties.formats.empty()
         || swapchainProperties.presentModes.empty())
         return;
 
+    auto &device = deviceLock.device();
     state->swapchainFormat =
         chooseSwapchainFormat(swapchainProperties.formats, &state->colorSpace);
     state->presentMode =
@@ -251,9 +262,8 @@ void VKWindow::initializeGpu()
         swapchainProperties.capabilities.supportedCompositeAlpha);
 
     for (auto i = 0u; i < MaxFramesInFlight; ++i) {
-        state->presentCompleteSemaphores[i] =
-            shared.device().createGpuSemaphore();
-        state->frameFences[i] = shared.device().createFence({
+        state->presentCompleteSemaphores[i] = device.createGpuSemaphore();
+        state->frameFences[i] = device.createFence({
             .createSignalled = true,
         });
     }
@@ -265,7 +275,9 @@ void VKWindow::initializeGpu()
 void VKWindow::releaseGpu()
 {
     if (mState) {
-        mState->shared->device().waitUntilIdle();
+        auto deviceLock = lockDevice();
+        auto &device = deviceLock.device();
+        device.waitUntilIdle();
         Q_EMIT releasingGpu();
     }
     mState.reset();
@@ -299,36 +311,41 @@ void VKWindow::exposeEvent(QExposeEvent *)
 bool VKWindow::ensureSwapchain()
 {
     auto &state = *mState;
-    auto &shared = *state.shared;
     if (!state.swapchainDirty)
         return true;
-    
+
+    auto deviceLock = lockDevice();
+    auto &adapter = deviceLock.adapter();
+    auto &device = deviceLock.device();
+
     const auto dpr = devicePixelRatio();
     const auto requestedWidth =
         std::max(1u, static_cast<uint32_t>(width() * dpr + 0.5));
     const auto requestedHeight =
         std::max(1u, static_cast<uint32_t>(height() * dpr + 0.5));
 
-    const auto swapchainProperties =
-        shared.adapter().swapchainProperties(state.surface);
+#if defined(Q_OS_MACOS)
+    gpupadResizeMetalLayer(*this, requestedWidth, requestedHeight);
+#endif
+
+    const auto swapchainProperties = adapter.swapchainProperties(state.surface);
     const auto &capabilities = swapchainProperties.capabilities;
     state.swapchainExtent = {
-        .width = std::clamp(requestedWidth,
-            capabilities.minImageExtent.width,
+        .width = std::clamp(requestedWidth, capabilities.minImageExtent.width,
             capabilities.maxImageExtent.width),
         .height = std::clamp(requestedHeight,
             capabilities.minImageExtent.height,
             capabilities.maxImageExtent.height),
     };
 
-    shared.device().waitUntilIdle();
+    device.waitUntilIdle();
     state.renderPass.reset();
     for (auto &commandBuffer : state.commandBuffers)
         commandBuffer = {};
     state.swapchainViews.clear();
     state.renderCompleteSemaphores.clear();
 
-    state.swapchain = shared.device().createSwapchain({
+    state.swapchain = device.createSwapchain({
         .surface = state.surface,
         .format = state.swapchainFormat,
         .colorSpace = state.colorSpace,
@@ -350,7 +367,7 @@ bool VKWindow::ensureSwapchain()
         state.swapchainViews.emplace_back(
             texture.createView({ .format = state.swapchainFormat }));
         state.renderCompleteSemaphores.emplace_back(
-            shared.device().createGpuSemaphore());
+            device.createGpuSemaphore());
     }
 
     state.swapchainDirty = false;
@@ -366,11 +383,11 @@ void VKWindow::redraw()
     if (!mState)
         return;
 
+    auto deviceLock = lockDevice();
     if (!ensureSwapchain())
         return;
 
     auto &state = *mState;
-    auto &shared = *state.shared;
     auto &frameFence = state.frameFences[state.inFlightIndex];
     frameFence.wait();
 
@@ -378,7 +395,7 @@ void VKWindow::redraw()
         state.presentCompleteSemaphores[state.inFlightIndex];
     const auto acquireResult = state.swapchain.getNextImageIndex(
         state.currentSwapchainImageIndex, presentComplete);
-        
+
     if (acquireResult == KDGpu::AcquireImageResult::SurfaceLost) {
         releaseGpu();
         return;
@@ -397,8 +414,9 @@ void VKWindow::redraw()
 
     Q_EMIT preparingGpu();
 
-    auto commandRecorder =
-        shared.device().createCommandRecorder({ .queue = shared.queue() });
+    auto commandRecorder = deviceLock.device().createCommandRecorder({
+        .queue = deviceLock.queue(),
+    });
     state.renderPass.emplace(commandRecorder.beginRenderPass(
         KDGpu::RenderPassCommandRecorderOptions{
             .colorAttachments = {
@@ -421,7 +439,7 @@ void VKWindow::redraw()
 
     state.commandBuffers[state.inFlightIndex] = commandRecorder.finish();
 
-    shared.queue().submit({
+    deviceLock.queue().submit({
         .commandBuffers = { state.commandBuffers[state.inFlightIndex] },
         .waitSemaphores = { presentComplete },
         .signalSemaphores = { renderComplete },
@@ -429,7 +447,7 @@ void VKWindow::redraw()
     });
     Q_EMIT submittedGpu();
 
-    shared.queue().present({
+    deviceLock.queue().present({
         .waitSemaphores = { renderComplete },
         .swapchainInfos = {
             {

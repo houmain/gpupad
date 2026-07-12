@@ -1,9 +1,8 @@
 #pragma once
-
-#include "GLPrintf.h"
-#include "render/ShaderBase.h"
-
 #if defined(OPENGL_ENABLED)
+
+#  include "GLPrintf.h"
+#  include "render/ShaderBase.h"
 
 class GLShader : public ShaderBase
 {

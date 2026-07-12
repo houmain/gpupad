@@ -37,7 +37,8 @@ public:
     bool deviceCopyModified() const { return mDeviceCopyModified; }
     void beginDownload(VKContext &context);
     bool finishDownload();
-    ShareHandle getShareHandle() const;
+    ShareHandle getShareHandle(
+        Renderer::Type usage = Renderer::Type::Vulkan) const;
 
 private:
     struct ViewOptions
@@ -73,6 +74,5 @@ private:
 
 inline uint32_t vkArrayLayerCount(const TextureKind &kind, int layers)
 {
-    return static_cast<uint32_t>(
-        std::max(layers, 1) * (kind.cubeMap ? 6 : 1));
+    return static_cast<uint32_t>(std::max(layers, 1) * (kind.cubeMap ? 6 : 1));
 }

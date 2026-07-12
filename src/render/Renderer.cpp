@@ -30,7 +30,7 @@ public:
             if (mDevice)
                 mRenderer.configureRenderTask(renderTask);
         } catch (const std::exception &ex) {
-            mMessages.insert(0, MessageType::RenderingFailed, ex.what());
+            mMessages.insert(MessageType::RenderingFailed, ex.what());
         }
         Q_EMIT taskConfigured();
     }
@@ -41,7 +41,7 @@ public:
             if (mDevice)
                 mRenderer.renderRenderTask(renderTask);
         } catch (const std::exception &ex) {
-            mMessages.insert(0, MessageType::RenderingFailed, ex.what());
+            mMessages.insert(MessageType::RenderingFailed, ex.what());
         }
         Q_EMIT taskRendered();
     }

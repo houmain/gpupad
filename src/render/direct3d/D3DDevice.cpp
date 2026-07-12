@@ -65,7 +65,7 @@ try {
     ThrowIfFailed(mRenderTargetHelper.Init(mDevice.Get()));
     return true;
 } catch (const std::exception &ex) {
-    mMessages.insert(0, MessageType::Direct3DNotAvailable, ex.what());
+    mMessages.insert(MessageType::Direct3DNotAvailable, ex.what());
     return false;
 }
 

@@ -306,6 +306,6 @@ void RenderSessionBase::obtainTimeQueryResults()
     mTimeQueryCallIds.clear();
 
     if (mTimeQueryMessages.size() > 1)
-        mTimeQueryMessages.insert(0, MessageType::TotalDuration,
+        mTimeQueryMessages.insert(MessageType::TotalDuration,
             formatDuration(total), false);
 }

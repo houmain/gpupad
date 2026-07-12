@@ -2,8 +2,10 @@
 #if defined(VULKAN_ENABLED)
 
 #  include "editors/texture/TextureEditorItem.h"
-#  include "render/opengl/GLContext.h"
-#  include <QOffscreenSurface>
+#  if defined(OPENGL_ENABLED)
+#    include "render/opengl/GLContext.h"
+#    include <QOffscreenSurface>
+#  endif
 
 class VKWindow;
 class VKTexture;
@@ -34,6 +36,7 @@ private:
         std::unique_ptr<VKTexture> texture;
     };
 
+#  if defined(OPENGL_ENABLED)
     // OpenGL path: copySharedTexture gets a producer GL texture id, exports
     // editor-owned mTexture to GL, blits the GL source into that view, then
     // transitions mTexture back for Vulkan rendering.
@@ -45,6 +48,7 @@ private:
         ShareHandle importedShareHandle{};
         GLuint textureId{};
     };
+#  endif
 
     struct TextureBinding;
     struct PipelineCache;
@@ -53,6 +57,7 @@ private:
     VKContext makeContext();
     void submitCommandQueue(VKContext &context);
     bool uploadTexture();
+    bool copyVKTexture(VKTexture &source);
     bool copyImportedTexture(ShareHandle textureHandle);
     bool importShareHandle(VKContext &context, ShareHandle shareHandle);
     void releaseShareState();
@@ -60,13 +65,17 @@ private:
     bool renderTexture(const QMatrix4x4 &transform);
     void resetTextureBinding();
 
+#  if defined(OPENGL_ENABLED)
     bool makeGLContextCurrent();
     void releaseGL();
     bool copyGLTexture(ShareHandle textureHandle);
+#  endif
 
     std::unique_ptr<PipelineCache> mPipelineCache;
     std::unique_ptr<ShareState> mShare;
+#  if defined(OPENGL_ENABLED)
     std::unique_ptr<GLState> mGLState;
+#  endif
     std::unique_ptr<VKTexture> mTexture;
     std::unique_ptr<TextureBinding> mTextureBinding;
     ShareHandle mSharedTextureHandle{};

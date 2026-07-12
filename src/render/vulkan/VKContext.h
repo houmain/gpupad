@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 
 // added because of memset in bind_group_description.h
 #if defined(__GNUC__)
@@ -32,6 +33,7 @@ struct ktxVulkanDeviceInfo;
 #include <KDGpu/texture_view.h>
 #include <KDGpu/vulkan/vulkan_graphics_api.h>
 #include "KDGpuEnums.h"
+#include "VKDevice.h"
 #include "VKRenderSession.h"
 #include "FileCache.h"
 #include "FileDialog.h"

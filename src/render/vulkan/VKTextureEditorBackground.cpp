@@ -63,9 +63,11 @@ void VKTextureEditorBackground::releaseGpu()
 void VKTextureEditorBackground::paintGpu(const QSizeF &size,
     const QPointF &offset)
 {
+    auto deviceLock = mWindow.lockDevice();
+
     const auto format = mWindow.swapchainFormat();
     if (!mPipeline || mPipeline->format != format)
-        mPipeline = std::make_unique<Pipeline>(mWindow.device(), format);
+        mPipeline = std::make_unique<Pipeline>(deviceLock.device(), format);
     if (!mPipeline->pipeline.isValid())
         return;
 

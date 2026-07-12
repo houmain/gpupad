@@ -327,6 +327,7 @@ void VKTexture::createAndUpload(VKContext &context)
         const auto finalLayout = (isSampled
                 ? KDGpu::TextureLayout::ShaderReadOnlyOptimal
                 : KDGpu::TextureLayout::TransferSrcOptimal);
+
         if (mData.uploadVK(&context.ktxDeviceInfo, &mKtxTexture,
                 static_cast<VkImageUsageFlags>(mUsage.toInt()),
                 static_cast<VkImageLayout>(finalLayout))) {
@@ -356,7 +357,7 @@ void VKTexture::createAndUpload(VKContext &context)
 #if defined(KDGPU_PLATFORM_WIN32)
         textureOptions.externalMemoryHandleType =
             KDGpu::ExternalMemoryHandleTypeFlagBits::OpaqueWin32;
-#else
+#elif defined(KDGPU_PLATFORM_LINUX)
         textureOptions.externalMemoryHandleType =
             KDGpu::ExternalMemoryHandleTypeFlagBits::OpaqueFD;
 #endif
@@ -537,10 +538,17 @@ void VKTexture::memoryBarrier(KDGpu::CommandRecorder &commandRecorder,
     mCurrentAccessMask = accessMask;
 }
 
-ShareHandle VKTexture::getShareHandle() const
+ShareHandle VKTexture::getShareHandle(Renderer::Type usage) const
 {
     if (!mTexture.isValid())
         return {};
+
+    if (usage == Renderer::Type::Vulkan)
+        return {
+            ShareHandleType::VK_TEXTURE_PTR,
+            const_cast<VKTexture *>(this),
+        };
+
     const auto memory = mTexture.externalMemoryHandle();
     if (memory.handle.index() == 0)
         return {};

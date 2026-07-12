@@ -136,6 +136,11 @@ public:
     {
         insert(makeMessage(itemId, type, text, fileName, line, deduplicate));
     }
+
+    void insert(MessageType type, QString text = "", bool deduplicate = true)
+    {
+        insert(makeMessage(0, type, text, "", 0, deduplicate));
+    }
 };
 
 QString formatDuration(const std::chrono::duration<double> &duration);

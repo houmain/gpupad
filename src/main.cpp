@@ -153,7 +153,7 @@ int runHeadless(int argc, char *argv[])
             && singletons.fileCache().getSource(fileName, &source)) {
             singletons.defaultScriptEngine().evaluateScript(source, fileName);
         } else {
-            messages.insert(0, MessageType::LoadingFileFailed, fileName);
+            messages.insert(MessageType::LoadingFileFailed, fileName);
         }
         singletons.synchronizeLogic().manualEvaluation();
         singletons.synchronizeLogic().finishEvaluation();
@@ -167,9 +167,10 @@ int runHeadless(int argc, char *argv[])
 
 int run(int argc, char *argv[])
 {
-    QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
     QApplication::setAttribute(Qt::AA_CompressHighFrequencyEvents);
 
+#if defined(OPENGL_ENABLED)
+    QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
     auto format = QSurfaceFormat();
     format.setRenderableType(QSurfaceFormat::OpenGL);
     format.setMajorVersion(4);
@@ -178,6 +179,7 @@ int run(int argc, char *argv[])
     format.setOption(QSurfaceFormat::DebugContext);
     format.setSwapInterval(0);
     QSurfaceFormat::setDefaultFormat(format);
+#endif
 
     auto app = QApplication(argc, argv);
     defaultMessageHandler = qInstallMessageHandler(filteringMessageHandler);

@@ -54,13 +54,14 @@ void VKRenderSession::createCommandQueue()
 {
     Q_ASSERT(!mPrevCommandQueue);
     mPrevCommandQueue.swap(mCommandQueue);
-    auto &device = vkDevice();
+
+    auto deviceLock = vkDevice().lock();
     mCommandQueue.reset(new CommandQueue{
         .context =
             VKContext{
-                .device = device.device(),
-                .queue = device.queue(),
-                .ktxDeviceInfo = device.ktxDeviceInfo(),
+                .device = deviceLock.device(),
+                .queue = deviceLock.queue(),
+                .ktxDeviceInfo = deviceLock.ktxDeviceInfo(),
             },
     });
 }
@@ -89,6 +90,7 @@ std::shared_ptr<void> VKRenderSession::beginTimeQuery(size_t index)
 
 void VKRenderSession::render()
 {
+    auto deviceLock = vkDevice().lock();
     if (itemsChanged() || evaluationType() == EvaluationType::Reset) {
         createCommandQueue();
         buildCommandQueue<VKRenderSession>(*mCommandQueue);
@@ -114,8 +116,9 @@ void VKRenderSession::render()
     context.commandRecorder.reset();
 
     auto submitOptions = KDGpu::SubmitOptions{
-        .commandBuffers = std::vector<KDGpu::RequiredHandle<KDGpu::CommandBuffer_t>>(
-            context.commandBuffers.begin(), context.commandBuffers.end()),
+        .commandBuffers =
+            std::vector<KDGpu::RequiredHandle<KDGpu::CommandBuffer_t>>(
+                context.commandBuffers.begin(), context.commandBuffers.end()),
     };
     context.queue.submit(submitOptions);
     context.queue.waitUntilIdle();
@@ -127,12 +130,14 @@ void VKRenderSession::render()
 
 void VKRenderSession::finish()
 {
+    auto deviceLock = vkDevice().lock();
     if (mCommandQueue)
         finishCommandQueue(*mCommandQueue);
 }
 
 void VKRenderSession::release()
 {
+    auto deviceLock = vkDevice().lock();
     mCommandQueue.reset();
     mPrevCommandQueue.reset();
 
@@ -141,6 +146,7 @@ void VKRenderSession::release()
 
 quint64 VKRenderSession::getBufferHandle(ItemId itemId)
 {
+    auto deviceLock = vkDevice().lock();
     if (!mCommandQueue)
         createCommandQueue();
 

@@ -1,5 +1,4 @@
 #pragma once
-
 #if defined(OPENGL_ENABLED)
 
 #  include "GLContext.h"

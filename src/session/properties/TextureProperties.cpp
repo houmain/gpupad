@@ -2,11 +2,9 @@
 #include "FileCache.h"
 #include "PropertiesEditor.h"
 #include "Singletons.h"
-#include "editors/EditorManager.h"
 #include "session/SessionModel.h"
 #include "ui_TextureProperties.h"
 #include <QDataWidgetMapper>
-#include <QDebug>
 
 namespace {
     enum FormatType {

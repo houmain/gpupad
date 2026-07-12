@@ -28,7 +28,7 @@ bool GLDevice::initialize(const AdapterIdentity &adapterIdentity)
     mSurface.create();
     if (!mContext.create() || !mContext.makeCurrent(&mSurface)
         || !mGL.initialize(&mContext)) {
-        mMessages.insert(0, MessageType::OpenGLVersionNotAvailable, "4.5");
+        mMessages.insert(MessageType::OpenGLVersionNotAvailable, "4.5");
         return false;
     }
     return true;

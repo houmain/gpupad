@@ -5,7 +5,9 @@
 #include "session/Item.h"
 
 class ShaderBase;
+#if defined(OPENGL_ENABLED)
 class GLProgram;
+#endif
 using ScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
 
 class ProcessSource final : public RenderTask
@@ -34,7 +36,9 @@ private:
     QByteArray processBinary();
 
     std::unique_ptr<ShaderBase> mShader;
+#if defined(OPENGL_ENABLED)
     std::unique_ptr<GLProgram> mGLProgram;
+#endif
     QString mFileName;
     SourceType mSourceType{};
     MessagePtrSet mMessages;

@@ -2,6 +2,8 @@
 #include "VKTexture.h"
 #include "VKWindow.h"
 
+#if defined(OPENGL_ENABLED)
+
 namespace {
     int textureLevelCount(const TextureData &data, int samples)
     {
@@ -60,16 +62,16 @@ namespace {
         static auto glMemoryObjectParameterivEXT =
             gl.getProcAddress<PFNGLMEMORYOBJECTPARAMETERIVEXTPROC>(
                 "glMemoryObjectParameterivEXT");
-#if defined(_WIN32)
+#  if defined(_WIN32)
         static auto glImportMemoryWin32HandleEXT =
 
             gl.getProcAddress<PFNGLIMPORTMEMORYWIN32HANDLEEXTPROC>(
                 "glImportMemoryWin32HandleEXT");
-#else
+#  else
         static auto glImportMemoryFdEXT =
             gl.getProcAddress<PFNGLIMPORTMEMORYFDEXTPROC>(
                 "glImportMemoryFdEXT");
-#endif
+#  endif
         static auto glTextureStorageMem1DEXT =
             gl.getProcAddress<PFNGLTEXTURESTORAGEMEM1DEXTPROC>(
                 "glTextureStorageMem1DEXT");
@@ -88,11 +90,11 @@ namespace {
 
         if (!glCreateMemoryObjectsEXT || !glDeleteMemoryObjectsEXT
             || !glMemoryObjectParameterivEXT
-#if defined(_WIN32)
+#  if defined(_WIN32)
             || !glImportMemoryWin32HandleEXT
-#else
+#  else
             || !glImportMemoryFdEXT
-#endif
+#  endif
             || !glTextureStorageMem1DEXT || !glTextureStorageMem2DEXT
             || !glTextureStorageMem2DMultisampleEXT || !glTextureStorageMem3DEXT
             || !glTextureStorageMem3DMultisampleEXT)
@@ -103,14 +105,14 @@ namespace {
         auto dedicated = GLint{ handle.dedicated ? GL_TRUE : GL_FALSE };
         glMemoryObjectParameterivEXT(memoryObject,
             GL_DEDICATED_MEMORY_OBJECT_EXT, &dedicated);
-#if defined(_WIN32)
+#  if defined(_WIN32)
         glImportMemoryWin32HandleEXT(memoryObject, handle.allocationSize,
             static_cast<GLenum>(handle.type), handle.handle);
-#else
+#  else
         glImportMemoryFdEXT(memoryObject, handle.allocationSize,
             static_cast<GLenum>(handle.type),
             reinterpret_cast<intptr_t>(handle.handle));
-#endif
+#  endif
         const auto target = data.getTarget(samples);
         const auto dimensions = data.dimensions() + (data.isArray() ? 1 : 0);
         if (dimensions == 1) {
@@ -183,13 +185,16 @@ bool VKTextureEditorItem::copyGLTexture(ShareHandle textureHandle)
         || mImage.isNull())
         return false;
 
+    auto deviceLock = window().lockDevice();
+    auto &device = deviceLock.device();
+
     const auto sourceTextureId = static_cast<GLuint>(
         reinterpret_cast<std::uintptr_t>(textureHandle.handle));
 
     if (!mTexture || mTexture->samples() != mTextureSamples) {
         releaseGL();
         if (mTexture)
-            mTexture->release(window().device());
+            mTexture->release(device);
         resetTextureBinding();
         mTexture = std::make_unique<VKTexture>(mImage, mTextureSamples);
         mTexture->boundAsSampler();
@@ -199,7 +204,7 @@ bool VKTextureEditorItem::copyGLTexture(ShareHandle textureHandle)
         context.commandRecorder =
             context.device.createCommandRecorder({ .queue = context.queue });
         if (!mTexture->prepareSampledImage(context)) {
-            mTexture->release(window().device());
+            mTexture->release(device);
             mTexture.reset();
             return false;
         }
@@ -213,7 +218,7 @@ bool VKTextureEditorItem::copyGLTexture(ShareHandle textureHandle)
     auto &gl = state.gl;
     Q_ASSERT(gl.glIsTexture(sourceTextureId));
 
-    const auto destHandle = mTexture->getShareHandle();
+    const auto destHandle = mTexture->getShareHandle(Renderer::Type::OpenGL);
     if (state.importedShareHandle != destHandle) {
         if (state.textureId)
             gl.glDeleteTextures(1, &state.textureId);
@@ -243,10 +248,12 @@ bool VKTextureEditorItem::copyGLTexture(ShareHandle textureHandle)
     context.commandRecorder =
         context.device.createCommandRecorder({ .queue = context.queue });
     if (!mTexture->prepareSampledImage(context)) {
-        mTexture->release(window().device());
+        mTexture->release(device);
         mTexture.reset();
         return false;
     }
     submitCommandQueue(context);
     return (mTexture && mTexture->texture().isValid());
 }
+
+#endif // defined(OPENGL_ENABLED)

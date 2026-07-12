@@ -1,6 +1,7 @@
 #pragma once
 #if defined(VULKAN_ENABLED)
 
+#  include "VKDevice.h"
 #  include <QWindow>
 #  include <KDGpu/gpu_core.h>
 #  include "VKContext.h"
@@ -22,9 +23,8 @@ public:
     ~VKWindow() override;
 
     bool initialized() const { return static_cast<bool>(mState); }
-    KDGpu::Device &device();
-    KDGpu::Queue &queue();
-    ktxVulkanDeviceInfo &ktxDeviceInfo();
+    VKDevice &device();
+    VKDevice::Lock lockDevice();
     KDGpu::RenderPassCommandRecorder &renderPass();
     KDGpu::Format swapchainFormat() const;
     KDGpu::Extent2D swapchainExtent() const;

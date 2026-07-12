@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.22)
 project(gpupad LANGUAGES CXX C)
+if(APPLE)
+  enable_language(OBJCXX)
+endif()
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 set(QT_CREATOR_SKIP_MAINTENANCE_TOOL_PROVIDER ON)
 include(FetchSparse)
@@ -201,6 +204,9 @@ if (GPUPAD_ENABLE_VULKAN)
   src/render/vulkan/VKRenderSession.cpp
   src/render/vulkan/VKAccelerationStructure.cpp
   src/render/vulkan/VKWindow.cpp)
+  if(APPLE)
+      set(SOURCES ${SOURCES} src/render/vulkan/VKWindow_MacOS.mm)
+  endif()
 endif()
 
 # D3D -------------------------
@@ -235,6 +241,10 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
 # build options -------------------------
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if(APPLE)
+    set(CMAKE_OBJCXX_STANDARD 20)
+    set(CMAKE_OBJCXX_STANDARD_REQUIRED ON)
+endif()
 
 if (MSVC)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
@@ -462,6 +472,11 @@ if (GPUPAD_ENABLE_VULKAN)
     add_subdirectory(libs/KDGpu/src/KDGpu EXCLUDE_FROM_ALL)
     target_include_directories(KDGpu PUBLIC "$<BUILD_INTERFACE:${spdlog_SOURCE_DIR}/include/spdlog>")
     target_link_libraries(${PROJECT_NAME} PRIVATE KDGpu spdlog::spdlog)
+    if(APPLE)
+        target_link_libraries(${PROJECT_NAME} PRIVATE
+            "-framework AppKit"
+            "-framework QuartzCore")
+    endif()
 
     # added for fallback in VKWindow to allow building on Ubuntu 22.04
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND Qt6_VERSION VERSION_LESS "6.5.0")

@@ -6,6 +6,7 @@
 enum class ShareHandleType {
     None = 0,
     OPENGL_TEXTURE_ID = 1,
+    VK_TEXTURE_PTR = 2,
     OPAQUE_FD = 0x9586,
     OPAQUE_WIN32 = 0x9587,
     OPAQUE_WIN32_KMT = 0x9588,

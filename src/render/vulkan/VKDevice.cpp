@@ -1,19 +1,17 @@
-#include "VKDevice.h"
-
 #if defined(VULKAN_ENABLED)
-
+#  include "VKDevice.h"
+#  include "MessageList.h"
 #  include <QCoreApplication>
-#  include <QDebug>
 #  include <KDGpu/adapter.h>
-#  include <KDGpu/surface.h>
 #  include <KDGpu/vulkan/vulkan_adapter.h>
 #  include <KDGpu/vulkan/vulkan_device.h>
 #  include <KDGpu/vulkan/vulkan_graphics_api.h>
 #  include <KDGpu/vulkan/vulkan_instance.h>
 #  include <KDGpu/vulkan/vulkan_queue.h>
+#  include <ktxvulkan.h>
 #  include <algorithm>
 #  include <cstdio>
-#  include <optional>
+#  include <mutex>
 #  include <vector>
 
 #  if defined(_WIN32)
@@ -34,267 +32,58 @@ namespace {
         return KDGPU_MAKE_API_VERSION(0, major, minor, build);
     }
 
-    template <typename Range>
-    bool isNull(const Range &range)
-    {
-        return std::ranges::all_of(range,
-            [](const auto byte) { return byte == 0; });
-    }
-
-    bool hasUUID(const AdapterIdentity &adapterIdentity)
-    {
-        if (isNull(adapterIdentity.driverUUID))
-            return false;
-
-        return std::ranges::any_of(adapterIdentity.deviceUUIDs,
-            [](const auto &deviceUUID) { return !isNull(deviceUUID); });
-    }
-
-    bool hasStableIdentity(const AdapterIdentity &adapterIdentity)
-    {
-        return !isNull(adapterIdentity.deviceLUID) || hasUUID(adapterIdentity);
-    }
-
     bool matchesAdapter(const KDGpu::Adapter &adapter,
         const AdapterIdentity &adapterIdentity)
     {
+        const auto matches = [](const auto &a, const auto &b) {
+            if (std::ranges::all_of(a,
+                    [](const auto byte) { return byte == 0; }))
+                return false;
+            return std::ranges::equal(a, b);
+        };
         const auto &properties = adapter.properties();
-        if (!isNull(adapterIdentity.deviceLUID)
-            && std::ranges::equal(properties.deviceLUID,
-                adapterIdentity.deviceLUID))
+        if (matches(properties.deviceLUID, adapterIdentity.deviceLUID))
             return true;
-
-        if (!isNull(adapterIdentity.driverUUID)
-            && std::ranges::equal(properties.driverUUID,
-                adapterIdentity.driverUUID)) {
+        if (matches(properties.driverUUID, adapterIdentity.driverUUID))
             for (const auto &deviceUUID : adapterIdentity.deviceUUIDs)
-                if (!isNull(deviceUUID)
-                    && std::ranges::equal(properties.deviceUUID, deviceUUID))
+                if (matches(properties.deviceUUID, deviceUUID))
                     return true;
-        }
-
         return false;
     }
 
-    KDGpu::Adapter *findAdapter(KDGpu::Instance &instance,
-        const AdapterIdentity &adapterIdentity)
-    {
-        if (hasStableIdentity(adapterIdentity)) {
-            for (auto adapter : instance.adapters())
-                if (matchesAdapter(*adapter, adapterIdentity))
-                    return adapter;
-            return nullptr;
-        }
-
-        if (auto adapter =
-                instance.selectAdapter(KDGpu::AdapterDeviceType::Default))
-            return adapter;
-
-        if (!instance.adapters().empty())
-            return instance.adapters().front();
-
-        return nullptr;
-    }
-
-    std::optional<uint32_t> findQueueType(KDGpu::Adapter &adapter,
-        KDGpu::Surface *surface, bool computeRequired)
-    {
-        const auto requiredQueueFlags =
-            KDGpu::QueueFlags(KDGpu::QueueFlagBits::GraphicsBit
-                | KDGpu::QueueFlagBits::TransferBit
-                | (computeRequired ? KDGpu::QueueFlagBits::ComputeBit
-                                   : KDGpu::QueueFlags{}));
-
-        const auto queueTypes = adapter.queueTypes();
-        for (auto i = 0u; i < queueTypes.size(); ++i) {
-            if (!queueTypes[i].supportsFeature(requiredQueueFlags))
-                continue;
-            if (surface && !adapter.supportsPresentation(*surface, i))
-                continue;
-            return i;
-        }
-
-        if (!surface)
-            return {};
-
-        for (auto i = 0u; i < queueTypes.size(); ++i) {
-            if (!queueTypes[i].supportsFeature(
-                    KDGpu::QueueFlags(KDGpu::QueueFlagBits::GraphicsBit)))
-                continue;
-            if (!adapter.supportsPresentation(*surface, i))
-                continue;
-            return i;
-        }
-        return {};
-    }
-
-    std::weak_ptr<VKDevice> sSharedVKDevice;
+    std::mutex gSharedVKDeviceMutex;
+    VKDevice::SharedDevicePtr gSharedVKDevice;
 } // namespace
 
-VKDevice::VKDevice() : Device(Type::Vulkan) { }
-
-VKDevice::~VKDevice()
+struct VKDevice::SharedDevice
 {
-    if (mDevice.isValid())
-        mDevice.waitUntilIdle();
+    SharedDevice();
+    ~SharedDevice();
+    bool initialize(const AdapterIdentity &adapterIdentity);
+    bool initializeKtxDeviceInfo();
+    void releaseKtxDeviceInfo();
 
-    releaseKtx();
-    mQueue = {};
-    mDevice = {};
-    mAdapter = {};
-    mInstance = {};
-    mApi.reset();
-}
+    std::recursive_mutex mutex;
+    std::unique_ptr<KDGpu::VulkanGraphicsApi> api;
+    KDGpu::Instance instance;
+    KDGpu::Adapter *adapter{};
+    KDGpu::Device device;
+    KDGpu::Queue queue;
+    ktxVulkanDeviceInfo ktxDeviceInfo{};
+    VkCommandPool ktxCommandPool{};
+    MessagePtrSet messages;
+};
 
-bool VKDevice::initialize(const AdapterIdentity &adapterIdentity)
+VKDevice::SharedDevice::SharedDevice()
 {
-    if (mDevice.isValid())
-        return true;
-
-    if (!ensureInstance())
-        return false;
-
-    mAdapter = [&]() -> KDGpu::Adapter * {
-        for (auto adapter : mInstance.adapters())
-            if (std::ranges::equal(adapter->properties().driverUUID,
-                    adapterIdentity.driverUUID))
-                for (const auto &deviceUUID : adapterIdentity.deviceUUIDs)
-                    if (std::ranges::equal(adapter->properties().deviceUUID,
-                            deviceUUID))
-                        return adapter;
-        return nullptr;
-    }();
-
-    if (!mAdapter) {
-        if (mInstance.adapters().empty()) {
-            error(MessageType::VulkanNotAvailable);
-            return false;
-        }
-        mAdapter = mInstance.adapters().front();
-    }
-
-    KDGpu::Logger::logger()->info("Initializing Vulkan on the "
-        + adapterDeviceTypeToString(mAdapter->properties().deviceType) + " "
-        + mAdapter->properties().deviceName);
-
-    mDevice = mAdapter->createDevice(KDGpu::DeviceOptions{
-        .requestedFeatures = mAdapter->features(),
-    });
-    if (!mDevice.isValid()) {
-        error(MessageType::VulkanNotAvailable, "creating device failed");
-        return false;
-    }
-
-    if (!chooseQueue(nullptr, true)) {
-        error(MessageType::VulkanNotAvailable, "no general queue found");
-        return false;
-    }
-
-    if (!initializeKtx())
-        return false;
-    return true;
-}
-
-bool VKDevice::initialize(KDGpu::Surface &surface,
-    const AdapterIdentity &adapterIdentity)
-{
-    if (!ensureInstance())
-        return false;
-
-    if (!mDevice.isValid()) {
-        mAdapter = findAdapter(mInstance, adapterIdentity);
-        if (!mAdapter) {
-            qWarning() << "Finding selected KDGpu Vulkan adapter failed";
-            return false;
-        }
-
-        const auto queueTypeIndex = findQueueType(*mAdapter, &surface, false);
-        if (!queueTypeIndex) {
-            qWarning() << "No KDGpu Vulkan graphics/present queue found";
-            return false;
-        }
-
-        mDevice = mAdapter->createDevice(KDGpu::DeviceOptions{
-            .queues = { KDGpu::QueueRequest{
-                .queueTypeIndex = *queueTypeIndex,
-                .count = 1,
-                .priorities = { 1.0f },
-            } },
-            .requestedFeatures = mAdapter->features(),
-        });
-        if (!mDevice.isValid()) {
-            qWarning() << "Creating KDGpu Vulkan device failed";
-            return false;
-        }
-
-        if (!chooseQueue(&surface, false)) {
-            qWarning() << "No KDGpu Vulkan graphics/present queue found";
-            return false;
-        }
-    } else if (hasStableIdentity(adapterIdentity)
-        && !matchesAdapter(*mAdapter, adapterIdentity)) {
-        qWarning() << "Shared KDGpu device uses a different adapter";
-        return false;
-    } else if (
-        !mAdapter->supportsPresentation(surface, mQueue.queueTypeIndex())) {
-        qWarning() << "Shared KDGpu device queue cannot present to this window";
-        return false;
-    }
-
-    if (!initializeKtx())
-        return false;
-
-    return true;
-}
-
-bool VKDevice::hasAdapters()
-{
-    return ensureInstance() && !mInstance.adapters().empty();
-}
-
-KDGpu::Instance &VKDevice::instance()
-{
-    Q_ASSERT(mInstance.isValid());
-    return mInstance;
-}
-
-KDGpu::Adapter &VKDevice::adapter()
-{
-    Q_ASSERT(mAdapter);
-    return *mAdapter;
-}
-
-KDGpu::Device &VKDevice::device()
-{
-    Q_ASSERT(mDevice.isValid());
-    return mDevice;
-}
-
-KDGpu::Queue &VKDevice::queue()
-{
-    Q_ASSERT(mQueue.isValid());
-    return mQueue;
-}
-
-ktxVulkanDeviceInfo &VKDevice::ktxDeviceInfo()
-{
-    Q_ASSERT(mKtxDeviceInfoInitialized);
-    return mKtxDeviceInfo;
-}
-
-bool VKDevice::ensureInstance()
-{
-    if (mInstance.isValid())
-        return true;
-
 #  if defined(_WIN32)
     static auto logger =
         spdlog::synchronous_factory::create<spdlog::sinks::msvc_sink_mt>(
             "KDGpu");
 #  endif
 
-    mApi = std::make_unique<KDGpu::VulkanGraphicsApi>();
-    mInstance = mApi->createInstance(KDGpu::InstanceOptions{
+    api = std::make_unique<KDGpu::VulkanGraphicsApi>();
+    instance = api->createInstance(KDGpu::InstanceOptions{
         .applicationName = QCoreApplication::applicationName().toStdString(),
         .applicationVersion = applicationVersion(),
 #  if !defined(NDEBUG)
@@ -302,118 +91,166 @@ bool VKDevice::ensureInstance()
 #  endif
     });
 
-    if (!mInstance.isValid() || mInstance.adapters().empty()) {
-        error(MessageType::VulkanNotAvailable);
+    if (instance.isValid() && instance.adapters().empty())
+        instance = {};
+}
+
+VKDevice::SharedDevice::~SharedDevice()
+{
+    const auto lockDevice = std::lock_guard{ mutex };
+    if (device.isValid())
+        device.waitUntilIdle();
+
+    releaseKtxDeviceInfo();
+}
+
+bool VKDevice::SharedDevice::initialize(const AdapterIdentity &adapterIdentity)
+{
+    if (adapter)
+        return (ktxDeviceInfo.device != nullptr);
+
+    if (!instance.isValid()) {
+        messages.insert(MessageType::VulkanNotAvailable);
+        return false;
+    }
+
+    adapter = instance.selectAdapter(KDGpu::AdapterDeviceType::Default);
+    for (auto canditate : instance.adapters())
+        if (matchesAdapter(*canditate, adapterIdentity))
+            adapter = canditate;
+
+    if (!adapter) {
+        messages.insert(MessageType::VulkanNotAvailable, "no adapter found");
+        return false;
+    }
+
+    device = adapter->createDevice(KDGpu::DeviceOptions{
+        .requestedFeatures = adapter->features(),
+    });
+    if (!device.isValid()) {
+        messages.insert(MessageType::VulkanNotAvailable,
+            "creating device failed");
+        return false;
+    }
+
+    const auto requiredQueueFlags = KDGpu::QueueFlags(
+        KDGpu::QueueFlagBits::GraphicsBit | KDGpu::QueueFlagBits::TransferBit
+        | KDGpu::QueueFlagBits::ComputeBit);
+    for (const auto &canditate : device.queues())
+        if ((canditate.flags() & requiredQueueFlags) == requiredQueueFlags) {
+            queue = canditate;
+            break;
+        }
+    if (!queue.isValid()) {
+        messages.insert(MessageType::VulkanNotAvailable, "no queue found");
+        return false;
+    }
+    if (!initializeKtxDeviceInfo()) {
+        messages.insert(MessageType::VulkanNotAvailable,
+            "initializing KTX device info failed");
         return false;
     }
     return true;
 }
 
-bool VKDevice::chooseQueue(KDGpu::Surface *surface, bool computeRequired)
+bool VKDevice::SharedDevice::initializeKtxDeviceInfo()
 {
-    const auto requiredQueueFlags = KDGpu::QueueFlags(
-        KDGpu::QueueFlagBits::GraphicsBit | KDGpu::QueueFlagBits::TransferBit
-        | (computeRequired ? KDGpu::QueueFlagBits::ComputeBit
-                           : KDGpu::QueueFlags{}));
-
-    for (const auto &candidate : mDevice.queues()) {
-        if ((candidate.flags() & requiredQueueFlags) != requiredQueueFlags)
-            continue;
-        if (surface
-            && !mAdapter->supportsPresentation(*surface,
-                candidate.queueTypeIndex()))
-            continue;
-        mQueue = candidate;
-        return true;
-    }
-
-    if (!surface)
-        return false;
-
-    for (const auto &candidate : mDevice.queues()) {
-        if (!(candidate.flags() & KDGpu::QueueFlagBits::GraphicsBit))
-            continue;
-        if (!mAdapter->supportsPresentation(*surface,
-                candidate.queueTypeIndex()))
-            continue;
-        mQueue = candidate;
-        return true;
-    }
-    return false;
-}
-
-bool VKDevice::initializeKtx()
-{
-    if (mKtxDeviceInfoInitialized)
-        return true;
-
-    const auto &rm = *mDevice.graphicsApi()->resourceManager();
-    const auto vkInstance = rm.getInstance(mInstance);
-    const auto vkAdapter = rm.getAdapter(*mAdapter);
-    const auto vkDevice = rm.getDevice(mDevice);
-    const auto vkQueue = rm.getQueue(mQueue);
+    const auto &rm = *device.graphicsApi()->resourceManager();
+    const auto vkInstance = rm.getInstance(instance);
+    const auto vkAdapter = rm.getAdapter(*adapter);
+    const auto vkDevice = rm.getDevice(device);
+    const auto vkQueue = rm.getQueue(queue);
 
     const auto commandPoolInfo = VkCommandPoolCreateInfo{
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = mQueue.queueTypeIndex(),
+        .queueFamilyIndex = queue.queueTypeIndex(),
     };
-    if (vkCreateCommandPool(vkDevice->device, &commandPoolInfo, nullptr,
-            &mKtxCommandPool)
-        != VK_SUCCESS) {
-        error(MessageType::VulkanNotAvailable, "creating command pool failed");
-        return false;
-    }
-
-    if (ktxVulkanDeviceInfo_ConstructEx(&mKtxDeviceInfo, vkInstance->instance,
-            vkAdapter->physicalDevice, vkDevice->device, vkQueue->queue,
-            mKtxCommandPool, nullptr, nullptr)
-        != KTX_SUCCESS) {
-        error(MessageType::VulkanNotAvailable,
-            "creating device info for KTX failed");
-        releaseKtx();
-        return false;
-    }
-
-    mKtxDeviceInfoInitialized = true;
-    return true;
+    return (vkCreateCommandPool(vkDevice->device, &commandPoolInfo, nullptr,
+                &ktxCommandPool)
+            == VK_SUCCESS
+        && ktxVulkanDeviceInfo_ConstructEx(&ktxDeviceInfo, vkInstance->instance,
+               vkAdapter->physicalDevice, vkDevice->device, vkQueue->queue,
+               ktxCommandPool, nullptr, nullptr)
+            == KTX_SUCCESS);
 }
 
-void VKDevice::releaseKtx()
+void VKDevice::SharedDevice::releaseKtxDeviceInfo()
 {
-    if (mKtxDeviceInfoInitialized) {
-        ktxVulkanDeviceInfo_Destruct(&mKtxDeviceInfo);
-        mKtxDeviceInfoInitialized = false;
-        mKtxDeviceInfo = {};
-    }
+    if (ktxDeviceInfo.device)
+        ktxVulkanDeviceInfo_Destruct(&ktxDeviceInfo);
 
-    if (mKtxCommandPool && mDevice.isValid()) {
-        const auto &rm = *mDevice.graphicsApi()->resourceManager();
+    if (ktxCommandPool) {
+        const auto &rm = *device.graphicsApi()->resourceManager();
         const auto vkDevice =
-            static_cast<KDGpu::VulkanDevice *>(rm.getDevice(mDevice));
-        vkDestroyCommandPool(vkDevice->device, mKtxCommandPool, nullptr);
-        mKtxCommandPool = VK_NULL_HANDLE;
+            static_cast<KDGpu::VulkanDevice *>(rm.getDevice(device));
+        vkDestroyCommandPool(vkDevice->device, ktxCommandPool, nullptr);
+        ktxCommandPool = VK_NULL_HANDLE;
     }
 }
 
-void VKDevice::error(MessageType messageType, const QString &message)
+VKDevice::Lock::Lock(SharedDevicePtr shared)
+    : mShared(std::move(shared))
+    , mLock(mShared->mutex)
 {
-    mMessages.insert(0, messageType, message);
 }
 
-std::shared_ptr<VKDevice> sharedVKDevice()
+KDGpu::Instance &VKDevice::Lock::instance()
 {
-    auto device = sSharedVKDevice.lock();
-    if (!device) {
-        device = std::make_shared<VKDevice>();
-        sSharedVKDevice = device;
-    }
-    return device;
+    Q_ASSERT(mShared->instance.isValid());
+    return mShared->instance;
 }
+
+KDGpu::Adapter &VKDevice::Lock::adapter()
+{
+    Q_ASSERT(mShared->adapter);
+    return *mShared->adapter;
+}
+
+KDGpu::Device &VKDevice::Lock::device()
+{
+    Q_ASSERT(mShared->device.isValid());
+    return mShared->device;
+}
+
+KDGpu::Queue &VKDevice::Lock::queue()
+{
+    Q_ASSERT(mShared->queue.isValid());
+    return mShared->queue;
+}
+
+ktxVulkanDeviceInfo &VKDevice::Lock::ktxDeviceInfo()
+{
+    Q_ASSERT(mShared->ktxDeviceInfo.device);
+    return mShared->ktxDeviceInfo;
+}
+
+//-------------------------------------------------------------------------
 
 void resetSharedVKDevice()
 {
-    sSharedVKDevice.reset();
+    const auto lock = std::lock_guard{ gSharedVKDeviceMutex };
+    gSharedVKDevice.reset();
+}
+
+VKDevice::VKDevice() : Device(Type::Vulkan)
+{
+    const auto lock = std::lock_guard{ gSharedVKDeviceMutex };
+    if (!gSharedVKDevice)
+        gSharedVKDevice = std::make_shared<VKDevice::SharedDevice>();
+    mShared = gSharedVKDevice;
+}
+
+VKDevice::~VKDevice() = default;
+
+bool VKDevice::initialize(const AdapterIdentity &adapterIdentity)
+{
+    return mShared->initialize(adapterIdentity);
+}
+
+VKDevice::Lock VKDevice::lock()
+{
+    return Lock{ mShared };
 }
 
 #endif // defined(VULKAN_ENABLED)
