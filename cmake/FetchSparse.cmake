@@ -116,25 +116,15 @@ function(fetch_sparse_parse_cache_option name out_name out_type out_value cache_
     set(${out_value} "${cache_option_value}" PARENT_SCOPE)
 endfunction()
 
-function(FetchSparse name)
-    set(one_value_args
-        FIND_PACKAGE
-        GIT_REPOSITORY
-        GIT_TAG
-        GIT_FILTER
-        SOURCE_SUBDIR)
-    set(multi_value_args
-        CACHE_OPTIONS
-        SPARSE_EXCLUDE)
-    cmake_parse_arguments(PARSE_ARGV 1 ARG "" "${one_value_args}" "${multi_value_args}")
+function(fetch_sparse_find_package name out_found)
+    set(${out_found} FALSE PARENT_SCOPE)
 
-    if(ARG_UNPARSED_ARGUMENTS)
-        message(FATAL_ERROR "Unknown arguments for FetchSparse(${name}): ${ARG_UNPARSED_ARGUMENTS}")
-    endif()
+    set(package_names ${name} ${ARGN})
+    list(REMOVE_DUPLICATES package_names)
 
-    if(ARG_FIND_PACKAGE)
-        find_package(${name} QUIET)
-        set(find_package_found_var "${name}_FOUND")
+    foreach(package_name IN LISTS package_names)
+        find_package(${package_name} QUIET)
+        set(find_package_found_var "${package_name}_FOUND")
         if(DEFINED ${find_package_found_var})
             set(find_package_found "${${find_package_found_var}}")
         else()
@@ -142,8 +132,43 @@ function(FetchSparse name)
         endif()
 
         if(find_package_found)
-            message(STATUS "FetchSparse(${name}): using package ${name}")
+            message(STATUS "FetchSparse(${name}): using package ${package_name}")
+            set(${out_found} TRUE PARENT_SCOPE)
             return()
+        endif()
+    endforeach()
+endfunction()
+
+function(FetchSparse name)
+    set(one_value_args
+        GIT_REPOSITORY
+        GIT_TAG
+        GIT_FILTER
+        SOURCE_SUBDIR)
+    set(multi_value_args
+        CACHE_OPTIONS
+        FIND_PACKAGE
+        SPARSE_EXCLUDE)
+    cmake_parse_arguments(PARSE_ARGV 1 ARG "" "${one_value_args}" "${multi_value_args}")
+
+    if(ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "Unknown arguments for FetchSparse(${name}): ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
+
+    if(NOT "${ARG_FIND_PACKAGE}" STREQUAL "")
+        set(find_package_args ${ARG_FIND_PACKAGE})
+        list(LENGTH find_package_args find_package_arg_count)
+        if(find_package_arg_count EQUAL 0)
+            message(FATAL_ERROR "FetchSparse(${name}) FIND_PACKAGE requires a boolean value")
+        endif()
+
+        list(GET find_package_args 0 find_package_enabled)
+        if(find_package_enabled)
+            list(REMOVE_AT find_package_args 0)
+            fetch_sparse_find_package(${name} package_found ${find_package_args})
+            if(package_found)
+                return()
+            endif()
         endif()
     endif()
 

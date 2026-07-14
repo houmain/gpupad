@@ -543,6 +543,7 @@ if (GPUPAD_ENABLE_GLSLANG)
     set(GPUPAD_SPIRV_HEADERS_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Headers.git" CACHE STRING "spirv-headers Git repository")
     set(GPUPAD_SPIRV_HEADERS_GIT_REVISION "c63848ecf2200425511319fd8bf2c17b751e501e" CACHE STRING "spirv-headers Git revision")
     FetchSparse(spirv-headers
+        FIND_PACKAGE ${GPUPAD_SPIRV_HEADERS_FIND_PACKAGE} SPIRV-Headers
         GIT_REPOSITORY ${GPUPAD_SPIRV_HEADERS_GIT_REPOSITORY}
         GIT_TAG ${GPUPAD_SPIRV_HEADERS_GIT_REVISION}
         CACHE_OPTIONS
@@ -556,7 +557,7 @@ if (GPUPAD_ENABLE_GLSLANG)
     set(GPUPAD_SPIRV_TOOLS_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Tools.git" CACHE STRING "spirv-tools Git repository")
     set(GPUPAD_SPIRV_TOOLS_GIT_REVISION "ee4f6beddb14cf6e9259288b86625405b4cdc4e1" CACHE STRING "spirv-tools Git revision")
     FetchSparse(spirv-tools
-        FIND_PACKAGE ${GPUPAD_SPIRV_TOOLS_FIND_PACKAGE}
+        FIND_PACKAGE ${GPUPAD_SPIRV_TOOLS_FIND_PACKAGE} SPIRV-Tools
         GIT_REPOSITORY ${GPUPAD_SPIRV_TOOLS_GIT_REPOSITORY}
         GIT_TAG ${GPUPAD_SPIRV_TOOLS_GIT_REVISION}
         CACHE_OPTIONS
@@ -639,7 +640,7 @@ if (GPUPAD_ENABLE_GLSLANG)
 endif()
 
 # OpenImageIO -------------------------
-find_package(OpenImageIO)
+find_package(OpenImageIO QUIET)
 if (OpenImageIO_FOUND)
     set(ENABLE_OPENIMEAGEIO_DEFAULT TRUE)
 endif()
@@ -650,7 +651,7 @@ if (GPUPAD_ENABLE_OPENIMEAGEIO)
 endif()
 
 # Slang -------------------------
-find_package(Slang)
+find_package(Slang QUIET)
 if (Slang_FOUND)
     set(ENABLE_SLANG_DEFAULT TRUE)
 endif()
