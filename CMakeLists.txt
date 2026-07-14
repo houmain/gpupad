@@ -360,7 +360,7 @@ endif()
 option(GPUPAD_BUILD_SHARED "Dynamically Link Shared Libraries" OFF)
 set(BUILD_SHARED_LIBS ${GPUPAD_BUILD_SHARED})
 
-option(GPUPAD_UNITY_BUILD_LIBRARIES "Unity Build Libraries" ON)
+option(GPUPAD_UNITY_BUILD_LIBRARIES "Unity Build Libraries" OFF)
 if (GPUPAD_UNITY_BUILD_LIBRARIES)
     set(CMAKE_UNITY_BUILD TRUE)
 else()
