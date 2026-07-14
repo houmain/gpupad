@@ -250,6 +250,10 @@ int main(int argc, char *argv[])
     // "Failed to sync surface 0x6: 5 (invalid VAContextID)."
     // even when calling QVideoFrame::toImage in QVideoSink::videoFrameChanged
     setenv("LIBVA_DRIVER_NAME", "", 0);
+
+    // prefer xwayland over wayland, since dragging editors can deadlock
+    // pass "-platform wayland" to force wayland platform
+    setenv("QT_QPA_PLATFORM", "xcb;wayland", 1);
 #endif
 
     if (std::string_view(argv[0]).ends_with("gpupad-headless"))
