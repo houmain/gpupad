@@ -400,7 +400,7 @@ set_target_properties(basisu_encoder PROPERTIES UNITY_BUILD OFF)
 set_target_properties(ktx PROPERTIES UNITY_BUILD OFF)
 
 # SPIRV-Reflect -------------------------
-set(CMAKE_FOLDER SPIRV-Reflect)
+set(CMAKE_FOLDER spirv-reflect)
 option(GPUPAD_SPIRV_REFLECT_FIND_PACKAGE "Find spirv-reflect package" ON)
 set(GPUPAD_SPIRV_REFLECT_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Reflect.git" CACHE STRING "spirv-reflect Git repository")
 set(GPUPAD_SPIRV_REFLECT_GIT_REVISION "c90b7b781cdcff63cf1b409ffc7ca0a714e0425e" CACHE STRING "spirv-reflect Git revision")
@@ -556,6 +556,9 @@ if (GPUPAD_ENABLE_GLSLANG)
     option(GPUPAD_SPIRV_TOOLS_FIND_PACKAGE "Find spirv-tools package" ON)
     set(GPUPAD_SPIRV_TOOLS_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Tools.git" CACHE STRING "spirv-tools Git repository")
     set(GPUPAD_SPIRV_TOOLS_GIT_REVISION "ee4f6beddb14cf6e9259288b86625405b4cdc4e1" CACHE STRING "spirv-tools Git revision")
+    if(NOT ${GPUPAD_BUILD_SHARED})
+        set(SPIRV_TOOLS_EXTRA_ARGS SPIRV_TOOLS_BUILD_STATIC:BOOL=ON)
+    endif()
     FetchSparse(spirv-tools
         FIND_PACKAGE ${GPUPAD_SPIRV_TOOLS_FIND_PACKAGE} SPIRV-Tools
         GIT_REPOSITORY ${GPUPAD_SPIRV_TOOLS_GIT_REPOSITORY}
@@ -567,7 +570,7 @@ if (GPUPAD_ENABLE_GLSLANG)
             SPIRV_SKIP_TESTS:BOOL=ON
             SPIRV_WERROR:BOOL=OFF
             SPIRV_TOOLS_USE_MIMALLOC:BOOL=OFF
-            SPIRV_TOOLS_BUILD_STATIC:BOOL=NOT ${GPUPAD_BUILD_SHARED}
+            ${SPIRV_TOOLS_EXTRA_ARGS}
     )
     if(NOT TARGET SPIRV-Tools-opt)
         find_package(SPIRV-Tools-opt REQUIRED)
@@ -598,6 +601,7 @@ if (GPUPAD_ENABLE_GLSLANG)
     set(BUILD_SHARED_LIBS ${GPUPAD_BUILD_SHARED})
 
     # SPIRV-Cross
+    set(CMAKE_FOLDER spirv-cross)
     option(GPUPAD_SPIRV_CROSS_FIND_PACKAGE "Find spirv-cross package" ON)
     set(GPUPAD_SPIRV_CROSS_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Cross.git" CACHE STRING "spirv-cross Git repository")
     set(GPUPAD_SPIRV_CROSS_GIT_REVISION "146679ff8255a6068518685599d7fb8761d1b570" CACHE STRING "spirv-cross Git revision")

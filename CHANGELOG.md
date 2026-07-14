@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 4.1.0] - 2026-07-14
+
+### Added
+
+- Added wrap mode to texture editor toolbar.
+- Made editor toolbar items moveable.
+- Added CMake options to find packages before fetching source.
+
 ## [Version 4.0.0] - 2026-07-05
 
 ### Added
@@ -1101,6 +1109,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 4.1.0]: https://github.com/houmain/gpupad/compare/4.0.0...4.1.0
 [version 4.0.0]: https://github.com/houmain/gpupad/compare/3.4.1...4.0.0
 [version 3.4.1]: https://github.com/houmain/gpupad/compare/3.4.0...3.4.1
 [version 3.4.0]: https://github.com/houmain/gpupad/compare/3.3.0...3.4.0
