@@ -206,4 +206,9 @@ Singletons::Singletons(QMainWindow *window)
     mDefaultScriptEngine = ScriptEngine::make(QDir::current());
 }
 
-Singletons::~Singletons() = default;
+Singletons::~Singletons()
+{
+    Q_ASSERT(onMainThread());
+    resetSharedVKDevice();
+    sInstance = nullptr;
+}
