@@ -359,11 +359,6 @@ endif()
 
 option(GPUPAD_BUILD_SHARED "Dynamically Link Shared Libraries" OFF)
 set(BUILD_SHARED_LIBS ${GPUPAD_BUILD_SHARED})
-if(GPUPAD_BUILD_SHARED)
-  set(GPUPAD_BUILD_STATIC OFF)
-else()
-  set(GPUPAD_BUILD_STATIC ON)
-endif()
 
 option(GPUPAD_UNITY_BUILD_LIBRARIES "Unity Build Libraries" ON)
 if (GPUPAD_UNITY_BUILD_LIBRARIES)
@@ -406,9 +401,10 @@ set_target_properties(ktx PROPERTIES UNITY_BUILD OFF)
 
 # SPIRV-Reflect -------------------------
 set(CMAKE_FOLDER SPIRV-Reflect)
-set(GPUPAD_SPIRV_REFLECT_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Reflect.git" CACHE STRING "SPIRV-Reflect Git repository")
-set(GPUPAD_SPIRV_REFLECT_GIT_REVISION "c90b7b781cdcff63cf1b409ffc7ca0a714e0425e" CACHE STRING "SPIRV-Reflect Git revision")
-FetchSparse(SPIRV-Reflect
+option(GPUPAD_SPIRV_REFLECT_FIND_PACKAGE "Find spirv-reflect package" ON)
+set(GPUPAD_SPIRV_REFLECT_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Reflect.git" CACHE STRING "spirv-reflect Git repository")
+set(GPUPAD_SPIRV_REFLECT_GIT_REVISION "c90b7b781cdcff63cf1b409ffc7ca0a714e0425e" CACHE STRING "spirv-reflect Git revision")
+FetchSparse(spirv-reflect
     GIT_REPOSITORY ${GPUPAD_SPIRV_REFLECT_GIT_REPOSITORY}
     GIT_TAG ${GPUPAD_SPIRV_REFLECT_GIT_REVISION}
     CACHE_OPTIONS
@@ -443,9 +439,11 @@ if (GPUPAD_ENABLE_VULKAN)
     target_compile_definitions(${PROJECT_NAME} PRIVATE VULKAN_ENABLED)
     set(CMAKE_FOLDER KDGpu)
 
-    set(GPUPAD_VMA_GIT_REPOSITORY "https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git" CACHE STRING "VulkanMemoryAllocator Git repository")
-    set(GPUPAD_VMA_GIT_REVISION "3aa921224c154a0d2c43912bc88e1c42ce1f7607" CACHE STRING "VulkanMemoryAllocator Git revision")
-    FetchSparse(VulkanMemoryAllocator
+    option(GPUPAD_VMA_FIND_PACKAGE "Find vulkan-memory-allocator package" ON)
+    set(GPUPAD_VMA_GIT_REPOSITORY "https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git" CACHE STRING "vulkan-memory-allocator Git repository")
+    set(GPUPAD_VMA_GIT_REVISION "3aa921224c154a0d2c43912bc88e1c42ce1f7607" CACHE STRING "vulkan-memory-allocator Git revision")
+    FetchSparse(vulkan-memory-allocator
+        FIND_PACKAGE ${GPUPAD_VMA_FIND_PACKAGE}
         GIT_REPOSITORY ${GPUPAD_VMA_GIT_REPOSITORY}
         GIT_TAG ${GPUPAD_VMA_GIT_REVISION}
         CACHE_OPTIONS
@@ -541,9 +539,9 @@ if (GPUPAD_ENABLE_GLSLANG)
     set(CMAKE_FOLDER glslang)
 
     # SPIRV-Headers
-    option(GPUPAD_SPIRV_HEADERS_FIND_PACKAGE "Find SPIRV-Headers package" ON)
-    set(GPUPAD_SPIRV_HEADERS_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Headers.git" CACHE STRING "SPIRV-Headers Git repository")
-    set(GPUPAD_SPIRV_HEADERS_GIT_REVISION "c63848ecf2200425511319fd8bf2c17b751e501e" CACHE STRING "SPIRV-Headers Git revision")
+    option(GPUPAD_SPIRV_HEADERS_FIND_PACKAGE "Find spirv-headers package" ON)
+    set(GPUPAD_SPIRV_HEADERS_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Headers.git" CACHE STRING "spirv-headers Git repository")
+    set(GPUPAD_SPIRV_HEADERS_GIT_REVISION "c63848ecf2200425511319fd8bf2c17b751e501e" CACHE STRING "spirv-headers Git revision")
     FetchSparse(spirv-headers
         GIT_REPOSITORY ${GPUPAD_SPIRV_HEADERS_GIT_REPOSITORY}
         GIT_TAG ${GPUPAD_SPIRV_HEADERS_GIT_REVISION}
@@ -554,9 +552,9 @@ if (GPUPAD_ENABLE_GLSLANG)
     FetchContent_GetProperties(SPIRV-Headers SOURCE_DIR GPUPAD_SPIRV_HEADERS_SOURCE_DIR)
 
     # SPIRV-Tools
-    option(GPUPAD_SPIRV_TOOLS_FIND_PACKAGE "Find SPIRV-Tools package" ON)
-    set(GPUPAD_SPIRV_TOOLS_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Tools.git" CACHE STRING "SPIRV-Tools Git repository")
-    set(GPUPAD_SPIRV_TOOLS_GIT_REVISION "ee4f6beddb14cf6e9259288b86625405b4cdc4e1" CACHE STRING "SPIRV-Tools Git revision")
+    option(GPUPAD_SPIRV_TOOLS_FIND_PACKAGE "Find spirv-tools package" ON)
+    set(GPUPAD_SPIRV_TOOLS_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Tools.git" CACHE STRING "spirv-tools Git repository")
+    set(GPUPAD_SPIRV_TOOLS_GIT_REVISION "ee4f6beddb14cf6e9259288b86625405b4cdc4e1" CACHE STRING "spirv-tools Git revision")
     FetchSparse(spirv-tools
         FIND_PACKAGE ${GPUPAD_SPIRV_TOOLS_FIND_PACKAGE}
         GIT_REPOSITORY ${GPUPAD_SPIRV_TOOLS_GIT_REPOSITORY}
@@ -568,7 +566,7 @@ if (GPUPAD_ENABLE_GLSLANG)
             SPIRV_SKIP_TESTS:BOOL=ON
             SPIRV_WERROR:BOOL=OFF
             SPIRV_TOOLS_USE_MIMALLOC:BOOL=OFF
-            SPIRV_TOOLS_BUILD_STATIC:BOOL=${GPUPAD_BUILD_STATIC}
+            SPIRV_TOOLS_BUILD_STATIC:BOOL=NOT ${GPUPAD_BUILD_SHARED}
     )
     if(NOT TARGET SPIRV-Tools-opt)
         find_package(SPIRV-Tools-opt REQUIRED)
@@ -599,9 +597,9 @@ if (GPUPAD_ENABLE_GLSLANG)
     set(BUILD_SHARED_LIBS ${GPUPAD_BUILD_SHARED})
 
     # SPIRV-Cross
-    option(GPUPAD_SPIRV_CROSS_FIND_PACKAGE "Find SPIRV-Cross package" ON)
-    set(GPUPAD_SPIRV_CROSS_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Cross.git" CACHE STRING "SPIRV-Cross Git repository")
-    set(GPUPAD_SPIRV_CROSS_GIT_REVISION "146679ff8255a6068518685599d7fb8761d1b570" CACHE STRING "SPIRV-Cross Git revision")
+    option(GPUPAD_SPIRV_CROSS_FIND_PACKAGE "Find spirv-cross package" ON)
+    set(GPUPAD_SPIRV_CROSS_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Cross.git" CACHE STRING "spirv-cross Git repository")
+    set(GPUPAD_SPIRV_CROSS_GIT_REVISION "146679ff8255a6068518685599d7fb8761d1b570" CACHE STRING "spirv-cross Git revision")
     FetchSparse(spirv-cross
         FIND_PACKAGE ${GPUPAD_SPIRV_CROSS_FIND_PACKAGE}
         GIT_REPOSITORY ${GPUPAD_SPIRV_CROSS_GIT_REPOSITORY}

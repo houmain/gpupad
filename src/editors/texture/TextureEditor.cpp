@@ -251,6 +251,7 @@ void TextureEditor::updateEditorToolBar()
 
     mEditorToolBar.setCanFilter(mTextureItem->canFilter());
     mEditorToolBar.setFilter(mTextureItem->magnifyLinear());
+    mEditorToolBar.setWrapMode(mTextureItem->wrapMode());
 
     mEditorToolBar.setCanFlipVertically(mTexture.dimensions() == 2
         || mTexture.isCubemap());
