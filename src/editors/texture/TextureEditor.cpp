@@ -63,12 +63,12 @@ TextureEditor::TextureEditor(QString fileName,
     auto *grid = new QGridLayout(this);
     grid->setContentsMargins(0, 0, 0, 0);
     grid->setSpacing(0);
-    grid->addWidget(viewport(),   0, 0);
+    grid->addWidget(viewport(), 0, 0);
     grid->addWidget(verticalScrollBar(), 0, 1);
     grid->addWidget(horizontalScrollBar(), 1, 0);
     grid->setRowStretch(0, 1);
     grid->setColumnStretch(0, 1);
-    
+
     verticalScrollBar()->hide();
     horizontalScrollBar()->hide();
 }
@@ -216,7 +216,10 @@ QList<QMetaObject::Connection> TextureEditor::connectEditActions(
     c += connect(&mEditorToolBar, &TextureEditorToolBar::filterChanged,
         mTextureItem, &TextureEditorItem::setMagnifyLinear);
     c += connect(&mEditorToolBar, &TextureEditorToolBar::wrapModeChanged,
-        mTextureItem, &TextureEditorItem::setWrapMode);
+        [this](int wrapMode) {
+            mTextureItem->setWrapMode(
+                static_cast<TextureEditorItem::WrapMode>(wrapMode));
+        });
     c += connect(&mEditorToolBar, &TextureEditorToolBar::flipVerticallyChanged,
         mTextureItem, &TextureEditorItem::setFlipVertically);
     c += connect(mTextureItem, &TextureEditorItem::pickerColorChanged,
@@ -251,7 +254,7 @@ void TextureEditor::updateEditorToolBar()
 
     mEditorToolBar.setCanFilter(mTextureItem->canFilter());
     mEditorToolBar.setFilter(mTextureItem->magnifyLinear());
-    mEditorToolBar.setWrapMode(mTextureItem->wrapMode());
+    mEditorToolBar.setWrapMode(static_cast<int>(mTextureItem->wrapMode()));
 
     mEditorToolBar.setCanFlipVertically(mTexture.dimensions() == 2
         || mTexture.isCubemap());

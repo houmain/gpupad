@@ -43,12 +43,12 @@ public:
         update();
     }
     bool magnifyLinear() const { return mMagnifyLinear; }
-    void setWrapMode(int wrapMode)
+    void setWrapMode(WrapMode wrapMode)
     {
         mWrapMode = wrapMode;
         update();
     }
-    int wrapMode() const { return mWrapMode; }
+    WrapMode wrapMode() const { return mWrapMode; }
     void setLevel(float level)
     {
         mLevel = level;
@@ -108,20 +108,22 @@ protected:
     struct Params
     {
         std::array<float, 16> transform{};
+        int32_t transformTexCoords{};
+        int32_t flipVertically{};
+
         float width{};
         float height{};
+        std::array<float, 2> pickerFragCoord{};
         float level{};
         float layer{};
         int32_t face{};
         int32_t sample{};
         int32_t samples{};
-        int32_t flipVertically{};
-        std::array<float, 2> pickerFragCoord{};
         float mappingOffset{};
         float mappingFactor{};
         uint32_t colorMask{};
     };
-    static_assert(sizeof(Params) == 116);
+    static_assert(sizeof(Params) == 120);
 
     static QString vertexShaderSource;
     static QString buildFragmentShader(const ShaderDesc &desc);
@@ -130,13 +132,14 @@ protected:
     QWindow &window();
     void update();
     QMatrix4x4 getTransform(const QSizeF &bounds, const QPointF &offset);
+    bool transformTextureCoordinates() const;
     Params getParams(const QMatrix4x4 &transform, int textureSamples) const;
 
     QRect mBoundingRect;
     TextureData mImage;
     int mTextureSamples{ 1 };
     bool mMagnifyLinear{};
-    int mWrapMode{};
+    WrapMode mWrapMode{};
     float mLevel{};
     int mFace{};
     float mLayer{};

@@ -26,13 +26,14 @@ QString TextureEditorItem::vertexShaderSource = R"(
 
 layout(push_constant) uniform Params {
   mat4 transform;
+  int transformTexCoords;
+  int flipVertically;  
   vec2 size;
   float level;
   float layer;
   int face;
   int samp;
   int samples;
-  int flipVertically;
   vec2 pickerFragCoord;
   float mappingOffset;
   float mappingFactor;
@@ -44,14 +45,16 @@ layout(location = 0) out vec2 vTexCoord;
 #else // !defined(VULKAN)
 
 uniform mat4 uTransform;
+uniform int uTransformTexCoords;
 uniform int uFlipVertically;
 out vec2 vTexCoord;
 
 struct Params {
   mat4 transform;
+  int transformTexCoords;
   int flipVertically;
 };
-Params pc = Params(uTransform, uFlipVertically);
+Params pc = Params(uTransform, uTransformTexCoords, uFlipVertically);
 
 #endif // !defined(VULKAN)
 
@@ -74,12 +77,17 @@ void main() {
   transform[1][1] *= -1;
   transform[3][1] *= -1;
 #endif
-  vTexCoord = ((transform * vec4(pos, 0.0, 1.0)).xy + 1.0) / 2.0;
 
+  if (pc.transformTexCoords == 1) {
+    vTexCoord = ((transform * vec4(pos, 0.0, 1.0)).xy + 1.0) / 2.0;
+    gl_Position = vec4(pos, 0.0, 1.0);
+  }
+  else {
+    vTexCoord = (pos + 1.0) / 2.0;
+    gl_Position = transform * vec4(pos, 0.0, 1.0);
+  }
   if (pc.flipVertically == 0)
     vTexCoord.y = 1 - vTexCoord.y;
-
-  gl_Position = vec4(pos, 0.0, 1.0);
 }
 )";
 
@@ -88,14 +96,16 @@ const QString fragmentShaderSource = R"(
 
 layout(push_constant) uniform Params {
   mat4 transform;
+  int transformTexCoords;
+  int flipVertically;
+
   vec2 size;
+  vec2 pickerFragCoord;
   float level;
   float layer;
   int face;
   int samp;
   int samples;
-  int flipVertically;
-  vec2 pickerFragCoord;
   float mappingOffset;
   float mappingFactor;
   uint colorMask;
@@ -135,24 +145,24 @@ out vec4 oColor;
 
 struct Params {
   vec2 size;
+  vec2 pickerFragCoord;
   float level;
   float layer;
   int face;
   int samp;
   int samples;
-  vec2 pickerFragCoord;
   float mappingOffset;
   float mappingFactor;
   int colorMask;
 };
 Params pc = Params(
   uSize,
+  uPickerFragCoord,
   uLevel,
   uLayer,
   uFace,
   uSample,
   uSamples,
-  uPickerFragCoord,
   uMappingOffset,
   uMappingFactor,
   uColorMask);
@@ -353,6 +363,11 @@ void TextureEditorItem::update()
     window().requestUpdate();
 }
 
+bool TextureEditorItem::transformTextureCoordinates() const
+{
+    return (wrapMode() != WrapMode::ClampToBorder);
+}
+
 QMatrix4x4 TextureEditorItem::getTransform(const QSizeF &bounds,
     const QPointF &offset)
 {
@@ -360,11 +375,20 @@ QMatrix4x4 TextureEditorItem::getTransform(const QSizeF &bounds,
     const auto renderSize = QSizeF(window().size());
     const auto width = std::max(renderSize.width() * dpr, 1.0);
     const auto height = std::max(renderSize.height() * dpr, 1.0);
-    const auto sx = width / bounds.width();
-    const auto sy = height / bounds.height();
-    const auto x = (width - offset.x() - bounds.width()) / bounds.width();
-    const auto y = (height - offset.y() - bounds.height()) / bounds.height();
-    return QMatrix4x4(QTransform(sx, 0, 0, 0, sy, 0, x, y, 1));
+    if (transformTextureCoordinates()) {
+        const auto sx = width / bounds.width();
+        const auto sy = height / bounds.height();
+        const auto x = (width - offset.x() - bounds.width()) / bounds.width();
+        const auto y = (height - offset.y() - bounds.height())
+            / bounds.height();
+        return QMatrix4x4(QTransform(sx, 0, 0, 0, sy, 0, x, y, 1));
+    } else {
+        const auto sx = bounds.width() / width;
+        const auto sy = bounds.height() / height;
+        const auto x = (offset.x() + bounds.width()) / width - 1.0;
+        const auto y = (offset.y() + bounds.height()) / height - 1.0;
+        return QMatrix4x4(QTransform(sx, 0, 0, 0, sy, 0, x, y, 1));
+    }
 }
 
 auto TextureEditorItem::getParams(const QMatrix4x4 &transform,
@@ -372,6 +396,8 @@ auto TextureEditorItem::getParams(const QMatrix4x4 &transform,
 {
     auto params = Params{};
     std::copy_n(transform.constData(), 16, params.transform.begin());
+    params.transformTexCoords = (transformTextureCoordinates() ? 1 : 0);
+    params.flipVertically = (mFlipVertically ? 1 : 0);
     params.width = static_cast<float>(mBoundingRect.width());
     params.height = static_cast<float>(mBoundingRect.height());
     params.level = mLevel;
@@ -380,7 +406,6 @@ auto TextureEditorItem::getParams(const QMatrix4x4 &transform,
     const auto resolve = (mSample < 0);
     params.sample = std::max(0, resolve ? 0 : mSample);
     params.samples = std::max(1, resolve ? textureSamples : 1);
-    params.flipVertically = (mFlipVertically ? 1 : 0);
     params.pickerFragCoord = {
         static_cast<float>(mMousePosition.x() + 0.5f),
         static_cast<float>(mMousePosition.y() + 0.5f),
