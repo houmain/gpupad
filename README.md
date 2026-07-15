@@ -189,6 +189,7 @@ The build script generator automatically fetches the additionally required libra
 
 - [KDGpu](https://github.com/houmain/KDGpu)
 - [libktx](https://github.com/KhronosGroup/KTX-Software)
+- [DirectXTex](https://github.com/microsoft/DirectXTex)
 - [glslang](https://github.com/KhronosGroup/glslang)
 - [SPIRV-Cross](https://github.com/KhronosGroup/SPIRV-Cross)
 - [SPIRV-Tools](https://github.com/KhronosGroup/SPIRV-Tools)

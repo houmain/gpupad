@@ -41,6 +41,7 @@ set(SOURCES
   src/Singletons.cpp
   src/SynchronizeLogic.cpp
   src/TextureData.cpp
+  src/TextureData_DDS.cpp
   src/VideoPlayer.cpp
   src/VideoManager.cpp
   src/InputState.cpp
@@ -398,6 +399,85 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ktx)
 # TODO: unity build does not work yet
 set_target_properties(basisu_encoder PROPERTIES UNITY_BUILD OFF)
 set_target_properties(ktx PROPERTIES UNITY_BUILD OFF)
+
+# DirectXTex -------------------------
+set(CMAKE_FOLDER DirectXTex)
+if (NOT MSVC)
+    set(GPUPAD_DIRECTXMATH_GIT_REPOSITORY "https://github.com/microsoft/DirectXMath.git" CACHE STRING "DirectXMath Git repository")
+    set(GPUPAD_DIRECTXMATH_GIT_REVISION "5618277fa077ab65c60bb677c0275bbccd95914d" CACHE STRING "DirectXMath Git revision")
+    FetchSparse(DirectXMath
+        GIT_REPOSITORY ${GPUPAD_DIRECTXMATH_GIT_REPOSITORY}
+        GIT_TAG ${GPUPAD_DIRECTXMATH_GIT_REVISION}
+        CACHE_OPTIONS
+            BUILD_XDSP:BOOL=OFF
+            BUILD_SHMATH:BOOL=OFF
+        SPARSE_EXCLUDE
+            Tests
+            XDSP
+            SHMath
+    )
+    if (NOT TARGET Microsoft::DirectXMath)
+        add_library(Microsoft::DirectXMath ALIAS DirectXMath)
+    endif()
+
+    set(GPUPAD_DIRECTX_HEADERS_GIT_REPOSITORY "https://github.com/microsoft/DirectX-Headers.git" CACHE STRING "DirectX-Headers Git repository")
+    set(GPUPAD_DIRECTX_HEADERS_GIT_REVISION "5c0f4bace522a37fda02421a97ccaa8a0d6a739a" CACHE STRING "DirectX-Headers Git revision")
+    FetchSparse(DirectX-Headers
+        GIT_REPOSITORY ${GPUPAD_DIRECTX_HEADERS_GIT_REPOSITORY}
+        GIT_TAG ${GPUPAD_DIRECTX_HEADERS_GIT_REVISION}
+        CACHE_OPTIONS
+            DXHEADERS_BUILD_TEST:BOOL=OFF
+            DXHEADERS_INSTALL:BOOL=OFF
+            DXHEADERS_BUILD_GOOGLE_TEST:BOOL=OFF
+        SPARSE_EXCLUDE
+            googletest
+            test
+    )
+
+    # DirectXTex requires find_package(CONFIG)
+    set(DIRECTXTEX_DEPENDENCY_CONFIG_DIR
+        "${CMAKE_CURRENT_BINARY_DIR}/directxtex-dependencies")
+    file(MAKE_DIRECTORY "${DIRECTXTEX_DEPENDENCY_CONFIG_DIR}")
+    file(WRITE "${DIRECTXTEX_DEPENDENCY_CONFIG_DIR}/directxmath-config.cmake"
+        "set(directxmath_FOUND TRUE)\n")
+    file(WRITE "${DIRECTXTEX_DEPENDENCY_CONFIG_DIR}/directx-headers-config.cmake"
+        "set(directx-headers_FOUND TRUE)\n")
+    set(SAVED_PREFIX_PATH "${CMAKE_PREFIX_PATH}")
+    list(PREPEND CMAKE_PREFIX_PATH "${DIRECTXTEX_DEPENDENCY_CONFIG_DIR}")
+endif()
+
+set(GPUPAD_DIRECTXTEX_GIT_REPOSITORY "https://github.com/microsoft/DirectXTex.git" CACHE STRING "DirectXTex Git repository")
+set(GPUPAD_DIRECTXTEX_GIT_REVISION "4feb3e11a020f35b796fc769a74216a555d4f5ef" CACHE STRING "DirectXTex Git revision")
+FetchSparse(DirectXTex
+    GIT_REPOSITORY ${GPUPAD_DIRECTXTEX_GIT_REPOSITORY}
+    GIT_TAG ${GPUPAD_DIRECTXTEX_GIT_REVISION}
+    CACHE_OPTIONS
+        BUILD_TOOLS:BOOL=OFF
+        BUILD_SAMPLE:BOOL=OFF
+        BUILD_DX11:BOOL=OFF
+        BUILD_DX12:BOOL=OFF
+        BC_USE_OPENMP:BOOL=OFF
+        BUILD_SHARED_LIBS:BOOL=${GPUPAD_BUILD_SHARED}
+    SPARSE_EXCLUDE
+        .azuredevops
+        .github
+        .nuget
+        Auxiliary
+        DDSTextureLoader
+        DDSView
+        ScreenGrab
+        Texassemble
+        Texconv
+        Texdiag
+        WICTextureLoader
+)
+target_link_libraries(${PROJECT_NAME} PRIVATE DirectXTex)
+set_target_properties(DirectXTex PROPERTIES UNITY_BUILD OFF)
+
+if (NOT MSVC)
+    set(CMAKE_PREFIX_PATH "${SAVED_PREFIX_PATH}")
+    unset(SAVED_PREFIX_PATH)
+endif()
 
 # SPIRV-Reflect -------------------------
 set(CMAKE_FOLDER spirv-reflect)

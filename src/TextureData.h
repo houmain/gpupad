@@ -77,10 +77,12 @@ public:
 
 private:
     bool loadKtx(const QString &fileName, bool flipVertically);
+    bool loadDDS(const QString &fileName, bool flipVertically);
     bool loadOpenImageIO(const QString &fileName, bool flipVertically);
     bool loadQImage(const QString &fileName, bool flipVertically);
     bool loadPfm(const QString &fileName, bool flipVertically);
     bool saveKtx(const QString &fileName, bool flipVertically) const;
+    bool saveDDS(const QString &fileName, bool flipVertically) const;
     bool saveQImage(const QString &fileName, bool flipVertically) const;
     bool saveOpenImageIO(const QString &fileName, bool flipVertically) const;
     bool savePfm(const QString &fileName, bool flipVertically) const;

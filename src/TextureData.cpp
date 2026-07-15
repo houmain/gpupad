@@ -958,6 +958,7 @@ bool TextureData::loadPfm(const QString &fileName, bool flipVertically)
 bool TextureData::load(const QString &fileName, bool flipVertically)
 {
     return loadKtx(fileName, flipVertically)
+        || loadDDS(fileName, flipVertically)
         || loadPfm(fileName, flipVertically)
         || loadOpenImageIO(fileName, flipVertically)
         || loadQImage(fileName, flipVertically);
@@ -1039,6 +1040,7 @@ bool TextureData::saveQImage(const QString &fileName, bool flipVertically) const
 bool TextureData::save(const QString &fileName, bool flipVertically) const
 {
     return saveKtx(fileName, flipVertically)
+        || saveDDS(fileName, flipVertically)
         || savePfm(fileName, flipVertically)
         || saveOpenImageIO(fileName, flipVertically)
         || saveQImage(fileName, flipVertically);
