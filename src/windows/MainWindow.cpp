@@ -280,6 +280,8 @@ MainWindow::MainWindow(QWidget *parent)
         &MainWindow::newFile);
     connect(mFileBrowserWindow.get(), &FileBrowserWindow::fileActivated,
         [this](const QString &fileName) { openFile(fileName); });
+    connect(mFileBrowserWindow.get(), &FileBrowserWindow::previewFileChanged,
+        this, &MainWindow::replacePreviewFileEditor);
 
     auto &synchronizeLogic = Singletons::synchronizeLogic();
     connect(&synchronizeLogic, &SynchronizeLogic::waitingForSync, this,
@@ -335,18 +337,17 @@ MainWindow::MainWindow(QWidget *parent)
             tb->showMenu();
         }
     });
-    
-    for (auto dock : findChildren<QDockWidget*>()) {
+
+    for (auto dock : findChildren<QDockWidget *>()) {
         if (dock != editorsDock)
             dock->setFeatures(QDockWidget::DockWidgetMovable
                 | QDockWidget::DockWidgetClosable);
-        connect(dock, &QDockWidget::topLevelChanged,
-            [dock](bool topLevel) {
-                if (topLevel)
-                    dock->hide();
-                else
-                    dock->show();
-            });
+        connect(dock, &QDockWidget::topLevelChanged, [dock](bool topLevel) {
+            if (topLevel)
+                dock->hide();
+            else
+                dock->show();
+        });
     }
 
     auto *customActionsButton = static_cast<QToolButton *>(
@@ -1402,4 +1403,14 @@ void MainWindow::openAbout()
     auto about = AboutDialog(this);
     about.setModal(true);
     about.exec();
+}
+
+void MainWindow::replacePreviewFileEditor(QString fileName)
+{
+    auto &editorManager = Singletons::editorManager();
+    editorManager.setAutoRaise(false);
+    editorManager.setEditorToReplace(mPreviewFileName);
+    editorManager.openEditor(fileName);
+    mPreviewFileName = fileName;
+    editorManager.setAutoRaise(true);
 }

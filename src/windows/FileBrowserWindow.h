@@ -22,14 +22,15 @@ public:
     void browseDirectory();
     void showInFileManager();
 
-private Q_SLOTS:
-    void itemActivated(const QModelIndex &index);
-    void currentDirectoryChanged(const QDir &dir);
-
 Q_SIGNALS:
     void fileActivated(const QString &filename);
+    void previewFileChanged(const QString &filename);
 
 private:
+    void itemActivated(const QModelIndex &index);
+    void currentDirectoryChanged(const QDir &dir);
+    void selectionChanged(const QModelIndex &current,
+        const QModelIndex &previous);
     bool revealDirectory(const QDir &dir);
     void focusDirectory(const QDir &dir);
     void updateRecentDirectories(const QString &path);
@@ -41,5 +42,6 @@ private:
     QComboBox *mRootDirectory{};
     QToolButton *mBrowseButton{};
     QToolButton *mShowInFileManagerButton{};
+    QToolButton *mPreviewFileButton{};
     QStringListModel *mRecentDirectories{};
 };

@@ -227,9 +227,10 @@ IEditor *EditorManager::getEditor(const QDockWidget *dock)
 
 QDockWidget *EditorManager::findEditorDock(const IEditor *editor) const
 {
-    for (auto [dock, dockEditor] : mDocks)
-        if (editor == dockEditor)
-            return dock;
+    if (editor)
+        for (auto [dock, dockEditor] : mDocks)
+            if (editor == dockEditor)
+                return dock;
     return nullptr;
 }
 
@@ -763,12 +764,33 @@ QDockWidget *EditorManager::findDockToAddTab(int tabifyGroup)
     return nullptr;
 }
 
+void EditorManager::setEditorToReplace(const QString &fileName)
+{
+    mEditorToReplace = fileName;
+}
+
+QDockWidget *EditorManager::getDockToReplace()
+{
+    return findEditorDock(getEditor(mEditorToReplace));
+}
+
 QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)
 {
     auto fileName = editor->fileName();
-    auto dock = new QDockWidget(this);
+    auto dock = getDockToReplace();
+    if (dock && promptSaveDock(dock)) {
+        closeDockEditor(dock);
+        dock->widget()->deleteLater();
+        setDockWindowTitle(dock, fileName);
+        dock->setWidget(widget);
+        mDocks[dock] = editor;
+        return dock;
+    }
+
+    dock = new QDockWidget(this);
     setDockWindowTitle(dock, fileName);
     dock->setWidget(widget);
+
     dock->setObjectName(
         QString::number(QRandomGenerator::global()->generate64(), 16));
 
@@ -782,13 +804,12 @@ QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)
     if (QGuiApplication::platformName().toLower().contains("wayland")) {
         features &= ~QDockWidget::DockWidgetFloatable;
 
-        connect(dock, &QDockWidget::topLevelChanged,
-            [dock](bool topLevel) {
-                if (topLevel)
-                    dock->hide();
-                else
-                    dock->show();
-            });
+        connect(dock, &QDockWidget::topLevelChanged, [dock](bool topLevel) {
+            if (topLevel)
+                dock->hide();
+            else
+                dock->show();
+        });
     }
     dock->setFeatures(features);
 
@@ -842,18 +863,23 @@ bool EditorManager::promptSaveDock(QDockWidget *dock)
     return true;
 }
 
-void EditorManager::closeDock(QDockWidget *dock)
+void EditorManager::closeDockEditor(QDockWidget *dock)
 {
-    Q_ASSERT(dock);
+    Q_ASSERT(dock && mDocks.contains(dock));
     auto editor = mDocks[dock];
+
     Q_EMIT editorRenamed(editor->fileName(), "");
 
     mSourceEditors.removeAll(static_cast<SourceEditor *>(editor));
     mBinaryEditors.removeAll(static_cast<BinaryEditor *>(editor));
     mTextureEditors.removeAll(static_cast<TextureEditor *>(editor));
     mQmlViews.removeAll(static_cast<QmlView *>(editor));
-
     mDocks.erase(dock);
+}
+
+void EditorManager::closeDock(QDockWidget *dock)
+{
+    closeDockEditor(dock);
 
     DockWindow::closeDock(dock);
 

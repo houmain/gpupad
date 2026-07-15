@@ -18,6 +18,7 @@ FileBrowserWindow::FileBrowserWindow(QWidget *parent)
     , mRootDirectory(new QComboBox(this))
     , mBrowseButton(new QToolButton(this))
     , mShowInFileManagerButton(new QToolButton(this))
+    , mPreviewFileButton(new QToolButton(this))
     , mRecentDirectories(new QStringListModel(this))
 {
     setFrameShape(QFrame::Box);
@@ -37,6 +38,12 @@ FileBrowserWindow::FileBrowserWindow(QWidget *parent)
     mShowInFileManagerButton->setAutoRaise(true);
     mShowInFileManagerButton->setToolTip(tr("Open Folder"));
 
+    mPreviewFileButton->setIcon(
+        QIcon(QIcon::fromTheme(QString::fromUtf8("application-exit"))));
+    mPreviewFileButton->setCheckable(true);
+    mPreviewFileButton->setAutoRaise(true);
+    mPreviewFileButton->setToolTip(tr("Open In Editor"));
+
     for (const auto &dir : getApplicationDirectories(ActionsDir))
         updateRecentDirectories(dir.path());
     for (const auto &dir : getApplicationDirectories(LibrariesDir))
@@ -52,6 +59,7 @@ FileBrowserWindow::FileBrowserWindow(QWidget *parent)
     headerLayout->addWidget(mRootDirectory);
     headerLayout->addWidget(mBrowseButton);
     headerLayout->addWidget(mShowInFileManagerButton);
+    headerLayout->addWidget(mPreviewFileButton);
 
     auto titleBar = new WindowTitle();
     titleBar->setWidget(header);
@@ -69,6 +77,13 @@ FileBrowserWindow::FileBrowserWindow(QWidget *parent)
     mFileSystemTree->setColumnHidden(2, true);
     mFileSystemTree->setColumnHidden(3, true);
 
+    connect(mFileSystemTree->selectionModel(),
+        &QItemSelectionModel::currentChanged, this,
+        &FileBrowserWindow::selectionChanged);
+    connect(mPreviewFileButton, &QToolButton::toggled, [this]() {
+        const auto index = mFileSystemTree->currentIndex();
+        Q_EMIT selectionChanged(index, index);
+    });
     connect(mBrowseButton, &QToolButton::clicked, this,
         &FileBrowserWindow::browseDirectory);
     connect(mShowInFileManagerButton, &QToolButton::clicked, this,
@@ -131,6 +146,16 @@ void FileBrowserWindow::itemActivated(const QModelIndex &index)
     const auto fileName = mModel->filePath(index);
     if (QFileInfo(fileName).isFile())
         Q_EMIT fileActivated(toNativeCanonicalFilePath(fileName));
+}
+
+void FileBrowserWindow::selectionChanged(const QModelIndex &current,
+    const QModelIndex &previous)
+{
+    if (mPreviewFileButton->isChecked()) {
+        const auto fileName = mModel->filePath(current);
+        if (QFileInfo(fileName).isFile())
+            Q_EMIT previewFileChanged(toNativeCanonicalFilePath(fileName));
+    }
 }
 
 void FileBrowserWindow::browseDirectory()

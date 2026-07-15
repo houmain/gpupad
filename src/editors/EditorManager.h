@@ -52,6 +52,7 @@ public:
         bool loadOrCreate = false);
     QmlView *openQmlView(const QString &fileName,
         const ScriptEnginePtr &enginePtr = {});
+    void setEditorToReplace(const QString &fileName);
     void setAutoRaise(bool raise) { mAutoRaise = raise; }
 
     EditorType getEditorType(const QString &fileName);
@@ -117,10 +118,12 @@ private:
     void handleEditorFilenameChanged(QDockWidget *dock);
     bool saveDock(QDockWidget *dock);
     bool promptSaveDock(QDockWidget *dock);
+    void closeDockEditor(QDockWidget *dock);
     void closeDock(QDockWidget *dock);
     void autoRaise(QWidget *editor);
     void updateEditorToolBarVisibility();
     void updateEditorPropertiesVisibility();
+    QDockWidget *getDockToReplace();
     QDockWidget *findDockToAddTab(int tabifyGroup);
     QDockWidget *createDock(QWidget *widget, IEditor *editor);
     void clearNavigationStack();
@@ -142,6 +145,7 @@ private:
     bool mAutoRaise{ true };
     QStack<QPair<QObject *, QString>> mNavigationStack;
     int mNavigationStackPosition{};
+    QString mEditorToReplace;
 };
 
 void updateDockCurrentProperty(QDockWidget *dock, bool current);

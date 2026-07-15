@@ -93,6 +93,7 @@ private:
     void handleHideMenuBarChanged(bool hide);
     void setToolbarIconVisible(QAction *action, bool visible);
     void waitForSync();
+    void replacePreviewFileEditor(QString fileName);
 
     Ui::MainWindow *mUi{};
     RenderWidget *mSyncWidget{};
@@ -115,4 +116,5 @@ private:
     QList<QAction *> mRecentFileActions;
     bool mLastPressWasAlt{};
     bool mIgnoreNextAlt{};
+    QString mPreviewFileName;
 };
