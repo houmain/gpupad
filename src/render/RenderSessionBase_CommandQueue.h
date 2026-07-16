@@ -311,11 +311,14 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
                         for (const auto &[name, binding] : scope.uniforms)
                             merged.uniforms[name] = binding;
                         for (const auto &[name, binding] : scope.samplers)
-                            merged.samplers[name] = binding;
+                            if (binding.texture)
+                                merged.samplers[name] = binding;
                         for (const auto &[name, binding] : scope.images)
-                            merged.images[name] = binding;
+                            if (binding.texture)
+                                merged.images[name] = binding;
                         for (const auto &[name, binding] : scope.buffers)
-                            merged.buffers[name] = binding;
+                            if (binding.buffer)
+                                merged.buffers[name] = binding;
                         for (const auto &[name, binding] : scope.subroutines)
                             merged.subroutines[name] = binding;
                     }
