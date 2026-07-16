@@ -16,7 +16,7 @@ namespace {
         "rgen", "rint", "rahit", "rchit", "rmiss", "rcall", "ps", "hlsli", "fx",
         "h" };
     const auto ScriptFileExtensions = { "js", "json", "qml" };
-    const auto TextureFileExtensions = { "ktx", "dds", "png",
+    const auto TextureFileExtensions = { "ktx", "ktx2", "dds", "png",
 #if defined(OPENIMAGEIO_ENABLED)
         "exr", "hdr",
 #endif

@@ -20,6 +20,345 @@ using TF = Texture::Format;
 using TT = Texture::Target;
 
 namespace {
+    enum PixelFormat : uint32_t {
+        NoSourceFormat = 0, // GL_NONE
+        Red = 0x1903, // GL_RED
+        RG = 0x8227, // GL_RG
+        RGB = 0x1907, // GL_RGB
+        BGR = 0x80E0, // GL_BGR
+        RGBA = 0x1908, // GL_RGBA
+        BGRA = 0x80E1, // GL_BGRA
+        Red_Integer = 0x8D94, // GL_RED_INTEGER
+        RG_Integer = 0x8228, // GL_RG_INTEGER
+        RGB_Integer = 0x8D98, // GL_RGB_INTEGER
+        BGR_Integer = 0x8D9A, // GL_BGR_INTEGER
+        RGBA_Integer = 0x8D99, // GL_RGBA_INTEGER
+        BGRA_Integer = 0x8D9B, // GL_BGRA_INTEGER
+        Stencil = 0x1901, // GL_STENCIL_INDEX
+        Depth = 0x1902, // GL_DEPTH_COMPONENT
+        DepthStencil = 0x84F9, // GL_DEPTH_STENCIL
+        Alpha = 0x1906, // GL_ALPHA
+        Luminance = 0x1909, // GL_LUMINANCE
+        LuminanceAlpha = 0x190A // GL_LUMINANCE_ALPHA
+    };
+
+    enum PixelType : uint32_t {
+        NoPixelType = 0, // GL_NONE
+        Int8 = 0x1400, // GL_BYTE
+        UInt8 = 0x1401, // GL_UNSIGNED_BYTE
+        Int16 = 0x1402, // GL_SHORT
+        UInt16 = 0x1403, // GL_UNSIGNED_SHORT
+        Int32 = 0x1404, // GL_INT
+        UInt32 = 0x1405, // GL_UNSIGNED_INT
+        Float16 = 0x140B, // GL_HALF_FLOAT
+        Float16OES = 0x8D61, // GL_HALF_FLOAT_OES
+        Float32 = 0x1406, // GL_FLOAT
+        UInt32_RGB9_E5 = 0x8C3E, // GL_UNSIGNED_INT_5_9_9_9_REV
+        UInt32_RG11B10F = 0x8C3B, // GL_UNSIGNED_INT_10F_11F_11F_REV
+        UInt8_RG3B2 = 0x8032, // GL_UNSIGNED_BYTE_3_3_2
+        UInt8_RG3B2_Rev = 0x8362, // GL_UNSIGNED_BYTE_2_3_3_REV
+        UInt16_RGB5A1 = 0x8034, // GL_UNSIGNED_SHORT_5_5_5_1
+        UInt16_RGB5A1_Rev = 0x8366, // GL_UNSIGNED_SHORT_1_5_5_5_REV
+        UInt16_R5G6B5 = 0x8363, // GL_UNSIGNED_SHORT_5_6_5
+        UInt16_R5G6B5_Rev = 0x8364, // GL_UNSIGNED_SHORT_5_6_5_REV
+        UInt16_RGBA4 = 0x8033, // GL_UNSIGNED_SHORT_4_4_4_4
+        UInt16_RGBA4_Rev = 0x8365, // GL_UNSIGNED_SHORT_4_4_4_4_REV
+        UInt32_RGBA8 = 0x8035, // GL_UNSIGNED_INT_8_8_8_8
+        UInt32_RGBA8_Rev = 0x8367, // GL_UNSIGNED_INT_8_8_8_8_REV
+        UInt32_RGB10A2 = 0x8036, // GL_UNSIGNED_INT_10_10_10_2
+        UInt32_RGB10A2_Rev = 0x8368, // GL_UNSIGNED_INT_2_10_10_10_REV
+        UInt32_D24S8 = 0x84FA, // GL_UNSIGNED_INT_24_8
+        Float32_D32_UInt32_S8_X24 = 0x8DAD // GL_FLOAT_32_UNSIGNED_INT_24_8_REV
+    };
+
+    enum class VulkanFormat : uint32_t {
+        UNDEFINED = 0,
+        R4G4B4A4_UNORM_PACK16 = 2,
+        R5G6B5_UNORM_PACK16 = 4,
+        A1R5G5B5_UNORM_PACK16 = 8,
+        R8_UNORM = 9,
+        R8_SNORM = 10,
+        R8_UINT = 13,
+        R8_SINT = 14,
+        R8G8_UNORM = 16,
+        R8G8_SNORM = 17,
+        R8G8_UINT = 20,
+        R8G8_SINT = 21,
+        R8G8B8_UNORM = 23,
+        R8G8B8_SNORM = 24,
+        R8G8B8_UINT = 27,
+        R8G8B8_SINT = 28,
+        R8G8B8_SRGB = 29,
+        R8G8B8A8_UNORM = 37,
+        R8G8B8A8_SNORM = 38,
+        R8G8B8A8_UINT = 41,
+        R8G8B8A8_SINT = 42,
+        R8G8B8A8_SRGB = 43,
+        A2R10G10B10_UNORM_PACK32 = 58,
+        A2B10G10R10_UNORM_PACK32 = 64,
+        R16_UNORM = 70,
+        R16_SNORM = 71,
+        R16_UINT = 74,
+        R16_SINT = 75,
+        R16_SFLOAT = 76,
+        R16G16_UNORM = 77,
+        R16G16_SNORM = 78,
+        R16G16_UINT = 81,
+        R16G16_SINT = 82,
+        R16G16_SFLOAT = 83,
+        R16G16B16_UNORM = 84,
+        R16G16B16_SNORM = 85,
+        R16G16B16_UINT = 88,
+        R16G16B16_SINT = 89,
+        R16G16B16_SFLOAT = 90,
+        R16G16B16A16_UNORM = 91,
+        R16G16B16A16_SNORM = 92,
+        R16G16B16A16_UINT = 95,
+        R16G16B16A16_SINT = 96,
+        R16G16B16A16_SFLOAT = 97,
+        R32_UINT = 98,
+        R32_SINT = 99,
+        R32_SFLOAT = 100,
+        R32G32_UINT = 101,
+        R32G32_SINT = 102,
+        R32G32_SFLOAT = 103,
+        R32G32B32_UINT = 104,
+        R32G32B32_SINT = 105,
+        R32G32B32_SFLOAT = 106,
+        R32G32B32A32_UINT = 107,
+        R32G32B32A32_SINT = 108,
+        R32G32B32A32_SFLOAT = 109,
+        B10G11R11_UFLOAT_PACK32 = 122,
+        E5B9G9R9_UFLOAT_PACK32 = 123,
+        D16_UNORM = 124,
+        X8_D24_UNORM_PACK32 = 125,
+        D32_SFLOAT = 126,
+        S8_UINT = 127,
+        D24_UNORM_S8_UINT = 129,
+        D32_SFLOAT_S8_UINT = 130,
+        BC1_RGB_UNORM_BLOCK = 131,
+        BC1_RGB_SRGB_BLOCK = 132,
+        BC1_RGBA_UNORM_BLOCK = 133,
+        BC1_RGBA_SRGB_BLOCK = 134,
+        BC2_UNORM_BLOCK = 135,
+        BC2_SRGB_BLOCK = 136,
+        BC3_UNORM_BLOCK = 137,
+        BC3_SRGB_BLOCK = 138,
+        BC4_UNORM_BLOCK = 139,
+        BC4_SNORM_BLOCK = 140,
+        BC5_UNORM_BLOCK = 141,
+        BC5_SNORM_BLOCK = 142,
+        BC6H_UFLOAT_BLOCK = 143,
+        BC6H_SFLOAT_BLOCK = 144,
+        BC7_UNORM_BLOCK = 145,
+        BC7_SRGB_BLOCK = 146,
+        ETC2_R8G8B8_UNORM_BLOCK = 147,
+        ETC2_R8G8B8_SRGB_BLOCK = 148,
+        ETC2_R8G8B8A1_UNORM_BLOCK = 149,
+        ETC2_R8G8B8A1_SRGB_BLOCK = 150,
+        ETC2_R8G8B8A8_UNORM_BLOCK = 151,
+        ETC2_R8G8B8A8_SRGB_BLOCK = 152,
+        EAC_R11_UNORM_BLOCK = 153,
+        EAC_R11_SNORM_BLOCK = 154,
+        EAC_R11G11_UNORM_BLOCK = 155,
+        EAC_R11G11_SNORM_BLOCK = 156,
+        ASTC_4x4_UNORM_BLOCK = 157,
+        ASTC_4x4_SRGB_BLOCK = 158,
+        ASTC_5x4_UNORM_BLOCK = 159,
+        ASTC_5x4_SRGB_BLOCK = 160,
+        ASTC_5x5_UNORM_BLOCK = 161,
+        ASTC_5x5_SRGB_BLOCK = 162,
+        ASTC_6x5_UNORM_BLOCK = 163,
+        ASTC_6x5_SRGB_BLOCK = 164,
+        ASTC_6x6_UNORM_BLOCK = 165,
+        ASTC_6x6_SRGB_BLOCK = 166,
+        ASTC_8x5_UNORM_BLOCK = 167,
+        ASTC_8x5_SRGB_BLOCK = 168,
+        ASTC_8x6_UNORM_BLOCK = 169,
+        ASTC_8x6_SRGB_BLOCK = 170,
+        ASTC_8x8_UNORM_BLOCK = 171,
+        ASTC_8x8_SRGB_BLOCK = 172,
+        ASTC_10x5_UNORM_BLOCK = 173,
+        ASTC_10x5_SRGB_BLOCK = 174,
+        ASTC_10x6_UNORM_BLOCK = 175,
+        ASTC_10x6_SRGB_BLOCK = 176,
+        ASTC_10x8_UNORM_BLOCK = 177,
+        ASTC_10x8_SRGB_BLOCK = 178,
+        ASTC_10x10_UNORM_BLOCK = 179,
+        ASTC_10x10_SRGB_BLOCK = 180,
+        ASTC_12x10_UNORM_BLOCK = 181,
+        ASTC_12x10_SRGB_BLOCK = 182,
+        ASTC_12x12_UNORM_BLOCK = 183,
+        ASTC_12x12_SRGB_BLOCK = 184,
+    };
+
+    Texture::Format getTextureFormatFromVkFormat(VulkanFormat format)
+    {
+        using VF = VulkanFormat;
+        switch (format) {
+        case VF::R8_UNORM:           return TF::R8_UNorm;
+        case VF::R8G8_UNORM:         return TF::RG8_UNorm;
+        case VF::R8G8B8_UNORM:       return TF::RGB8_UNorm;
+        case VF::R8G8B8A8_UNORM:     return TF::RGBA8_UNorm;
+        case VF::R16_UNORM:          return TF::R16_UNorm;
+        case VF::R16G16_UNORM:       return TF::RG16_UNorm;
+        case VF::R16G16B16_UNORM:    return TF::RGB16_UNorm;
+        case VF::R16G16B16A16_UNORM: return TF::RGBA16_UNorm;
+
+        case VF::R8_SNORM:           return TF::R8_SNorm;
+        case VF::R8G8_SNORM:         return TF::RG8_SNorm;
+        case VF::R8G8B8_SNORM:       return TF::RGB8_SNorm;
+        case VF::R8G8B8A8_SNORM:     return TF::RGBA8_SNorm;
+        case VF::R16_SNORM:          return TF::R16_SNorm;
+        case VF::R16G16_SNORM:       return TF::RG16_SNorm;
+        case VF::R16G16B16_SNORM:    return TF::RGB16_SNorm;
+        case VF::R16G16B16A16_SNORM: return TF::RGBA16_SNorm;
+
+        case VF::R8_UINT:           return TF::R8U;
+        case VF::R8G8_UINT:         return TF::RG8U;
+        case VF::R8G8B8_UINT:       return TF::RGB8U;
+        case VF::R8G8B8A8_UINT:     return TF::RGBA8U;
+        case VF::R16_UINT:          return TF::R16U;
+        case VF::R16G16_UINT:       return TF::RG16U;
+        case VF::R16G16B16_UINT:    return TF::RGB16U;
+        case VF::R16G16B16A16_UINT: return TF::RGBA16U;
+        case VF::R32_UINT:          return TF::R32U;
+        case VF::R32G32_UINT:       return TF::RG32U;
+        case VF::R32G32B32_UINT:    return TF::RGB32U;
+        case VF::R32G32B32A32_UINT: return TF::RGBA32U;
+
+        case VF::R8_SINT:           return TF::R8I;
+        case VF::R8G8_SINT:         return TF::RG8I;
+        case VF::R8G8B8_SINT:       return TF::RGB8I;
+        case VF::R8G8B8A8_SINT:     return TF::RGBA8I;
+        case VF::R16_SINT:          return TF::R16I;
+        case VF::R16G16_SINT:       return TF::RG16I;
+        case VF::R16G16B16_SINT:    return TF::RGB16I;
+        case VF::R16G16B16A16_SINT: return TF::RGBA16I;
+        case VF::R32_SINT:          return TF::R32I;
+        case VF::R32G32_SINT:       return TF::RG32I;
+        case VF::R32G32B32_SINT:    return TF::RGB32I;
+        case VF::R32G32B32A32_SINT: return TF::RGBA32I;
+
+        case VF::R16_SFLOAT:          return TF::R16F;
+        case VF::R16G16_SFLOAT:       return TF::RG16F;
+        case VF::R16G16B16_SFLOAT:    return TF::RGB16F;
+        case VF::R16G16B16A16_SFLOAT: return TF::RGBA16F;
+        case VF::R32_SFLOAT:          return TF::R32F;
+        case VF::R32G32_SFLOAT:       return TF::RG32F;
+        case VF::R32G32B32_SFLOAT:    return TF::RGB32F;
+        case VF::R32G32B32A32_SFLOAT: return TF::RGBA32F;
+
+        case VF::E5B9G9R9_UFLOAT_PACK32:   return TF::RGB9E5;
+        case VF::B10G11R11_UFLOAT_PACK32:  return TF::RG11B10F;
+        case VF::R5G6B5_UNORM_PACK16:      return TF::R5G6B5;
+        case VF::A1R5G5B5_UNORM_PACK16:    return TF::RGB5A1;
+        case VF::R4G4B4A4_UNORM_PACK16:    return TF::RGBA4;
+        case VF::A2R10G10B10_UNORM_PACK32:
+        case VF::A2B10G10R10_UNORM_PACK32: return TF::RGB10A2;
+
+        case VF::D16_UNORM:           return TF::D16;
+        case VF::X8_D24_UNORM_PACK32: return TF::D24;
+        case VF::D32_SFLOAT:          return TF::D32F;
+        case VF::S8_UINT:             return TF::S8;
+        case VF::D24_UNORM_S8_UINT:   return TF::D24S8;
+        case VF::D32_SFLOAT_S8_UINT:  return TF::D32FS8X24;
+
+        case VF::BC1_RGB_UNORM_BLOCK:  return TF::RGB_DXT1;
+        case VF::BC1_RGB_SRGB_BLOCK:   return TF::SRGB_DXT1;
+        case VF::BC1_RGBA_UNORM_BLOCK: return TF::RGBA_DXT1;
+        case VF::BC1_RGBA_SRGB_BLOCK:  return TF::SRGB_Alpha_DXT1;
+        case VF::BC2_UNORM_BLOCK:      return TF::RGBA_DXT3;
+        case VF::BC2_SRGB_BLOCK:       return TF::SRGB_Alpha_DXT3;
+        case VF::BC3_UNORM_BLOCK:      return TF::RGBA_DXT5;
+        case VF::BC3_SRGB_BLOCK:       return TF::SRGB_Alpha_DXT5;
+        case VF::BC4_UNORM_BLOCK:      return TF::R_ATI1N_UNorm;
+        case VF::BC4_SNORM_BLOCK:      return TF::R_ATI1N_SNorm;
+        case VF::BC5_UNORM_BLOCK:      return TF::RG_ATI2N_UNorm;
+        case VF::BC5_SNORM_BLOCK:      return TF::RG_ATI2N_SNorm;
+        case VF::BC6H_UFLOAT_BLOCK:    return TF::RGB_BP_UNSIGNED_FLOAT;
+        case VF::BC6H_SFLOAT_BLOCK:    return TF::RGB_BP_SIGNED_FLOAT;
+        case VF::BC7_UNORM_BLOCK:      return TF::RGB_BP_UNorm;
+        case VF::BC7_SRGB_BLOCK:       return TF::SRGB_BP_UNorm;
+
+        case VF::ETC2_R8G8B8_UNORM_BLOCK: return TF::RGB8_ETC2;
+        case VF::ETC2_R8G8B8_SRGB_BLOCK:  return TF::SRGB8_ETC2;
+        case VF::ETC2_R8G8B8A1_UNORM_BLOCK:
+            return TF::RGB8_PunchThrough_Alpha1_ETC2;
+        case VF::ETC2_R8G8B8A1_SRGB_BLOCK:
+            return TF::SRGB8_PunchThrough_Alpha1_ETC2;
+        case VF::ETC2_R8G8B8A8_UNORM_BLOCK: return TF::RGBA8_ETC2_EAC;
+        case VF::ETC2_R8G8B8A8_SRGB_BLOCK:  return TF::SRGB8_Alpha8_ETC2_EAC;
+        case VF::EAC_R11_UNORM_BLOCK:       return TF::R11_EAC_UNorm;
+        case VF::EAC_R11_SNORM_BLOCK:       return TF::R11_EAC_SNorm;
+        case VF::EAC_R11G11_UNORM_BLOCK:    return TF::RG11_EAC_UNorm;
+        case VF::EAC_R11G11_SNORM_BLOCK:    return TF::RG11_EAC_SNorm;
+
+        case VF::ASTC_4x4_UNORM_BLOCK:   return TF::RGBA_ASTC_4x4;
+        case VF::ASTC_5x4_UNORM_BLOCK:   return TF::RGBA_ASTC_5x4;
+        case VF::ASTC_5x5_UNORM_BLOCK:   return TF::RGBA_ASTC_5x5;
+        case VF::ASTC_6x5_UNORM_BLOCK:   return TF::RGBA_ASTC_6x5;
+        case VF::ASTC_6x6_UNORM_BLOCK:   return TF::RGBA_ASTC_6x6;
+        case VF::ASTC_8x5_UNORM_BLOCK:   return TF::RGBA_ASTC_8x5;
+        case VF::ASTC_8x6_UNORM_BLOCK:   return TF::RGBA_ASTC_8x6;
+        case VF::ASTC_8x8_UNORM_BLOCK:   return TF::RGBA_ASTC_8x8;
+        case VF::ASTC_10x5_UNORM_BLOCK:  return TF::RGBA_ASTC_10x5;
+        case VF::ASTC_10x6_UNORM_BLOCK:  return TF::RGBA_ASTC_10x6;
+        case VF::ASTC_10x8_UNORM_BLOCK:  return TF::RGBA_ASTC_10x8;
+        case VF::ASTC_10x10_UNORM_BLOCK: return TF::RGBA_ASTC_10x10;
+        case VF::ASTC_12x10_UNORM_BLOCK: return TF::RGBA_ASTC_12x10;
+        case VF::ASTC_12x12_UNORM_BLOCK: return TF::RGBA_ASTC_12x12;
+        case VF::ASTC_4x4_SRGB_BLOCK:    return TF::SRGB8_Alpha8_ASTC_4x4;
+        case VF::ASTC_5x4_SRGB_BLOCK:    return TF::SRGB8_Alpha8_ASTC_5x4;
+        case VF::ASTC_5x5_SRGB_BLOCK:    return TF::SRGB8_Alpha8_ASTC_5x5;
+        case VF::ASTC_6x5_SRGB_BLOCK:    return TF::SRGB8_Alpha8_ASTC_6x5;
+        case VF::ASTC_6x6_SRGB_BLOCK:    return TF::SRGB8_Alpha8_ASTC_6x6;
+        case VF::ASTC_8x5_SRGB_BLOCK:    return TF::SRGB8_Alpha8_ASTC_8x5;
+        case VF::ASTC_8x6_SRGB_BLOCK:    return TF::SRGB8_Alpha8_ASTC_8x6;
+        case VF::ASTC_8x8_SRGB_BLOCK:    return TF::SRGB8_Alpha8_ASTC_8x8;
+        case VF::ASTC_10x5_SRGB_BLOCK:   return TF::SRGB8_Alpha8_ASTC_10x5;
+        case VF::ASTC_10x6_SRGB_BLOCK:   return TF::SRGB8_Alpha8_ASTC_10x6;
+        case VF::ASTC_10x8_SRGB_BLOCK:   return TF::SRGB8_Alpha8_ASTC_10x8;
+        case VF::ASTC_10x10_SRGB_BLOCK:  return TF::SRGB8_Alpha8_ASTC_10x10;
+        case VF::ASTC_12x10_SRGB_BLOCK:  return TF::SRGB8_Alpha8_ASTC_12x10;
+        case VF::ASTC_12x12_SRGB_BLOCK:  return TF::SRGB8_Alpha8_ASTC_12x12;
+
+        case VF::R8G8B8_SRGB:   return TF::SRGB8;
+        case VF::R8G8B8A8_SRGB: return TF::SRGB8_Alpha8;
+        default:                return TF::NoFormat;
+        }
+    }
+
+    const ktxTexture1 *asTexture1(const ktxTexture *texture)
+    {
+        return reinterpret_cast<const ktxTexture1 *>(texture);
+    }
+
+    ktxTexture1 *asTexture1(ktxTexture *texture)
+    {
+        return reinterpret_cast<ktxTexture1 *>(texture);
+    }
+
+    const ktxTexture2 *asTexture2(const ktxTexture *texture)
+    {
+        return reinterpret_cast<const ktxTexture2 *>(texture);
+    }
+
+    ktxTexture2 *asTexture2(ktxTexture *texture)
+    {
+        return reinterpret_cast<ktxTexture2 *>(texture);
+    }
+
+    Texture::Format getTextureFormat(const ktxTexture &texture)
+    {
+        if (texture.classId == ktxTexture1_c)
+            return static_cast<TF>(asTexture1(&texture)->glInternalformat);
+        if (texture.classId == ktxTexture2_c)
+            return getTextureFormatFromVkFormat(
+                static_cast<VulkanFormat>(asTexture2(&texture)->vkFormat));
+        return TF::NoFormat;
+    }
+
     // TODO: remove when libKTX is fixed
     void fixFormat(ktxTexture1 &texture)
     {
@@ -85,10 +424,10 @@ namespace {
             default: return GL_NONE;
             }
         };
-#endif // defined(OPENGL_ENABLED)
         if (auto format =
                 glGetFormatFromInternalFormat(texture.glInternalformat))
             texture.glFormat = format;
+#endif // defined(OPENGL_ENABLED)
     }
 
     QImage::Format getNextNativeImageFormat(QImage::Format format)
@@ -139,58 +478,6 @@ namespace {
 
     QImage::Format getImageFormat(uint32_t format, uint32_t type)
     {
-        enum PixelFormat {
-            NoSourceFormat = 0, // GL_NONE
-            Red = 0x1903, // GL_RED
-            RG = 0x8227, // GL_RG
-            RGB = 0x1907, // GL_RGB
-            BGR = 0x80E0, // GL_BGR
-            RGBA = 0x1908, // GL_RGBA
-            BGRA = 0x80E1, // GL_BGRA
-            Red_Integer = 0x8D94, // GL_RED_INTEGER
-            RG_Integer = 0x8228, // GL_RG_INTEGER
-            RGB_Integer = 0x8D98, // GL_RGB_INTEGER
-            BGR_Integer = 0x8D9A, // GL_BGR_INTEGER
-            RGBA_Integer = 0x8D99, // GL_RGBA_INTEGER
-            BGRA_Integer = 0x8D9B, // GL_BGRA_INTEGER
-            Stencil = 0x1901, // GL_STENCIL_INDEX
-            Depth = 0x1902, // GL_DEPTH_COMPONENT
-            DepthStencil = 0x84F9, // GL_DEPTH_STENCIL
-            Alpha = 0x1906, // GL_ALPHA
-            Luminance = 0x1909, // GL_LUMINANCE
-            LuminanceAlpha = 0x190A // GL_LUMINANCE_ALPHA
-        };
-
-        enum PixelType {
-            NoPixelType = 0, // GL_NONE
-            Int8 = 0x1400, // GL_BYTE
-            UInt8 = 0x1401, // GL_UNSIGNED_BYTE
-            Int16 = 0x1402, // GL_SHORT
-            UInt16 = 0x1403, // GL_UNSIGNED_SHORT
-            Int32 = 0x1404, // GL_INT
-            UInt32 = 0x1405, // GL_UNSIGNED_INT
-            Float16 = 0x140B, // GL_HALF_FLOAT
-            Float16OES = 0x8D61, // GL_HALF_FLOAT_OES
-            Float32 = 0x1406, // GL_FLOAT
-            UInt32_RGB9_E5 = 0x8C3E, // GL_UNSIGNED_INT_5_9_9_9_REV
-            UInt32_RG11B10F = 0x8C3B, // GL_UNSIGNED_INT_10F_11F_11F_REV
-            UInt8_RG3B2 = 0x8032, // GL_UNSIGNED_BYTE_3_3_2
-            UInt8_RG3B2_Rev = 0x8362, // GL_UNSIGNED_BYTE_2_3_3_REV
-            UInt16_RGB5A1 = 0x8034, // GL_UNSIGNED_SHORT_5_5_5_1
-            UInt16_RGB5A1_Rev = 0x8366, // GL_UNSIGNED_SHORT_1_5_5_5_REV
-            UInt16_R5G6B5 = 0x8363, // GL_UNSIGNED_SHORT_5_6_5
-            UInt16_R5G6B5_Rev = 0x8364, // GL_UNSIGNED_SHORT_5_6_5_REV
-            UInt16_RGBA4 = 0x8033, // GL_UNSIGNED_SHORT_4_4_4_4
-            UInt16_RGBA4_Rev = 0x8365, // GL_UNSIGNED_SHORT_4_4_4_4_REV
-            UInt32_RGBA8 = 0x8035, // GL_UNSIGNED_INT_8_8_8_8
-            UInt32_RGBA8_Rev = 0x8367, // GL_UNSIGNED_INT_8_8_8_8_REV
-            UInt32_RGB10A2 = 0x8036, // GL_UNSIGNED_INT_10_10_10_2
-            UInt32_RGB10A2_Rev = 0x8368, // GL_UNSIGNED_INT_2_10_10_10_REV
-            UInt32_D24S8 = 0x84FA, // GL_UNSIGNED_INT_24_8
-            Float32_D32_UInt32_S8_X24 =
-                0x8DAD // GL_FLOAT_32_UNSIGNED_INT_24_8_REV
-        };
-
         switch (type) {
         case PixelType::Int8:
         case PixelType::UInt8:
@@ -691,7 +978,6 @@ bool TextureData::create(Texture::Target target, Texture::Format format,
     case TT::TargetCubeMapArray:
         createInfo.isArray = KTX_TRUE;
         createInfo.numLayers = static_cast<ktx_uint32_t>(layers);
-        createInfo.numLayers *= 6;
         [[fallthrough]];
     case TT::TargetCubeMap:
         createInfo.baseHeight = createInfo.baseWidth;
@@ -711,8 +997,8 @@ bool TextureData::create(Texture::Target target, Texture::Format format,
             &texture)
         == KTX_SUCCESS) {
         fixFormat(*texture);
-        mKtxTexture.reset(texture,
-            [](ktxTexture1 *tex) { ktxTexture_Destroy(ktxTexture(tex)); });
+        mKtxTexture.reset(ktxTexture(texture),
+            [](ktxTexture *tex) { ktxTexture_Destroy(tex); });
         return true;
     }
     return false;
@@ -784,14 +1070,31 @@ bool TextureData::loadKtx(const QString &fileName, bool flipVertically)
         return false;
     auto guard = qScopeGuard([&]() { std::fclose(f); });
 
-    auto texture = std::add_pointer_t<ktxTexture1>{};
-    if (ktxTexture1_CreateFromStdioStream(f,
-            KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &texture)
+    auto texturePtr = std::add_pointer_t<ktxTexture>{};
+    if (ktxTexture_CreateFromStdioStream(f,
+            KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &texturePtr)
         != KTX_SUCCESS)
         return false;
 
-    mKtxTexture.reset(texture,
-        [](ktxTexture1 *tex) { ktxTexture_Destroy(ktxTexture(tex)); });
+    auto texture = std::shared_ptr<ktxTexture>(texturePtr,
+        [](ktxTexture *tex) { ktxTexture_Destroy(tex); });
+
+    if (ktxTexture_NeedsTranscoding(texture.get())) {
+        if (texture->classId != ktxTexture2_c)
+            return false;
+
+        const auto target = (ktxTexture_IsHDR(texture.get())
+                ? KTX_TTF_BC6HU
+                : KTX_TTF_BC7_RGBA);
+        if (ktxTexture2_TranscodeBasis(asTexture2(texture.get()), target, 0)
+            != KTX_SUCCESS) {
+            return false;
+        }
+    }
+    if (getTextureFormat(*texture) == TF::NoFormat)
+        return false;
+
+    mKtxTexture = std::move(texture);
 
     if (flipVertically)
         this->flipVertically();
@@ -966,11 +1269,25 @@ bool TextureData::load(const QString &fileName, bool flipVertically)
 
 bool TextureData::saveKtx(const QString &fileName, bool flipVertically) const
 {
-    if (!fileName.endsWith(".ktx", Qt::CaseInsensitive))
+    if (isNull())
         return false;
 
-    return (ktxTexture_WriteToNamedFile(ktxTexture(mKtxTexture.get()),
-                qUtf8Printable(fileName))
+    if (fileName.endsWith(".ktx2", Qt::CaseInsensitive)) {
+        if (mKtxTexture->classId == ktxTexture1_c)
+            return (ktxTexture1_WriteKTX2ToNamedFile(
+                        asTexture1(mKtxTexture.get()), qUtf8Printable(fileName))
+                == KTX_SUCCESS);
+        return (ktxTexture_WriteToNamedFile(mKtxTexture.get(),
+                    qUtf8Printable(fileName))
+            == KTX_SUCCESS);
+    }
+
+    if (!fileName.endsWith(".ktx", Qt::CaseInsensitive)
+        || mKtxTexture->classId != ktxTexture1_c)
+        return false;
+
+    return (
+        ktxTexture_WriteToNamedFile(mKtxTexture.get(), qUtf8Printable(fileName))
         == KTX_SUCCESS);
 }
 
@@ -1120,19 +1437,97 @@ Texture::Target TextureData::getTarget(int samples) const
 
 Texture::Format TextureData::format() const
 {
-    return (isNull()
-            ? TF::NoFormat
-            : static_cast<Texture::Format>(mKtxTexture->glInternalformat));
+    return (isNull() ? TF::NoFormat : getTextureFormat(*mKtxTexture));
 }
 
 uint32_t TextureData::pixelFormat() const
 {
-    return (isNull() ? 0 : mKtxTexture->glFormat);
+    if (isNull())
+        return NoSourceFormat;
+    if (mKtxTexture->classId == ktxTexture1_c)
+        return asTexture1(mKtxTexture.get())->glFormat;
+    if (isCompressed())
+        return NoSourceFormat;
+
+    using VF = VulkanFormat;
+    const auto vkFormat =
+        static_cast<VF>(asTexture2(mKtxTexture.get())->vkFormat);
+    switch (vkFormat) {
+    case VF::A1R5G5B5_UNORM_PACK16:
+    case VF::A2R10G10B10_UNORM_PACK32: return BGRA;
+    case VF::R5G6B5_UNORM_PACK16:
+    case VF::B10G11R11_UFLOAT_PACK32:
+    case VF::E5B9G9R9_UFLOAT_PACK32:   return RGB;
+    case VF::R4G4B4A4_UNORM_PACK16:
+    case VF::A2B10G10R10_UNORM_PACK32: return RGBA;
+    case VF::D16_UNORM:
+    case VF::X8_D24_UNORM_PACK32:
+    case VF::D32_SFLOAT:               return Depth;
+    case VF::S8_UINT:                  return Stencil;
+    case VF::D24_UNORM_S8_UINT:
+    case VF::D32_SFLOAT_S8_UINT:       return DepthStencil;
+    default:                           break;
+    }
+
+    const auto componentCount = getTextureComponentCount(format());
+    const auto sampleType = getTextureSampleType(format());
+    const auto integer = (sampleType == TextureSampleType::Int8
+        || sampleType == TextureSampleType::Int16
+        || sampleType == TextureSampleType::Int32
+        || sampleType == TextureSampleType::Uint8
+        || sampleType == TextureSampleType::Uint16
+        || sampleType == TextureSampleType::Uint32);
+    switch (componentCount) {
+    case 1:  return (integer ? Red_Integer : Red);
+    case 2:  return (integer ? RG_Integer : RG);
+    case 3:  return (integer ? RGB_Integer : RGB);
+    case 4:  return (integer ? RGBA_Integer : RGBA);
+    default: return NoSourceFormat;
+    }
 }
 
 uint32_t TextureData::pixelType() const
 {
-    return (isNull() ? 0 : mKtxTexture->glType);
+    if (isNull())
+        return NoPixelType;
+    if (mKtxTexture->classId == ktxTexture1_c)
+        return asTexture1(mKtxTexture.get())->glType;
+    if (isCompressed())
+        return NoPixelType;
+
+    using VF = VulkanFormat;
+    const auto vkFormat =
+        static_cast<VF>(asTexture2(mKtxTexture.get())->vkFormat);
+    switch (vkFormat) {
+    case VF::R4G4B4A4_UNORM_PACK16:    return UInt16_RGBA4;
+    case VF::R5G6B5_UNORM_PACK16:      return UInt16_R5G6B5;
+    case VF::A1R5G5B5_UNORM_PACK16:    return UInt16_RGB5A1_Rev;
+    case VF::A2R10G10B10_UNORM_PACK32:
+    case VF::A2B10G10R10_UNORM_PACK32: return UInt32_RGB10A2_Rev;
+    case VF::B10G11R11_UFLOAT_PACK32:  return UInt32_RG11B10F;
+    case VF::E5B9G9R9_UFLOAT_PACK32:   return UInt32_RGB9_E5;
+    case VF::D16_UNORM:                return UInt16;
+    case VF::X8_D24_UNORM_PACK32:      return UInt32;
+    case VF::D32_SFLOAT:               return Float32;
+    case VF::S8_UINT:                  return UInt8;
+    case VF::D24_UNORM_S8_UINT:        return UInt32_D24S8;
+    case VF::D32_SFLOAT_S8_UINT:       return Float32_D32_UInt32_S8_X24;
+    default:                           break;
+    }
+
+    switch (getTextureDataType(format())) {
+    case TextureDataType::Int8:       return Int8;
+    case TextureDataType::Int16:      return Int16;
+    case TextureDataType::Int32:      return Int32;
+    case TextureDataType::Uint8:      return UInt8;
+    case TextureDataType::Uint16:     return UInt16;
+    case TextureDataType::Uint32:     return UInt32;
+    case TextureDataType::Float16:    return Float16;
+    case TextureDataType::Float32:    return Float32;
+    case TextureDataType::Packed:
+    case TextureDataType::Compressed: return NoPixelType;
+    }
+    return NoPixelType;
 }
 
 int TextureData::getLevelWidth(int level) const
@@ -1158,9 +1553,10 @@ int TextureData::getLevelDepth(int level) const
 
 int TextureData::getLevelStride(int level) const
 {
-    if (auto height = getLevelHeight(level))
-        return getImageSize(level) / height;
-    return 0;
+    return (isNull()
+            ? 0
+            : static_cast<int>(ktxTexture_GetRowPitch(mKtxTexture.get(),
+                  static_cast<ktx_uint32_t>(level))));
 }
 
 int TextureData::levels() const
@@ -1172,10 +1568,6 @@ int TextureData::layers() const
 {
     if (isNull())
         return 0;
-
-    if (getTarget() == TT::TargetCubeMapArray)
-        return static_cast<int>(mKtxTexture->numLayers / 6);
-
     return static_cast<int>(mKtxTexture->numLayers);
 }
 
@@ -1196,8 +1588,7 @@ const uchar *TextureData::getData() const
 
 int TextureData::getDataSize() const
 {
-    return static_cast<int>(
-        ktxTexture_GetDataSize(ktxTexture(mKtxTexture.get())));
+    return static_cast<int>(ktxTexture_GetDataSize(mKtxTexture.get()));
 }
 
 uchar *TextureData::getWriteonlyData(int level, int layer, int face)
@@ -1223,11 +1614,11 @@ const uchar *TextureData::getData(int level, int layer, int faceSlice) const
         return nullptr;
 
     auto offset = ktx_size_t{};
-    if (ktxTexture_GetImageOffset(ktxTexture(mKtxTexture.get()),
+    if (ktxTexture_GetImageOffset(mKtxTexture.get(),
             static_cast<ktx_uint32_t>(level), static_cast<ktx_uint32_t>(layer),
             static_cast<ktx_uint32_t>(faceSlice), &offset)
         == KTX_SUCCESS)
-        return ktxTexture_GetData(ktxTexture(mKtxTexture.get())) + offset;
+        return ktxTexture_GetData(mKtxTexture.get()) + offset;
 
     return nullptr;
 }
@@ -1241,8 +1632,8 @@ int TextureData::getImageSize(int level) const
 {
     if (isNull())
         return 0;
-    return static_cast<int>(ktxTexture_GetImageSize(
-        ktxTexture(mKtxTexture.get()), static_cast<ktx_uint32_t>(level)));
+    return static_cast<int>(ktxTexture_GetImageSize(mKtxTexture.get(),
+        static_cast<ktx_uint32_t>(level)));
 }
 
 int TextureData::getSlicesSize(int level) const
@@ -1252,7 +1643,10 @@ int TextureData::getSlicesSize(int level) const
 
 int TextureData::getLevelSize(int level) const
 {
-    return getSlicesSize(level) * layers() * faces();
+    if (isNull())
+        return 0;
+    return static_cast<int>(ktxTexture_GetLevelSize(mKtxTexture.get(),
+        static_cast<ktx_uint32_t>(level)));
 }
 
 void TextureData::clear()
@@ -1290,8 +1684,8 @@ bool TextureData::uploadGL(GLuint *textureId) const
 
     auto error = GLenum{};
     auto target = static_cast<GLenum>(getTarget());
-    const auto result = ktxTexture_GLUpload(ktxTexture(mKtxTexture.get()),
-        textureId, &target, &error);
+    const auto result =
+        ktxTexture_GLUpload(mKtxTexture.get(), textureId, &target, &error);
 
     Q_ASSERT(glGetError() == GL_NO_ERROR);
     return (result == KTX_SUCCESS);
@@ -1299,6 +1693,13 @@ bool TextureData::uploadGL(GLuint *textureId) const
 #endif // defined(OPENGL_ENABLED)
 
 #if defined(VULKAN_ENABLED)
+uint32_t TextureData::getVkFormat() const
+{
+    return (isNull()
+            ? static_cast<uint32_t>(VK_FORMAT_UNDEFINED)
+            : static_cast<uint32_t>(ktxTexture_GetVkFormat(mKtxTexture.get())));
+}
+
 bool TextureData::uploadVK(ktxVulkanDeviceInfo *vdi,
     ktxVulkanTexture *vkTexture, VkImageUsageFlags usageFlags,
     VkImageLayout finalLayout) const
@@ -1306,7 +1707,7 @@ bool TextureData::uploadVK(ktxVulkanDeviceInfo *vdi,
     if (isNull() || !vkTexture || !vdi)
         return false;
 
-    const auto texture = ktxTexture(mKtxTexture.get());
+    const auto texture = mKtxTexture.get();
     const auto numLevels = texture->numLevels;
     const auto dataSize = texture->dataSize;
     const auto restoreTexture = qScopeGuard([&] {
@@ -1320,8 +1721,8 @@ bool TextureData::uploadVK(ktxVulkanDeviceInfo *vdi,
         texture->dataSize = static_cast<ktx_size_t>(getLevelSize(0));
     }
 
-    const auto result = ktxTexture_VkUploadEx(texture,
-        vdi, vkTexture, VK_IMAGE_TILING_OPTIMAL, usageFlags, finalLayout);
+    const auto result = ktxTexture_VkUploadEx(texture, vdi, vkTexture,
+        VK_IMAGE_TILING_OPTIMAL, usageFlags, finalLayout);
 
     return (result == KTX_SUCCESS);
 }

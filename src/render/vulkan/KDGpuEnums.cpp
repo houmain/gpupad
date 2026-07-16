@@ -60,7 +60,7 @@ KDGpu::Format toKDGpu(Texture::Format format)
     case E::R5G6B5:                return KD::R5G6B5_UNORM_PACK16;
     case E::RGB5A1:                return KD::A1R5G5B5_UNORM_PACK16;
     case E::RGBA4:                 return KD::R4G4B4A4_UNORM_PACK16;
-    case E::RGB10A2:               return KD::A2B10G10R10_UNORM_PACK32;
+    case E::RGB10A2:               return KD::A2R10G10B10_UNORM_PACK32;
     case E::D16:                   return KD::D16_UNORM;
     case E::D24:                   return KD::X8_D24_UNORM_PACK32;
     case E::D24S8:                 return KD::D24_UNORM_S8_UINT;
@@ -81,11 +81,53 @@ KDGpu::Format toKDGpu(Texture::Format format)
     case E::RGB_BP_UNorm:          return KD::BC7_UNORM_BLOCK;
     case E::SRGB8:                 return KD::R8G8B8_SRGB;
     case E::SRGB8_Alpha8:          return KD::R8G8B8A8_SRGB;
-    case E::SRGB_DXT1:             return KD::BC1_RGBA_SRGB_BLOCK;
-    case E::SRGB_Alpha_DXT1:       return KD::BC1_RGB_SRGB_BLOCK;
+    case E::SRGB_DXT1:             return KD::BC1_RGB_SRGB_BLOCK;
+    case E::SRGB_Alpha_DXT1:       return KD::BC1_RGBA_SRGB_BLOCK;
     case E::SRGB_Alpha_DXT3:       return KD::BC2_SRGB_BLOCK;
     case E::SRGB_Alpha_DXT5:       return KD::BC3_SRGB_BLOCK;
     case E::SRGB_BP_UNorm:         return KD::BC7_SRGB_BLOCK;
+    case E::R11_EAC_UNorm:         return KD::EAC_R11_UNORM_BLOCK;
+    case E::R11_EAC_SNorm:         return KD::EAC_R11_SNORM_BLOCK;
+    case E::RG11_EAC_UNorm:        return KD::EAC_R11G11_UNORM_BLOCK;
+    case E::RG11_EAC_SNorm:        return KD::EAC_R11G11_SNORM_BLOCK;
+    case E::RGB8_ETC1:
+    case E::RGB8_ETC2:             return KD::ETC2_R8G8B8_UNORM_BLOCK;
+    case E::SRGB8_ETC2:            return KD::ETC2_R8G8B8_SRGB_BLOCK;
+    case E::RGB8_PunchThrough_Alpha1_ETC2:
+        return KD::ETC2_R8G8B8A1_UNORM_BLOCK;
+    case E::SRGB8_PunchThrough_Alpha1_ETC2:
+        return KD::ETC2_R8G8B8A1_SRGB_BLOCK;
+    case E::RGBA8_ETC2_EAC:        return KD::ETC2_R8G8B8A8_UNORM_BLOCK;
+    case E::SRGB8_Alpha8_ETC2_EAC:
+        return KD::ETC2_R8G8B8A8_SRGB_BLOCK;
+    case E::RGBA_ASTC_4x4:         return KD::ASTC_4x4_UNORM_BLOCK;
+    case E::RGBA_ASTC_5x4:         return KD::ASTC_5x4_UNORM_BLOCK;
+    case E::RGBA_ASTC_5x5:         return KD::ASTC_5x5_UNORM_BLOCK;
+    case E::RGBA_ASTC_6x5:         return KD::ASTC_6x5_UNORM_BLOCK;
+    case E::RGBA_ASTC_6x6:         return KD::ASTC_6x6_UNORM_BLOCK;
+    case E::RGBA_ASTC_8x5:         return KD::ASTC_8x5_UNORM_BLOCK;
+    case E::RGBA_ASTC_8x6:         return KD::ASTC_8x6_UNORM_BLOCK;
+    case E::RGBA_ASTC_8x8:         return KD::ASTC_8x8_UNORM_BLOCK;
+    case E::RGBA_ASTC_10x5:        return KD::ASTC_10x5_UNORM_BLOCK;
+    case E::RGBA_ASTC_10x6:        return KD::ASTC_10x6_UNORM_BLOCK;
+    case E::RGBA_ASTC_10x8:        return KD::ASTC_10x8_UNORM_BLOCK;
+    case E::RGBA_ASTC_10x10:       return KD::ASTC_10x10_UNORM_BLOCK;
+    case E::RGBA_ASTC_12x10:       return KD::ASTC_12x10_UNORM_BLOCK;
+    case E::RGBA_ASTC_12x12:       return KD::ASTC_12x12_UNORM_BLOCK;
+    case E::SRGB8_Alpha8_ASTC_4x4: return KD::ASTC_4x4_SRGB_BLOCK;
+    case E::SRGB8_Alpha8_ASTC_5x4: return KD::ASTC_5x4_SRGB_BLOCK;
+    case E::SRGB8_Alpha8_ASTC_5x5: return KD::ASTC_5x5_SRGB_BLOCK;
+    case E::SRGB8_Alpha8_ASTC_6x5: return KD::ASTC_6x5_SRGB_BLOCK;
+    case E::SRGB8_Alpha8_ASTC_6x6: return KD::ASTC_6x6_SRGB_BLOCK;
+    case E::SRGB8_Alpha8_ASTC_8x5: return KD::ASTC_8x5_SRGB_BLOCK;
+    case E::SRGB8_Alpha8_ASTC_8x6: return KD::ASTC_8x6_SRGB_BLOCK;
+    case E::SRGB8_Alpha8_ASTC_8x8: return KD::ASTC_8x8_SRGB_BLOCK;
+    case E::SRGB8_Alpha8_ASTC_10x5: return KD::ASTC_10x5_SRGB_BLOCK;
+    case E::SRGB8_Alpha8_ASTC_10x6: return KD::ASTC_10x6_SRGB_BLOCK;
+    case E::SRGB8_Alpha8_ASTC_10x8: return KD::ASTC_10x8_SRGB_BLOCK;
+    case E::SRGB8_Alpha8_ASTC_10x10: return KD::ASTC_10x10_SRGB_BLOCK;
+    case E::SRGB8_Alpha8_ASTC_12x10: return KD::ASTC_12x10_SRGB_BLOCK;
+    case E::SRGB8_Alpha8_ASTC_12x12: return KD::ASTC_12x12_SRGB_BLOCK;
     default:                       break;
     }
     return KD::UNDEFINED;

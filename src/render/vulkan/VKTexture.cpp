@@ -300,9 +300,11 @@ void VKTexture::createAndUpload(VKContext &context)
     if (std::exchange(mCreated, true))
         return;
 
+    const auto dataFormat = static_cast<KDGpu::Format>(mData.getVkFormat());
     auto textureOptions = KDGpu::TextureOptions{
         .type = getKDTextureType(mKind),
-        .format = toKDGpu(mFormat),
+        .format = (dataFormat == KDGpu::Format::UNDEFINED ? toKDGpu(mFormat)
+                                                          : dataFormat),
         .extent = { 
             static_cast<uint32_t>(mWidth), 
             static_cast<uint32_t>(mHeight),

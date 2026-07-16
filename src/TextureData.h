@@ -68,6 +68,7 @@ public:
 #endif
 
 #if defined(VULKAN_ENABLED)
+    uint32_t getVkFormat() const;
     bool uploadVK(ktxVulkanDeviceInfo *vdi, ktxVulkanTexture *vkTexture,
         VkImageUsageFlags usageFlags, VkImageLayout finalLayout) const;
 #endif
@@ -88,7 +89,7 @@ private:
     bool savePfm(const QString &fileName, bool flipVertically) const;
     void flipVertically();
 
-    std::shared_ptr<ktxTexture1> mKtxTexture;
+    std::shared_ptr<ktxTexture> mKtxTexture;
     bool mFlippedVertically{};
 };
 
