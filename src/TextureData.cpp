@@ -1016,12 +1016,24 @@ TextureData TextureData::convert(Texture::Format format) const
 
     // only write first level, it will trigger the mipmap generation
     const auto level = 0;
-    for (auto layer = 0; layer < layers(); ++layer)
-        for (auto faceSlice = 0; faceSlice < depth() * faces(); ++faceSlice)
-            if (!convertPlane(getData(level, layer, faceSlice), this->format(),
-                    copy.getWriteonlyData(level, layer, faceSlice), format,
-                    getLevelWidth(level) * getLevelHeight(level)))
+    const auto levelWidth = getLevelWidth(level);
+    const auto levelHeight = getLevelHeight(level);
+    const auto sourceStride = getLevelStride(level);
+    const auto destStride = copy.getLevelStride(level);
+    for (auto layer = 0; layer < layers(); ++layer) {
+        for (auto faceSlice = 0; faceSlice < depth() * faces(); ++faceSlice) {
+            const auto *source = getData(level, layer, faceSlice);
+            auto *dest = copy.getWriteonlyData(level, layer, faceSlice);
+            if (!source || !dest)
                 return {};
+            for (auto row = 0; row < levelHeight; ++row) {
+                if (!convertPlane(source + row * sourceStride, this->format(),
+                        dest + row * destStride, format, levelWidth)) {
+                    return {};
+                }
+            }
+        }
+    }
 
     copy.setFlippedVertically(flippedVertically());
     return copy;
@@ -1154,7 +1166,6 @@ bool TextureData::loadOpenImageIO(const QString &fileName, bool flipVertically)
         return F::NoFormat;
     }();
     const auto target = (spec.depth > 1 ? TT::Target3D : TT::Target2D);
-
     if (!create(target, format, spec.width, spec.height, spec.depth, 1))
         return false;
 
