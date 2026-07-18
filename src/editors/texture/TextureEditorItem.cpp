@@ -353,6 +353,14 @@ void TextureEditorItem::setMappingRange(const Range &range)
     }
 }
 
+void TextureEditorItem::setMappingSelection(const Range &selection)
+{
+    if (mMappingSelection != selection) {
+        mMappingSelection = selection;
+        update();
+    }
+}
+
 QWindow &TextureEditorItem::window()
 {
     return *static_cast<QWindow *>(parent());
@@ -410,8 +418,13 @@ auto TextureEditorItem::getParams(const QMatrix4x4 &transform,
         static_cast<float>(mMousePosition.x() + 0.5f),
         static_cast<float>(mMousePosition.y() + 0.5f),
     };
-    params.mappingOffset = static_cast<float>(-mMappingRange.minimum);
-    params.mappingFactor = static_cast<float>(1 / mMappingRange.range());
+
+    auto mapping = mMappingRange;
+    const auto range = mapping.range();
+    mapping.minimum += (range * mMappingSelection.minimum);
+    mapping.maximum -= (range * (1 - mMappingSelection.maximum));
+    params.mappingOffset = static_cast<float>(-mapping.minimum);
+    params.mappingFactor = static_cast<float>(1 / mapping.range());
     params.colorMask = mColorMask;
     return params;
 }

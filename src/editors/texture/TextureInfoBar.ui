@@ -325,47 +325,38 @@
      <item row="1" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
-        <widget class="QDoubleSpinBox" name="minimum">
-         <property name="decimals">
-          <number>2</number>
-         </property>
-         <property name="minimum">
-          <double>-10000.000000000000000</double>
-         </property>
-         <property name="maximum">
-          <double>10000.000000000000000</double>
-         </property>
-         <property name="stepType">
-          <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
+        <widget class="ExpressionLineEdit" name="minimum">
+         <property name="maximumSize">
+          <size>
+           <width>70</width>
+           <height>16777215</height>
+          </size>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="labelMaximum">
-         <property name="text">
-          <string> - </string>
+        <widget class="RangeSlider" name="rangeSlider">
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
          </property>
-         <property name="alignment">
-          <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QDoubleSpinBox" name="maximum">
-         <property name="decimals">
-          <number>2</number>
-         </property>
-         <property name="minimum">
-          <double>-10000.000000000000000</double>
-         </property>
-         <property name="maximum">
-          <double>10000.000000000000000</double>
-         </property>
-         <property name="stepType">
-          <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
-         </property>
-         <property name="value">
-          <double>1.000000000000000</double>
+        <widget class="ExpressionLineEdit" name="maximum">
+         <property name="maximumSize">
+          <size>
+           <width>70</width>
+           <height>16777215</height>
+          </size>
          </property>
         </widget>
        </item>
@@ -441,6 +432,18 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>RangeSlider</class>
+   <extends>QSlider</extends>
+   <header>Qt-RangeSlider/RangeSlider.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ExpressionLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>widgets/ExpressionLineEdit.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../../resources.qrc"/>
   <include location="../../resources.qrc"/>

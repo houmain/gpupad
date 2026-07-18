@@ -34,6 +34,7 @@ configure_file("src/version.h.in" "${CMAKE_SOURCE_DIR}/src/_version.h")
 set(SOURCES
   libs/SingleApplication/singleapplication.cpp
   libs/SingleApplication/singleapplication_p.cpp
+  libs/Qt-RangeSlider/RangeSlider.cpp
   src/FileDialog.cpp
   src/FileCache.cpp
   src/MessageList.cpp

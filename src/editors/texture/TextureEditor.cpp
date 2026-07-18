@@ -158,6 +158,7 @@ void TextureEditor::recreateRenderWidget()
         mTextureItem->setSample(prevTextureItem->sample());
         mTextureItem->setFlipVertically(prevTextureItem->flipVertically());
         mTextureItem->setMappingRange(prevTextureItem->mappingRange());
+        mTextureItem->setMappingSelection(prevTextureItem->mappingSelection());
         mTextureItem->setColorMask(prevTextureItem->colorMask());
     }
     updateGeometry();
@@ -226,10 +227,13 @@ QList<QMetaObject::Connection> TextureEditor::connectEditActions(
         &mTextureInfoBar, &TextureInfoBar::setPickerColor);
     c += connect(&mTextureInfoBar, &TextureInfoBar::mappingRangeChanged,
         mTextureItem, &TextureEditorItem::setMappingRange);
+    c += connect(&mTextureInfoBar, &TextureInfoBar::mappingSelectionChanged,
+        mTextureItem, &TextureEditorItem::setMappingSelection);
     c += connect(&mTextureInfoBar, &TextureInfoBar::colorMaskChanged,
         mTextureItem, &TextureEditorItem::setColorMask);
 
     mTextureInfoBar.setMappingRange(mTextureItem->mappingRange());
+    mTextureInfoBar.setMappingSelection(mTextureItem->mappingSelection());
     mTextureInfoBar.setColorMask(mTextureItem->colorMask());
     return c;
 }

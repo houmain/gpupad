@@ -81,8 +81,10 @@ public:
     bool flipVertically() const { return mFlipVertically; }
     void setPickerEnabled(bool enabled) { mPickerEnabled = enabled; }
     bool pickerEnabled() const { return mPickerEnabled; }
-    void setMappingRange(const Range &bounds);
+    void setMappingRange(const Range &range);
     const Range &mappingRange() const { return mMappingRange; }
+    void setMappingSelection(const Range &selection);
+    const Range &mappingSelection() const { return mMappingSelection; }
     void setColorMask(unsigned int colorMask);
     unsigned int colorMask() const { return mColorMask; }
     QRectF boundingRect() const { return mBoundingRect; }
@@ -147,6 +149,7 @@ protected:
     bool mFlipVertically{};
     bool mPickerEnabled{};
     Range mMappingRange{ 0, 1 };
+    Range mMappingSelection{ 0, 1 };
     QPointF mMousePosition{};
     bool mUpload{};
     unsigned int mColorMask{};
