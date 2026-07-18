@@ -120,7 +120,7 @@ private:
     bool shouldSerializeColumn(const Item &item, ColumnType column) const;
     QJsonArray generateJsonFromUrls(QModelIndex target,
         const QList<QUrl> &urls) const;
-    QJsonArray parseDraggedJson(QModelIndex target,
+    QJsonArray parseDraggedJson(QModelIndex &target,
         const QMimeData *data) const;
     void serialize(QJsonObject &object, const Item &item,
         bool relativeFilePaths, bool serializingScriptItem = false) const;

@@ -247,10 +247,12 @@ QJsonArray SessionModel::generateJsonFromUrls(QModelIndex target,
     return itemArray;
 }
 
-QJsonArray SessionModel::parseDraggedJson(QModelIndex target,
+QJsonArray SessionModel::parseDraggedJson(QModelIndex &target,
     const QMimeData *data) const
 {
     if (data->hasUrls()) {
+        if (!target.isValid())
+            target = sessionItemIndex();
         mDraggedJson = generateJsonFromUrls(target, data->urls());
         return mDraggedJson;
     }
@@ -273,13 +275,17 @@ bool SessionModel::canDropMimeData(const QMimeData *data, Qt::DropAction action,
     if (!QAbstractItemModel::canDropMimeData(data, action, row, column, parent))
         return false;
 
-    const auto jsonArray = parseDraggedJson(parent, data);
+    auto target = parent;
+    const auto jsonArray = parseDraggedJson(target, data);
+    if (jsonArray.empty())
+        return false;
+
     for (const QJsonValue &value : jsonArray) {
         auto ok = false;
         const auto object = value.toObject();
         const auto typeName = object["type"].toString();
         const auto type = getTypeByName(typeName, ok);
-        if (!ok || !canContainType(parent, type))
+        if (!ok || !canContainType(target, type))
             return false;
     }
     return true;
@@ -355,12 +361,13 @@ bool SessionModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
     if (action == Qt::IgnoreAction)
         return true;
 
-    auto jsonArray = parseDraggedJson(parent, data);
+    auto target = parent;
+    auto jsonArray = parseDraggedJson(target, data);
     if (jsonArray.empty())
         return false;
 
     if (row < 0)
-        row = rowCount(parent);
+        row = rowCount(target);
 
     beginUndoMacro("Move");
 
@@ -368,17 +375,17 @@ bool SessionModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
         std::stable_sort(mDraggedIndices.begin(), mDraggedIndices.end(),
             [](const auto &a, const auto &b) { return a.row() > b.row(); });
         for (const auto &index : std::as_const(mDraggedIndices)) {
-            if (index.parent() == parent && index.row() < row)
+            if (index.parent() == target && index.row() < row)
                 --row;
             deleteItem(index);
         }
     }
 
     // do not allow to drop another Sessioon
-    if (!parent.isValid() && sessionItemIndex().isValid())
+    if (!target.isValid() && sessionItemIndex().isValid())
         return false;
 
-    dropJson(jsonArray, row, parent, false);
+    dropJson(jsonArray, row, target, false);
     mDraggedIndices.clear();
 
     endUndoMacro();
