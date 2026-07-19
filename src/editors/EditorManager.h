@@ -54,6 +54,7 @@ public:
         const ScriptEnginePtr &enginePtr = {});
     void setEditorToReplace(const QString &fileName);
     void setAutoRaise(bool raise) { mAutoRaise = raise; }
+    void setAutoFocus(bool focus) { mAutoFocus = focus; }
 
     EditorType getEditorType(const QString &fileName);
     IEditor *getEditor(const QString &fileName);
@@ -143,6 +144,7 @@ private:
     BinaryEditorToolBar *mBinaryEditorToolBar{};
     SourceEditorToolBar *mSourceEditorToolBar{};
     bool mAutoRaise{ true };
+    bool mAutoFocus{ true };
     QStack<QPair<QObject *, QString>> mNavigationStack;
     int mNavigationStackPosition{};
     QString mEditorToReplace;

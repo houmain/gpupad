@@ -13,18 +13,20 @@
 QDockWidget *getTabBarDock(QTabBar *tabBar, int index)
 {
     // source: https://bugreports.qt.io/browse/QTBUG-39489
-    return reinterpret_cast<QDockWidget *>(tabBar->tabData(index).toULongLong());
+    return reinterpret_cast<QDockWidget *>(
+        tabBar->tabData(index).toULongLong());
 }
 
 DockWindow::DockWindow(QWidget *parent) : QMainWindow(parent) { }
 
-void DockWindow::raiseDock(QDockWidget *dock)
+void DockWindow::raiseDock(QDockWidget *dock, bool setFocus)
 {
     // it seems like raising only works when the dock was layouted
-    QTimer::singleShot(0, [dock = QPointer<QDockWidget>(dock)]() {
+    QTimer::singleShot(0, [dock = QPointer<QDockWidget>(dock), setFocus]() {
         if (dock) {
             dock->raise();
-            dock->widget()->setFocus();
+            if (setFocus)
+                dock->widget()->setFocus();
         }
     });
 }
@@ -64,20 +66,20 @@ bool DockWindow::eventFilter(QObject *watched, QEvent *event)
 
     // inform titlebars of corresponding tabbar, whenever tabbar children change
     if (event->type() == QEvent::ChildAdded
-        || (event->type() == QEvent::ChildRemoved && qobject_cast<QTabBar *>(watched)))
-        {
-            const auto dockTitles = findChildren<DockTitle *>();
-            for (auto title : dockTitles)
-                title->setTabBar(nullptr);
+        || (event->type() == QEvent::ChildRemoved
+            && qobject_cast<QTabBar *>(watched))) {
+        const auto dockTitles = findChildren<DockTitle *>();
+        for (auto title : dockTitles)
+            title->setTabBar(nullptr);
 
-            const auto tabBars = findChildren<QTabBar *>();
-            for (auto tabBar : tabBars)
-                for (auto i = 0; i < tabBar->count(); i++)
-                    if (auto dock = getTabBarDock(tabBar, i))
-                        if (auto title = qobject_cast<DockTitle *>(
-                                dock->titleBarWidget()))
-                            title->setTabBar(tabBar);
-        }
+        const auto tabBars = findChildren<QTabBar *>();
+        for (auto tabBar : tabBars)
+            for (auto i = 0; i < tabBar->count(); i++)
+                if (auto dock = getTabBarDock(tabBar, i))
+                    if (auto title =
+                            qobject_cast<DockTitle *>(dock->titleBarWidget()))
+                        title->setTabBar(tabBar);
+    }
 
     return QMainWindow::eventFilter(watched, event);
 }

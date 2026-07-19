@@ -8,7 +8,7 @@ class DockWindow : public QMainWindow
 public:
     explicit DockWindow(QWidget *parent = nullptr);
 
-    void raiseDock(QDockWidget *dock);
+    void raiseDock(QDockWidget *dock, bool setFocus = true);
     void closeDock(QDockWidget *dock);
     void closeDocksExcept(QTabBar *tabBar, QDockWidget *dock);
 

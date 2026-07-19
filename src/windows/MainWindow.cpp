@@ -1408,9 +1408,9 @@ void MainWindow::openAbout()
 void MainWindow::replacePreviewFileEditor(QString fileName)
 {
     auto &editorManager = Singletons::editorManager();
-    editorManager.setAutoRaise(false);
+    editorManager.setAutoFocus(false);
     editorManager.setEditorToReplace(mPreviewFileName);
     editorManager.openEditor(fileName);
     mPreviewFileName = fileName;
-    editorManager.setAutoRaise(true);
+    editorManager.setAutoFocus(true);
 }

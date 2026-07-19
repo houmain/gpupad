@@ -896,8 +896,9 @@ void EditorManager::closeDock(QDockWidget *dock)
 
 void EditorManager::autoRaise(QWidget *editor)
 {
-    if (mAutoRaise && editor)
-        raiseDock(qobject_cast<QDockWidget *>(editor->parentWidget()));
+    if (editor && mAutoRaise)
+        raiseDock(qobject_cast<QDockWidget *>(editor->parentWidget()),
+            mAutoFocus);
 }
 
 void updateDockCurrentProperty(QDockWidget *dock, bool current)
