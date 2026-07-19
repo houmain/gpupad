@@ -650,7 +650,7 @@ void TextureEditor::updateScrollBars()
     verticalScrollBar()->setRange(-sy, sy);
     horizontalScrollBar()->setVisible(sx != 0);
     verticalScrollBar()->setVisible(sy != 0);
-    mRenderWidget->redraw();
+    mRenderWidget->update();
 }
 
 void TextureEditor::paintGpu()
