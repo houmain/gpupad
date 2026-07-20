@@ -110,7 +110,8 @@ void VKTextureEditorItem::releaseShareState()
     mShare.reset();
 }
 
-bool VKTextureEditorItem::copyImportedTexture(ShareHandle textureHandle)
+bool VKTextureEditorItem::copyImportedTexture(ShareHandle textureHandle,
+    const TextureData &image)
 {
     auto deviceLock = window().lockDevice();
     auto &device = deviceLock.device();
@@ -118,14 +119,14 @@ bool VKTextureEditorItem::copyImportedTexture(ShareHandle textureHandle)
 
     context.commandRecorder =
         context.device.createCommandRecorder({ .queue = context.queue });
-    if (!importShareHandle(context, std::move(textureHandle))) {
+    if (!importShareHandle(context, std::move(textureHandle), image)) {
         if (mTexture)
             mTexture->release(device);
         mTexture.reset();
         releaseShareState();
         return false;
     }
-    if (!copyShareStateToTexture(context)) {
+    if (!copyShareStateToTexture(context, image)) {
         if (mTexture)
             mTexture->release(device);
         mTexture.reset();
@@ -137,7 +138,7 @@ bool VKTextureEditorItem::copyImportedTexture(ShareHandle textureHandle)
 }
 
 bool VKTextureEditorItem::importShareHandle(VKContext &context,
-    ShareHandle shareHandle)
+    ShareHandle shareHandle, const TextureData &image)
 {
     if (!shareHandle)
         return false;
@@ -153,7 +154,7 @@ bool VKTextureEditorItem::importShareHandle(VKContext &context,
         return true;
     }
 
-    const auto format = toKDGpu(mImage.format());
+    const auto format = toKDGpu(image.format());
     if (format == KDGpu::Format::UNDEFINED)
         return false;
 
@@ -163,11 +164,10 @@ bool VKTextureEditorItem::importShareHandle(VKContext &context,
     const auto vkDevice = getVkDevice(context.device);
     const auto vkAdapter = rm.getAdapter(context.device.adapter()->handle());
 
-    const auto kind =
-        getKind(mImage.getTarget(mTextureSamples), mImage.format());
+    const auto kind = getKind(image.getTarget(mTextureSamples), image.format());
     const auto levelCount = static_cast<uint32_t>(
-        mTextureSamples > 1 ? 1 : std::max(mImage.levels(), 1));
-    const auto layerCount = vkArrayLayerCount(kind, mImage.layers());
+        mTextureSamples > 1 ? 1 : std::max(image.levels(), 1));
+    const auto layerCount = vkArrayLayerCount(kind, image.layers());
 
     mShare.reset(new ShareState);
     auto &imported = *mShare;
@@ -188,8 +188,7 @@ bool VKTextureEditorItem::importShareHandle(VKContext &context,
         .flags = static_cast<VkImageCreateFlags>(imageCreateFlags),
         .imageType = toVkImageType(kind),
         .format = static_cast<VkFormat>(format),
-        .extent =
-            vkExtent(kind, mImage.width(), mImage.height(), mImage.depth()),
+        .extent = vkExtent(kind, image.width(), image.height(), image.depth()),
         .mipLevels = levelCount,
         .arrayLayers = layerCount,
         .samples = static_cast<VkSampleCountFlagBits>(
@@ -291,9 +290,9 @@ bool VKTextureEditorItem::importShareHandle(VKContext &context,
             .type = getKDTextureType(kind),
             .format = format,
             .extent = {
-                static_cast<uint32_t>(std::max(mImage.width(), 1)),
-                static_cast<uint32_t>(std::max(mImage.height(), 1)),
-                static_cast<uint32_t>(std::max(mImage.depth(), 1)),
+                static_cast<uint32_t>(std::max(image.width(), 1)),
+                static_cast<uint32_t>(std::max(image.height(), 1)),
+                static_cast<uint32_t>(std::max(image.depth(), 1)),
             },
             .mipLevels = levelCount,
             .arrayLayers = layerCount,
@@ -308,8 +307,8 @@ bool VKTextureEditorItem::importShareHandle(VKContext &context,
         return false;
     }
 
-    imported.texture = std::make_unique<VKTexture>(mImage, mTextureSamples,
-        std::move(texture));
+    imported.texture =
+        std::make_unique<VKTexture>(image, mTextureSamples, std::move(texture));
     if (!imported.texture->prepareSampledImage(context)) {
         releaseShareState();
         return false;
@@ -319,7 +318,8 @@ bool VKTextureEditorItem::importShareHandle(VKContext &context,
     return true;
 }
 
-bool VKTextureEditorItem::copyShareStateToTexture(VKContext &context)
+bool VKTextureEditorItem::copyShareStateToTexture(VKContext &context,
+    const TextureData &image)
 {
     if (!mShare || !mShare->texture || !mShare->texture->texture().isValid())
         return false;
@@ -327,7 +327,7 @@ bool VKTextureEditorItem::copyShareStateToTexture(VKContext &context)
     if (!mTexture || mTexture->samples() != mTextureSamples) {
         if (mTexture)
             mTexture->release(context.device);
-        mTexture = std::make_unique<VKTexture>(mImage, mTextureSamples);
+        mTexture = std::make_unique<VKTexture>(image, mTextureSamples);
         mTexture->boundAsSampler();
     }
 

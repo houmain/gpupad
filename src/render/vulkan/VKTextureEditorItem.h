@@ -19,10 +19,12 @@ public:
 
     void releaseGpu() override;
     void prepareGpu() override;
-    void paintGpu(const QSizeF &bounds, const QPointF &offset) override;
+    void paintGpu(const QSizeF &bounds, const QPointF &offset,
+        const TextureData &image) override;
     void submittedGpu() override;
     bool downloadImage(TextureData *image) override;
-    void copySharedTexture(ShareHandle textureHandle, int samples) override;
+    bool copySharedTexture(ShareHandle textureHandle, int samples,
+        const TextureData &image) override;
 
 private:
     // Shared-memory path: copySharedTexture gets a producer memory handle,
@@ -56,19 +58,21 @@ private:
     VKWindow &window();
     VKContext makeContext();
     void submitCommandQueue(VKContext &context);
-    bool uploadTexture();
+    bool uploadImage(const TextureData &image) override;
     bool copyVKTexture(VKTexture &source);
-    bool copyImportedTexture(ShareHandle textureHandle);
-    bool importShareHandle(VKContext &context, ShareHandle shareHandle);
+    bool copyImportedTexture(ShareHandle textureHandle,
+        const TextureData &image);
+    bool importShareHandle(VKContext &context, ShareHandle shareHandle,
+        const TextureData &image);
     void releaseShareState();
-    bool copyShareStateToTexture(VKContext &context);
-    bool renderTexture(const QMatrix4x4 &transform);
+    bool copyShareStateToTexture(VKContext &context, const TextureData &image);
+    bool renderTexture(const QMatrix4x4 &transform, const TextureData &image);
     void resetTextureBinding();
 
 #  if defined(OPENGL_ENABLED)
     bool makeGLContextCurrent();
     void releaseGL();
-    bool copyGLTexture(ShareHandle textureHandle);
+    bool copyGLTexture(ShareHandle textureHandle, const TextureData &image);
 #  endif
 
     std::unique_ptr<PipelineCache> mPipelineCache;

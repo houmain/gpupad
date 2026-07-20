@@ -24,6 +24,22 @@
 #include <QWheelEvent>
 #include <cstring>
 
+namespace {
+    bool canFilter(Texture::Format format)
+    {
+        switch (getTextureSampleType(format)) {
+        case TextureSampleType::Int8:
+        case TextureSampleType::Int16:
+        case TextureSampleType::Int32:
+        case TextureSampleType::Uint8:
+        case TextureSampleType::Uint16:
+        case TextureSampleType::Uint32:
+        case TextureSampleType::Uint_10_10_10_2: return false;
+        default:                                 return true;
+        }
+    }
+} // namespace
+
 bool createFromRaw(const QByteArray &binary, const TextureEditor::RawFormat &r,
     TextureData *texture)
 {
@@ -91,6 +107,8 @@ bool TextureEditor::initializeRenderWidget()
 
         connect(window, &VKWindow::releasingGpu, mTextureItem,
             &TextureEditorItem::releaseGpu);
+        connect(window, &VKWindow::initializingGpu, this,
+            &TextureEditor::handleGpuInitialized);
         connect(window, &VKWindow::releasingGpu, mBackground,
             &TextureEditorBackground::releaseGpu);
         connect(window, &VKWindow::preparingGpu, mTextureItem,
@@ -114,6 +132,8 @@ bool TextureEditor::initializeRenderWidget()
 
     connect(window, &GLWindow::releasingGpu, mTextureItem,
         &TextureEditorItem::releaseGpu);
+    connect(window, &GLWindow::initializingGpu, this,
+        &TextureEditor::handleGpuInitialized);
     connect(window, &GLWindow::releasingGpu, mBackground,
         &TextureEditorBackground::releaseGpu);
     connect(window, &GLWindow::paintingGpu, this, [this] {
@@ -149,7 +169,7 @@ void TextureEditor::recreateRenderWidget()
     setEnabled(true);
 
     if (prevTextureItem) {
-        mTextureItem->setImage(prevTextureItem->image());
+        mTextureItem->setBoundingRect(prevTextureItem->boundingRect());
         mTextureItem->setMagnifyLinear(prevTextureItem->magnifyLinear());
         mTextureItem->setWrapMode(prevTextureItem->wrapMode());
         mTextureItem->setLevel(prevTextureItem->level());
@@ -256,7 +276,8 @@ void TextureEditor::updateEditorToolBar()
     mEditorToolBar.setMaxFace(std::max(mTexture.faces() - 1, 0));
     mEditorToolBar.setFace(mTextureItem->face());
 
-    mEditorToolBar.setCanFilter(mTextureItem->canFilter());
+    mEditorToolBar.setCanFilter(canFilter(mTexture.format())
+        && mTextureItem->samples() == 1);
     mEditorToolBar.setFilter(mTextureItem->magnifyLinear());
     mEditorToolBar.setWrapMode(static_cast<int>(mTextureItem->wrapMode()));
 
@@ -334,7 +355,7 @@ int TextureEditor::tabifyGroup() const
 
 bool TextureEditor::save()
 {
-    auto texture = TextureData{};
+    auto texture = mTexture;
     if (!mTextureItem->downloadImage(&texture))
         return false;
 
@@ -352,15 +373,17 @@ void TextureEditor::replace(TextureData texture, bool emitFileChanged)
     if (!mTextureItem || texture.isNull() || texture == mTexture)
         return;
 
-    mTextureItem->setImage(texture);
+    const auto w = static_cast<qreal>(texture.width());
+    const auto h = static_cast<qreal>(texture.height());
+    mTextureItem->setBoundingRect({ -w / 2, -h / 2, w, h });
     setBounds(mTextureItem->boundingRect().toRect());
+
     if (mTexture.isNull()) {
         horizontalScrollBar()->setSliderPosition(
             horizontalScrollBar()->minimum());
         verticalScrollBar()->setSliderPosition(verticalScrollBar()->minimum());
     }
-    mTexture = texture;
-    mTextureSamples = 1;
+    mTexture = std::move(texture);
     mIsRaw = false;
 
     // automatically enabled zoom to fit,
@@ -378,11 +401,17 @@ void TextureEditor::replace(TextureData texture, bool emitFileChanged)
 
     if (qApp->focusWidget() == this)
         updateEditorToolBar();
+
+    whenGpuInitialized([this]() { mTextureItem->uploadImage(mTexture); });
 }
 
 void TextureEditor::copy()
 {
-    auto image = mTextureItem->image().toImage();
+    auto texture = TextureData{};
+    if (!mTextureItem->downloadImage(&texture))
+        return;
+
+    auto image = texture.toImage();
     if (!image.isNull()) {
         auto *data = new QMimeData();
         data->setImageData(image);
@@ -392,8 +421,11 @@ void TextureEditor::copy()
 
 void TextureEditor::copySharedTexture(ShareHandle textureHandle, int samples)
 {
-    mTextureItem->copySharedTexture(std::move(textureHandle), samples);
-    mRenderWidget->redraw();
+    whenGpuInitialized([this, textureHandle, samples]() {
+        mTextureItem->copySharedTexture(textureHandle, std::max(samples, 1),
+            mTexture);
+        mRenderWidget->redraw();
+    });
 }
 
 void TextureEditor::setModified()
@@ -653,6 +685,22 @@ void TextureEditor::updateScrollBars()
     mRenderWidget->update();
 }
 
+void TextureEditor::whenGpuInitialized(std::function<void()> &&func)
+{
+    if (mGpuInitialized) {
+        func();
+    } else {
+        mOnGpuInitialized = std::move(func);
+    }
+}
+
+void TextureEditor::handleGpuInitialized()
+{
+    mGpuInitialized = true;
+    if (auto func = std::exchange(mOnGpuInitialized, {}))
+        func();
+}
+
 void TextureEditor::paintGpu()
 {
     if (!mRenderWidget || !mBackground || !mTextureItem)
@@ -673,5 +721,5 @@ void TextureEditor::paintGpu()
             std::min(scrollOffsetY + 2 * margin(), 0))
         + QPointF(-scrollX, -scrollY);
     mBackground->paintGpu(bounds, offset / 2);
-    mTextureItem->paintGpu(bounds, offset);
+    mTextureItem->paintGpu(bounds, offset, mTexture);
 }

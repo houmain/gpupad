@@ -227,32 +227,9 @@ TextureEditorItem::TextureEditorItem(QWindow *window) : QObject(window) { }
 
 TextureEditorItem::~TextureEditorItem() = default;
 
-void TextureEditorItem::setImage(TextureData image)
+void TextureEditorItem::setBoundingRect(const QRectF &rect)
 {
-    const auto w = image.width();
-    const auto h = image.height();
-    mBoundingRect = { -w / 2, -h / 2, w, h };
-    mImage = std::move(image);
-    if (!mImage.isNull())
-        mUpload = true;
-    mTextureSamples = 1;
-    update();
-}
-
-bool TextureEditorItem::downloadImage(TextureData *image)
-{
-    Q_ASSERT(image);
-    if (mImage.isNull())
-        return false;
-
-    *image = mImage;
-    return true;
-}
-
-bool TextureEditorItem::canFilter() const
-{
-    return (!mImage.isNull() && canLinearFilter(mImage.format())
-        && mTextureSamples == 1);
+    mBoundingRect = rect;
 }
 
 QString TextureEditorItem::buildFragmentShader(const ShaderDesc &desc)
@@ -324,20 +301,6 @@ QString TextureEditorItem::buildFragmentShader(const ShaderDesc &desc)
         + fragmentShaderSource;
 }
 
-bool TextureEditorItem::canLinearFilter(Texture::Format format)
-{
-    switch (getTextureSampleType(format)) {
-    case TextureSampleType::Int8:
-    case TextureSampleType::Int16:
-    case TextureSampleType::Int32:
-    case TextureSampleType::Uint8:
-    case TextureSampleType::Uint16:
-    case TextureSampleType::Uint32:
-    case TextureSampleType::Uint_10_10_10_2: return false;
-    default:                                 return true;
-    }
-}
-
 void TextureEditorItem::setMousePosition(const QPointF &mousePosition)
 {
     mMousePosition = mousePosition;
@@ -400,7 +363,7 @@ QMatrix4x4 TextureEditorItem::getTransform(const QSizeF &bounds,
 }
 
 auto TextureEditorItem::getParams(const QMatrix4x4 &transform,
-    int textureSamples) const -> Params
+    int textureSamples, int textureDepth) const -> Params
 {
     auto params = Params{};
     std::copy_n(transform.constData(), 16, params.transform.begin());
@@ -409,7 +372,7 @@ auto TextureEditorItem::getParams(const QMatrix4x4 &transform,
     params.width = static_cast<float>(mBoundingRect.width());
     params.height = static_cast<float>(mBoundingRect.height());
     params.level = mLevel;
-    params.layer = mLayer / static_cast<float>(std::max(mImage.depth(), 1));
+    params.layer = mLayer / static_cast<float>(std::max(textureDepth, 1));
     params.face = mFace;
     const auto resolve = (mSample < 0);
     params.sample = std::max(0, resolve ? 0 : mSample);

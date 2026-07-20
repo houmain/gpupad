@@ -111,8 +111,8 @@ bool GLWindow::makeCurrent()
     if (!mGL) {
         mGL = std::make_unique<GLContext>();
         if (mGL->initialize(mContext.get())) {
-            Q_EMIT initializingGpu();
             mInitialized = true;
+            Q_EMIT initializingGpu();
         }
     }
     return mInitialized;

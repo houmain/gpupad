@@ -53,9 +53,9 @@ Q_SIGNALS:
     void zoomToFitChanged(bool fit);
 
 protected:
-    RenderWidget* viewport() const { return mRenderWidget; }
-    QScrollBar* horizontalScrollBar() const { return mHorizontalScrollBar; }
-    QScrollBar* verticalScrollBar() const { return mVerticalScrollBar; }
+    RenderWidget *viewport() const { return mRenderWidget; }
+    QScrollBar *horizontalScrollBar() const { return mHorizontalScrollBar; }
+    QScrollBar *verticalScrollBar() const { return mVerticalScrollBar; }
     void wheelEvent(QWheelEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
@@ -69,6 +69,8 @@ protected:
 private:
     bool initializeRenderWidget();
     void releaseRenderWidget();
+    void handleGpuInitialized();
+    void whenGpuInitialized(std::function<void()> &&func);
     void paintGpu();
     void updateMousePosition(const QPoint &position);
     void setBounds(QRect bounds);
@@ -85,8 +87,8 @@ private:
     QPointF mapFromScene(const QPointF &position) const;
 
     RenderWidget *mRenderWidget{};
-    QScrollBar* mHorizontalScrollBar{};
-    QScrollBar* mVerticalScrollBar{};
+    QScrollBar *mHorizontalScrollBar{};
+    QScrollBar *mVerticalScrollBar{};
     TextureEditorItem *mTextureItem{};
     TextureEditorBackground *mBackground{};
     TextureEditorToolBar &mEditorToolBar;
@@ -96,10 +98,11 @@ private:
     bool mIsRaw{};
     bool mModified{};
     TextureData mTexture;
-    int mTextureSamples{ 1 };
     bool mPan{};
     QRect mBounds{};
     bool mZoomToFit{};
     int mZoom{ 100 };
     QPoint mPanStart{};
+    std::function<void()> mOnGpuInitialized;
+    bool mGpuInitialized{ };
 };

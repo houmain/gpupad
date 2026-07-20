@@ -13,16 +13,18 @@ public:
     ~GLTextureEditorItem() override;
 
     void releaseGpu() override;
-    void paintGpu(const QSizeF &bounds, const QPointF &offset) override;
+    void paintGpu(const QSizeF &bounds, const QPointF &offset,
+        const TextureData &image) override;
     bool downloadImage(TextureData *image) override;
-    void copySharedTexture(ShareHandle textureHandle, int samples) override;
+    bool copySharedTexture(ShareHandle textureHandle, int samples,
+        const TextureData &image) override;
 
 private:
     class ProgramCache;
 
     GLWindow &window();
-    bool uploadTexture();
-    bool renderTexture(const QMatrix4x4 &transform);
+    bool uploadImage(const TextureData &image) override;
+    bool renderTexture(const QMatrix4x4 &transform, const TextureData &image);
 
     std::unique_ptr<ProgramCache> mProgramCache;
     QOpenGLTexture mPickerTexture{ QOpenGLTexture::Target1D };

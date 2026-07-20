@@ -27,16 +27,21 @@ public:
 
     explicit TextureEditorItem(QWindow *parent);
     ~TextureEditorItem() override;
+
     virtual void releaseGpu() = 0;
     virtual void prepareGpu() { }
-    virtual void paintGpu(const QSizeF &bounds, const QPointF &offset) = 0;
+    virtual void paintGpu(const QSizeF &bounds, const QPointF &offset,
+        const TextureData &image) = 0;
     virtual void submittedGpu() { }
-    void setImage(TextureData image);
-    const TextureData &image() const { return mImage; }
-    virtual bool downloadImage(TextureData *image);
-    virtual void copySharedTexture(ShareHandle textureHandle, int samples) = 0;
+    virtual bool uploadImage(const TextureData &image) = 0;
+    virtual bool downloadImage(TextureData *image) = 0;
+    virtual bool copySharedTexture(ShareHandle textureHandle, int samples,
+        const TextureData &image) = 0;
 
-    bool canFilter() const;
+    void setBoundingRect(const QRectF &rect);
+    QRectF boundingRect() const { return mBoundingRect; }
+    int samples() const { return mTextureSamples; }
+
     void setMagnifyLinear(bool magnifyLinear)
     {
         mMagnifyLinear = magnifyLinear;
@@ -87,7 +92,6 @@ public:
     const Range &mappingSelection() const { return mMappingSelection; }
     void setColorMask(unsigned int colorMask);
     unsigned int colorMask() const { return mColorMask; }
-    QRectF boundingRect() const { return mBoundingRect; }
     void setMousePosition(const QPointF &mousePosition);
 
 Q_SIGNALS:
@@ -129,16 +133,15 @@ protected:
 
     static QString vertexShaderSource;
     static QString buildFragmentShader(const ShaderDesc &desc);
-    static bool canLinearFilter(Texture::Format format);
 
     QWindow &window();
     void update();
     QMatrix4x4 getTransform(const QSizeF &bounds, const QPointF &offset);
     bool transformTextureCoordinates() const;
-    Params getParams(const QMatrix4x4 &transform, int textureSamples) const;
+    Params getParams(const QMatrix4x4 &transform, int textureSamples,
+        int textureDepth) const;
 
-    QRect mBoundingRect;
-    TextureData mImage;
+    QRectF mBoundingRect;
     int mTextureSamples{ 1 };
     bool mMagnifyLinear{};
     WrapMode mWrapMode{};
@@ -151,6 +154,5 @@ protected:
     Range mMappingRange{ 0, 1 };
     Range mMappingSelection{ 0, 1 };
     QPointF mMousePosition{};
-    bool mUpload{};
     unsigned int mColorMask{};
 };

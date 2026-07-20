@@ -179,10 +179,11 @@ void VKTextureEditorItem::releaseGL()
     mGLState.reset();
 }
 
-bool VKTextureEditorItem::copyGLTexture(ShareHandle textureHandle)
+bool VKTextureEditorItem::copyGLTexture(ShareHandle textureHandle,
+    const TextureData &image)
 {
     if (textureHandle.type != ShareHandleType::OPENGL_TEXTURE_ID
-        || mImage.isNull())
+        || image.isNull())
         return false;
 
     auto deviceLock = window().lockDevice();
@@ -196,7 +197,7 @@ bool VKTextureEditorItem::copyGLTexture(ShareHandle textureHandle)
         if (mTexture)
             mTexture->release(device);
         resetTextureBinding();
-        mTexture = std::make_unique<VKTexture>(mImage, mTextureSamples);
+        mTexture = std::make_unique<VKTexture>(image, mTextureSamples);
         mTexture->boundAsSampler();
         mTexture->addUsage(KDGpu::TextureUsageFlagBits::ColorAttachmentBit);
 
@@ -225,21 +226,21 @@ bool VKTextureEditorItem::copyGLTexture(ShareHandle textureHandle)
         state.textureId = GL_NONE;
         state.importedShareHandle = {};
 
-        gl.glCreateTextures(mImage.getTarget(mTextureSamples), 1,
+        gl.glCreateTextures(image.getTarget(mTextureSamples), 1,
             &state.textureId);
         auto cleanup = qScopeGuard([&] {
             if (state.textureId)
                 gl.glDeleteTextures(1, &state.textureId);
             state.textureId = GL_NONE;
         });
-        if (!importSharedTexture(gl, destHandle, mImage, mTextureSamples,
+        if (!importSharedTexture(gl, destHandle, image, mTextureSamples,
                 state.textureId))
             return false;
         state.importedShareHandle = destHandle;
         cleanup.dismiss();
     }
 
-    if (!copyTexture(gl, mImage, mTextureSamples, sourceTextureId,
+    if (!copyTexture(gl, image, mTextureSamples, sourceTextureId,
             state.textureId))
         return false;
     gl.glFinish();

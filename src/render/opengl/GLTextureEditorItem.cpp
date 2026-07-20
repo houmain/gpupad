@@ -2,7 +2,9 @@
 #include "GLTexture.h"
 #include "GLWindow.h"
 #include <QMatrix4x4>
+#include <QOpenGLContext>
 #include <QOpenGLShaderProgram>
+#include <QScopeGuard>
 #include <map>
 
 namespace {
@@ -72,12 +74,13 @@ void GLTextureEditorItem::releaseGpu()
     mProgramCache = std::make_unique<ProgramCache>();
 }
 
-void GLTextureEditorItem::paintGpu(const QSizeF &bounds, const QPointF &offset)
+void GLTextureEditorItem::paintGpu(const QSizeF &bounds, const QPointF &offset,
+    const TextureData &image)
 {
     Q_ASSERT(glGetError() == GL_NO_ERROR);
 
-    if (uploadTexture())
-        renderTexture(getTransform(bounds, offset));
+    if (!image.isNull() && (mSharedTextureId || mImageTextureId))
+        renderTexture(getTransform(bounds, offset), image);
 
     Q_ASSERT(glGetError() == GL_NO_ERROR);
 }
@@ -86,11 +89,12 @@ bool GLTextureEditorItem::downloadImage(TextureData *image)
 {
     Q_ASSERT(image);
     if (!mSharedTextureId)
-        return TextureEditorItem::downloadImage(image);
+        return false;
 
-    window().makeCurrent();
+    if (!window().initialized() || !window().makeCurrent())
+        return false;
 
-    auto data = mImage;
+    auto data = *image;
     auto &gl = window().gl();
     const auto target = data.getTarget(mTextureSamples);
 
@@ -105,8 +109,8 @@ bool GLTextureEditorItem::downloadImage(TextureData *image)
     return true;
 }
 
-void GLTextureEditorItem::copySharedTexture(ShareHandle textureHandle,
-    int samples)
+bool GLTextureEditorItem::copySharedTexture(ShareHandle textureHandle,
+    int samples, const TextureData &)
 {
     Q_ASSERT(!textureHandle
         || textureHandle.type == ShareHandleType::OPENGL_TEXTURE_ID);
@@ -115,13 +119,14 @@ void GLTextureEditorItem::copySharedTexture(ShareHandle textureHandle,
     if (textureHandle.type != ShareHandleType::OPENGL_TEXTURE_ID
         || !textureHandle) {
         update();
-        return;
+        return false;
     }
 
     mSharedTextureId = static_cast<GLuint>(
         reinterpret_cast<std::uintptr_t>(textureHandle.handle));
     mTextureSamples = std::max(samples, 1);
     update();
+    return true;
 }
 
 GLWindow &GLTextureEditorItem::window()
@@ -129,26 +134,27 @@ GLWindow &GLTextureEditorItem::window()
     return *static_cast<GLWindow *>(parent());
 }
 
-bool GLTextureEditorItem::uploadTexture()
+bool GLTextureEditorItem::uploadImage(const TextureData &image)
 {
-    if (mImage.isNull())
+    if (image.isNull() || !window().initialized())
+        return false;
+    if (!window().makeCurrent())
         return false;
 
-    if (!mSharedTextureId && std::exchange(mUpload, false)) {
-        auto &gl = window().gl();
-        gl.glDeleteTextures(1, &mImageTextureId);
-        mImageTextureId = GL_NONE;
+    auto &gl = window().gl();
+    auto textureId = GLuint{};
+    if (!GLTexture::upload(gl, image, image.getTarget(), 1, &textureId))
+        return false;
 
-        const auto result = GLTexture::upload(gl, mImage, mImage.getTarget(), 1,
-            &mImageTextureId);
-        Q_ASSERT(result);
-    } else if (mSharedTextureId) {
-        mUpload = false;
-    }
-    return (mSharedTextureId || mImageTextureId);
+    if (mImageTextureId)
+        gl.glDeleteTextures(1, &mImageTextureId);
+    mImageTextureId = textureId;
+    mSharedTextureId = GL_NONE;
+    return true;
 }
 
-bool GLTextureEditorItem::renderTexture(const QMatrix4x4 &transform)
+bool GLTextureEditorItem::renderTexture(const QMatrix4x4 &transform,
+    const TextureData &image)
 {
     Q_ASSERT(glGetError() == GL_NO_ERROR);
     auto &gl = window().gl();
@@ -156,8 +162,7 @@ bool GLTextureEditorItem::renderTexture(const QMatrix4x4 &transform)
     if (mSharedTextureId && !gl.glIsTexture(mSharedTextureId))
         mSharedTextureId = GL_NONE;
 
-    const auto target =
-        mImage.getTarget(mSharedTextureId ? mTextureSamples : 0);
+    const auto target = image.getTarget(mSharedTextureId ? mTextureSamples : 0);
     gl.glActiveTexture(GL_TEXTURE0);
     gl.glBindTexture(target,
         mSharedTextureId ? mSharedTextureId : mImageTextureId);
@@ -186,14 +191,14 @@ bool GLTextureEditorItem::renderTexture(const QMatrix4x4 &transform)
 
     const auto desc = ShaderDesc{
         .target = target,
-        .format = mImage.format(),
+        .format = image.format(),
         .picker = mPickerEnabled,
     };
     auto *program = mProgramCache->getProgram(desc);
     if (!program)
         return false;
 
-    const auto params = getParams(transform, mTextureSamples);
+    const auto params = getParams(transform, mTextureSamples, image.depth());
     program->bind();
     program->setUniformValue("uTexture", 0);
     program->setUniformValue("uTransform", transform);
