@@ -42,7 +42,7 @@ public:
     bool isRaw() const { return mIsRaw; }
     void replace(TextureData texture, bool emitFileChanged = true);
     void setFlipVertically(bool flipVertically);
-    void copySharedTexture(ShareHandle textureHandle, int samples = 1);
+    void copySharedTexture(ShareHandle shareHandle, int samples = 1);
     void recreateRenderWidget();
     const TextureData &texture() const { return mTexture; }
 
@@ -104,5 +104,5 @@ private:
     int mZoom{ 100 };
     QPoint mPanStart{};
     std::function<void()> mOnGpuInitialized;
-    bool mGpuInitialized{ };
+    bool mGpuInitialized{};
 };

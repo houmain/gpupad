@@ -347,7 +347,6 @@ bool D3DTexture::swap(D3DTexture &other)
     std::swap(mCreated, other.mCreated);
     std::swap(mResource, other.mResource);
     std::swap(mCurrentState, other.mCurrentState);
-    std::swap(mShareHandle, other.mShareHandle);
     return true;
 }
 
@@ -430,8 +429,13 @@ void D3DTexture::create(D3DContext &context)
         return;
     }
 
+    auto shareHandle = HANDLE{};
     AssertIfFailed(context.device.CreateSharedHandle(resource(), nullptr,
-        GENERIC_ALL, nullptr, &mShareHandle));
+        GENERIC_ALL, nullptr, &shareHandle));
+    mShareHandle = std::make_shared<ShareHandleData>(ShareHandleData{
+        ShareHandleType::D3D12_RESOURCE,
+        shareHandle,
+    });
 }
 
 ComPtr<ID3D12Resource> D3DTexture::createStagingBuffer(D3DContext &context,
@@ -565,12 +569,4 @@ void D3DTexture::resourceBarrier(D3DContext &context,
         context.graphicsCommandList->ResourceBarrier(1, &transition);
         mCurrentState = state;
     }
-}
-
-ShareHandle D3DTexture::getShareHandle() const
-{
-    return {
-        ShareHandleType::D3D12_RESOURCE,
-        mShareHandle,
-    };
 }

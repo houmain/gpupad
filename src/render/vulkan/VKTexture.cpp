@@ -134,6 +134,15 @@ bool VKTexture::prepareTransferSource(VKContext &context)
     return mTexture.isValid();
 }
 
+bool VKTexture::prepareExternalWrite(VKContext &context)
+{
+    memoryBarrier(*context.commandRecorder, KDGpu::TextureLayout::General,
+        KDGpu::AccessFlagBit::MemoryWriteBit,
+        KDGpu::PipelineStageFlagBit::AllCommandsBit);
+
+    return mTexture.isValid();
+}
+
 bool VKTexture::clear(VKContext &context, std::array<double, 4> color,
     double depth, int stencil)
 {
@@ -280,6 +289,7 @@ void VKTexture::release(KDGpu::Device &device)
 {
     if (std::exchange(mCreated, false)) {
         const auto textureValid = mTexture.isValid();
+        mShareHandle.reset();
         mTextureViews.clear();
         mTexture = {};
 
@@ -292,6 +302,21 @@ void VKTexture::release(KDGpu::Device &device)
     }
 }
 
+KDGpu::Format VKTexture::getVkFormat(KDGpu::Device &device)
+{
+    const auto dataFormat = static_cast<KDGpu::Format>(mData.getVkFormat());
+    const auto format = (dataFormat == KDGpu::Format::UNDEFINED
+            ? toKDGpu(mFormat)
+            : dataFormat);
+
+    const auto properties = device.adapter()->formatProperties(format);
+    if (!properties.optimalTilingFeatures) {
+        mMessages.insert(mItemId, MessageType::UnsupportedTextureFormat);
+        return KDGpu::Format::R8_UNORM;
+    }
+    return format;
+}
+
 void VKTexture::createAndUpload(VKContext &context)
 {
     if (mSystemCopyModified)
@@ -300,13 +325,11 @@ void VKTexture::createAndUpload(VKContext &context)
     if (std::exchange(mCreated, true))
         return;
 
-    const auto dataFormat = static_cast<KDGpu::Format>(mData.getVkFormat());
-    auto textureOptions = KDGpu::TextureOptions{
+    const auto textureOptions = KDGpu::TextureOptions{
         .type = getKDTextureType(mKind),
-        .format = (dataFormat == KDGpu::Format::UNDEFINED ? toKDGpu(mFormat)
-                                                          : dataFormat),
-        .extent = { 
-            static_cast<uint32_t>(mWidth), 
+        .format = getVkFormat(context.device),
+        .extent = {
+            static_cast<uint32_t>(mWidth),
             static_cast<uint32_t>(mHeight),
             static_cast<uint32_t>(mDepth),
         },
@@ -316,14 +339,8 @@ void VKTexture::createAndUpload(VKContext &context)
         .usage = mUsage,
         .memoryUsage = KDGpu::MemoryUsage::GpuOnly,
     };
-    const auto isWritten = (mUsage
-        & (KDGpu::TextureUsageFlagBits::ColorAttachmentBit
-            | KDGpu::TextureUsageFlagBits::DepthStencilAttachmentBit
-            | KDGpu::TextureUsageFlagBits::StorageBit));
 
-    if (isWritten || mSamples > 1) {
-        mTexture = {};
-    } else {
+    if (mSamples == 1 && mKind.color) {
         const auto isSampled =
             (mUsage & KDGpu::TextureUsageFlagBits::SampledBit);
         const auto finalLayout = (isSampled
@@ -348,24 +365,15 @@ void VKTexture::createAndUpload(VKContext &context)
     }
 
     if (!mTexture.isValid()) {
-        // check if format is supported
-        const auto properties =
-            context.device.adapter()->formatProperties(textureOptions.format);
-        if (!properties.optimalTilingFeatures) {
-            mMessages.insert(mItemId, MessageType::UnsupportedTextureFormat);
-            textureOptions.format = KDGpu::Format::R8_UNORM;
-        }
-
-#if defined(KDGPU_PLATFORM_WIN32)
-        textureOptions.externalMemoryHandleType =
-            KDGpu::ExternalMemoryHandleTypeFlagBits::OpaqueWin32;
-#elif defined(KDGPU_PLATFORM_LINUX)
-        textureOptions.externalMemoryHandleType =
-            KDGpu::ExternalMemoryHandleTypeFlagBits::OpaqueFD;
-#endif
         mTexture = context.device.createTexture(textureOptions);
         mCurrentLayout = textureOptions.initialLayout;
     }
+
+    mShareHandle = std::make_shared<ShareHandleData>(ShareHandleData{
+        ShareHandleType::VK_TEXTURE_PTR,
+        const_cast<VKTexture *>(this),
+    });
+
     mSystemCopyModified = mDeviceCopyModified = false;
 }
 
@@ -540,20 +548,38 @@ void VKTexture::memoryBarrier(KDGpu::CommandRecorder &commandRecorder,
     mCurrentAccessMask = accessMask;
 }
 
-ShareHandle VKTexture::getShareHandle(Renderer::Type usage) const
+ShareHandleData VKTexture::getExternalMemoryShareHandle(VKContext &context)
 {
-    if (!mTexture.isValid())
-        return {};
-
-    if (usage == Renderer::Type::Vulkan)
-        return {
-            ShareHandleType::VK_TEXTURE_PTR,
-            const_cast<VKTexture *>(this),
+    if (!std::exchange(mCreated, true)) {
+        const auto textureOptions = KDGpu::TextureOptions{
+            .type = getKDTextureType(mKind),
+            .format = getVkFormat(context.device),
+            .extent = {
+                static_cast<uint32_t>(mWidth),
+                static_cast<uint32_t>(mHeight),
+                static_cast<uint32_t>(mDepth),
+            },
+            .mipLevels = static_cast<uint32_t>(levels()),
+            .arrayLayers = vkArrayLayerCount(mKind, mLayers),
+            .samples = getKDSampleCount(mSamples),
+            .usage = mUsage,
+            .memoryUsage = KDGpu::MemoryUsage::GpuOnly,
+#if defined(KDGPU_PLATFORM_WIN32)
+            .externalMemoryHandleType =
+                KDGpu::ExternalMemoryHandleTypeFlagBits::OpaqueWin32,
+#elif defined(KDGPU_PLATFORM_LINUX)
+            .externalMemoryHandleType =
+                KDGpu::ExternalMemoryHandleTypeFlagBits::OpaqueFD,
+#endif
         };
+        mTexture = context.device.createTexture(textureOptions);
+        mSystemCopyModified = mDeviceCopyModified = false;
+    }
 
     const auto memory = mTexture.externalMemoryHandle();
     if (memory.handle.index() == 0)
         return {};
+
 #if defined(KDGPU_PLATFORM_WIN32)
     return {
         ShareHandleType::OPAQUE_WIN32,

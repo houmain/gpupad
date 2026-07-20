@@ -16,7 +16,7 @@ public:
     void paintGpu(const QSizeF &bounds, const QPointF &offset,
         const TextureData &image) override;
     bool downloadImage(TextureData *image) override;
-    bool copySharedTexture(ShareHandle textureHandle, int samples,
+    bool copySharedTexture(ShareHandle shareHandle, int samples,
         const TextureData &image) override;
 
 private:

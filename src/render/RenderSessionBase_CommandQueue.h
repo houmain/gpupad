@@ -414,7 +414,7 @@ void RenderSessionBase::finishCommandQueue(CommandQueue &commandQueue) noexcept
     for (auto &[itemId, texture] : commandQueue.textures)
         if (texture.deviceCopyModified())
             synchronizeLogic.handleTextureDeviceDataChanged(texture.itemId(),
-                texture.data(), texture.getShareHandle(), texture.samples());
+                texture.data(), texture.shareHandle(), texture.samples());
 
     for (auto &[itemId, buffer] : commandQueue.buffers)
         if (buffer.finishDownload())

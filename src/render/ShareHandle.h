@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstddef>
-#include <cstdint>
+#include <memory>
 
 enum class ShareHandleType {
     None = 0,
@@ -16,24 +16,14 @@ enum class ShareHandleType {
     D3D11_IMAGE_KMT = 0x958C,
 };
 
-struct ShareHandle
+struct ShareHandleData
 {
     ShareHandleType type{};
     void *handle{};
     size_t allocationSize{};
     size_t allocationOffset{};
     bool dedicated{};
-
-    explicit operator bool() const { return (handle != nullptr); }
-    bool sameResource(const ShareHandle &other) const
-    {
-        return type == other.type && handle == other.handle
-            && allocationSize == other.allocationSize
-            && allocationOffset == other.allocationOffset
-            && dedicated == other.dedicated;
-    }
-    bool operator==(const ShareHandle &other) const
-    {
-        return sameResource(other);
-    }
 };
+
+using ShareHandleSource = std::shared_ptr<const ShareHandleData>;
+using ShareHandle = std::weak_ptr<const ShareHandleData>;

@@ -419,12 +419,11 @@ void TextureEditor::copy()
     }
 }
 
-void TextureEditor::copySharedTexture(ShareHandle textureHandle, int samples)
+void TextureEditor::copySharedTexture(ShareHandle shareHandle, int samples)
 {
-    whenGpuInitialized([this, textureHandle, samples]() {
-        mTextureItem->copySharedTexture(textureHandle, std::max(samples, 1),
-            mTexture);
-        mRenderWidget->redraw();
+    whenGpuInitialized([this, shareHandle, samples]() {
+        if (mTextureItem->copySharedTexture(shareHandle, samples, mTexture))
+            mRenderWidget->redraw();
     });
 }
 

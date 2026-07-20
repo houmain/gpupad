@@ -3,6 +3,7 @@
 #include "MessageList.h"
 #include "TextureData.h"
 #include "session/Item.h"
+#include "render/ShareHandle.h"
 
 class RenderSessionBase;
 
@@ -31,6 +32,7 @@ public:
     const TextureData &data() const { return mData; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
     bool deviceCopyModified() const { return mDeviceCopyModified; }
+    ShareHandle shareHandle() const { return mShareHandle; }
 
 protected:
     bool swap(TextureBase &other);
@@ -54,6 +56,7 @@ protected:
     bool mSystemCopyModified{};
     bool mDeviceCopyModified{};
     bool mMipmapsInvalidated{};
+    ShareHandleSource mShareHandle;
 };
 
 void transformClearColor(std::array<double, 4> &color,

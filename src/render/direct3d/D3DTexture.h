@@ -62,7 +62,6 @@ private:
     ComPtr<ID3D12Resource> mResource;
     ComPtr<ID3D12Resource> mDownloadBuffer;
     D3D12_RESOURCE_STATES mCurrentState{};
-    HANDLE mShareHandle{};
 };
 
 #endif // D3D_ENABLED

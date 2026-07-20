@@ -2,6 +2,7 @@
 
 #include "SourceType.h"
 #include "session/Item.h"
+#include "render/ShareHandle.h"
 #include <QObject>
 #include <QSet>
 
@@ -12,7 +13,6 @@ class BinaryEditor;
 class RenderSessionBase;
 class ProcessSource;
 class TextureData;
-struct ShareHandle;
 
 class SynchronizeLogic final : public QObject
 {

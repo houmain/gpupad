@@ -29,12 +29,12 @@ layout(push_constant) uniform Params {
   int transformTexCoords;
   int flipVertically;  
   vec2 size;
+  vec2 pickerFragCoord;
   float level;
   float layer;
   int face;
   int samp;
   int samples;
-  vec2 pickerFragCoord;
   float mappingOffset;
   float mappingFactor;
   uint colorMask;
@@ -130,12 +130,12 @@ writeonly layout(rgba32f) uniform image1D uPickerColor;
 
 uniform SAMPLER uTexture;
 uniform vec2 uSize;
+uniform vec2 uPickerFragCoord;
 uniform float uLevel;
 uniform float uLayer;
 uniform int uFace;
 uniform int uSample;
 uniform int uSamples;
-uniform vec2 uPickerFragCoord;
 uniform float uMappingOffset;
 uniform float uMappingFactor;
 uniform int uColorMask;

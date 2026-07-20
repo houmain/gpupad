@@ -109,21 +109,16 @@ bool GLTextureEditorItem::downloadImage(TextureData *image)
     return true;
 }
 
-bool GLTextureEditorItem::copySharedTexture(ShareHandle textureHandle,
+bool GLTextureEditorItem::copySharedTexture(ShareHandle shareHandle,
     int samples, const TextureData &)
 {
-    Q_ASSERT(!textureHandle
-        || textureHandle.type == ShareHandleType::OPENGL_TEXTURE_ID);
-
-    mSharedTextureId = GL_NONE;
-    if (textureHandle.type != ShareHandleType::OPENGL_TEXTURE_ID
-        || !textureHandle) {
-        update();
+    auto shareHandleData = shareHandle.lock();
+    if (!shareHandleData
+        || shareHandleData->type != ShareHandleType::OPENGL_TEXTURE_ID)
         return false;
-    }
 
     mSharedTextureId = static_cast<GLuint>(
-        reinterpret_cast<std::uintptr_t>(textureHandle.handle));
+        reinterpret_cast<std::uintptr_t>(shareHandleData->handle));
     mTextureSamples = std::max(samples, 1);
     update();
     return true;

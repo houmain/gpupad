@@ -8,6 +8,7 @@
 #  include "render/AdapterIdentity.h"
 #  include <QList>
 #  include <memory>
+#  include <optional>
 
 struct ktxVulkanDeviceInfo;
 
@@ -25,6 +26,9 @@ public:
     bool initialized() const { return static_cast<bool>(mState); }
     VKDevice &device();
     VKDevice::Lock lockDevice();
+    VKContext &context();
+    VKDevice::Lock beginCommandQueue();
+    void submitCommandQueueWaitIdle();
     KDGpu::RenderPassCommandRecorder &renderPass();
     KDGpu::Format swapchainFormat() const;
     KDGpu::Extent2D swapchainExtent() const;
@@ -41,14 +45,17 @@ Q_SIGNALS:
 private:
     struct State;
 
-    void initializeGpu();
+    bool initializeGpu();
     void releaseGpu();
     bool event(QEvent *event) override;
     void exposeEvent(QExposeEvent *event) override;
-    bool ensureSwapchain();
+    bool ensureSwapchain(VKDevice::Lock &deviceLock);
+    void submitCommandQueue(bool waitUntilIdle, KDGpu::SubmitOptions options);
 
     const bool mEnableVSync;
+    bool mRedrawing{};
     std::unique_ptr<State> mState;
+    std::optional<VKContext> mContext;
 };
 
 #endif // defined(VULKAN_ENABLED)

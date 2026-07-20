@@ -137,6 +137,7 @@ struct VKWindow::State
     std::vector<KDGpu::GpuSemaphore> renderCompleteSemaphores;
     std::array<KDGpu::Fence, MaxFramesInFlight> frameFences;
     std::array<KDGpu::CommandBuffer, MaxFramesInFlight> commandBuffers;
+    std::array<std::vector<KDGpu::Buffer>, MaxFramesInFlight> stagingBuffers;
     KDGpu::Format swapchainFormat{ KDGpu::Format::B8G8R8A8_UNORM };
     KDGpu::ColorSpace colorSpace{ KDGpu::ColorSpace::SRgbNonlinear };
     KDGpu::PresentMode presentMode{ KDGpu::PresentMode::Fifo };
@@ -206,6 +207,66 @@ VKDevice::Lock VKWindow::lockDevice()
     return device().lock();
 }
 
+VKContext &VKWindow::context()
+{
+    Q_ASSERT(mContext);
+    return *mContext;
+}
+
+VKDevice::Lock VKWindow::beginCommandQueue()
+{
+    auto deviceLock = lockDevice();
+    if (!mContext)
+        mContext.emplace(VKContext{
+            .device = deviceLock.device(),
+            .queue = deviceLock.queue(),
+            .ktxDeviceInfo = deviceLock.ktxDeviceInfo(),
+            .commandRecorder = deviceLock.device().createCommandRecorder({
+                .queue = deviceLock.queue(),
+            }),
+        });
+    return deviceLock;
+}
+
+void VKWindow::submitCommandQueue(bool waitUntilIdle,
+    KDGpu::SubmitOptions options)
+{
+    Q_ASSERT(mContext.has_value());
+    auto &context = *mContext;
+    if (context.commandRecorder) {
+        context.commandBuffers.push_back(context.commandRecorder->finish());
+        context.commandRecorder.reset();
+    }
+
+    if (!context.commandBuffers.empty()) {
+        if (waitUntilIdle) {
+            options.commandBuffers =
+                std::vector<KDGpu::RequiredHandle<KDGpu::CommandBuffer_t>>(
+                    context.commandBuffers.begin(),
+                    context.commandBuffers.end());
+        } else {
+            Q_ASSERT(mState && context.commandBuffers.size() == 1);
+            auto &commandBuffer = mState->commandBuffers[mState->inFlightIndex];
+            commandBuffer = std::move(context.commandBuffers.front());
+            mState->stagingBuffers[mState->inFlightIndex] =
+                std::move(context.stagingBuffers);
+            options.commandBuffers = { commandBuffer };
+        }
+
+        context.queue.submit(options);
+        if (waitUntilIdle)
+            context.queue.waitUntilIdle();
+        context.commandBuffers.clear();
+    }
+    context.stagingBuffers.clear();
+    mContext.reset();
+}
+
+void VKWindow::submitCommandQueueWaitIdle()
+{
+    submitCommandQueue(true, {});
+}
+
 KDGpu::RenderPassCommandRecorder &VKWindow::renderPass()
 {
     Q_ASSERT(mState && mState->renderPass);
@@ -224,34 +285,33 @@ KDGpu::Extent2D VKWindow::swapchainExtent() const
     return mState->swapchainExtent;
 }
 
-void VKWindow::initializeGpu()
+bool VKWindow::initializeGpu()
 {
-    if (mState)
-        return;
+    Q_ASSERT(!mState);
 
     auto state = std::make_unique<State>();
     auto deviceLock = state->device.lock();
     auto &instance = deviceLock.instance();
     if (!instance.isValid())
-        return;
+        return false;
 
     if (!state->device.initialize(Singletons::selectedAdapter()))
-        return;
+        return false;
 
     state->surface = instance.createSurface(surfaceOptions(*this));
     if (!state->surface.isValid())
-        return;
+        return false;
 
     auto &adapter = deviceLock.adapter();
     auto &queue = deviceLock.queue();
     if (!adapter.supportsPresentation(state->surface, queue.queueTypeIndex()))
-        return;
+        return false;
 
     const auto swapchainProperties =
         adapter.swapchainProperties(state->surface);
     if (swapchainProperties.formats.empty()
         || swapchainProperties.presentModes.empty())
-        return;
+        return false;
 
     auto &device = deviceLock.device();
     state->swapchainFormat =
@@ -267,18 +327,16 @@ void VKWindow::initializeGpu()
             .createSignalled = true,
         });
     }
-
     mState = std::move(state);
-    Q_EMIT initializingGpu();
+    return true;
 }
 
 void VKWindow::releaseGpu()
 {
     if (mState) {
-        auto deviceLock = lockDevice();
-        auto &device = deviceLock.device();
-        device.waitUntilIdle();
+        auto deviceLock = beginCommandQueue();
         Q_EMIT releasingGpu();
+        submitCommandQueueWaitIdle();
     }
     mState.reset();
 }
@@ -308,13 +366,12 @@ void VKWindow::exposeEvent(QExposeEvent *)
     redraw();
 }
 
-bool VKWindow::ensureSwapchain()
+bool VKWindow::ensureSwapchain(VKDevice::Lock &deviceLock)
 {
     auto &state = *mState;
     if (!state.swapchainDirty)
         return true;
 
-    auto deviceLock = lockDevice();
     auto &adapter = deviceLock.adapter();
     auto &device = deviceLock.device();
 
@@ -342,6 +399,8 @@ bool VKWindow::ensureSwapchain()
     state.renderPass.reset();
     for (auto &commandBuffer : state.commandBuffers)
         commandBuffer = {};
+    for (auto &stagingBuffers : state.stagingBuffers)
+        stagingBuffers.clear();
     state.swapchainViews.clear();
     state.renderCompleteSemaphores.clear();
 
@@ -379,17 +438,25 @@ void VKWindow::redraw()
     if (!isExposed())
         return;
 
-    initializeGpu();
-    if (!mState)
+    if (mRedrawing)
         return;
+    mRedrawing = true;
+    auto redrawGuard = qScopeGuard([&] { mRedrawing = false; });
 
-    auto deviceLock = lockDevice();
-    if (!ensureSwapchain())
+    if (!mState) {
+        if (!initializeGpu())
+            return;
+        Q_EMIT initializingGpu();
+    }
+
+    auto deviceLock = beginCommandQueue();
+    if (!ensureSwapchain(deviceLock))
         return;
 
     auto &state = *mState;
     auto &frameFence = state.frameFences[state.inFlightIndex];
     frameFence.wait();
+    state.stagingBuffers[state.inFlightIndex].clear();
 
     auto &presentComplete =
         state.presentCompleteSemaphores[state.inFlightIndex];
@@ -414,10 +481,7 @@ void VKWindow::redraw()
 
     Q_EMIT preparingGpu();
 
-    auto commandRecorder = deviceLock.device().createCommandRecorder({
-        .queue = deviceLock.queue(),
-    });
-    state.renderPass.emplace(commandRecorder.beginRenderPass(
+    state.renderPass.emplace(context().commandRecorder->beginRenderPass(
         KDGpu::RenderPassCommandRecorderOptions{
             .colorAttachments = {
                 {
@@ -437,14 +501,12 @@ void VKWindow::redraw()
     state.renderPass->end();
     state.renderPass.reset();
 
-    state.commandBuffers[state.inFlightIndex] = commandRecorder.finish();
-
-    deviceLock.queue().submit({
-        .commandBuffers = { state.commandBuffers[state.inFlightIndex] },
-        .waitSemaphores = { presentComplete },
-        .signalSemaphores = { renderComplete },
-        .signalFence = frameFence,
-    });
+    submitCommandQueue(false,
+        KDGpu::SubmitOptions{
+            .waitSemaphores = { presentComplete },
+            .signalSemaphores = { renderComplete },
+            .signalFence = frameFence,
+        });
     Q_EMIT submittedGpu();
 
     deviceLock.queue().present({

@@ -35,8 +35,8 @@ public:
     virtual void submittedGpu() { }
     virtual bool uploadImage(const TextureData &image) = 0;
     virtual bool downloadImage(TextureData *image) = 0;
-    virtual bool copySharedTexture(ShareHandle textureHandle, int samples,
-        const TextureData &image) = 0;
+    virtual bool copySharedTexture(ShareHandle shareHandle,
+        int samples, const TextureData &image) = 0;
 
     void setBoundingRect(const QRectF &rect);
     QRectF boundingRect() const { return mBoundingRect; }

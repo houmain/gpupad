@@ -29,6 +29,7 @@ public:
     bool prepareStorageImage(VKContext &context);
     bool prepareAttachment(VKContext &context);
     bool prepareTransferSource(VKContext &context);
+    bool prepareExternalWrite(VKContext &context);
     bool clear(VKContext &context, std::array<double, 4> color, double depth,
         int stencil);
     bool copy(VKContext &context, VKTexture &source);
@@ -37,8 +38,7 @@ public:
     bool deviceCopyModified() const { return mDeviceCopyModified; }
     void beginDownload(VKContext &context);
     bool finishDownload();
-    ShareHandle getShareHandle(
-        Renderer::Type usage = Renderer::Type::Vulkan) const;
+    ShareHandleData getExternalMemoryShareHandle(VKContext &context);
 
 private:
     struct ViewOptions
@@ -54,6 +54,7 @@ private:
         }
     };
 
+    KDGpu::Format getVkFormat(KDGpu::Device &device);
     void createAndUpload(VKContext &context);
     void memoryBarrier(KDGpu::CommandRecorder &commandRecorder,
         KDGpu::TextureLayout layout, KDGpu::AccessFlags accessMask,

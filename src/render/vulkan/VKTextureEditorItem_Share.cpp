@@ -10,10 +10,16 @@
 #endif
 
 namespace {
-    KDGpu::VulkanDevice *getVkDevice(KDGpu::Device &device)
+    VkDevice getVkDevice(KDGpu::Device &device)
     {
         const auto &rm = *device.graphicsApi()->resourceManager();
-        return static_cast<KDGpu::VulkanDevice *>(rm.getDevice(device));
+        return static_cast<KDGpu::VulkanDevice *>(rm.getDevice(device))->device;
+    }
+
+    VkPhysicalDevice getVkPhysicalDevice(KDGpu::Device &device)
+    {
+        const auto &rm = *device.graphicsApi()->resourceManager();
+        return rm.getAdapter(device.adapter()->handle())->physicalDevice;
     }
 
     std::optional<VkExternalMemoryHandleTypeFlagBits> toVkHandleType(
@@ -82,95 +88,31 @@ namespace {
 
         return VK_MAX_MEMORY_TYPES;
     }
-
 } // namespace
 
-void VKTextureEditorItem::releaseShareState()
+VKTextureEditorItem::ShareState::~ShareState()
 {
-    if (!mShare)
-        return;
-
-    if (window().initialized()) {
-        auto deviceLock = window().lockDevice();
-        auto &device = deviceLock.device();
-        if (mShare->texture) {
-            mShare->texture->release(device);
-            mShare->texture.reset();
-        }
-
-        if (auto vkDevice = getVkDevice(device)) {
-            if (auto image = std::exchange(mShare->image, {}))
-                vkDestroyImage(vkDevice->device, image, nullptr);
-            if (auto memory = std::exchange(mShare->memory, {}))
-                vkFreeMemory(vkDevice->device, memory, nullptr);
-        }
-    } else {
-        Q_ASSERT(!mShare->texture && !mShare->image && !mShare->memory);
-    }
-    mShare.reset();
+    Q_ASSERT(!vkTexture && !vkImage && !vkMemory);
 }
 
-bool VKTextureEditorItem::copyImportedTexture(ShareHandle textureHandle,
-    const TextureData &image)
+bool VKTextureEditorItem::ShareState::initialize(VKContext &context,
+    const ShareHandleData &shareHandle, const TextureData &data, int samples)
 {
-    auto deviceLock = window().lockDevice();
-    auto &device = deviceLock.device();
-    auto context = makeContext();
-
-    context.commandRecorder =
-        context.device.createCommandRecorder({ .queue = context.queue });
-    if (!importShareHandle(context, std::move(textureHandle), image)) {
-        if (mTexture)
-            mTexture->release(device);
-        mTexture.reset();
-        releaseShareState();
-        return false;
-    }
-    if (!copyShareStateToTexture(context, image)) {
-        if (mTexture)
-            mTexture->release(device);
-        mTexture.reset();
-        return false;
-    }
-
-    submitCommandQueue(context);
-    return (mTexture && mTexture->texture().isValid());
-}
-
-bool VKTextureEditorItem::importShareHandle(VKContext &context,
-    ShareHandle shareHandle, const TextureData &image)
-{
-    if (!shareHandle)
-        return false;
-
-    auto externalHandleType = toVkHandleType(shareHandle.type);
+    const auto externalHandleType = toVkHandleType(shareHandle.type);
     if (!externalHandleType)
         return false;
 
-    if (mShare && mShare->shareHandle.sameResource(shareHandle)
-        && mShare->texture && mShare->texture->texture().isValid()
-        && mShare->texture->samples() == mTextureSamples) {
-        mShare->shareHandle = std::move(shareHandle);
-        return true;
-    }
-
-    const auto format = toKDGpu(image.format());
+    const auto format = toKDGpu(data.format());
     if (format == KDGpu::Format::UNDEFINED)
         return false;
 
-    releaseShareState();
-
-    const auto &rm = *context.device.graphicsApi()->resourceManager();
     const auto vkDevice = getVkDevice(context.device);
-    const auto vkAdapter = rm.getAdapter(context.device.adapter()->handle());
+    const auto vkPhysicalDevice = getVkPhysicalDevice(context.device);
 
-    const auto kind = getKind(image.getTarget(mTextureSamples), image.format());
-    const auto levelCount = static_cast<uint32_t>(
-        mTextureSamples > 1 ? 1 : std::max(image.levels(), 1));
-    const auto layerCount = vkArrayLayerCount(kind, image.layers());
-
-    mShare.reset(new ShareState);
-    auto &imported = *mShare;
+    const auto kind = getKind(data.getTarget(samples), data.format());
+    const auto levelCount =
+        static_cast<uint32_t>(samples > 1 ? 1 : std::max(data.levels(), 1));
+    const auto layerCount = vkArrayLayerCount(kind, data.layers());
 
     const auto imageUsage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT
         | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
@@ -181,161 +123,137 @@ bool VKTextureEditorItem::importShareHandle(VKContext &context,
         .handleTypes =
             static_cast<VkExternalMemoryHandleTypeFlags>(*externalHandleType),
     };
-
     const auto imageInfo = VkImageCreateInfo{
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
         .pNext = &externalImageInfo,
         .flags = static_cast<VkImageCreateFlags>(imageCreateFlags),
         .imageType = toVkImageType(kind),
         .format = static_cast<VkFormat>(format),
-        .extent = vkExtent(kind, image.width(), image.height(), image.depth()),
+        .extent = vkExtent(kind, data.width(), data.height(), data.depth()),
         .mipLevels = levelCount,
         .arrayLayers = layerCount,
-        .samples = static_cast<VkSampleCountFlagBits>(
-            getKDSampleCount(mTextureSamples)),
+        .samples =
+            static_cast<VkSampleCountFlagBits>(getKDSampleCount(samples)),
         .tiling = VK_IMAGE_TILING_OPTIMAL,
         .usage = imageUsage,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     };
-
-    if (vkCreateImage(vkDevice->device, &imageInfo, nullptr, &imported.image)
-        != VK_SUCCESS) {
-        releaseShareState();
+    if (vkCreateImage(vkDevice, &imageInfo, nullptr, &vkImage))
         return false;
-    }
 
     auto requirements = VkMemoryRequirements{};
-    vkGetImageMemoryRequirements(vkDevice->device, imported.image,
-        &requirements);
-    const auto memoryTypeIndex = findMemoryType(vkAdapter->physicalDevice,
+    vkGetImageMemoryRequirements(vkDevice, vkImage, &requirements);
+    const auto memoryTypeIndex = findMemoryType(vkPhysicalDevice,
         requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    if (memoryTypeIndex == VK_MAX_MEMORY_TYPES) {
-        releaseShareState();
+    if (memoryTypeIndex == VK_MAX_MEMORY_TYPES)
         return false;
-    }
 
     auto dedicatedInfo = VkMemoryDedicatedAllocateInfo{
         .sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO,
-        .image = imported.image,
+        .image = vkImage,
     };
-    auto allocateInfo = VkMemoryAllocateInfo{
-        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .allocationSize = shareHandle.allocationSize
-            ? static_cast<VkDeviceSize>(shareHandle.allocationSize)
-            : requirements.size,
-        .memoryTypeIndex = memoryTypeIndex,
-    };
-
     const auto dedicated = shareHandle.dedicated
         || shareHandle.type == ShareHandleType::D3D12_RESOURCE
         || shareHandle.type == ShareHandleType::D3D11_IMAGE
         || shareHandle.type == ShareHandleType::D3D11_IMAGE_KMT;
 
 #if defined(_WIN32)
-    auto importInfo = VkImportMemoryWin32HandleInfoKHR{
+    const auto importInfo = VkImportMemoryWin32HandleInfoKHR{
         .sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_WIN32_HANDLE_INFO_KHR,
+        .pNext = (dedicated ? &dedicatedInfo : nullptr),
         .handleType = *externalHandleType,
         .handle = static_cast<HANDLE>(shareHandle.handle),
     };
-    if (dedicated) {
-        importInfo.pNext = &dedicatedInfo;
-        allocateInfo.pNext = &importInfo;
-    } else {
-        allocateInfo.pNext = &importInfo;
-    }
 #else
     auto fd = static_cast<int>(reinterpret_cast<intptr_t>(shareHandle.handle));
     if (fd >= 0)
         fd = dup(fd);
-    auto importInfo = VkImportMemoryFdInfoKHR{
+    const auto importInfo = VkImportMemoryFdInfoKHR{
         .sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_FD_INFO_KHR,
+        .pNext = (dedicated ? &dedicatedInfo : nullptr),
         .handleType = *externalHandleType,
         .fd = fd,
     };
-    if (dedicated) {
-        importInfo.pNext = &dedicatedInfo;
-        allocateInfo.pNext = &importInfo;
-    } else {
-        allocateInfo.pNext = &importInfo;
-    }
 #endif
-
-    if (vkAllocateMemory(vkDevice->device, &allocateInfo, nullptr,
-            &imported.memory)
-        != VK_SUCCESS) {
-        releaseShareState();
+    const auto allocateInfo = VkMemoryAllocateInfo{
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .pNext = &importInfo,
+        .allocationSize = shareHandle.allocationSize
+            ? static_cast<VkDeviceSize>(shareHandle.allocationSize)
+            : requirements.size,
+        .memoryTypeIndex = memoryTypeIndex,
+    };
+    if (vkAllocateMemory(vkDevice, &allocateInfo, nullptr, &vkMemory))
         return false;
-    }
-    if (!imported.memory) {
-        releaseShareState();
-        return false;
-    }
 
-    if (vkBindImageMemory(vkDevice->device, imported.image, imported.memory,
-            static_cast<VkDeviceSize>(shareHandle.allocationOffset))
-        != VK_SUCCESS) {
-        releaseShareState();
+    if (vkBindImageMemory(vkDevice, vkImage, vkMemory,
+            static_cast<VkDeviceSize>(shareHandle.allocationOffset)))
         return false;
-    }
 
-    auto vkApi =
+    const auto vkApi =
         static_cast<KDGpu::VulkanGraphicsApi *>(context.device.graphicsApi());
-    const auto usage =
+    const auto textureUsage =
         KDGpu::TextureUsageFlags{ KDGpu::TextureUsageFlagBits::SampledBit
             | KDGpu::TextureUsageFlagBits::TransferSrcBit
             | KDGpu::TextureUsageFlagBits::TransferDstBit };
-    auto texture = vkApi->createTextureFromExistingVkImage(context.device,
-        KDGpu::TextureOptions{
-            .type = getKDTextureType(kind),
-            .format = format,
-            .extent = {
-                static_cast<uint32_t>(std::max(image.width(), 1)),
-                static_cast<uint32_t>(std::max(image.height(), 1)),
-                static_cast<uint32_t>(std::max(image.depth(), 1)),
-            },
-            .mipLevels = levelCount,
-            .arrayLayers = layerCount,
-            .samples = getKDSampleCount(mTextureSamples),
-            .usage = usage,
-            .memoryUsage = KDGpu::MemoryUsage::GpuOnly,
-            .initialLayout = KDGpu::TextureLayout::Undefined,
+    const auto textureOptions = KDGpu::TextureOptions{
+        .type = getKDTextureType(kind),
+        .format = format,
+        .extent = {
+            static_cast<uint32_t>(std::max(data.width(), 1)),
+            static_cast<uint32_t>(std::max(data.height(), 1)),
+            static_cast<uint32_t>(std::max(data.depth(), 1)),
         },
-        imported.image);
-    if (!texture.isValid()) {
-        releaseShareState();
+        .mipLevels = levelCount,
+        .arrayLayers = layerCount,
+        .samples = getKDSampleCount(samples),
+        .usage = textureUsage,
+        .memoryUsage = KDGpu::MemoryUsage::GpuOnly,
+        .initialLayout = KDGpu::TextureLayout::Undefined,
+    };
+    auto texture = vkApi->createTextureFromExistingVkImage(context.device,
+        textureOptions, vkImage);
+    if (!texture.isValid())
         return false;
-    }
-
-    imported.texture =
-        std::make_unique<VKTexture>(image, mTextureSamples, std::move(texture));
-    if (!imported.texture->prepareSampledImage(context)) {
-        releaseShareState();
-        return false;
-    }
-
-    imported.shareHandle = std::move(shareHandle);
+    vkTexture = std::make_unique<VKTexture>(data, samples, std::move(texture));
     return true;
 }
 
-bool VKTextureEditorItem::copyShareStateToTexture(VKContext &context,
-    const TextureData &image)
+void VKTextureEditorItem::ShareState::release(KDGpu::Device &device)
 {
-    if (!mShare || !mShare->texture || !mShare->texture->texture().isValid())
-        return false;
+    if (vkTexture)
+        vkTexture->release(device);
+    vkTexture.reset();
 
-    if (!mTexture || mTexture->samples() != mTextureSamples) {
-        if (mTexture)
-            mTexture->release(context.device);
-        mTexture = std::make_unique<VKTexture>(image, mTextureSamples);
-        mTexture->boundAsSampler();
+    if (vkImage)
+        vkDestroyImage(getVkDevice(device), vkImage, nullptr);
+    vkImage = {};
+
+    if (vkMemory)
+        vkFreeMemory(getVkDevice(device), vkMemory, nullptr);
+    vkMemory = {};
+}
+
+bool VKTextureEditorItem::copySharedTexture(VKContext &context,
+    const ShareHandleData &shareHandle, const TextureData &data)
+{
+    if (!mShare) {
+        auto share = std::make_unique<VKTextureEditorItem::ShareState>();
+        if (!share->initialize(context, shareHandle, data, mTextureSamples))
+            return false;
+        mShare = std::move(share);
     }
 
-    if (!mTexture->copy(context, *mShare->texture))
-        return false;
-    if (!mTexture->prepareSampledImage(context))
+    if (!mShare)
         return false;
 
-    resetTextureBinding();
+    if (!mTexture) {
+        mTexture = std::make_unique<VKTexture>(data, mTextureSamples);
+        mTexture->boundAsSampler();
+    }
+    if (!mTexture->copy(context, *mShare->vkTexture))
+        return false;
+
     return true;
 }

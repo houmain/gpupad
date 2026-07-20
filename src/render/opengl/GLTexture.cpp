@@ -352,16 +352,6 @@ bool GLTexture::copy(GLContext &gl, GLTexture &source)
         mData.getLevelHeight(level), level);
 }
 
-ShareHandle GLTexture::getShareHandle()
-{
-    Q_ASSERT(mTextureObject);
-    return {
-        .type = ShareHandleType::OPENGL_TEXTURE_ID,
-        .handle =
-            reinterpret_cast<void *>(static_cast<uintptr_t>(mTextureObject)),
-    };
-}
-
 bool GLTexture::swap(GLTexture &other)
 {
     if (!TextureBase::swap(other))
@@ -422,6 +412,12 @@ void GLTexture::createTexture(GLContext &gl)
     };
 
     mTextureObject = GLObject(&gl, createTexture(), freeTexture);
+
+    mShareHandle = std::make_shared<ShareHandleData>(ShareHandleData{
+        .type = ShareHandleType::OPENGL_TEXTURE_ID,
+        .handle =
+            reinterpret_cast<void *>(static_cast<uintptr_t>(mTextureObject)),
+    });
 }
 
 void GLTexture::upload(GLContext &gl)
@@ -470,12 +466,14 @@ GLuint64 GLTexture::obtainBindlessHandle(GLContext &gl)
         return 0;
 
     static auto glGetTextureHandleARB =
-        gl.getProcAddress<PFNGLGETTEXTUREHANDLEARBPROC>("glGetTextureHandleARB");
+        gl.getProcAddress<PFNGLGETTEXTUREHANDLEARBPROC>(
+            "glGetTextureHandleARB");
     if (glGetTextureHandleARB)
         mBindlessHandle = glGetTextureHandleARB(getReadOnlyTextureId(gl));
 
     static auto glMakeTextureHandleResidentARB =
-        gl.getProcAddress<PFNGLMAKETEXTUREHANDLERESIDENTARBPROC>("glMakeTextureHandleResidentARB");
+        gl.getProcAddress<PFNGLMAKETEXTUREHANDLERESIDENTARBPROC>(
+            "glMakeTextureHandleResidentARB");
     if (mBindlessHandle && glMakeTextureHandleResidentARB)
         glMakeTextureHandleResidentARB(mBindlessHandle);
 
