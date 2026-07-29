@@ -817,7 +817,11 @@ QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)
         tabifyDockWidget(tabDock, dock);
     } else {
         addDockWidget(Qt::TopDockWidgetArea, dock);
+
+        // TODO: not initializing width in Debug build due to likely invalid assertion
+#if defined(NDEBUG) || QT_VERSION != QT_VERSION_CHECK(6, 12, 0)
         resizeDocks({ dock }, { width() }, Qt::Horizontal);
+#endif
     }
     mDocks.emplace(dock, editor);
     return dock;

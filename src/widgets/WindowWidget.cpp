@@ -6,6 +6,7 @@ WindowWidget::WindowWidget(bool forwardInputEvents, QWidget *parent)
     : QWidget(parent)
     , mForwardInputEvents(forwardInputEvents)
 {
+    setMinimumSize(100, 100);
     mResizeTimer.setSingleShot(true);
     connect(&mResizeTimer, &QTimer::timeout, this, &WindowWidget::resizeWindow);
 }
