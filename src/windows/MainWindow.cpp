@@ -411,6 +411,7 @@ MainWindow::MainWindow(QWidget *parent)
         mRecentFileActions += action;
     }
 
+    newFile();
     readSettings();
 }
 
@@ -451,6 +452,9 @@ void MainWindow::readSettings()
     auto &settings = Singletons::settings();
     settings.applyTheme();
 
+    if (settings.hideMenuBar())
+        handleHideMenuBarChanged(true);
+
     if (!restoreGeometry(settings.value("geometry").toByteArray()))
         setGeometry(100, 100, 800, 600);
 
@@ -475,8 +479,6 @@ void MainWindow::readSettings()
     mUi->actionHideMenuBar->setChecked(settings.hideMenuBar());
     mUi->actionLineWrapping->setChecked(settings.lineWrap());
     mUi->actionFullScreen->setChecked(isFullScreen());
-    if (settings.hideMenuBar())
-        handleHideMenuBarChanged(true);
 
     auto prevVisibleAction = std::add_pointer_t<QAction>{};
     const auto hiddenIconNames = settings.value("hiddenIcons").toStringList();

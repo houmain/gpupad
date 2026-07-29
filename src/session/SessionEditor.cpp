@@ -273,9 +273,11 @@ void SessionEditor::setFileName(QString fileName)
 
 bool SessionEditor::load()
 {
+    setAnimated(false);
     if (!mModel.load(mFileName))
         return false;
     selectSession();
+    setAnimated(true);
     return true;
 }
 

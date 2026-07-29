@@ -211,11 +211,12 @@ int run(int argc, char *argv[])
 
     auto arguments = QApplication::arguments();
     arguments.removeFirst();
-    for (const QString &argument : std::as_const(arguments))
-        window.openFile(argument);
 
-    if (!window.hasEditor())
-        window.newFile();
+    if (!arguments.isEmpty()) {
+        window.closeAllFiles();
+        for (const QString &argument : std::as_const(arguments))
+            window.openFile(argument);
+    }
 
     app.processEvents();
     restoreProcessPriority();
