@@ -404,6 +404,8 @@ set_target_properties(ktx PROPERTIES UNITY_BUILD OFF)
 # DirectXTex -------------------------
 set(CMAKE_FOLDER DirectXTex)
 if (NOT MSVC)
+    include_directories(libs/WindowsSDK)
+
     set(GPUPAD_DIRECTXMATH_GIT_REPOSITORY "https://github.com/microsoft/DirectXMath.git" CACHE STRING "DirectXMath Git repository")
     set(GPUPAD_DIRECTXMATH_GIT_REVISION "5618277fa077ab65c60bb677c0275bbccd95914d" CACHE STRING "DirectXMath Git revision")
     FetchSparse(DirectXMath
@@ -428,7 +430,7 @@ if (NOT MSVC)
         GIT_TAG ${GPUPAD_DIRECTX_HEADERS_GIT_REVISION}
         CACHE_OPTIONS
             DXHEADERS_BUILD_TEST:BOOL=OFF
-            DXHEADERS_INSTALL:BOOL=OFF
+            DXHEADERS_INSTALL:BOOL=ON
             DXHEADERS_BUILD_GOOGLE_TEST:BOOL=OFF
         SPARSE_EXCLUDE
             googletest
@@ -473,7 +475,6 @@ FetchSparse(DirectXTex
         WICTextureLoader
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE DirectXTex)
-set_target_properties(DirectXTex PROPERTIES UNITY_BUILD OFF)
 
 if (NOT MSVC)
     set(CMAKE_PREFIX_PATH "${SAVED_PREFIX_PATH}")
@@ -510,7 +511,7 @@ if (GPUPAD_ENABLE_OPENGL)
         target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
     elseif(APPLE)
         find_package(OpenGL REQUIRED)
-        include_directories(${OPENGL_INCLUDE_DIR})
+        target_include_directories(${PROJECT_NAME} PRIVATE ${OPENGL_INCLUDE_DIR})
         target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENGL_LIBRARIES})
     endif()
 endif()
