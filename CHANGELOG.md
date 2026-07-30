@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 4.2.0] - 2026-07-30
+
+### Added
+
+- Added KTX2 support.
+- Using DirectXTex for loading/saving DDS.
+- Added preview in editor button to file browser.
+- Added color range selection slider to texture editor info panel.
+
+### Fixed
+
+- Fixed texture upload stride.
+- Fixed crash when buffer binding has no buffer set.
+- Improved dragging files from file browser to session.
+- Fixed flickering when zooming in texture editor.
+- Reduced flickering on startup.
+
 ## [Version 4.1.0] - 2026-07-14
 
 ### Added
@@ -1109,6 +1126,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 4.2.0]: https://github.com/houmain/gpupad/compare/4.1.0...4.2.0
 [version 4.1.0]: https://github.com/houmain/gpupad/compare/4.0.0...4.1.0
 [version 4.0.0]: https://github.com/houmain/gpupad/compare/3.4.1...4.0.0
 [version 3.4.1]: https://github.com/houmain/gpupad/compare/3.4.0...3.4.1
