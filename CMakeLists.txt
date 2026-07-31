@@ -347,6 +347,7 @@ foreach(ACTION_PATH IN LISTS ACTION_PATHS)
         get_filename_component(ACTION "${ACTION_PATH}" NAME)
         add_subdirectory("${ACTION_PATH}" EXCLUDE_FROM_ALL)
         add_dependencies(${PROJECT_NAME} ${ACTION})
+        set(ACTIONS ${ACTIONS} ${ACTION})
     endif()
 endforeach()
 
