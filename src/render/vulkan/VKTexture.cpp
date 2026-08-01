@@ -369,12 +369,17 @@ void VKTexture::createAndUpload(VKContext &context)
         mCurrentLayout = textureOptions.initialLayout;
     }
 
+    updateShareHandle();
+
+    mSystemCopyModified = mDeviceCopyModified = false;
+}
+
+void VKTexture::updateShareHandle()
+{
     mShareHandle = std::make_shared<ShareHandleData>(ShareHandleData{
         ShareHandleType::VK_TEXTURE_PTR,
         const_cast<VKTexture *>(this),
     });
-
-    mSystemCopyModified = mDeviceCopyModified = false;
 }
 
 void VKTexture::beginDownload(VKContext &context)

@@ -5,20 +5,25 @@
 #include "SynchronizeLogic.h"
 #include <QStack>
 
+class VKTexture;
+
 template <typename T>
 void replaceEqual(std::map<ItemId, T> &to, std::map<ItemId, T> &from)
 {
-    for (auto &kv : to) {
-        auto it = from.find(kv.first);
-        if (it != from.end()) {
+    for (auto &[itemId, item] : to)
+        if (auto it = from.find(itemId);
+            it != from.end() && item == it->second) {
+
             // implicitly update untitled filename of buffer
             if constexpr (std::is_base_of_v<BufferBase, T>)
-                it->second.updateUntitledFilename(kv.second);
+                it->second.updateUntitledFilename(item);
 
-            if (kv.second == it->second)
-                kv.second = std::move(it->second);
+            item = std::move(it->second);
+
+            // update texture share handle
+            if constexpr (std::is_base_of_v<VKTexture, T>)
+                item.updateShareHandle();
         }
-    }
 }
 
 template <typename CommandQueue>

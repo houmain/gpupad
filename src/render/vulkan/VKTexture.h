@@ -38,6 +38,7 @@ public:
     bool deviceCopyModified() const { return mDeviceCopyModified; }
     void beginDownload(VKContext &context);
     bool finishDownload();
+    void updateShareHandle();
     ShareHandleData getExternalMemoryShareHandle(VKContext &context);
 
 private:
