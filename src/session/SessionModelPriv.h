@@ -7,6 +7,7 @@
 
 #define ADD_EACH_COLUMN_TYPE()                                                \
     ADD(SessionRenderer, Session, renderer)                                   \
+    ADD(SessionApiVersion, Session, apiVersion)                               \
     ADD(SessionShaderLanguage, Session, shaderLanguage)                       \
     ADD(SessionShaderCompiler, Session, shaderCompiler)                       \
     ADD(SessionShaderCompilerSettings, Session, shaderCompilerSettings)       \

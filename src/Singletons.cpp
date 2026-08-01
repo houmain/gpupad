@@ -29,10 +29,12 @@ bool onMainThread()
     return (QThread::currentThread() == QApplication::instance()->thread());
 }
 
-void Singletons::selectAdapter(const AdapterIdentity &adapter)
+void Singletons::selectAdapter(const AdapterIdentity &adapter,
+    const QString &apiVersion)
 {
     Q_ASSERT(onMainThread());
-    if (sInstance->mSelectedAdapter && *sInstance->mSelectedAdapter == adapter)
+    if (sInstance->mSelectedAdapter && *sInstance->mSelectedAdapter == adapter
+        && sInstance->mSelectedApiVersion == apiVersion)
         return;
 
     sInstance->mSynchronizeLogic->resetRenderSession();
@@ -40,8 +42,9 @@ void Singletons::selectAdapter(const AdapterIdentity &adapter)
     sInstance->mVKRenderer.reset();
     sInstance->mD3DRenderer.reset();
     sInstance->mSelectedAdapter = std::make_unique<AdapterIdentity>(adapter);
+    sInstance->mSelectedApiVersion = apiVersion;
 #if defined(VULKAN_ENABLED)
-    resetSharedVKDevice();
+    VKDevice::resetSharedDevice();
 #endif
     sInstance->mEditorManager->recreateRenderWidgets();
     sInstance->mSynchronizeLogic->invalidateRenderSession();
@@ -53,6 +56,12 @@ const AdapterIdentity &Singletons::selectedAdapter()
     static const auto sEmpty = AdapterIdentity{};
     return (sInstance->mSelectedAdapter ? *sInstance->mSelectedAdapter
                                         : sEmpty);
+}
+
+const QString &Singletons::selectedApiVersion()
+{
+    Q_ASSERT(onMainThread());
+    return (sInstance->mSelectedApiVersion);
 }
 
 RendererPtr Singletons::sessionRenderer()
@@ -84,9 +93,8 @@ RendererPtr Singletons::glRenderer()
     Q_ASSERT(onMainThread());
     if (!sInstance->mGLRenderer) {
 #if defined(OPENGL_ENABLED)
-        sInstance->mGLRenderer =
-            std::make_shared<Renderer>(Renderer::Type::OpenGL,
-                std::make_unique<GLDevice>(), selectedAdapter());
+        sInstance->mGLRenderer = std::make_shared<Renderer>(
+            Renderer::Type::OpenGL, std::make_unique<GLDevice>());
 #else
         sInstance->mGLRenderer = std::make_shared<Renderer>(
             Renderer::Type::OpenGL, MessageType::OpenGLVersionNotAvailable);
@@ -102,7 +110,8 @@ RendererPtr Singletons::vkRenderer()
 #if defined(VULKAN_ENABLED)
         sInstance->mVKRenderer =
             std::make_shared<Renderer>(Renderer::Type::Vulkan,
-                std::make_unique<VKDevice>(), selectedAdapter());
+                std::make_unique<VKDevice>(selectedAdapter(),
+                    selectedApiVersion()));
 #else
         sInstance->mVKRenderer = std::make_shared<Renderer>(
             Renderer::Type::Vulkan, MessageType::VulkanNotAvailable);
@@ -118,7 +127,7 @@ RendererPtr Singletons::d3dRenderer()
 #if defined(D3D_ENABLED)
         sInstance->mD3DRenderer =
             std::make_shared<Renderer>(Renderer::Type::Direct3D,
-                std::make_unique<D3DDevice>(), selectedAdapter());
+                std::make_unique<D3DDevice>(selectedAdapter()));
 #else
         sInstance->mD3DRenderer = std::make_shared<Renderer>(
             Renderer::Type::Direct3D, MessageType::Direct3DNotAvailable);
@@ -209,6 +218,6 @@ Singletons::Singletons(QMainWindow *window)
 Singletons::~Singletons()
 {
     Q_ASSERT(onMainThread());
-    resetSharedVKDevice();
+    VKDevice::resetSharedDevice();
     sInstance = nullptr;
 }

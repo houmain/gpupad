@@ -33,6 +33,15 @@
 namespace ShaderCompiler {
 
     namespace {
+        std::pair<int, int> parseVersion(const QString &string)
+        {
+            auto major = 0;
+            auto minor = 0;
+            auto [[maybe_unused]] result =
+                std::sscanf(qPrintable(string), "%d.%d", &major, &minor);
+            return { major, minor };
+        }
+
         void staticInitGlslang()
         {
             static struct Init
@@ -85,32 +94,30 @@ namespace ShaderCompiler {
         }
 
         glslang::EShTargetClientVersion getClientVersion(
-            glslang::EShClient client, int version)
+            glslang::EShClient client, const QString &apiVersion)
         {
             using Version = glslang::EShTargetClientVersion;
             if (client == glslang::EShClient::EShClientOpenGL)
                 return Version::EShTargetOpenGL_450;
 
-            Q_ASSERT(client == glslang::EShClient::EShClientVulkan);
-            if (!version)
-                return Version::EShTargetVulkan_1_3;
+            const auto [major, minor] = parseVersion(apiVersion);
+            if (!major)
+                return Version::EShTargetVulkan_1_1;
 
             static_assert(Version::EShTargetVulkan_1_3
                 == (1 << 22) + (3 << 12));
-            const auto major = version / 10;
-            const auto minor = version % 10;
             return static_cast<Version>((major << 22) + (minor << 12));
         }
 
-        glslang::EShTargetLanguageVersion getSpirvVersion(int version)
+        glslang::EShTargetLanguageVersion getSpirvVersion(
+            const QString &version)
         {
             using Version = glslang::EShTargetLanguageVersion;
-            if (!version)
+            const auto [major, minor] = parseVersion(version);
+            if (!major)
                 return Version::EShTargetSpv_1_0;
 
             static_assert(Version::EShTargetSpv_1_6 == (1 << 16) + (6 << 8));
-            const auto major = version / 10;
-            const auto minor = version % 10;
             return static_cast<Version>((major << 16) + (minor << 8));
         }
 
@@ -173,10 +180,11 @@ namespace ShaderCompiler {
             staticInitGlslang();
 
             const auto client = getClient(session.renderer);
-            const auto clientVersion = getClientVersion(client, 0);
+            const auto clientVersion =
+                getClientVersion(client, session.apiVersion);
             const auto targetLanguage =
                 glslang::EShTargetLanguage::EShTargetSpv;
-            const auto targetVersion = getSpirvVersion(getShaderCompilerInt(
+            const auto targetVersion = getSpirvVersion(getShaderCompilerString(
                 session, Session::ShaderCompilerSetting::spirvVersion));
 
             auto sourcesUtf8 = std::vector<QByteArray>();

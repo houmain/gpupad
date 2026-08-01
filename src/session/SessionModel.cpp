@@ -579,6 +579,7 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
     case Item::Type::Session: {
         const auto &session = static_cast<const Session &>(item);
         for (auto c : {
+                 SessionApiVersion,
                  SessionFlipViewport,
                  SessionReverseCulling,
              })
@@ -775,6 +776,7 @@ bool rendererHasSetting(Session::Renderer renderer,
     using CT = SessionModel::ColumnType;
     switch (column) {
     default:                        break;
+    case CT::SessionApiVersion:     return (renderer == R::Vulkan);
     case CT::SessionReverseCulling: return (renderer != R::OpenGL);
     case CT::SessionFlipViewport:   return (renderer != R::OpenGL);
     }

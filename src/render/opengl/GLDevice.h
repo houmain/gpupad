@@ -9,10 +9,10 @@
 class GLDevice final : public Device
 {
 public:
-    explicit GLDevice(QObject *parent = nullptr);
+    GLDevice();
     ~GLDevice() override;
 
-    bool initialize(const AdapterIdentity &adapterIdentity) override;
+    bool initialize() override;
 
     QOpenGLContext &context() { return mContext; }
     GLContext &gl() { return mGL; }

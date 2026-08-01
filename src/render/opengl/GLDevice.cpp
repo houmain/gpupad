@@ -4,7 +4,7 @@
 
 #  include <QApplication>
 
-GLDevice::GLDevice(QObject *parent)
+GLDevice::GLDevice()
     : Device(Type::OpenGL)
     , mContext(this)
     , mSurface(nullptr, this)
@@ -18,9 +18,8 @@ GLDevice::~GLDevice()
         || QOpenGLContext::currentContext() == &mContext);
 }
 
-bool GLDevice::initialize(const AdapterIdentity &adapterIdentity)
+bool GLDevice::initialize()
 {
-    Q_UNUSED(adapterIdentity);
     Q_ASSERT(mContext.thread() == QThread::currentThread());
 
     mContext.setShareContext(QOpenGLContext::globalShareContext());

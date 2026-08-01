@@ -24,8 +24,10 @@ bool onMainThread();
 class Singletons
 {
 public:
-    static void selectAdapter(const AdapterIdentity &adapter);
+    static void selectAdapter(const AdapterIdentity &adapter,
+        const QString &apiVersion);
     static const AdapterIdentity &selectedAdapter();
+    static const QString& selectedApiVersion();
     static RendererPtr sessionRenderer();
     static RendererPtr glRenderer();
     static RendererPtr vkRenderer();
@@ -48,6 +50,7 @@ private:
     static Singletons *sInstance;
 
     std::unique_ptr<AdapterIdentity> mSelectedAdapter;
+    QString mSelectedApiVersion;
     std::unique_ptr<Settings> mSettings;
     std::unique_ptr<FileCache> mFileCache;
     std::unique_ptr<FileDialog> mFileDialog;
@@ -61,5 +64,4 @@ private:
     std::shared_ptr<Renderer> mVKRenderer;
     std::shared_ptr<Renderer> mGLRenderer;
     std::shared_ptr<Renderer> mD3DRenderer;
-
 };

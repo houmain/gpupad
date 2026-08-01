@@ -8,6 +8,7 @@
 #  endif
 
 #  include "render/Device.h"
+#  include "render/AdapterIdentity.h"
 #  include <memory>
 #  include <mutex>
 
@@ -44,16 +45,16 @@ public:
         std::unique_lock<std::recursive_mutex> mLock;
     };
 
-    VKDevice();
-    ~VKDevice() override;
+    static KDGpu::Instance &instance();
+    static void resetSharedDevice();
 
-    bool initialize(const AdapterIdentity &adapterIdentity) override;
+    VKDevice(const AdapterIdentity &adapterIdentity, const QString &apiVersion);
+    ~VKDevice() override;
+    bool initialize() override;
     Lock lock();
 
 private:
     SharedDevicePtr mShared;
 };
-
-void resetSharedVKDevice();
 
 #endif // defined(VULKAN_ENABLED)

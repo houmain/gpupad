@@ -3,6 +3,7 @@
 
 #  include <QWindow>
 #  include "GLContext.h"
+#  include "render/AdapterIdentity.h"
 
 class GLWindow final : public QWindow
 {

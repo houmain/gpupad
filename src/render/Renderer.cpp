@@ -9,11 +9,9 @@ class Renderer::Worker final : public QObject
     Q_OBJECT
 
 public:
-    Worker(Renderer &renderer, std::unique_ptr<Device> device,
-        const AdapterIdentity &adapterIdentity)
+    Worker(Renderer &renderer, std::unique_ptr<Device> device)
         : mRenderer(renderer)
         , mDevice(std::move(device))
-        , mAdapterIdentity(adapterIdentity)
     {
     }
 
@@ -22,8 +20,7 @@ public:
     void handleConfigureTask(RenderTask *renderTask)
     {
         try {
-            if (!std::exchange(mInitialized, true)
-                && !mDevice->initialize(mAdapterIdentity)) {
+            if (!std::exchange(mInitialized, true) && !mDevice->initialize()) {
                 mRenderer.setFailed();
                 mDevice.reset();
             }
@@ -67,7 +64,6 @@ Q_SIGNALS:
 private:
     Renderer &mRenderer;
     std::unique_ptr<Device> mDevice;
-    const AdapterIdentity mAdapterIdentity;
     bool mInitialized{};
     MessagePtrSet mMessages;
 };
@@ -80,15 +76,13 @@ Renderer::Renderer(Type type, MessageType failureMessage, QObject *parent)
     setFailed();
 }
 
-Renderer::Renderer(Type type, std::unique_ptr<Device> device,
-    const AdapterIdentity &adapterIdentity, QObject *parent)
+Renderer::Renderer(Type type, std::unique_ptr<Device> device, QObject *parent)
     : QObject(parent)
     , mType(type)
 {
     Q_ASSERT(device);
     device->moveToThread(&mThread);
-    mWorker =
-        std::make_unique<Worker>(*this, std::move(device), adapterIdentity);
+    mWorker = std::make_unique<Worker>(*this, std::move(device));
     mWorker->moveToThread(&mThread);
 
     connect(this, &Renderer::configureTaskRequested, mWorker.get(),

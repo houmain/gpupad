@@ -5,7 +5,6 @@
 #include "FileDialog.h"
 #include "Singletons.h"
 #include "ShaderCompiler.h"
-#include <QDir>
 #include <QFileInfo>
 #include <QRegularExpression>
 
@@ -76,8 +75,8 @@ namespace {
         if (usedFileNames && !usedFileNames->contains(fileName)) {
             usedFileNames->append(fileName);
         } else if (recursionDepth++ > 3) {
-            messages.insert(fileName, 0,
-                MessageType::RecursiveInclude, fileName);
+            messages.insert(fileName, 0, MessageType::RecursiveInclude,
+                fileName);
             return {};
         }
         const auto fileNo =
@@ -232,8 +231,8 @@ bool shaderSessionSettingsDiffer(const Session &a, const Session &b)
         return true;
 
     const auto common = [](const Session &a) {
-        return std::tie(a.renderer, a.shaderCompiler, a.shaderPreamble,
-            a.shaderIncludePaths);
+        return std::tie(a.renderer, a.apiVersion, a.shaderCompiler,
+            a.shaderPreamble, a.shaderIncludePaths);
     };
     return common(a) != common(b);
 }
@@ -251,8 +250,8 @@ ShaderBase::ShaderBase(Shader::ShaderType type,
     for (const Shader *shader : shaders) {
         auto source = QString();
         if (!Singletons::fileCache().getSource(shader->fileName, &source))
-            mMessages.insert(shader->id,
-                MessageType::LoadingFileFailed, shader->fileName);
+            mMessages.insert(shader->id, MessageType::LoadingFileFailed,
+                shader->fileName);
 
         mFileNames += shader->fileName;
         mSources += source + "\n";

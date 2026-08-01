@@ -1,6 +1,5 @@
 #pragma once
 
-#include "AdapterIdentity.h"
 #include "Device.h"
 #include "MessageList.h"
 #include "session/ItemEnums.h"
@@ -19,7 +18,7 @@ public:
     using Type = ItemEnums::Renderer;
 
     Renderer(Type type, std::unique_ptr<Device> device,
-        const AdapterIdentity &adapterIdentity, QObject *parent = nullptr);
+        QObject *parent = nullptr);
     explicit Renderer(Type type, MessageType failureMessage,
         QObject *parent = nullptr);
     ~Renderer() override;

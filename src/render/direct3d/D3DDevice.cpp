@@ -16,7 +16,11 @@ namespace {
 #  endif
 } // namespace
 
-D3DDevice::D3DDevice() : Device(Type::Direct3D) { }
+D3DDevice::D3DDevice(const AdapterIdentity &adapterIdentity)
+    : Device(Type::Direct3D)
+    , mAdapterIdentity(adapterIdentity)
+{
+}
 
 D3DDevice::~D3DDevice()
 {
@@ -27,7 +31,7 @@ D3DDevice::~D3DDevice()
     mDxgiFactory.Reset();
 }
 
-bool D3DDevice::initialize(const AdapterIdentity &adapterIdentity)
+bool D3DDevice::initialize()
 try {
     const auto ThrowIfFailed = [](HRESULT hr) {
         if (FAILED(hr))
@@ -45,7 +49,7 @@ try {
             auto desc = DXGI_ADAPTER_DESC{};
             adapter->GetDesc(&desc);
             const auto matchesLuid = !std::memcmp(&desc.AdapterLuid,
-                &adapterIdentity.deviceLUID, sizeof(LUID));
+                &mAdapterIdentity.deviceLUID, sizeof(LUID));
             if (matchesLuid)
                 return adapter;
             ++i;

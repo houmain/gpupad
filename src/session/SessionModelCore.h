@@ -14,6 +14,7 @@ public:
         FileName,
 
         SessionRenderer,
+        SessionApiVersion,
         SessionShaderLanguage,
         SessionShaderCompiler,
         SessionShaderCompilerSettings,

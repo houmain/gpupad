@@ -5,7 +5,7 @@
 #include <QRegularExpression>
 #include <mutex>
 #if defined(DXC_ENABLED)
-# include <dxcapi.h>
+#  include <dxcapi.h>
 #endif
 
 namespace ShaderCompiler {
@@ -291,6 +291,10 @@ namespace ShaderCompiler {
     {
         auto arguments = DXCCompiler::ArgumentList();
         arguments.add(L"-spirv");
+
+        if (session.renderer == Session::Renderer::Vulkan)
+            arguments.add(QStringLiteral("-fspv-target-env=vulkan%1")
+                    .arg(session.apiVersion));
 
         //arguments.add(L"-ignore-line-directives");
 

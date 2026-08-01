@@ -149,14 +149,16 @@ struct VKWindow::State
     uint32_t inFlightIndex{};
     bool swapchainDirty{ true };
     std::optional<KDGpu::RenderPassCommandRecorder> renderPass;
+
+    State(const AdapterIdentity &adapterIdentity, const QString &apiVersion)
+        : device(adapterIdentity, apiVersion)
+    {
+    }
 };
 
 QList<AdapterIdentity> VKWindow::getAdapterIdentities()
 {
-    auto device = VKDevice{};
-    auto deviceLock = device.lock();
-    auto &instance = deviceLock.instance();
-
+    auto &instance = VKDevice::instance();
     auto result = QList<AdapterIdentity>();
     for (const auto adapter : instance.adapters()) {
         const auto &properties = adapter->properties();
@@ -176,10 +178,7 @@ QList<AdapterIdentity> VKWindow::getAdapterIdentities()
 
 bool VKWindow::isSupported()
 {
-    auto device = VKDevice{};
-    auto deviceLock = device.lock();
-    auto &instance = deviceLock.instance();
-    return instance.isValid();
+    return VKDevice::instance().isValid();
 }
 
 //-------------------------------------------------------------------------
@@ -289,15 +288,14 @@ bool VKWindow::initializeGpu()
 {
     Q_ASSERT(!mState);
 
-    auto state = std::make_unique<State>();
+    auto state = std::make_unique<State>(Singletons::selectedAdapter(),
+        Singletons::selectedApiVersion());
     auto deviceLock = state->device.lock();
+
+    if (!state->device.initialize())
+        return false;
+
     auto &instance = deviceLock.instance();
-    if (!instance.isValid())
-        return false;
-
-    if (!state->device.initialize(Singletons::selectedAdapter()))
-        return false;
-
     state->surface = instance.createSurface(surfaceOptions(*this));
     if (!state->surface.isValid())
         return false;

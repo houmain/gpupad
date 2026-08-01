@@ -47,6 +47,7 @@ struct Session : ScopeItem
     using ShaderCompilerSetting = ItemEnums2::ShaderCompilerSetting;
 
     Renderer renderer{ Renderer::OpenGL };
+    QString apiVersion;
     ShaderLanguage shaderLanguage{ ShaderLanguage::GLSL };
     ShaderCompiler shaderCompiler{ ShaderCompiler::Driver };
     QVariantMap shaderCompilerSettings;
@@ -329,6 +330,12 @@ QVariant getShaderCompilerSetting(const Session &session,
     Session::ShaderCompilerSetting setting);
 void setShaderCompilerSetting(Session &session,
     Session::ShaderCompilerSetting setting, QVariant value);
+
+inline QString getShaderCompilerString(const Session &session,
+    Session::ShaderCompilerSetting setting)
+{
+    return getShaderCompilerSetting(session, setting).toString();
+}
 
 inline bool getShaderCompilerBool(const Session &session,
     Session::ShaderCompilerSetting setting)

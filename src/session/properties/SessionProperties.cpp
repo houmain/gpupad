@@ -139,6 +139,12 @@ SessionProperties::SessionProperties(PropertiesEditor *propertiesEditor)
     mUi->setupUi(this);
 
     fillComboBox<Session::Renderer>(mUi->renderer, true);
+
+    for (auto i = 1; i <= 4; ++i) {
+        auto version = QString("1.%1").arg(i);
+        mUi->apiVersion->addItem(version, version);
+    }
+
     fillComboBox<Session::ShaderLanguage>(mUi->shaderLanguage);
     removeComboBoxItem(mUi->shaderLanguage, "None");
     // TODO: implement Slang
@@ -159,16 +165,15 @@ SessionProperties::SessionProperties(PropertiesEditor *propertiesEditor)
     mShaderCompilerSettingsMapper->addMapping(mUi->vulkanRulesRelaxed,
         Session::ShaderCompilerSetting::vulkanRulesRelaxed);
 
-    mUi->spirvVersion->addItem("1.0", 10);
-    mUi->spirvVersion->addItem("1.1", 11);
-    mUi->spirvVersion->addItem("1.2", 12);
-    mUi->spirvVersion->addItem("1.3", 13);
-    mUi->spirvVersion->addItem("1.4", 14);
-    mUi->spirvVersion->addItem("1.5", 15);
-    mUi->spirvVersion->addItem("1.6", 16);
+    for (auto i = 0; i <= 6; ++i) {
+        auto version = QString("1.%1").arg(i);
+        mUi->spirvVersion->addItem(version, version);
+    }
 
     connect(mUi->renderer, &DataComboBox::currentDataChanged, this,
         &SessionProperties::updateShaderCompiler);
+    connect(mUi->apiVersion, &DataComboBox::currentDataChanged, this,
+        &SessionProperties::updateAdapters);
     connect(mUi->adapter, &DataComboBox::currentDataChanged, this,
         &SessionProperties::selectAdapter);
     connect(mUi->shaderLanguage, &DataComboBox::currentDataChanged, this,
@@ -189,6 +194,7 @@ void SessionProperties::addMappings(QDataWidgetMapper &mapper)
 {
     mapper.addMapping(mUi->name, SessionModel::Name);
     mapper.addMapping(mUi->renderer, SessionModel::SessionRenderer);
+    mapper.addMapping(mUi->apiVersion, SessionModel::SessionApiVersion);
     mapper.addMapping(mUi->shaderLanguage, SessionModel::SessionShaderLanguage);
     mapper.addMapping(mUi->shaderCompiler, SessionModel::SessionShaderCompiler);
     mapper.addMapping(mUi->shaderPreamble, SessionModel::SessionShaderPreamble);
@@ -228,52 +234,30 @@ void SessionProperties::updateAdapters()
 #endif
         break;
     }
+    if (mAdapters.isEmpty())
+        mAdapters.push_back(AdapterIdentity{ "Default" });
 
-    const auto signalBlocker = QSignalBlocker(mUi->adapter);
-    mUi->adapter->clear();
+    {
+        const auto signalBlocker = QSignalBlocker(mUi->adapter);
+        mUi->adapter->clear();
+        for (auto i = 0; i < mAdapters.size(); ++i)
+            mUi->adapter->addItem(getAdapterName(mAdapters[i], i), i);
 
-    if (mAdapters.isEmpty()) {
-        mUi->adapter->addItem("Default", -1);
-        mUi->adapter->setEnabled(false);
-        if (Singletons::selectedAdapter() != AdapterIdentity{})
-            Singletons::selectAdapter({});
-        return;
+        for (auto i = 0; i < mAdapters.size(); ++i)
+            if (isSameAdapter(mAdapters[i], Singletons::selectedAdapter())) {
+                mUi->adapter->setCurrentIndex(i);
+                break;
+            }
     }
-
-    for (auto i = 0; i < mAdapters.size(); ++i)
-        mUi->adapter->addItem(getAdapterName(mAdapters[i], i), i);
-
-    auto selectedAdapterIndex = -1;
-    for (auto i = 0; i < mAdapters.size(); ++i)
-        if (isSameAdapter(mAdapters[i], Singletons::selectedAdapter())) {
-            selectedAdapterIndex = i;
-            break;
-        }
-
-    if (selectedAdapterIndex < 0)
-        selectedAdapterIndex = 0;
-
-    mUi->adapter->setCurrentIndex(selectedAdapterIndex);
-    mUi->adapter->setEnabled(mAdapters.size() > 1);
-
-    if (Singletons::selectedAdapter() != mAdapters[selectedAdapterIndex])
-        Singletons::selectAdapter(mAdapters[selectedAdapterIndex]);
+    selectAdapter(mUi->adapter->currentData());
 }
 
 void SessionProperties::selectAdapter(QVariant data)
 {
-    auto ok = false;
-    const auto adapterIndex = data.toInt(&ok);
-    if (!ok)
-        return;
-
-    if (adapterIndex < 0) {
-        Singletons::selectAdapter({});
-        return;
-    }
-
+    const auto apiVersion = mUi->apiVersion->currentData().toString();
+    const auto adapterIndex = data.toInt();
     if (adapterIndex < mAdapters.size())
-        Singletons::selectAdapter(mAdapters[adapterIndex]);
+        Singletons::selectAdapter(mAdapters[adapterIndex], apiVersion);
 }
 
 void SessionProperties::updateShaderCompiler()
@@ -356,6 +340,11 @@ void SessionProperties::updateWidgets()
     const auto hasShaderCompiler =
         (shaderCompiler == Session::ShaderCompiler::glslang);
 
+    setFormVisibility(mUi->formLayout, mUi->labelApiVersion, mUi->apiVersion,
+        (renderer == Session::Renderer::Vulkan));
+    setFormVisibility(mUi->formLayout, mUi->labelAdapter, mUi->adapter, true);
+    setFormVisibility(mUi->formLayout, mUi->labelShaderLanguage,
+        mUi->shaderLanguage, true);
     setFormVisibility(mUi->formLayout, mUi->labelShaderCompiler,
         mUi->shaderCompiler, (language != Session::ShaderLanguage::Slang));
 

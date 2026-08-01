@@ -2,9 +2,6 @@
 
 #include <QObject>
 #include "session/ItemEnums.h"
-#include "AdapterIdentity.h"
-
-class QThread;
 
 class Device : public QObject
 {
@@ -17,7 +14,7 @@ public:
 
     Type type() const { return mType; }
 
-    virtual bool initialize(const AdapterIdentity &adapter) = 0;
+    virtual bool initialize() = 0;
 
 private:
     const Type mType;

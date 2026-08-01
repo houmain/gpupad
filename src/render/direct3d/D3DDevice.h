@@ -15,16 +15,17 @@ struct ID3D12Device;
 class D3DDevice final : public Device
 {
 public:
-    D3DDevice();
+    explicit D3DDevice(const AdapterIdentity &adapterIdentity);
     ~D3DDevice() override;
 
-    bool initialize(const AdapterIdentity &adapterIdentity) override;
+    bool initialize() override;
 
     ID3D12Device &device();
     ID3D12CommandQueue &queue();
     RenderTargetHelper &renderTargetHelper();
 
 private:
+    AdapterIdentity mAdapterIdentity;
     ComPtr<IDXGIFactory4> mDxgiFactory;
     IDXGIAdapter *mAdapter{};
     ComPtr<ID3D12Device> mDevice;
