@@ -94,12 +94,10 @@ bool GLShader::specialize(GLContext &gl, const Spirv &spirv)
     if (mShaderObject)
         return true;
 
-    if (spirv.empty())
-        return false;
-
     void (*glSpecializeShader)(GLuint, const GLchar *, GLuint, const GLuint *,
         const GLuint *);
-    glSpecializeShader = gl.getProcAddress<decltype(glSpecializeShader)>("glSpecializeShader");
+    glSpecializeShader =
+        gl.getProcAddress<decltype(glSpecializeShader)>("glSpecializeShader");
     if (!glSpecializeShader) {
         mMessages.insert(mItemId, MessageType::OpenGLVersionNotAvailable,
             "4.6");
@@ -113,6 +111,12 @@ bool GLShader::specialize(GLContext &gl, const Spirv &spirv)
     // strip reflection info first, which contains problematic HLSL sematics
     // https://github.com/KhronosGroup/SPIRV-Tools/issues/2019
     const auto stripped = ShaderCompiler::stripReflection(spirv);
+
+    auto errorMessage = QString();
+    if (!ShaderCompiler::validateSpirv(mSession, stripped, errorMessage)) {
+        mMessages.insert(mItemId, MessageType::ShaderError, errorMessage);
+        return false;
+    }
 
     const auto shaderObject = static_cast<GLuint>(shader);
     gl.glShaderBinary(1, &shaderObject, GL_SHADER_BINARY_FORMAT_SPIR_V_ARB,

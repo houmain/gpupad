@@ -62,13 +62,15 @@ VKShader::VKShader(Shader::ShaderType type,
 
 void VKShader::create(KDGpu::Device &device, const Spirv &spirv)
 {
-    if (auto messageType = checkShaderTypeSupport(mType, device)) {
-        mMessages.insert(mItemId, *messageType);
-        return;
-    }
+    if (auto messageType = checkShaderTypeSupport(mType, device))
+        return mMessages.insert(mItemId, *messageType);
 
-    Q_ASSERT(!spirv.empty());
-    mShaderModule = device.createShaderModule(spirv);
+    auto errorMessage = QString();
+    if (ShaderCompiler::validateSpirv(mSession, spirv, errorMessage)) {
+        mShaderModule = device.createShaderModule(spirv);
+    } else {
+        mMessages.insert(mItemId, MessageType::ShaderError, errorMessage);
+    }
     mReflection = Reflection(spirv);
 }
 

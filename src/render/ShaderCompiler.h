@@ -20,7 +20,8 @@ namespace ShaderCompiler {
         ItemId itemId;
     };
 
-    Spirv compileSpirvVulkanGLSL(Shader::ShaderType shaderType, const QString &source);
+    Spirv compileSpirvVulkanGLSL(Shader::ShaderType shaderType,
+        const QString &source);
 
     std::map<Shader::ShaderType, Spirv> compileSpirv(const Session &session,
         const std::vector<Input> &inputs, ItemId programItemId,
@@ -37,6 +38,8 @@ namespace ShaderCompiler {
     QString generateHLSL(const Spirv &spirv, ItemId itemId,
         MessagePtrSet &messages);
     Spirv stripReflection(const Spirv &spirv);
+    bool validateSpirv(const Session &session, const Spirv &spirv,
+        QString &Errormessage);
 
     QString generateAST(const Session &session, Shader::ShaderType shaderType,
         const QStringList &sources, const QStringList &fileNames,

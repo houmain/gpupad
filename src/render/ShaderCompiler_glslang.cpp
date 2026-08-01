@@ -121,6 +121,27 @@ namespace ShaderCompiler {
             return static_cast<Version>((major << 16) + (minor << 8));
         }
 
+        spv_target_env getTargetEnvironment(
+            glslang::EShTargetClientVersion version)
+        {
+            using enum glslang::EShTargetClientVersion;
+            switch (version) {
+            case EShTargetOpenGL_450: return SPV_ENV_OPENGL_4_5;
+            case EShTargetVulkan_1_0: return SPV_ENV_VULKAN_1_0;
+            case EShTargetVulkan_1_1: return SPV_ENV_VULKAN_1_1;
+            case EShTargetVulkan_1_2: return SPV_ENV_VULKAN_1_2;
+            case EShTargetVulkan_1_3: return SPV_ENV_VULKAN_1_3;
+            case EShTargetVulkan_1_4: return SPV_ENV_VULKAN_1_4;
+            }
+            return {};
+        }
+
+        spv_target_env getTargetEnvironment(const Session &session)
+        {
+            return getTargetEnvironment(getClientVersion(
+                getClient(session.renderer), session.apiVersion));
+        }
+
         bool parseGLSLangErrors(const QString &log, MessagePtrSet &messages,
             ItemId itemId, const QStringList &fileNames)
         {
@@ -388,7 +409,6 @@ namespace ShaderCompiler {
             glslang::GlslangToSpv(
                 *program.getIntermediate(getStage(shaderType)), spirv,
                 &spvOptions);
-            Q_ASSERT(!spirv.empty());
             stages.emplace(shaderType, std::move(spirv));
         }
         return stages;
@@ -515,6 +535,31 @@ namespace ShaderCompiler {
         return result;
     }
 
+    bool validateSpirv(const Session &session, const Spirv &spirv,
+        QString &errorMessage)
+    {
+        if (spirv.empty()) {
+            errorMessage = "SPIR-V is empty";
+            return false;
+        }
+
+        const auto targetEnvironment = getTargetEnvironment(session);
+        auto diagnostics = QStringList();
+        auto tools = spvtools::SpirvTools(targetEnvironment);
+        tools.SetMessageConsumer([&](spv_message_level_t, const char *,
+                                     const spv_position_t &position,
+                                     const char *message) {
+            diagnostics.append(QStringLiteral("word %1: %2")
+                    .arg(static_cast<qulonglong>(position.index))
+                    .arg(QString::fromUtf8(message)));
+        });
+
+        if (!tools.IsValid() || !tools.Validate(spirv.data(), spirv.size())) {
+            errorMessage = diagnostics.join('\n');
+            return false;
+        }
+        return true;
+    }
 } // namespace ShaderCompiler
 
 #else // !defined(GLSLANG_ENABLED)
@@ -563,6 +608,12 @@ namespace ShaderCompiler {
     Spirv stripReflection(const Spirv &spirv)
     {
         return {};
+    }
+
+    bool validateSpirv(const Session &session, const Spirv &spirv,
+        QString &errorMessage)
+    {
+        return false;
     }
 } // namespace ShaderCompiler
 
