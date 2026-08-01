@@ -127,6 +127,7 @@ void SynchronizeLogic::setCurrentEditorSourceType(SourceType sourceType)
 
 bool SynchronizeLogic::initializeRenderSession()
 {
+    Q_ASSERT(onMainThread());
     if (mRenderSession)
         return true;
 
@@ -137,16 +138,14 @@ bool SynchronizeLogic::initializeRenderSession()
     mRenderSession = RenderSessionBase::create(sessionRenderer);
     if (!mRenderSession)
         return false;
+    mProcessSource = std::make_unique<ProcessSource>(sessionRenderer);
 
     connect(mRenderSession.get(), &RenderTask::preparing, this,
         &SynchronizeLogic::handlePreparingEvaluation);
     connect(mRenderSession.get(), &RenderTask::updated, this,
         &SynchronizeLogic::handleEvaluated);
-
-    mProcessSource = std::make_unique<ProcessSource>(sessionRenderer);
     connect(mProcessSource.get(), &ProcessSource::outputChanged, this,
         &SynchronizeLogic::outputChanged);
-
     return true;
 }
 
@@ -158,13 +157,16 @@ void SynchronizeLogic::finishEvaluation()
 
 void SynchronizeLogic::resetRenderSession()
 {
+    Q_ASSERT(onMainThread());
+
     interruptRunningScriptEngines();
-    mRenderSession.reset();
-    mProcessSource.reset();
     Singletons::defaultScriptEngine().resetMessages();
     Singletons::videoManager().unloadAll();
     Singletons::fileCache().unloadAll();
     Singletons::inputState().reset();
+    finishEvaluation();
+    mProcessSource.reset();
+    mRenderSession.reset();
 }
 
 void SynchronizeLogic::resetEvaluation()
@@ -591,10 +593,11 @@ void SynchronizeLogic::processSource()
         || !Singletons::editorManager().getSourceEditor(mCurrentEditorFileName))
         return;
 
+    Singletons::fileCache().updateFromEditors();
+
     if (!initializeRenderSession())
         return;
 
-    Singletons::fileCache().updateFromEditors();
     mProcessSource->setFileName(mCurrentEditorFileName);
     mProcessSource->setSourceType(mCurrentEditorSourceType);
     mProcessSource->setValidateSource(mValidateSource);

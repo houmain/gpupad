@@ -37,6 +37,8 @@ void Singletons::selectAdapter(const AdapterIdentity &adapter,
         && sInstance->mSelectedApiVersion == apiVersion)
         return;
 
+    if (auto renderer = sessionRenderer())
+        renderer->finish();
     sInstance->mSynchronizeLogic->resetRenderSession();
     sInstance->mGLRenderer.reset();
     sInstance->mVKRenderer.reset();

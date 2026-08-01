@@ -35,6 +35,7 @@ private:
     QString processString();
     QByteArray processBinary();
 
+    Session mSession;
     std::unique_ptr<ShaderBase> mShader;
 #if defined(OPENGL_ENABLED)
     std::unique_ptr<GLProgram> mGLProgram;

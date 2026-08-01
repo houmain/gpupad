@@ -256,8 +256,10 @@ void SessionProperties::selectAdapter(QVariant data)
 {
     const auto apiVersion = mUi->apiVersion->currentData().toString();
     const auto adapterIndex = data.toInt();
-    if (adapterIndex < mAdapters.size())
-        Singletons::selectAdapter(mAdapters[adapterIndex], apiVersion);
+    if (adapterIndex < mAdapters.size()) {
+        const auto adapter = mAdapters[adapterIndex];
+        Singletons::selectAdapter(adapter, apiVersion);
+    }
 }
 
 void SessionProperties::updateShaderCompiler()

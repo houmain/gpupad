@@ -78,8 +78,11 @@ namespace {
 } // namespace
 
 ProcessSource::ProcessSource(RendererPtr renderer, QObject *parent)
-    : RenderTask(std::move(renderer), parent)
+    : RenderTask(renderer, parent)
 {
+    mSession = Singletons::sessionModel().sessionItem();
+    Q_ASSERT(mSession.renderer == renderer->type());
+    mSession.renderer = renderer->type();
 }
 
 ProcessSource::~ProcessSource()
@@ -121,11 +124,10 @@ void ProcessSource::prepare(bool itemsChanged, EvaluationType)
 
 void ProcessSource::prepareShader(Shader::ShaderType shaderType)
 {
-    auto session = Singletons::sessionModel().sessionItem();
-    session.shaderLanguage = getShaderLanguage(mSourceType);
+    mSession.shaderLanguage = getShaderLanguage(mSourceType);
 
     const auto linkingProgram = [&]() {
-        if (session.renderer != Session::Renderer::OpenGL)
+        if (mSession.renderer != Session::Renderer::OpenGL)
             return false;
         return ((mValidateSource && mProcessType.isEmpty())
             || mProcessType == "programBinary" || mProcessType == "json");
@@ -140,26 +142,26 @@ void ProcessSource::prepareShader(Shader::ShaderType shaderType)
 
     // define state of hidden session properties
     const auto hasShaderCompiler =
-        (session.shaderCompiler != Session::ShaderCompiler::Driver
-            || session.renderer == Session::Renderer::Vulkan);
+        (mSession.shaderCompiler != Session::ShaderCompiler::Driver
+            || mSession.renderer == Session::Renderer::Vulkan);
     if (!hasShaderCompiler) {
-        setShaderCompilerSetting(session,
+        setShaderCompilerSetting(mSession,
             Session::ShaderCompilerSetting::autoMapBindings, true);
-        setShaderCompilerSetting(session,
+        setShaderCompilerSetting(mSession,
             Session::ShaderCompilerSetting::autoMapLocations, true);
     }
 
-    switch (session.renderer) {
+    switch (mSession.renderer) {
     default:
 #if defined(VULKAN_ENABLED)
     case Session::Renderer::Vulkan:
-        mShader = std::make_unique<VKShader>(shaderType, shaders, session);
+        mShader = std::make_unique<VKShader>(shaderType, shaders, mSession);
         break;
 #endif
 
 #if defined(D3D_ENABLED)
     case Session::Renderer::Direct3D:
-        mShader = std::make_unique<D3DShader>(shaderType, shaders, session);
+        mShader = std::make_unique<D3DShader>(shaderType, shaders, mSession);
         break;
 #endif
 
@@ -169,9 +171,9 @@ void ProcessSource::prepareShader(Shader::ShaderType shaderType)
             auto program = Program{};
             for (auto shader : shaders)
                 program.items.append(const_cast<Shader *>(shader));
-            mGLProgram = std::make_unique<GLProgram>(program, session);
+            mGLProgram = std::make_unique<GLProgram>(program, mSession);
         } else {
-            mShader = std::make_unique<GLShader>(shaderType, shaders, session);
+            mShader = std::make_unique<GLShader>(shaderType, shaders, mSession);
         }
         break;
     }

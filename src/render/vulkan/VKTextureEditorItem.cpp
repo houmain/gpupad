@@ -405,7 +405,7 @@ bool VKTextureEditorItem::copySharedTexture(ShareHandle shareHandle,
 
 bool VKTextureEditorItem::copyVKTexture(VKContext &context, VKTexture &source)
 {
-    // check if texture handle is still valid for currently selected adapter 
+    // check if texture handle is still valid for currently selected adapter
     const auto &rm = *context.device.graphicsApi()->resourceManager();
     if (!rm.getTexture(source.texture()))
         return false;
