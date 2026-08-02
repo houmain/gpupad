@@ -1201,9 +1201,6 @@ bool TextureData::loadQImage(QImage image, bool flipVertically)
     image = std::move(image).convertToFormat(
         getNextNativeImageFormat(image.format()));
 
-    if (flipVertically)
-        image = flipImage(std::move(image));
-
     if (!create(TT::Target2D, getTextureFormat(image.format()), image.width(),
             image.height(), 1, 1))
         return false;
@@ -1211,8 +1208,17 @@ bool TextureData::loadQImage(QImage image, bool flipVertically)
     if (static_cast<int>(image.sizeInBytes()) != getImageSize(0))
         return false;
 
-    std::memcpy(getWriteonlyData(0, 0, 0), image.constBits(),
-        static_cast<size_t>(getImageSize(0)));
+    const auto stride = getLevelStride(0);
+    auto *dest = getWriteonlyData(0, 0, 0);
+    if (flipVertically) {
+        for (auto y = 0; y < image.height(); ++y) {
+            std::memcpy(dest + y * stride,
+                image.constScanLine(image.height() - y - 1), stride);
+        }
+    } else {
+        std::memcpy(dest, image.constBits(),
+            static_cast<size_t>(getImageSize(0)));
+    }
 
     mFlippedVertically = flipVertically;
     return true;
