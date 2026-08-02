@@ -43,7 +43,8 @@ void GLTextureEditorBackground::paintGpu(const QSizeF &size,
 
     mProgram->bind();
     mProgram->setUniformValue("uSize", params.width, params.height);
-    mProgram->setUniformValue("uOffset", params.offsetX, params.offsetY);
+    mProgram->setUniformValue("uOffset", params.offsetX, 
+        (mWindow.height() - params.height) - params.offsetY);
     setColor("uColor0", params.color0);
     setColor("uColor1", params.color1);
     setColor("uLineColor", params.lineColor);
