@@ -12,9 +12,6 @@ public:
         Name = 0,
         Custom,
         FileName,
-        BinaryData,
-        TextureData,
-        SourceData,
 
         SessionRenderer,
         SessionApiVersion,

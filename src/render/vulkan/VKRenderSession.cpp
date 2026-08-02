@@ -130,9 +130,10 @@ void VKRenderSession::render()
 
 void VKRenderSession::finish()
 {
+    if (!mCommandQueue)
+        return;
     auto deviceLock = vkDevice().lock();
-    if (mCommandQueue)
-        finishCommandQueue(*mCommandQueue);
+    finishCommandQueue(*mCommandQueue);
 }
 
 void VKRenderSession::release()

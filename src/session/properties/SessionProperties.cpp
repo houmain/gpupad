@@ -235,7 +235,7 @@ void SessionProperties::updateAdapters()
         break;
     }
     if (mAdapters.isEmpty())
-        mAdapters.push_back(AdapterIdentity{ "Default" });
+        mAdapters.push_back(AdapterIdentity{ "None" });
 
     {
         const auto signalBlocker = QSignalBlocker(mUi->adapter);

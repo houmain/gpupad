@@ -159,6 +159,8 @@ struct VKWindow::State
 QList<AdapterIdentity> VKWindow::getAdapterIdentities()
 {
     auto &instance = VKDevice::instance();
+    if (!instance.isValid())
+        return {};
     auto result = QList<AdapterIdentity>();
     for (const auto adapter : instance.adapters()) {
         const auto &properties = adapter->properties();

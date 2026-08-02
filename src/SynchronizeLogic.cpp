@@ -220,12 +220,7 @@ void SynchronizeLogic::handleFileChanged(const QString &fileName)
 {
     mModel.forEachFileItem([&](const FileItem &item) {
         if (item.fileName == fileName) {
-            const auto column = (item.type == Item::Type::Buffer
-                    ? SessionModel::ColumnType::BinaryData
-                    : item.type == Item::Type::Texture
-                    ? SessionModel::ColumnType::TextureData
-                    : SessionModel::ColumnType::SourceData);
-            const auto index = mModel.getIndex(&item, column);
+            const auto index = mModel.getIndex(&item);
             Q_EMIT mModel.dataChanged(index, index);
         }
     });

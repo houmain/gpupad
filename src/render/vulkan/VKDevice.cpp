@@ -26,7 +26,7 @@ namespace {
     {
         auto major = 0;
         auto minor = 0;
-        auto [[maybe_unused]] result =
+        [[maybe_unused]] auto result =
             std::sscanf(qPrintable(string), "%d.%d", &major, &minor);
         return { major, minor };
     }

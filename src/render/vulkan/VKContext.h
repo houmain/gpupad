@@ -3,9 +3,9 @@
 #include <vector>
 #include <memory>
 
-// added because of memset in bind_group_description.h
+// added because of vk_mem_alloc.h warnings
 #if defined(__GNUC__)
-#  pragma GCC diagnostic ignored "-Wclass-memaccess"
+#  pragma GCC diagnostic ignored "-Wnullability-completeness"
 #endif
 
 // still missing declaration in KDGpu/texture_view.h?

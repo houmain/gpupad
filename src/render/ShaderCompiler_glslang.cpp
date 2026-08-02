@@ -37,7 +37,7 @@ namespace ShaderCompiler {
         {
             auto major = 0;
             auto minor = 0;
-            auto [[maybe_unused]] result =
+            [[maybe_unused]] auto result =
                 std::sscanf(qPrintable(string), "%d.%d", &major, &minor);
             return { major, minor };
         }
@@ -132,6 +132,7 @@ namespace ShaderCompiler {
             case EShTargetVulkan_1_2: return SPV_ENV_VULKAN_1_2;
             case EShTargetVulkan_1_3: return SPV_ENV_VULKAN_1_3;
             case EShTargetVulkan_1_4: return SPV_ENV_VULKAN_1_4;
+            case EShTargetClientVersionCount: break;
             }
             return {};
         }
@@ -528,8 +529,7 @@ namespace ShaderCompiler {
     Spirv stripReflection(const Spirv &spirv)
     {
         auto optimizer = spvtools::Optimizer(SPV_ENV_OPENGL_4_5);
-        optimizer.RegisterPass(
-            std::move(spvtools::CreateStripNonSemanticInfoPass()));
+        optimizer.RegisterPass(spvtools::CreateStripNonSemanticInfoPass());
         auto result = Spirv();
         optimizer.Run(spirv.data(), spirv.size(), &result);
         return result;
