@@ -3,18 +3,25 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Version 4.2.0] - 2026-07-30
+## [Version 4.2.0] - 2026-08-02
 
 ### Added
 
 - Added KTX2 support.
 - Using DirectXTex for loading/saving DDS.
+- Added Vulkan API version selection to session properties.
 - Added preview in editor button to file browser.
 - Added color range selection slider to texture editor info panel.
+- Validating SPIR-V before creating module.
+
+### Changed
+
+- No longer reordering properties in JSON serialization.
 
 ### Fixed
 
 - Fixed texture upload stride.
+- Fixed races when switching adapter.
 - Fixed crash when buffer binding has no buffer set.
 - Improved dragging files from file browser to session.
 - Fixed flickering when zooming in texture editor.

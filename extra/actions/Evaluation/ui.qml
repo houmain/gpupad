@@ -64,16 +64,6 @@ ThemedScrollView {
       Label {
         text: "Time Delta: " + Math.round(app.timeDelta * 10000) / 10000
       }
-      
-      Label {
-          text: "UI Refresh Rate: " + frameAnimation.fps.toFixed(0)
-      }
-
-      FrameAnimation {
-          id: frameAnimation
-          property real fps: smoothFrameTime > 0 ? (1.0 / smoothFrameTime) : 0
-          running: true
-      }
 
       Button {
         text: "Steady"
