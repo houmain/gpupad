@@ -119,7 +119,7 @@ protected:
 
     void addMessage(MessagePtr message) { mMessages += message; }
     void addUsedItems(const QSet<ItemId> &itemIds) { mUsedItems += itemIds; }
-    bool updatingSharedTextures() const;
+    bool updatingTimerQueries() const;
     size_t timeQueryCount() const { return mTimeQueryCallIds.size(); }
     void obtainTimeQueryResults();
 

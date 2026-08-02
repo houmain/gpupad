@@ -62,6 +62,7 @@ Q_SIGNALS:
 
 private:
     void triggerEvaluation(EvaluationType type, int delayMs = 0);
+    void triggerAutomaticEvaluation();
     bool initializeRenderSession();
     void handleItemRenamed(const QModelIndex &index, const QString &prevName);
     void handleItemModified(const QModelIndex &index);

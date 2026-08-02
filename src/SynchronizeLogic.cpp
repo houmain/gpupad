@@ -79,11 +79,10 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
         &SynchronizeLogic::handleEditorFileRenamed);
     connect(&Singletons::editorManager(), &EditorManager::viewportSizeChanged,
         this, &SynchronizeLogic::handleViewportSizeChanged);
-
     connect(&Singletons::inputState(), &InputState::frameIndexChanged, this,
-        &SynchronizeLogic::invalidateRenderSession);
+        &SynchronizeLogic::triggerAutomaticEvaluation);
     connect(&Singletons::inputState(), &InputState::timeChanged, this,
-        &SynchronizeLogic::invalidateRenderSession);
+        &SynchronizeLogic::triggerAutomaticEvaluation);
     connect(&Singletons::inputState(), &InputState::mouseChanged, this,
         &SynchronizeLogic::handleMouseStateChanged);
     connect(&Singletons::inputState(), &InputState::keysChanged, this,
@@ -221,7 +220,12 @@ void SynchronizeLogic::handleFileChanged(const QString &fileName)
 {
     mModel.forEachFileItem([&](const FileItem &item) {
         if (item.fileName == fileName) {
-            auto index = mModel.getIndex(&item);
+            const auto column = (item.type == Item::Type::Buffer
+                    ? SessionModel::ColumnType::BinaryData
+                    : item.type == Item::Type::Texture
+                    ? SessionModel::ColumnType::TextureData
+                    : SessionModel::ColumnType::SourceData);
+            const auto index = mModel.getIndex(&item, column);
             Q_EMIT mModel.dataChanged(index, index);
         }
     });
@@ -245,8 +249,7 @@ void SynchronizeLogic::handleItemsModified(const QModelIndex &topLeft,
 void SynchronizeLogic::invalidateRenderSession()
 {
     mRenderSessionInvalidated = true;
-    if (mEvaluationMode == EvaluationMode::Automatic)
-        triggerEvaluation(EvaluationType::Automatic, 10);
+    triggerAutomaticEvaluation();
 }
 
 void SynchronizeLogic::handleItemRenamed(const QModelIndex &index,
@@ -429,6 +432,12 @@ void SynchronizeLogic::triggerEvaluation(EvaluationType type, int delayMs)
     } else {
         mPendingEvaluationType = std::max(mPendingEvaluationType, type);
     }
+}
+
+void SynchronizeLogic::triggerAutomaticEvaluation()
+{
+    if (mEvaluationMode == EvaluationMode::Automatic)
+        triggerEvaluation(EvaluationType::Automatic, 10);
 }
 
 void SynchronizeLogic::handleEvaluateTimout()
