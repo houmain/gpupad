@@ -140,9 +140,9 @@ public Q_SLOTS:
         const QVideoFrame &frame)
     {
 #if defined(VIDEOPLAYER_ENABLED)
-        auto texture = TextureData();
-        if (texture.loadQImage(frame.toImage(), flipVertically))
-            Q_EMIT textureLoaded(fileName, flipVertically, std::move(texture));
+        mPendingVideoFrames[{ fileName, flipVertically }] = frame;
+        QMetaObject::invokeMethod(
+            this, [this]() { convertNextVideoFrame(); }, Qt::QueuedConnection);
 #endif
     }
 
@@ -152,6 +152,29 @@ Q_SIGNALS:
         TextureData texture);
     void binaryLoaded(const QString &fileName, QByteArray binary);
     void loadingFailed(const QString &fileName);
+
+private:
+#if defined(VIDEOPLAYER_ENABLED)
+    void convertNextVideoFrame()
+    {
+        if (mPendingVideoFrames.isEmpty())
+            return;
+
+        const auto it = mPendingVideoFrames.begin();
+        const auto [fileName, flipVertically] = it.key();
+        const auto frame = it.value();
+        mPendingVideoFrames.erase(it);
+
+        auto texture = TextureData();
+        if (texture.loadQImage(frame.toImage(), flipVertically))
+            Q_EMIT textureLoaded(fileName, flipVertically, std::move(texture));
+
+        QMetaObject::invokeMethod(
+            this, [this]() { convertNextVideoFrame(); }, Qt::QueuedConnection);
+    }
+
+    QMap<QPair<QString, bool>, QVideoFrame> mPendingVideoFrames;
+#endif // defined(VIDEOPLAYER_ENABLED)
 };
 
 FileCache::FileCache(QObject *parent) : QObject(parent)
@@ -302,8 +325,8 @@ bool FileCache::getTexture(const QString &fileName, bool flipVertically,
 
     if (FileDialog::isVideoFileName(fileName)
         || FileDialog::isSequenceFileName(fileName)) {
-        texture->create(Texture::Target::Target2D,
-            Texture::Format::RGB8_UNorm, 1, 1, 1, 1);
+        texture->create(Texture::Target::Target2D, Texture::Format::RGB8_UNorm,
+            1, 1, 1, 1);
         texture->setFlippedVertically(flipVertically);
         texture->clear();
         Q_EMIT videoPlayerRequested(fileName, flipVertically);
