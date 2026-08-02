@@ -22,6 +22,7 @@ Q_SIGNALS:
     void typeSelectionChanged(QString type);
 
 private:
+    void setTabSize(int tabSize);
     void handleThemeChanged(const Theme &theme);
     void exportText();
 

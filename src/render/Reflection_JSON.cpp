@@ -1,8 +1,6 @@
 
 #include "Reflection.h"
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
+#include "JSON.h"
 
 namespace {
     struct TypeDesc
@@ -214,24 +212,24 @@ namespace {
         return QStringLiteral("%1%2%3").arg(prefix).arg(kind).arg(dims);
     }
 
-    QJsonObject getJson(const SpvReflectBlockVariable &variable,
+    JsonObject getJson(const SpvReflectBlockVariable &variable,
         bool isUniform = false);
 
-    QJsonArray getMembersJson(const SpvReflectBlockVariable &variable,
+    JsonArray getMembersJson(const SpvReflectBlockVariable &variable,
         bool isUniform = false)
     {
-        auto json = QJsonArray();
+        auto json = JsonArray();
         for (auto i = 0u; i < variable.member_count; ++i) {
             const auto &member = variable.members[i];
             auto jsonMember = getJson(member, isUniform);
-            json.append(jsonMember);
+            json.push_back(jsonMember);
         }
         return json;
     }
 
-    QJsonObject getJson(const SpvReflectTypeDescription &type)
+    JsonObject getJson(const SpvReflectTypeDescription &type)
     {
-        auto json = QJsonObject();
+        auto json = JsonObject();
         if (type.struct_member_name)
             json["name"] = type.struct_member_name;
         if (type.type_flags
@@ -247,27 +245,27 @@ namespace {
         }
 
         if (type.type_flags & SPV_REFLECT_TYPE_FLAG_ARRAY) {
-            auto array = QJsonArray();
+            auto array = JsonArray();
             for (auto i = 0u; i < type.traits.array.dims_count; ++i)
-                array.append(static_cast<int>(type.traits.array.dims[i]));
+                array.push_back(static_cast<int>(type.traits.array.dims[i]));
             json["array"] = array;
             json["arrayStride"] = static_cast<int>(type.traits.array.stride);
         }
         return json;
     }
 
-    QJsonArray getMembersJson(const SpvReflectTypeDescription &type)
+    JsonArray getMembersJson(const SpvReflectTypeDescription &type)
     {
-        auto json = QJsonArray();
+        auto json = JsonArray();
         for (auto i = 0u; i < type.member_count; ++i) {
             const auto &member = type.members[i];
             auto jsonMember = getJson(member);
-            json.append(jsonMember);
+            json.push_back(jsonMember);
         }
         return json;
     }
 
-    QJsonObject getJson(const SpvReflectBlockVariable &variable, bool isUniform)
+    JsonObject getJson(const SpvReflectBlockVariable &variable, bool isUniform)
     {
         auto json = getJson(*variable.type_description);
         json["name"] = variable.name;
@@ -283,9 +281,9 @@ namespace {
         return json;
     }
 
-    QJsonObject getJson(const SpvReflectInterfaceVariable &variable)
+    JsonObject getJson(const SpvReflectInterfaceVariable &variable)
     {
-        auto json = QJsonObject();
+        auto json = JsonObject();
         const auto &type = *variable.type_description;
         json["name"] = variable.name;
         json["type"] = getTypeName(type);
@@ -300,7 +298,7 @@ namespace {
         return json;
     }
 
-    QJsonObject getJson(const SpvReflectDescriptorBinding &binding)
+    JsonObject getJson(const SpvReflectDescriptorBinding &binding)
     {
         auto json = binding.block.type_description
             ? getJson(binding.block)
@@ -315,30 +313,30 @@ namespace {
         return json;
     }
 
-    QJsonObject getJson(const SpvReflectShaderModule &module)
+    JsonObject getJson(const SpvReflectShaderModule &module)
     {
-        auto json = QJsonObject();
+        auto json = JsonObject();
         json["stage"] = getStageName(module.shader_stage);
 
-        auto jsonInputs = QJsonArray();
+        auto jsonInputs = JsonArray();
         for (auto i = 0u; i < module.input_variable_count; ++i)
             if (const auto input = module.input_variables[i])
                 if (!isBuiltIn(*input))
-                    jsonInputs.append(getJson(*input));
-        if (!jsonInputs.isEmpty())
+                    jsonInputs.push_back(getJson(*input));
+        if (!jsonInputs.empty())
             json["inputs"] = jsonInputs;
 
-        auto jsonOutputs = QJsonArray();
+        auto jsonOutputs = JsonArray();
         for (auto i = 0u; i < module.output_variable_count; ++i)
             if (const auto output = module.output_variables[i])
                 if (!isBuiltIn(*output))
-                    jsonOutputs.append(getJson(*output));
-        if (!jsonOutputs.isEmpty())
+                    jsonOutputs.push_back(getJson(*output));
+        if (!jsonOutputs.empty())
             json["outputs"] = jsonOutputs;
 
-        auto jsonUniforms = QJsonArray();
-        auto jsonBuffers = QJsonArray();
-        auto jsonAccelerationStructures = QJsonArray();
+        auto jsonUniforms = JsonArray();
+        auto jsonBuffers = JsonArray();
+        auto jsonAccelerationStructures = JsonArray();
         for (auto i = 0u; i < module.descriptor_binding_count; ++i)
             if (const auto &binding = module.descriptor_bindings[i]; true) {
                 switch (binding.descriptor_type) {
@@ -370,11 +368,11 @@ namespace {
                 default: Q_ASSERT(!"not handled descriptor type");
                 }
             }
-        if (!jsonUniforms.isEmpty())
+        if (!jsonUniforms.empty())
             json["uniforms"] = jsonUniforms;
-        if (!jsonBuffers.isEmpty())
+        if (!jsonBuffers.empty())
             json["buffers"] = jsonBuffers;
-        if (!jsonAccelerationStructures.isEmpty())
+        if (!jsonAccelerationStructures.empty())
             json["accelerationStructures"] = jsonAccelerationStructures;
         return json;
     }
@@ -385,5 +383,5 @@ QString getJsonString(const Reflection &reflection)
 {
     if (!reflection)
         return {};
-    return QJsonDocument(getJson(*reflection)).toJson();
+    return serializeJson(getJson(*reflection));
 }

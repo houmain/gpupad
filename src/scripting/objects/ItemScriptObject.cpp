@@ -2,7 +2,6 @@
 #include "AppScriptObject.h"
 #include "session/SessionModel.h"
 #include <QJSEngine>
-#include <QJsonObject>
 
 ItemScriptObject::ItemScriptObject(AppScriptObject *appScriptObject,
     ItemId itemId)
@@ -21,11 +20,14 @@ bool ItemScriptObject::updateProperties()
         return false;
 
     auto properties = QVariantHash();
-    const auto json = session.getJson({ index }, true).first().toObject();
-    for (auto it = json.begin(); it != json.end(); ++it) {
-        Q_ASSERT(it.key() != "items");
-        properties[it.key()] = it.value().toVariant();
-    }
+    if (auto json = session.getJson({ index }, true); !json.empty())
+        if (const auto object = jsonObject(json.front()))
+            for (const auto &[key, value] : *object) {
+                const auto property = QString::fromUtf8(key.data(),
+                    static_cast<qsizetype>(key.size()));
+                Q_ASSERT(property != "items");
+                properties[property] = variantFromJson(value);
+            }
 
     properties["items"] = QVariant::fromValue(
         mAppScriptObject.makeItemArray(session.getItem(index).items));
@@ -37,14 +39,14 @@ bool ItemScriptObject::updateProperties()
 QVariant ItemScriptObject::updateValue(const QString &key,
     const QVariant &input)
 {
-    auto update = QJsonObject();
-    update.insert("id", mItemId);
+    auto update = JsonObject();
+    update["id"] = mItemId;
     if (input.canConvert<QJSValue>()) {
         const auto jsValue = mAppScriptObject.jsEngine().toScriptValue(input);
         const auto json = jsValue.toVariant(QJSValue::ConvertJSObjects);
-        update.insert(key, json.toJsonValue());
+        update[jsonKey(key)] = jsonFromVariant(json);
     } else {
-        update.insert(key, input.toJsonValue());
+        update[jsonKey(key)] = jsonFromVariant(input);
     }
 
     mAppScriptObject.withSessionModel(

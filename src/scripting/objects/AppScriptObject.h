@@ -1,5 +1,6 @@
 #pragma once
 
+#include "JSON.h"
 #include "MessageList.h"
 #include "Evaluation.h"
 #include "FileDialog.h"
@@ -155,7 +156,7 @@ private:
     // session
     bool isSessionAvailable() const;
     SessionModel &threadSessionModel();
-    QJsonObject toJsonObject(const QJSValue &object);
+    JsonObject toJsonObject(const QJSValue &object);
     void withSessionModel(UpdateSessionFunction &&updateFunction);
     QModelIndex getOriginIndex(QJSValue originIdent);
     const Item *findSessionItem(QJSValue itemIdent,

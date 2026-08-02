@@ -37,6 +37,7 @@ set(SOURCES
   libs/Qt-RangeSlider/RangeSlider.cpp
   src/FileDialog.cpp
   src/FileCache.cpp
+  src/JSON.cpp
   src/MessageList.cpp
   src/Settings.cpp
   src/Singletons.cpp
@@ -372,6 +373,28 @@ endif()
 # Qt6 -------------------------
 find_package(Qt6 REQUIRED COMPONENTS Widgets Qml)
 target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Widgets Qt6::Qml)
+
+# nlohmann JSON -------------------------
+set(GPUPAD_NLOHMANN_JSON_GIT_REPOSITORY
+    "https://github.com/nlohmann/json.git" CACHE STRING
+    "nlohmann_json Git repository")
+set(GPUPAD_NLOHMANN_JSON_GIT_REVISION
+    "55f93686c01528224f448c19128836e7df245f72" CACHE STRING
+    "nlohmann_json Git revision")
+FetchSparse(nlohmann_json
+    FIND_PACKAGE ${GPUPAD_NLOHMANN_JSON_FIND_PACKAGE}
+    GIT_REPOSITORY ${GPUPAD_NLOHMANN_JSON_GIT_REPOSITORY}
+    GIT_TAG ${GPUPAD_NLOHMANN_JSON_GIT_REVISION}
+    CACHE_OPTIONS
+        JSON_BuildTests:BOOL=OFF
+    SPARSE_EXCLUDE
+        .github
+        benchmarks
+        docs
+        tests
+        tools
+)
+target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)
 
 # KTX -------------------------
 set(PROJECT_VERSION "0.0.0")

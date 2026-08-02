@@ -1,9 +1,8 @@
 #pragma once
 
+#include "JSON.h"
 #include "SessionModelCore.h"
 #include <QIcon>
-#include <QJsonArray>
-#include <QJsonObject>
 #include <QSet>
 
 class SessionModel final : public SessionModelCore
@@ -40,9 +39,9 @@ public:
     void setActiveItemColor(QColor color);
 
     void clear();
-    QJsonArray getJson(const QModelIndexList &indexes,
+    JsonArray getJson(const QModelIndexList &indexes,
         bool serializingScriptItem = false) const;
-    void dropJson(const QJsonArray &json, int row, const QModelIndex &parent,
+    void dropJson(const JsonArray &json, int row, const QModelIndex &parent,
         bool updateExisting);
     bool save(const QString &fileName);
     bool load(const QString &fileName);
@@ -118,13 +117,13 @@ Q_SIGNALS:
 
 private:
     bool shouldSerializeColumn(const Item &item, ColumnType column) const;
-    QJsonArray generateJsonFromUrls(QModelIndex target,
+    JsonArray generateJsonFromUrls(QModelIndex target,
         const QList<QUrl> &urls) const;
-    QJsonArray parseDraggedJson(QModelIndex &target,
+    JsonArray parseDraggedJson(QModelIndex &target,
         const QMimeData *data) const;
-    void serialize(QJsonObject &object, const Item &item,
-        bool relativeFilePaths, bool serializingScriptItem = false) const;
-    void deserialize(const QJsonObject &object, const QModelIndex &parent,
+    void serialize(JsonObject &object, const Item &item, bool relativeFilePaths,
+        bool serializingScriptItem = false) const;
+    void deserialize(const JsonObject &object, const QModelIndex &parent,
         int row, bool updateExisting);
 
     template <typename F>
@@ -164,7 +163,7 @@ private:
     QColor mActiveItemsColor;
     mutable QModelIndexList mDraggedIndices;
     mutable QString mDraggedText;
-    mutable QJsonArray mDraggedJson;
+    mutable JsonArray mDraggedJson;
     mutable QMap<ItemId, QString> mDraggedUntitledFileNames;
 };
 

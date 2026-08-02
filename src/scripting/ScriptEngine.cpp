@@ -4,6 +4,7 @@
 #include "objects/ConsoleScriptObject.h"
 #include "objects/AppScriptObject.h"
 #include "session/SessionModel.h"
+#include <QRegularExpression>
 #include <QTextStream>
 #include <QThread>
 #include <QMutex>

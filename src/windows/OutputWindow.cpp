@@ -64,6 +64,8 @@ OutputWindow::OutputWindow(QWidget *parent)
 
     connect(&Singletons::settings(), &Settings::fontChanged, mTextEdit,
         &QPlainTextEdit::setFont);
+    connect(&Singletons::settings(), &Settings::tabSizeChanged, this,
+        &OutputWindow::setTabSize);
     connect(&Singletons::settings(), &Settings::windowThemeChanged, this,
         &OutputWindow::handleThemeChanged);
     connect(mExportButton, &QToolButton::clicked, this,
@@ -80,6 +82,12 @@ void OutputWindow::handleThemeChanged(const Theme &theme)
     auto palette = theme.palette();
     palette.setColor(QPalette::Base, palette.alternateBase().color());
     mTextEdit->setPalette(palette);
+}
+
+void OutputWindow::setTabSize(int tabSize)
+{
+    mTextEdit->setTabStopDistance(mTextEdit->fontMetrics().horizontalAdvance(
+        QString(tabSize, QChar::Space)));
 }
 
 void OutputWindow::setText(QString text)

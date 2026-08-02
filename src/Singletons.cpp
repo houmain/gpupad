@@ -140,7 +140,6 @@ RendererPtr Singletons::d3dRenderer()
 
 Settings &Singletons::settings()
 {
-    Q_ASSERT(onMainThread());
     return *sInstance->mSettings;
 }
 

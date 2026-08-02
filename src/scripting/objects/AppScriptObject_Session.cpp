@@ -357,21 +357,22 @@ QJSValue AppScriptObject::insertItem(QJSValue object)
     return insertItem(QJSValue::UndefinedValue, object);
 }
 
-QJsonObject AppScriptObject::toJsonObject(const QJSValue &value)
+JsonObject AppScriptObject::toJsonObject(const QJSValue &value)
 {
     if (auto object = value.toQObject()) {
         // create JSON object from ItemObject
         if (const auto item = qobject_cast<const QQmlPropertyMap *>(object)) {
-            auto jsonObject = QJsonObject();
+            auto jsonObject = JsonObject();
             const auto keys = item->keys();
             for (const auto &key : keys)
-                jsonObject.insert(key,
-                    QJsonValue::fromVariant(item->value(key)));
+                jsonObject[jsonKey(key)] = jsonFromVariant(item->value(key));
             return jsonObject;
         }
         return {};
     }
-    return value.toVariant().toJsonObject();
+    const auto json = jsonFromVariant(value.toVariant());
+    const auto object = jsonObject(json);
+    return (object ? *object : JsonObject());
 }
 
 QJSValue AppScriptObject::insertItemAt(const Item *parent, int row,
@@ -385,7 +386,7 @@ QJSValue AppScriptObject::insertItemAt(const Item *parent, int row,
     }
 
     const auto update = toJsonObject(object);
-    if (update.isEmpty()) {
+    if (update.empty()) {
         throwJsError("Invalid object");
         return QJSValue::UndefinedValue;
     }
@@ -441,15 +442,15 @@ QJSValue AppScriptObject::insertAfterItem(QJSValue siblingIdent,
 void AppScriptObject::replaceItems(QJSValue parentIdent, QJSValue array)
 {
     const auto count = array.property("length").toInt();
-    auto update = QJsonArray();
+    auto update = JsonArray();
     for (auto i = 0; i < count; ++i)
         if (!array.property(i).isUndefined()) {
             const auto object = toJsonObject(array.property(i));
-            if (object.isEmpty()) {
+            if (object.empty()) {
                 throwJsError("Invalid object");
                 return;
             }
-            update.append(object);
+            update.push_back(object);
         }
 
     const auto parent = findSessionItem(parentIdent);
@@ -470,8 +471,8 @@ void AppScriptObject::replaceItems(QJSValue parentIdent, QJSValue array)
 
     // remove Items contained in new list
     for (auto i = 0; i < update.size(); ++i) {
-        const auto object = update[i].toObject();
-        if (const auto id = object["id"].toInt()) {
+        const auto &object = update[i].get_ref<const JsonObject &>();
+        if (const auto id = jsonValue<int>(object, "id")) {
             const auto it = std::find_if(unusedItems.begin(), unusedItems.end(),
                 [&](const ItemInfo &item) { return item.id == id; });
             if (it != unusedItems.end())
@@ -481,9 +482,10 @@ void AppScriptObject::replaceItems(QJSValue parentIdent, QJSValue array)
 
     // reuse Items with same type and no sub items
     for (auto i = 0; i < update.size(); ++i) {
-        auto object = update[i].toObject();
-        if (!object["id"].toInt()) {
-            const auto type = getItemTypeByName(object["type"].toString());
+        auto object = update[i].get_ref<const JsonObject &>();
+        if (!jsonValue<int>(object, "id")) {
+            const auto type =
+                getItemTypeByName(jsonValue<QString>(object, "type"));
             const auto it = std::find_if(unusedItems.begin(), unusedItems.end(),
                 [&](const ItemInfo &item) {
                     return item.type == type && !item.hasItems;

@@ -7,6 +7,7 @@
 #include "D3DTexture.h"
 #include "D3DAccelerationStructure.h"
 #include <QScopeGuard>
+#include <QRegularExpression>
 
 namespace {
     D3D12_FILTER getFilter(Binding::Filter min, Binding::Filter mag,

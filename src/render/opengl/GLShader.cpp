@@ -1,5 +1,6 @@
 #include "GLShader.h"
 #include "GLDevice.h"
+#include <QRegularExpression>
 
 namespace {
     void parseLog(const QString &log, MessagePtrSet &messages, ItemId itemId,

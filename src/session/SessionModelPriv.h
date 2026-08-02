@@ -1,8 +1,7 @@
 #pragma once
 
+#include "JSON.h"
 #include "Item.h"
-#include <QJsonArray>
-#include <QJsonObject>
 #include <QMetaEnum>
 
 #define ADD_EACH_COLUMN_TYPE()                                                \
@@ -216,45 +215,45 @@ void forEachItem(const Item &item, const F &function)
 
 template <typename T>
 auto toJsonValue(const T &v)
-    -> std::enable_if_t<!std::is_enum<T>::value, QJsonValue>
+    -> std::enable_if_t<!std::is_enum<T>::value, JsonValue>
 {
     return v;
 }
 
 template <typename T>
 auto toJsonValue(const T &v)
-    -> std::enable_if_t<std::is_enum<T>::value, QJsonValue>
+    -> std::enable_if_t<std::is_enum<T>::value, JsonValue>
 {
     return QMetaEnum::fromType<T>().valueToKey(v);
 }
 
 template <>
-inline QJsonValue toJsonValue(const QStringList &v)
+inline JsonValue toJsonValue(const QStringList &v)
 {
-    auto array = QJsonArray();
+    auto array = JsonArray();
     for (const auto &value : v)
-        array.append(value);
+        array.push_back(value);
     return array;
 }
 
 template <>
-inline QJsonValue toJsonValue(const unsigned int &v)
+inline JsonValue toJsonValue(const unsigned int &v)
 {
     return static_cast<int>(v);
 }
 
 template <>
-inline QJsonValue toJsonValue(const QColor &v)
+inline JsonValue toJsonValue(const QColor &v)
 {
     return v.name(QColor::HexArgb);
 }
 
 template <>
-inline QJsonValue toJsonValue(const QVariantMap &v)
+inline JsonValue toJsonValue(const QVariantMap &v)
 {
-    auto object = QJsonObject();
+    auto object = JsonObject();
     for (auto it = v.constBegin(); it != v.constEnd(); ++it)
-        object[it.key()] = it.value().toString();
+        object[jsonKey(it.key())] = it.value().toString();
 
     return object;
 }

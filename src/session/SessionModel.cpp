@@ -4,9 +4,9 @@
 #include <QAction>
 #include <QDir>
 #include <QIcon>
-#include <QJsonDocument>
 #include <QMimeData>
 #include <QSaveFile>
+#include <QUrl>
 
 SessionModel::SessionModel(QObject *parent) : SessionModelCore(parent)
 {
@@ -198,17 +198,17 @@ Qt::DropActions SessionModel::supportedDropActions() const
     return Qt::CopyAction | Qt::MoveAction;
 }
 
-QJsonArray SessionModel::generateJsonFromUrls(QModelIndex target,
+JsonArray SessionModel::generateJsonFromUrls(QModelIndex target,
     const QList<QUrl> &urls) const
 {
-    auto itemArray = QJsonArray();
+    auto itemArray = JsonArray();
     const auto addFileItem = [&](auto &item, const QUrl &url) {
         item.name = url.fileName();
         item.fileName = toNativeCanonicalFilePath(url.toLocalFile());
 
-        auto object = QJsonObject();
+        auto object = JsonObject();
         serialize(object, item, true);
-        itemArray.append(object);
+        itemArray.push_back(object);
     };
 
     for (const auto &url : urls) {
@@ -247,7 +247,7 @@ QJsonArray SessionModel::generateJsonFromUrls(QModelIndex target,
     return itemArray;
 }
 
-QJsonArray SessionModel::parseDraggedJson(QModelIndex &target,
+JsonArray SessionModel::parseDraggedJson(QModelIndex &target,
     const QMimeData *data) const
 {
     if (data->hasUrls()) {
@@ -261,10 +261,10 @@ QJsonArray SessionModel::parseDraggedJson(QModelIndex &target,
     if (text != mDraggedText) {
         mDraggedText = text;
 
-        auto document = QJsonDocument::fromJson(text.toUtf8());
-        mDraggedJson = document.isNull() ? QJsonArray()
-            : document.isArray()         ? document.array()
-                                         : QJsonArray({ document.object() });
+        const auto document = parseJson(text);
+        mDraggedJson = document.is_array() ? *jsonArray(document)
+            : document.is_object()         ? JsonArray{ *jsonObject(document) }
+                                           : JsonArray();
     }
     return mDraggedJson;
 }
@@ -280,10 +280,12 @@ bool SessionModel::canDropMimeData(const QMimeData *data, Qt::DropAction action,
     if (jsonArray.empty())
         return false;
 
-    for (const QJsonValue &value : jsonArray) {
+    for (const JsonValue &value : jsonArray) {
+        const auto object = jsonObject(value);
+        if (!object)
+            return false;
         auto ok = false;
-        const auto object = value.toObject();
-        const auto typeName = object["type"].toString();
+        const auto typeName = jsonValue<QString>(*object, "type");
         const auto type = getTypeByName(typeName, ok);
         if (!ok || !canContainType(target, type))
             return false;
@@ -346,11 +348,10 @@ QMimeData *SessionModel::mimeData(const QModelIndexList &indexes) const
     mDraggedUntitledFileNames.clear();
 
     auto jsonArray = getJson(indexes);
-    auto document = (jsonArray.size() != 1
-            ? QJsonDocument(jsonArray)
-            : QJsonDocument(jsonArray.first().toObject()));
+    auto document =
+        (jsonArray.size() != 1 ? JsonValue(jsonArray) : jsonArray.front());
     auto data = new QMimeData();
-    data->setText(document.toJson());
+    data->setText(serializeJson(document));
     return data;
 }
 
@@ -398,31 +399,32 @@ void SessionModel::clear()
     SessionModelCore::clear();
 }
 
-QJsonArray SessionModel::getJson(const QModelIndexList &indexes,
+JsonArray SessionModel::getJson(const QModelIndexList &indexes,
     bool serializingScriptItem) const
 {
-    auto itemArray = QJsonArray();
+    auto itemArray = JsonArray();
     if (indexes.size() == 1 && !indexes.first().isValid()) {
         for (const Item *item : getItem({}).items) {
-            auto object = QJsonObject();
+            auto object = JsonObject();
             serialize(object, *item, true, serializingScriptItem);
-            itemArray.append(object);
+            itemArray.push_back(object);
         }
     } else {
         for (const QModelIndex &index : indexes) {
-            auto object = QJsonObject();
+            auto object = JsonObject();
             serialize(object, getItem(index), false, serializingScriptItem);
-            itemArray.append(object);
+            itemArray.push_back(object);
         }
     }
     return itemArray;
 }
 
-void SessionModel::dropJson(const QJsonArray &jsonArray, int row,
+void SessionModel::dropJson(const JsonArray &jsonArray, int row,
     const QModelIndex &parent, bool updateExisting)
 {
-    for (const QJsonValue &value : jsonArray)
-        deserialize(value.toObject(), parent, row++, updateExisting);
+    for (const JsonValue &value : jsonArray)
+        if (const auto object = jsonObject(value))
+            deserialize(*object, parent, row++, updateExisting);
 
     // fixup item references
     const auto keys = mDroppedIdsReplaced.keys();
@@ -434,10 +436,11 @@ void SessionModel::dropJson(const QJsonArray &jsonArray, int row,
     mDroppedReferences.clear();
 }
 
-void SessionModel::deserialize(const QJsonObject &object,
+void SessionModel::deserialize(const JsonObject &object,
     const QModelIndex &parent, int row, bool updateExisting)
 {
-    auto id = (object.contains("id") ? object["id"].toInt() : getNextItemId());
+    auto id =
+        (object.count("id") ? jsonValue<int>(object, "id") : getNextItemId());
 
     auto existingItem = findItem(id);
     auto untitledFileName = QString();
@@ -455,14 +458,14 @@ void SessionModel::deserialize(const QJsonObject &object,
 
     auto ok = true;
     const auto type = (existingItem ? existingItem->type
-            : object.contains("type")
-            ? getTypeByName(object["type"].toString(), ok)
+            : object.count("type")
+            ? getTypeByName(jsonValue<QString>(object, "type"), ok)
             : getDefaultChildType(parent));
     if (!ok)
         return;
 
     const auto isDynamicGroup =
-        (type == Item::Type::Group && object["dynamic"].toBool());
+        (type == Item::Type::Group && jsonValue<bool>(object, "dynamic"));
 
     const auto index = (existingItem
             ? getIndex(existingItem)
@@ -488,9 +491,10 @@ void SessionModel::deserialize(const QJsonObject &object,
             setField(index, column, value);
         };
 
-    const auto keys = object.keys();
-    for (const QString &property : keys) {
-        auto value = object[property].toVariant();
+    for (const auto &[key, json] : object) {
+        const auto property =
+            QString::fromUtf8(key.data(), static_cast<qsizetype>(key.size()));
+        auto value = variantFromJson(json);
 
         if (property == "name") {
             setField(index, Name, value);
@@ -520,13 +524,13 @@ void SessionModel::deserialize(const QJsonObject &object,
         }
     }
 
-    auto items = object["items"].toArray();
-    if (!items.isEmpty())
-        for (const QJsonValue &value : std::as_const(items))
-            deserialize(value.toObject(), index, -1, updateExisting);
+    if (const auto items = jsonArray(object, "items"))
+        for (const JsonValue &value : *items)
+            if (const auto child = jsonObject(value))
+                deserialize(*child, index, -1, updateExisting);
 }
 
-void SessionModel::serialize(QJsonObject &object, const Item &item,
+void SessionModel::serialize(JsonObject &object, const Item &item,
     bool relativeFilePaths, bool serializingScriptItem) const
 {
     object["type"] = getTypeName(item.type);
@@ -545,7 +549,7 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
                         ? toForwardSlashRelativeFilePath(fileName)
                         : fileName);
                 if (QFileInfo(fileName).fileName() == item.name)
-                    object.remove("name");
+                    object.erase("name");
             }
         }
     }
@@ -561,11 +565,11 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
 
     if (!serializingScriptItem && !item.items.empty()
         && !isDynamicGroup(item)) {
-        auto items = QJsonArray();
+        auto items = JsonArray();
         for (const Item *item : item.items) {
-            auto sub = QJsonObject();
+            auto sub = JsonObject();
             serialize(sub, *item, relativeFilePaths);
-            items.append(sub);
+            items.push_back(sub);
         }
         object["items"] = items;
     }
