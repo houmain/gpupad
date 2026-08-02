@@ -222,6 +222,7 @@ QString getMessageText(const Message &message)
             .arg(message.text);
     case RayTracingNotAvailable:  return tr("Raytracing not available");
     case MeshShadersNotAvailable: return tr("Mesh Shaders not available");
+    case ShaderCompilerNotAvailable: return tr("Shader compiler not available");
     }
     return message.text;
 #undef tr

@@ -1,4 +1,3 @@
-#if defined(GLSLANG_ENABLED)
 
 #  include "ShaderCompiler.h"
 #  include "ShaderBase.h"
@@ -9,6 +8,7 @@
 #  include <sstream>
 #  include <set>
 
+#if defined(GLSLANG_ENABLED)
 #  define ENABLE_HLSL
 #  include <glslang/Public/ResourceLimits.h>
 #  include <glslang/Public/ShaderLang.h>
@@ -569,6 +569,7 @@ namespace ShaderCompiler {
         const Session &session, const std::vector<Input> &inputs,
         ItemId programItemId, MessagePtrSet &messages)
     {
+        messages.insert(programItemId, MessageType::ShaderCompilerNotAvailable);
         return {};
     }
 
@@ -577,6 +578,7 @@ namespace ShaderCompiler {
         const QString &entryPoint, ItemId itemId, const QString &includePaths,
         MessagePtrSet &messages)
     {
+        messages.insert(itemId, MessageType::ShaderCompilerNotAvailable);
         return {};
     }
 
@@ -588,12 +590,14 @@ namespace ShaderCompiler {
     QString generateGLSL(const Spirv &spirv, ItemId itemId,
         MessagePtrSet &messages)
     {
+        messages.insert(itemId, MessageType::ShaderCompilerNotAvailable);
         return {};
     }
 
     QString generateHLSL(const Spirv &spirv, ItemId itemId,
         MessagePtrSet &messages)
     {
+        messages.insert(itemId, MessageType::ShaderCompilerNotAvailable);
         return {};
     }
 
@@ -602,18 +606,23 @@ namespace ShaderCompiler {
         const QString &entryPoint, ItemId itemId, const QString &includePaths,
         MessagePtrSet &messages)
     {
+        messages.insert(itemId, MessageType::ShaderCompilerNotAvailable);
         return {};
     }
 
     Spirv stripReflection(const Spirv &spirv)
     {
-        return {};
+        return spirv;
     }
 
     bool validateSpirv(const Session &session, const Spirv &spirv,
         QString &errorMessage)
     {
-        return false;
+        if (spirv.empty()) {
+            errorMessage = "SPIR-V is empty";
+            return false;
+        }
+        return true;
     }
 } // namespace ShaderCompiler
 

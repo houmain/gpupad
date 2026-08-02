@@ -78,6 +78,7 @@ enum class MessageType {
     RayTracingNotAvailable,
     MeshShadersNotAvailable,
     SpirvCrossError,
+    ShaderCompilerNotAvailable,
 };
 
 struct Message

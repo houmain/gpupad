@@ -29,7 +29,7 @@ namespace ShaderCompiler {
             }
             return stageSpirv;
 #else
-            messages.insert(programItemId, MessageType::UnsupportedShaderType);
+            messages.insert(programItemId, MessageType::ShaderCompilerNotAvailable);
             return {};
 #endif
         }

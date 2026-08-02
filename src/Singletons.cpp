@@ -219,6 +219,8 @@ Singletons::Singletons(QMainWindow *window)
 Singletons::~Singletons()
 {
     Q_ASSERT(onMainThread());
+#if defined(VULKAN_ENABLED)
     VKDevice::resetSharedDevice();
+#endif
     sInstance = nullptr;
 }

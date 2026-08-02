@@ -268,7 +268,8 @@ namespace {
     JsonObject getJson(const SpvReflectBlockVariable &variable, bool isUniform)
     {
         auto json = getJson(*variable.type_description);
-        json["name"] = variable.name;
+        if (variable.name)
+            json["name"] = variable.name;
         if (!isUniform) {
             json["offset"] = static_cast<int>(variable.offset);
             json["size"] = static_cast<int>(variable.size);
@@ -285,7 +286,8 @@ namespace {
     {
         auto json = JsonObject();
         const auto &type = *variable.type_description;
-        json["name"] = variable.name;
+        if (variable.name)
+            json["name"] = variable.name;
         json["type"] = getTypeName(type);
         if (type.type_flags & SPV_REFLECT_TYPE_FLAG_STRUCT)
             json["members"] = getMembersJson(type);
