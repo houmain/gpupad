@@ -329,7 +329,7 @@ bool FileCache::getTexture(const QString &fileName, bool flipVertically,
             1, 1, 1, 1);
         texture->setFlippedVertically(flipVertically);
         texture->clear();
-        Q_EMIT videoPlayerRequested(fileName, flipVertically);
+        Q_EMIT mediaRequested(fileName, flipVertically);
     } else if (!loadTexture(fileName, flipVertically, texture)) {
         return false;
     }

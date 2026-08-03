@@ -42,8 +42,7 @@ public:
 
 Q_SIGNALS:
     void fileChanged(const QString &fileName);
-    void videoPlayerRequested(const QString &fileName,
-        bool flipVertically) const;
+    void mediaRequested(const QString &fileName, bool flipVertically) const;
     void reloadSource(const QString &fileName, QPrivateSignal);
     void reloadTexture(const QString &fileName, bool flipVertically,
         QPrivateSignal);
@@ -80,6 +79,6 @@ private:
     QSet<QString> mEditorSaveAdvertised;
     QTimer mUpdateFileSystemWatchesTimer;
     QFileSystemWatcher mFileSystemWatcher;
-    int mFileSystemWatcherUpdate{};
+    int mFileSystemWatcherUpdate{ };
     QThread mBackgroundLoaderThread;
 };

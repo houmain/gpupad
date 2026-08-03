@@ -55,7 +55,7 @@ void Singletons::selectAdapter(const AdapterIdentity &adapter,
 const AdapterIdentity &Singletons::selectedAdapter()
 {
     Q_ASSERT(onMainThread());
-    static const auto sEmpty = AdapterIdentity{};
+    static const auto sEmpty = AdapterIdentity{ };
     return (sInstance->mSelectedAdapter ? *sInstance->mSelectedAdapter
                                         : sEmpty);
 }
@@ -209,9 +209,8 @@ Singletons::Singletons(QMainWindow *window)
     sInstance = this;
     mSynchronizeLogic = std::make_unique<SynchronizeLogic>();
 
-    QObject::connect(&fileCache(), &FileCache::videoPlayerRequested,
-        &mediaManager(), &MediaManager::handleVideoPlayerRequested,
-        Qt::QueuedConnection);
+    QObject::connect(&fileCache(), &FileCache::mediaRequested, &mediaManager(),
+        &MediaManager::handleMediaRequested, Qt::QueuedConnection);
 
     mDefaultScriptEngine = ScriptEngine::make(QDir::current());
 }

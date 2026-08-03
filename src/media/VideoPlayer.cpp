@@ -1,8 +1,6 @@
 #if defined(MULTIMEDIA_ENABLED)
 
 #  include "VideoPlayer.h"
-#  include "FileCache.h"
-#  include "Singletons.h"
 #  include "TextureData.h"
 #  include "FileDialog.h"
 
@@ -23,19 +21,18 @@ namespace {
 } // namespace
 
 VideoPlayer::VideoPlayer(QString fileName, bool flipVertically, QObject *parent)
-    : QVideoSink(parent)
-    , mFileName(fileName)
-    , mFlipVertically(flipVertically)
+    : VideoStream(fileName, flipVertically, parent)
 {
     mPlayer = new QMediaPlayer(this);
+    mSink = new QVideoSink();
     connect(mPlayer, &QMediaPlayer::mediaStatusChanged, this,
         &VideoPlayer::handleStatusChanged);
-    connect(this, &QVideoSink::videoFrameChanged, this,
+    connect(mSink, &QVideoSink::videoFrameChanged, this,
         &VideoPlayer::handleFrameDecoded);
     mPlayer->setSource(QUrl::fromLocalFile(fileName));
     mPlayer->setLoops(QMediaPlayer::Once);
     mPlayer->setPlaybackRate(DecodeSpeed);
-    mPlayer->setVideoSink(this);
+    mPlayer->setVideoSink(mSink);
 }
 
 void VideoPlayer::handleStatusChanged(QMediaPlayer::MediaStatus status)
@@ -54,16 +51,14 @@ void VideoPlayer::handleStatusChanged(QMediaPlayer::MediaStatus status)
 
 void VideoPlayer::handleFrameDecoded(QVideoFrame frame)
 {
-    if (!mWidth) {
-        mWidth = frame.width();
-        mHeight = frame.height();
+    if (!width()) {
         mDuration = std::chrono::milliseconds(mPlayer->duration());
 
         // play image sequences at 60 fps
-        if (FileDialog::isSequenceFileName(mFileName))
+        if (FileDialog::isSequenceFileName(fileName()))
             mPlaybackSpeed = 2.4;
 
-        Q_EMIT loadingFinished();
+        finishedLoading(frame.width(), frame.height());
     }
 
     if (!frame.isValid()) {
@@ -101,8 +96,8 @@ void VideoPlayer::seek(std::chrono::milliseconds time)
 
     // present frame at target time
     const auto bestFrame = [&]() -> QVideoFrame {
-        auto bestFrame = QVideoFrame{};
-        auto best = int64_t{};
+        auto bestFrame = QVideoFrame{ };
+        auto best = int64_t{ };
         for (auto i = 0u; i < mFrameQueue.size(); ++i) {
             const auto &frame = mFrameQueue[i];
             const auto current = std::abs(
@@ -141,15 +136,6 @@ void VideoPlayer::seek(std::chrono::milliseconds time)
     // start decoding
     if (mFrameQueue.size() < MaxQueuedFrames)
         mPlayer->play();
-}
-
-void VideoPlayer::presentFrame(const QVideoFrame &frame)
-{
-    if (mCurrentFrame == frame)
-        return;
-    mCurrentFrame = frame;
-    Singletons::fileCache().updateVideoTexture(mFileName, mFlipVertically,
-        frame);
 }
 
 #endif // MULTIMEDIA_ENABLED

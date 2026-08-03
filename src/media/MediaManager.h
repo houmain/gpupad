@@ -2,9 +2,10 @@
 
 #include <QObject>
 #include <map>
+#include <chrono>
 #include <memory>
 
-class VideoPlayer;
+class VideoStream;
 
 class MediaManager : public QObject
 {
@@ -17,13 +18,11 @@ public:
 
     void unloadAll();
     void seek(double time);
-
-    void handleVideoPlayerRequested(const QString &fileName,
-        bool flipVertically);
+    void handleMediaRequested(const QString &fileName, bool flipVertically);
 
 private:
-    void handleVideoPlayerLoaded();
+    void handleMediaLoaded();
 
-    std::map<QString, std::unique_ptr<VideoPlayer>> mVideoPlayers;
-    std::chrono::milliseconds mTargetTime{};
+    std::map<QString, std::unique_ptr<VideoStream>> mVideoStreams;
+    std::chrono::milliseconds mTargetTime{ };
 };

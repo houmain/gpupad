@@ -8,32 +8,34 @@ MediaManager::MediaManager(QObject *parent) : QObject(parent) { }
 
 MediaManager::~MediaManager() = default;
 
+#if defined(MULTIMEDIA_ENABLED)
+
 void MediaManager::unloadAll()
 {
     Q_ASSERT(onMainThread());
-    for (const auto &[fileName, videoPlayer] : mVideoPlayers)
+    for (const auto &[fileName, videoPlayer] : mVideoStreams)
         Singletons::fileCache().invalidateFile(fileName);
-    mVideoPlayers.clear();
+    mVideoStreams.clear();
 }
 
-void MediaManager::handleVideoPlayerRequested(const QString &fileName,
+void MediaManager::handleMediaRequested(const QString &fileName,
     bool flipVertically)
 {
     Q_ASSERT(onMainThread());
     auto videoPlayer = new VideoPlayer(fileName, flipVertically);
     connect(videoPlayer, &VideoPlayer::loadingFinished, this,
-        &MediaManager::handleVideoPlayerLoaded);
+        &MediaManager::handleMediaLoaded);
 }
 
-void MediaManager::handleVideoPlayerLoaded()
+void MediaManager::handleMediaLoaded()
 {
     Q_ASSERT(onMainThread());
-    auto videoPlayer = qobject_cast<VideoPlayer *>(QObject::sender());
-    if (videoPlayer->width()) {
-        videoPlayer->seek(mTargetTime);
-        mVideoPlayers[videoPlayer->fileName()].reset(videoPlayer);
+    auto videoStream = qobject_cast<VideoStream *>(QObject::sender());
+    if (videoStream->width()) {
+        videoStream->seek(mTargetTime);
+        mVideoStreams[videoStream->fileName()].reset(videoStream);
     } else {
-        videoPlayer->deleteLater();
+        videoStream->deleteLater();
     }
 }
 
@@ -46,7 +48,15 @@ void MediaManager::seek(double time)
     if (mTargetTime == targetTime)
         return;
 
-    for (const auto &videoPlayer : mVideoPlayers)
-        videoPlayer.second->seek(targetTime);
+    for (const auto &[fileName, videoStream] : mVideoStreams)
+        videoStream->seek(targetTime);
     mTargetTime = targetTime;
 }
+
+#else // !defined(MULTIMEDIA_ENABLED)
+
+void MediaManager::unloadAll() { }
+void MediaManager::handleMediaRequested(const QString &, bool) { }
+void MediaManager::seek(double time) { }
+
+#endif // !defined(MULTIMEDIA_ENABLED)

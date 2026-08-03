@@ -2,69 +2,31 @@
 
 #if defined(MULTIMEDIA_ENABLED)
 
+#  include "VideoStream.h"
 #  include <QMediaPlayer>
 #  include <QVideoSink>
-#  include <QVideoFrame>
 
-class VideoPlayer final : public QVideoSink
+class VideoPlayer final : public VideoStream
 {
-    Q_OBJECT
 public:
     VideoPlayer(QString fileName, bool flipVertically,
         QObject *parent = nullptr);
 
-    const QString &fileName() const { return mFileName; }
-    int width() const { return mWidth; }
-    int height() const { return mHeight; }
-    void seek(std::chrono::milliseconds targetTime);
-
-Q_SIGNALS:
-    void loadingFinished();
+    void seek(std::chrono::milliseconds time) override;
 
 private:
     void handleStatusChanged(QMediaPlayer::MediaStatus status);
     void handleFrameDecoded(QVideoFrame frame);
-    void presentFrame(const QVideoFrame &frame);
 
-    QMediaPlayer *mPlayer{};
-    QString mFileName;
-    int mWidth{};
-    int mHeight{};
-    bool mFlipVertically{};
+    QMediaPlayer *mPlayer{ };
+    QVideoSink *mSink{ };
     double mPlaybackSpeed{ 1.0 };
     std::vector<QVideoFrame> mFrameQueue;
-    QVideoFrame mCurrentFrame;
-    std::chrono::milliseconds mTargetTime{};
-    std::chrono::microseconds mDecodeTime{};
-    std::chrono::microseconds mDuration{};
-    int mLoopCount{};
-    bool mSeeking{};
-};
-
-#else // !MULTIMEDIA_ENABLED
-
-#  include <QObject>
-
-class VideoPlayer final : public QObject
-{
-    Q_OBJECT
-public:
-    explicit VideoPlayer(QString fileName, bool flipVertically,
-        QObject *parent = nullptr)
-        : QObject(parent)
-        , mFileName(fileName)
-    {
-    }
-    const QString &fileName() const { return mFileName; }
-    int width() const { return 0; }
-    int height() const { return 0; }
-    void seek(std::chrono::milliseconds time) { }
-
-Q_SIGNALS:
-    void loadingFinished();
-
-private:
-    QString mFileName;
+    std::chrono::milliseconds mTargetTime{ };
+    std::chrono::microseconds mDecodeTime{ };
+    std::chrono::microseconds mDuration{ };
+    int mLoopCount{ };
+    bool mSeeking{ };
 };
 
 #endif // !MULTIMEDIA_ENABLED
