@@ -12,7 +12,7 @@ class EditorManager;
 class SynchronizeLogic;
 class SessionModel;
 class Renderer;
-class VideoManager;
+class MediaManager;
 class InputState;
 class CustomActions;
 class ScriptEngine;
@@ -38,7 +38,7 @@ public:
     static EditorManager &editorManager();
     static SessionModel &sessionModel();
     static SynchronizeLogic &synchronizeLogic();
-    static VideoManager &videoManager();
+    static MediaManager &mediaManager();
     static InputState &inputState();
     static CustomActions &customActions();
     static ScriptEngine &defaultScriptEngine();
@@ -57,7 +57,7 @@ private:
     std::unique_ptr<EditorManager> mEditorManager;
     std::unique_ptr<SessionModel> mSessionModel;
     std::unique_ptr<SynchronizeLogic> mSynchronizeLogic;
-    std::unique_ptr<VideoManager> mVideoManager;
+    std::unique_ptr<MediaManager> mMediaManager;
     std::unique_ptr<InputState> mInputState;
     std::unique_ptr<CustomActions> mCustomActions;
     std::shared_ptr<ScriptEngine> mDefaultScriptEngine;

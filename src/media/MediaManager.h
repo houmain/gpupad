@@ -6,14 +6,14 @@
 
 class VideoPlayer;
 
-class VideoManager : public QObject
+class MediaManager : public QObject
 {
     Q_OBJECT
 public:
-    explicit VideoManager(QObject *parent = nullptr);
-    VideoManager(const VideoManager &) = delete;
-    VideoManager &operator=(const VideoManager &) = delete;
-    ~VideoManager();
+    explicit MediaManager(QObject *parent = nullptr);
+    MediaManager(const MediaManager &) = delete;
+    MediaManager &operator=(const MediaManager &) = delete;
+    ~MediaManager();
 
     void unloadAll();
     void seek(double time);

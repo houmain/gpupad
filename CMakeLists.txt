@@ -44,8 +44,8 @@ set(SOURCES
   src/SynchronizeLogic.cpp
   src/TextureData.cpp
   src/TextureData_DDS.cpp
-  src/VideoPlayer.cpp
-  src/VideoManager.cpp
+  src/media/VideoPlayer.cpp
+  src/media/MediaManager.cpp
   src/InputState.cpp
   src/SourceType.cpp
   src/Style.cpp
@@ -618,9 +618,9 @@ endif()
 
 # QtMultimedia -------------------------
 find_package(Qt6Multimedia CONFIG)
-option(GPUPAD_ENABLE_VIDEOPLAYER "Enable Video Playback" ${Qt6Multimedia_FOUND})
-if(GPUPAD_ENABLE_VIDEOPLAYER)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE VIDEOPLAYER_ENABLED)
+option(GPUPAD_ENABLE_MULTIMEDIA "Enable Multimedia" ${Qt6Multimedia_FOUND})
+if(GPUPAD_ENABLE_MULTIMEDIA)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE MULTIMEDIA_ENABLED)
     target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Multimedia)
 endif()
 

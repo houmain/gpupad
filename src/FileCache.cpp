@@ -8,7 +8,7 @@
 #include <QTextStream>
 #include <QThread>
 
-#if defined(VIDEOPLAYER_ENABLED)
+#if defined(MULTIMEDIA_ENABLED)
 #  include <QVideoFrame>
 #endif
 
@@ -139,7 +139,7 @@ public Q_SLOTS:
     void convertVideoFrame(const QString &fileName, bool flipVertically,
         const QVideoFrame &frame)
     {
-#if defined(VIDEOPLAYER_ENABLED)
+#if defined(MULTIMEDIA_ENABLED)
         mPendingVideoFrames[{ fileName, flipVertically }] = frame;
         QMetaObject::invokeMethod(
             this, [this]() { convertNextVideoFrame(); }, Qt::QueuedConnection);
@@ -154,7 +154,7 @@ Q_SIGNALS:
     void loadingFailed(const QString &fileName);
 
 private:
-#if defined(VIDEOPLAYER_ENABLED)
+#if defined(MULTIMEDIA_ENABLED)
     void convertNextVideoFrame()
     {
         if (mPendingVideoFrames.isEmpty())
@@ -174,7 +174,7 @@ private:
     }
 
     QMap<QPair<QString, bool>, QVideoFrame> mPendingVideoFrames;
-#endif // defined(VIDEOPLAYER_ENABLED)
+#endif // defined(MULTIMEDIA_ENABLED)
 };
 
 FileCache::FileCache(QObject *parent) : QObject(parent)

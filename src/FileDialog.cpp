@@ -22,7 +22,7 @@ namespace {
 #endif
         "tga", "bmp", "jpeg", "jpg", "pbm", "pgm", "tif", "tiff", "raw" };
     const auto VideoFileExtensions = std::initializer_list<const char *>{
-#if defined(VIDEOPLAYER_ENABLED)
+#if defined(MULTIMEDIA_ENABLED)
         "mp4", "webm", "mkv", "ogg", "mpg", "wmv", "mov", "avi"
 #endif
     };

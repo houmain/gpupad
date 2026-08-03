@@ -1,14 +1,14 @@
 
-#include "VideoManager.h"
+#include "MediaManager.h"
 #include "FileCache.h"
 #include "Singletons.h"
 #include "VideoPlayer.h"
 
-VideoManager::VideoManager(QObject *parent) : QObject(parent) { }
+MediaManager::MediaManager(QObject *parent) : QObject(parent) { }
 
-VideoManager::~VideoManager() = default;
+MediaManager::~MediaManager() = default;
 
-void VideoManager::unloadAll()
+void MediaManager::unloadAll()
 {
     Q_ASSERT(onMainThread());
     for (const auto &[fileName, videoPlayer] : mVideoPlayers)
@@ -16,16 +16,16 @@ void VideoManager::unloadAll()
     mVideoPlayers.clear();
 }
 
-void VideoManager::handleVideoPlayerRequested(const QString &fileName,
+void MediaManager::handleVideoPlayerRequested(const QString &fileName,
     bool flipVertically)
 {
     Q_ASSERT(onMainThread());
     auto videoPlayer = new VideoPlayer(fileName, flipVertically);
     connect(videoPlayer, &VideoPlayer::loadingFinished, this,
-        &VideoManager::handleVideoPlayerLoaded);
+        &MediaManager::handleVideoPlayerLoaded);
 }
 
-void VideoManager::handleVideoPlayerLoaded()
+void MediaManager::handleVideoPlayerLoaded()
 {
     Q_ASSERT(onMainThread());
     auto videoPlayer = qobject_cast<VideoPlayer *>(QObject::sender());
@@ -37,7 +37,7 @@ void VideoManager::handleVideoPlayerLoaded()
     }
 }
 
-void VideoManager::seek(double time)
+void MediaManager::seek(double time)
 {
     Q_ASSERT(onMainThread());
     const auto targetTime =

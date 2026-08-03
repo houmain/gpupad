@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(VIDEOPLAYER_ENABLED)
+#if defined(MULTIMEDIA_ENABLED)
 
 #  include <QMediaPlayer>
 #  include <QVideoSink>
@@ -41,7 +41,7 @@ private:
     bool mSeeking{};
 };
 
-#else // !VIDEOPLAYER_ENABLED
+#else // !MULTIMEDIA_ENABLED
 
 #  include <QObject>
 
@@ -67,4 +67,4 @@ private:
     QString mFileName;
 };
 
-#endif // !VIDEOPLAYER_ENABLED
+#endif // !MULTIMEDIA_ENABLED

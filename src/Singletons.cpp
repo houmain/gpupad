@@ -4,7 +4,7 @@
 #include "InputState.h"
 #include "Settings.h"
 #include "SynchronizeLogic.h"
-#include "VideoManager.h"
+#include "media/MediaManager.h"
 #include "editors/EditorManager.h"
 #include "render/AdapterIdentity.h"
 #include "render/Renderer.h"
@@ -172,10 +172,10 @@ SynchronizeLogic &Singletons::synchronizeLogic()
     return *sInstance->mSynchronizeLogic;
 }
 
-VideoManager &Singletons::videoManager()
+MediaManager &Singletons::mediaManager()
 {
     Q_ASSERT(onMainThread());
-    return *sInstance->mVideoManager;
+    return *sInstance->mMediaManager;
 }
 
 InputState &Singletons::inputState()
@@ -201,7 +201,7 @@ Singletons::Singletons(QMainWindow *window)
     , mFileDialog(std::make_unique<FileDialog>(window))
     , mEditorManager(std::make_unique<EditorManager>())
     , mSessionModel(std::make_unique<SessionModel>())
-    , mVideoManager(std::make_unique<VideoManager>())
+    , mMediaManager(std::make_unique<MediaManager>())
     , mInputState(std::make_unique<InputState>())
     , mCustomActions(std::make_unique<CustomActions>())
 {
@@ -210,7 +210,7 @@ Singletons::Singletons(QMainWindow *window)
     mSynchronizeLogic = std::make_unique<SynchronizeLogic>();
 
     QObject::connect(&fileCache(), &FileCache::videoPlayerRequested,
-        &videoManager(), &VideoManager::handleVideoPlayerRequested,
+        &mediaManager(), &MediaManager::handleVideoPlayerRequested,
         Qt::QueuedConnection);
 
     mDefaultScriptEngine = ScriptEngine::make(QDir::current());

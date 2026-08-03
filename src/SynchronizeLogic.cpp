@@ -2,7 +2,7 @@
 #include "FileCache.h"
 #include "Singletons.h"
 #include "InputState.h"
-#include "VideoManager.h"
+#include "media/MediaManager.h"
 #include "editors/EditorManager.h"
 #include "editors/binary/BinaryEditor.h"
 #include "editors/texture/TextureEditor.h"
@@ -160,7 +160,7 @@ void SynchronizeLogic::resetRenderSession()
 
     interruptRunningScriptEngines();
     Singletons::defaultScriptEngine().resetMessages();
-    Singletons::videoManager().unloadAll();
+    Singletons::mediaManager().unloadAll();
     Singletons::fileCache().unloadAll();
     Singletons::inputState().reset();
     finishEvaluation();
@@ -468,7 +468,7 @@ void SynchronizeLogic::handlePreparingEvaluation(bool &itemsChanged,
     evaluationType = mEvaluationType;
 
     Singletons::inputState().update(mEvaluationType);
-    Singletons::videoManager().seek(Singletons::inputState().time());
+    Singletons::mediaManager().seek(Singletons::inputState().time());
 
     mEvaluationType = EvaluationType::Steady;
     mRenderSessionInvalidated = false;
