@@ -12,16 +12,14 @@ VideoStream::VideoStream(QString fileName, bool flipVertically, QObject *parent)
 {
 }
 
-void VideoStream::finishedLoading(int width, int height)
-{
-    mWidth = width;
-    mHeight = height;
-
-    Q_EMIT loadingFinished();
-}
-
 void VideoStream::presentFrame(const QVideoFrame &frame)
 {
+    Q_ASSERT(onMainThread());
+    if (!mWidth) {
+        mWidth = frame.width();
+        mHeight = frame.height();
+        Q_EMIT loadingFinished();
+    }
     if (mCurrentFrame == frame)
         return;
     mCurrentFrame = frame;

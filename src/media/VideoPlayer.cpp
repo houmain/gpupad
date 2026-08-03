@@ -3,6 +3,7 @@
 #  include "VideoPlayer.h"
 #  include "TextureData.h"
 #  include "FileDialog.h"
+#  include <QVideoSink>
 
 namespace {
     const auto MaxQueuedFrames = 4;
@@ -54,11 +55,9 @@ void VideoPlayer::handleFrameDecoded(QVideoFrame frame)
     if (!width()) {
         mDuration = std::chrono::milliseconds(mPlayer->duration());
 
-        // play image sequences at 60 fps
+        // speedup image sequences from 25 to 60 fps
         if (FileDialog::isSequenceFileName(fileName()))
             mPlaybackSpeed = 2.4;
-
-        finishedLoading(frame.width(), frame.height());
     }
 
     if (!frame.isValid()) {

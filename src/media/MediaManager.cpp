@@ -3,6 +3,7 @@
 #include "FileCache.h"
 #include "Singletons.h"
 #include "VideoPlayer.h"
+#include "Camera.h"
 
 MediaManager::MediaManager(QObject *parent) : QObject(parent) { }
 
@@ -31,6 +32,7 @@ void MediaManager::handleMediaLoaded()
 {
     Q_ASSERT(onMainThread());
     auto videoStream = qobject_cast<VideoStream *>(QObject::sender());
+    Singletons::fileCache().invalidateFile(videoStream->fileName());
     if (videoStream->width()) {
         videoStream->seek(mTargetTime);
         mVideoStreams[videoStream->fileName()].reset(videoStream);

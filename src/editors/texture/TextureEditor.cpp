@@ -404,12 +404,15 @@ void TextureEditor::replace(TextureData texture, bool emitFileChanged)
     if (qApp->focusWidget() == this)
         updateEditorToolBar();
 
-    whenGpuInitialized([this]() { mTextureItem->uploadImage(mTexture); });
+    whenGpuInitialized([this]() {
+        mTextureItem->uploadImage(mTexture);
+        update();
+    });
 }
 
 void TextureEditor::copy()
 {
-    auto texture = TextureData{};
+    auto texture = TextureData{ };
     if (!mTextureItem->downloadImage(&texture))
         return;
 
@@ -698,7 +701,7 @@ void TextureEditor::whenGpuInitialized(std::function<void()> &&func)
 void TextureEditor::handleGpuInitialized()
 {
     mGpuInitialized = true;
-    if (auto func = std::exchange(mOnGpuInitialized, {}))
+    if (auto func = std::exchange(mOnGpuInitialized, { }))
         func();
 }
 

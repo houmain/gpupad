@@ -4,7 +4,8 @@
 
 #  include "VideoStream.h"
 #  include <QMediaPlayer>
-#  include <QVideoSink>
+
+class QVideoSink;
 
 class VideoPlayer final : public VideoStream
 {
