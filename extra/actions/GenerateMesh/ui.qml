@@ -44,6 +44,7 @@ ThemedScrollView {
       currentIndex: 0
       Layout.preferredHeight: 25
       Layout.preferredWidth: 150
+      wheelEnabled: true
       onActivated: { script.refresh() }
     }
 
@@ -60,6 +61,7 @@ ThemedScrollView {
       from: 1
       to: 100
       editable: true
+      wheelEnabled: true
       onValueModified: { script.refresh() }
     }
     
@@ -76,6 +78,7 @@ ThemedScrollView {
       from: 1
       to: 100
       editable: true
+      wheelEnabled: true
       onValueModified: { script.refresh() }
     }
     
@@ -92,6 +95,7 @@ ThemedScrollView {
       from: 0
       to: 20
       editable: true
+      wheelEnabled: true
       onValueModified: { script.refresh() }
     }
     
@@ -108,6 +112,7 @@ ThemedScrollView {
       from: 0
       to: 100
       editable: true
+      wheelEnabled: true
       onValueModified: { script.refresh() }
     }    
 
@@ -123,6 +128,7 @@ ThemedScrollView {
       to: 1000
       decimals: 2
       editable: true
+      wheelEnabled: true
       onValueModified: { script.refresh() }
     }
     
@@ -138,6 +144,7 @@ ThemedScrollView {
       to: 1000
       decimals: 2
       editable: true
+      wheelEnabled: true
       onValueModified: { script.refresh() }
     }
     
@@ -153,6 +160,7 @@ ThemedScrollView {
       to: 1000
       decimals: 2
       editable: true
+      wheelEnabled: true
       onValueModified: { script.refresh() }
     }
     
@@ -171,6 +179,7 @@ ThemedScrollView {
       stepSize: 0.1
       decimals: 2
       editable: true
+      wheelEnabled: true
       onValueModified: { script.refresh() }
     }
 
@@ -187,6 +196,7 @@ ThemedScrollView {
       decimals: 2
       stepSize: 1.0
       editable: true
+      wheelEnabled: true
       onValueModified: { script.refresh() }
     }
     
@@ -203,6 +213,7 @@ ThemedScrollView {
       decimals: 2
       stepSize: 1.0
       editable: true
+      wheelEnabled: true
       onValueModified: { script.refresh() }
     }    
 
@@ -217,6 +228,7 @@ ThemedScrollView {
       from: 0
       to: 64
       editable: true
+      wheelEnabled: true
       onValueModified: { script.refresh() }
     }
 

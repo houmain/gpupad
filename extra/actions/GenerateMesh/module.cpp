@@ -172,6 +172,41 @@ namespace {
     }
   }
 
+  void generate_tcoords_cube(par_shapes_mesh* m) {
+    PAR_FREE(m->tcoords);
+    m->tcoords = PAR_CALLOC(float, m->npoints * 2);
+    const float face_tcoords[] = {
+      0, 0,
+      0, 1,
+      1, 1,
+      1, 1,
+      1, 0,
+      0, 0,
+    };
+    auto tcoord = m->tcoords;
+    for (auto i = 0; i < m->npoints; ++i, tcoord += 2) {
+      const auto face_tcoord = face_tcoords + (i % 6) * 2;
+      tcoord[0] = face_tcoord[0];
+      tcoord[1] = face_tcoord[1];
+    }
+  }
+
+  void unweld_tcoords(par_shapes_mesh* mesh) {
+    int npoints = mesh->ntriangles * 3;
+    if (mesh->tcoords) {
+      float* tcoords = PAR_MALLOC(float, 2 * npoints);
+      float* dst = tcoords;
+      PAR_SHAPES_T const* index = mesh->triangles;
+      for (int i = 0; i < npoints; i++) {
+        float const* src = mesh->tcoords + 2 * (*index++);
+        *dst++ = src[0];
+        *dst++ = src[1];
+      }
+      PAR_FREE(mesh->tcoords);
+      mesh->tcoords = tcoords;
+    }
+  }
+
   bool get_swap_yz(const Settings& s) {
     switch (s.type) {
     case ShapeType::hemisphere:
@@ -317,6 +352,8 @@ Geometry generate(const std::string& json) {
   case ShapeType::cube:
     m.reset(par_shapes_create_cube());
     if (m) {
+      par_shapes_unweld(m.get(), true);
+      generate_tcoords_cube(m.get());
       par_shapes_scale(m.get(), 2, 2, 2);
       par_shapes_translate(m.get(), -1, -1, -1);
     }
@@ -327,13 +364,14 @@ Geometry generate(const std::string& json) {
   }
 
   if (m) {
-    if (s.facetted)
+    if (s.facetted) {
+      unweld_tcoords(m.get());
       par_shapes_unweld(m.get(), true);
-
+    }
     if (s.facetted || !m->normals)
       par_shapes_compute_normals(m.get());
 
-    if (s.facetted || !m->tcoords)
+    if (!m->tcoords)
       generate_tcoords_sphere(m.get());
   }
   return geometry;

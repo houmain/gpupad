@@ -1058,19 +1058,19 @@ par_shapes_mesh* par_shapes_create_tetrahedron()
 par_shapes_mesh* par_shapes_create_cube()
 {
     static float verts[8 * 3] = {
-        0, 0, 0, // 0
-        0, 1, 0, // 1
-        1, 1, 0, // 2
-        1, 0, 0, // 3
-        0, 0, 1, // 4
-        0, 1, 1, // 5
-        1, 1, 1, // 6
-        1, 0, 1, // 7
+        1, 0, 0, // 0
+        1, 1, 0, // 1
+        0, 1, 0, // 2
+        0, 0, 0, // 3
+        1, 0, 1, // 4
+        1, 1, 1, // 5
+        0, 1, 1, // 6
+        0, 0, 1, // 7
     };
     static PAR_SHAPES_T quads[6 * 4] = {
         7,6,5,4, // front
         0,1,2,3, // back
-        6,7,3,2, // right
+        3,2,6,7, // right
         5,6,2,1, // top
         4,5,1,0, // left
         7,4,0,3, // bottom

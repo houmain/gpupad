@@ -28,7 +28,7 @@ const color = app.insertItem({
   name: "Color",  
   width: width,
   height: height,
-  format: "RGB8_UNorm",
+  format: "RGBA8_UNorm",
   fileName: reuseFileName,  
 })
 
