@@ -5,4 +5,5 @@ import QtQuick.Controls
 import QtQuick.Layouts 1.0
 
 ThemedScrollView 1.0 ThemedScrollView.qml
+DoubleSpinBox 1.0 DoubleSpinBox.qml
 

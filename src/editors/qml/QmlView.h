@@ -27,7 +27,7 @@ public:
     bool save() override;
     void setModified() override;
     int tabifyGroup() const override { return 3; }
-    QSize minimumSizeHint() const override { return QSize(150, 150); }
+    QSize minimumSizeHint() const override { return mMinimumSizeHint; }
 
     const QScriptEnginePtr &enginePtr() const { return mEnginePtr; }
     QString actionId() const;
@@ -45,8 +45,11 @@ private:
     MessagePtrSet mMessages;
     QSet<QString> mDependencies;
     bool mResetOnFocus{};
+    QSize mMinimumSizeHint{ 150, 150 };
 
 #if defined(QMLVIEW_ENABLED)
+    void updateMinimumSizeHint();
+
     QQuickView *mQuickView{};
     WindowWidget *mQuickWidget{};
     std::unique_ptr<QQmlNetworkAccessManagerFactory>

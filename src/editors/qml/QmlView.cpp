@@ -28,9 +28,11 @@ void QmlView::reset() { }
 #  include <QQmlAbstractUrlInterceptor>
 #  include <QQmlNetworkAccessManagerFactory>
 #  include <QQmlEngine>
+#  include <QQuickItem>
 #  include <QQuickStyle>
 #  include <QApplication>
 #  include <QQuickView>
+#  include <QtMath>
 #  include <cstring>
 
 namespace {
@@ -65,7 +67,7 @@ namespace {
     class NetworkReply : public QNetworkReply
     {
         const QByteArray mData;
-        qint64 mReadPosition{};
+        qint64 mReadPosition{ };
 
     public:
         NetworkReply(QByteArray data, QObject *parent = nullptr)
@@ -183,6 +185,7 @@ QColor QmlView::backgroundColor() const
 void QmlView::reset()
 {
     mMessages.clear();
+    updateGeometry();
 
     const auto qmlEngine = qobject_cast<QQmlEngine *>(&mEnginePtr->jsEngine());
     Q_ASSERT(qmlEngine);
@@ -193,10 +196,21 @@ void QmlView::reset()
     mQuickView->setColor(backgroundColor());
     mQuickView->setFormat(QSurfaceFormat::defaultFormat());
 
-    connect(mQuickView, &QQuickView::statusChanged,
-        [this](QQuickView::Status status) {
+    connect(mQuickView, &QQuickView::statusChanged, this,
+        [this, quickView = mQuickView](QQuickView::Status status) {
+            if (quickView != mQuickView)
+                return;
+            if (status == QQuickView::Ready) {
+                if (auto rootItem = quickView->rootObject()) {
+                    connect(rootItem, &QQuickItem::implicitWidthChanged, this,
+                        &QmlView::updateMinimumSizeHint, Qt::UniqueConnection);
+                    connect(rootItem, &QQuickItem::implicitHeightChanged, this,
+                        &QmlView::updateMinimumSizeHint, Qt::UniqueConnection);
+                    updateMinimumSizeHint();
+                }
+            }
             if (status == QQuickView::Error) {
-                const auto errors = mQuickView->errors();
+                const auto errors = quickView->errors();
                 for (const QQmlError &error : errors) {
                     const auto fileName = toAbsolutePath(error.url());
                     if (!QFileInfo(fileName).isFile() && error.line() < 0) {
@@ -236,9 +250,25 @@ void QmlView::reset()
     layout()->addWidget(mQuickWidget);
 }
 
+void QmlView::updateMinimumSizeHint()
+{
+    if (!mQuickView)
+        return;
+    const auto rootItem = mQuickView->rootObject();
+    if (!rootItem)
+        return;
+
+    const auto size = QSize(qCeil(rootItem->implicitWidth()),
+        qCeil(rootItem->implicitHeight()));
+    if (size.isEmpty() || mMinimumSizeHint == size)
+        return;
+    mMinimumSizeHint = size;
+    updateGeometry();
+}
+
 #endif // defined(QMLVIEW_ENABLED)
 
-QmlView::~QmlView() { }
+QmlView::~QmlView() = default;
 
 QList<QMetaObject::Connection> QmlView::connectEditActions(
     const EditActions &actions)
@@ -258,7 +288,7 @@ QList<QMetaObject::Connection> QmlView::connectEditActions(
     actions.rename->setEnabled(false);
     actions.findReplace->setEnabled(false);
 
-    return {};
+    return { };
 }
 
 QString QmlView::fileName() const
