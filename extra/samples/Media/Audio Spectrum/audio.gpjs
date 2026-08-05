@@ -1,0 +1,171 @@
+{
+  "type": "Session",
+  "id": 897,
+  "name": "Session",
+  "renderer": "OpenGL",
+  "shaderLanguage": "GLSL",
+  "shaderCompiler": "Driver",
+  "shaderCompilerSettings": {},
+  "shaderPreamble": "",
+  "shaderIncludePaths": "",
+  "items": [
+    {
+      "type": "Texture",
+      "id": 10,
+      "name": "Spectrogram",
+      "target": "Target2D",
+      "format": "RGBA8_UNorm",
+      "width": "512",
+      "height": "1025",
+      "samples": 1,
+      "flipVertically": false
+    },
+    {
+      "type": "Texture",
+      "id": 898,
+      "name": "Spectrogram Scratch",
+      "target": "Target2D",
+      "format": "RGBA8_UNorm",
+      "width": "512",
+      "height": "1025",
+      "samples": 1,
+      "flipVertically": false
+    },
+    {
+      "type": "Target",
+      "id": 7,
+      "name": "Target",
+      "frontFace": "CCW",
+      "cullMode": "Back",
+      "polygonMode": "Fill",
+      "logicOperation": "NoLogicOperation",
+      "blendConstant": "#ffffffff",
+      "items": [
+        {
+          "type": "Attachment",
+          "id": 8,
+          "name": "Color",
+          "textureId": 898,
+          "level": 0,
+          "blendColorEq": "Add",
+          "blendColorSource": "One",
+          "blendColorDest": "Zero",
+          "blendAlphaEq": "Add",
+          "blendAlphaSource": "One",
+          "blendAlphaDest": "Zero",
+          "colorWriteMask": 15
+        }
+      ]
+    },
+    {
+      "type": "Texture",
+      "id": 105,
+      "fileName": "3xBlast - Babe, You Look Poggers Tonight! (Looped).ogg",
+      "target": "Target2D",
+      "format": "R32F",
+      "width": "1025",
+      "height": "1",
+      "samples": 1,
+      "flipVertically": false
+    },
+    {
+      "type": "Binding",
+      "id": 109,
+      "name": "uSpectrum",
+      "bindingType": "Sampler",
+      "textureId": 105,
+      "minFilter": "Linear",
+      "magFilter": "Linear",
+      "anisotropic": false,
+      "wrapModeX": "ClampToEdge",
+      "wrapModeY": "ClampToEdge",
+      "wrapModeZ": "ClampToEdge",
+      "borderColor": "#ff000000",
+      "comparisonFunc": "NoComparisonFunc"
+    },
+    {
+      "type": "Binding",
+      "id": 111,
+      "name": "uHistory",
+      "bindingType": "Sampler",
+      "textureId": 10,
+      "minFilter": "Nearest",
+      "magFilter": "Nearest",
+      "anisotropic": false,
+      "wrapModeX": "ClampToEdge",
+      "wrapModeY": "ClampToEdge",
+      "wrapModeZ": "ClampToEdge",
+      "borderColor": "#ff000000",
+      "comparisonFunc": "NoComparisonFunc"
+    },
+    {
+      "type": "Program",
+      "id": 1,
+      "name": "Program",
+      "items": [
+        {
+          "type": "Shader",
+          "id": 2,
+          "fileName": "attributeless.vs",
+          "shaderType": "Vertex"
+        },
+        {
+          "type": "Shader",
+          "id": 3,
+          "fileName": "textured.fs",
+          "shaderType": "Fragment"
+        }
+      ]
+    },
+    {
+      "type": "Call",
+      "id": 110,
+      "name": "Clear Spectrogram",
+      "checked": true,
+      "callType": "ClearTexture",
+      "textureId": 10,
+      "clearColor": "#ff000000",
+      "clearDepth": 1.0,
+      "clearStencil": 0,
+      "executeOn": "ResetEvaluation"
+    },
+    {
+      "type": "Call",
+      "id": 112,
+      "name": "Clear Scratch",
+      "checked": true,
+      "callType": "ClearTexture",
+      "textureId": 898,
+      "clearColor": "#ff000000",
+      "clearDepth": 1.0,
+      "clearStencil": 0,
+      "executeOn": "ResetEvaluation"
+    },
+    {
+      "type": "Call",
+      "id": 4,
+      "name": "Draw",
+      "checked": true,
+      "callType": "Draw",
+      "programId": 1,
+      "targetId": 7,
+      "vertexStreamId": 0,
+      "primitiveType": "TriangleStrip",
+      "count": "4",
+      "first": "0",
+      "instanceCount": "1",
+      "baseInstance": "0",
+      "executeOn": "EveryEvaluation"
+    },
+    {
+      "type": "Call",
+      "id": 113,
+      "name": "Store Spectrogram History",
+      "checked": true,
+      "callType": "SwapTextures",
+      "textureId": 10,
+      "fromTextureId": 898,
+      "executeOn": "EveryEvaluation"
+    }
+  ]
+}

@@ -1,0 +1,557 @@
+{
+  "type": "Session",
+  "id": 897,
+  "name": "Beat Detection",
+  "renderer": "OpenGL",
+  "shaderLanguage": "GLSL",
+  "shaderCompiler": "Driver",
+  "shaderCompilerSettings": {},
+  "shaderPreamble": "",
+  "shaderIncludePaths": "",
+  "items": [
+    {
+      "type": "Texture",
+      "id": 10,
+      "name": "Beat Detection History",
+      "target": "Target2D",
+      "format": "RGBA8_UNorm",
+      "width": "512",
+      "height": "100",
+      "samples": 1,
+      "flipVertically": false
+    },
+    {
+      "type": "Texture",
+      "id": 105,
+      "fileName": "../Audio Spectrum/3xBlast - Babe, You Look Poggers Tonight! (Looped).ogg",
+      "target": "Target2D",
+      "format": "R32F",
+      "width": "1025",
+      "height": "1",
+      "samples": 1,
+      "flipVertically": false
+    },
+    {
+      "type": "Group",
+      "id": 100,
+      "name": "Beat Detection",
+      "inlineScope": true,
+      "iterations": "1",
+      "items": [
+        {
+          "type": "Texture",
+          "id": 11,
+          "name": "Band State",
+          "target": "Target2D",
+          "format": "RGBA32F",
+          "width": "10",
+          "height": "1",
+          "samples": 1,
+          "flipVertically": false
+        },
+        {
+          "type": "Texture",
+          "id": 12,
+          "name": "Band State Scratch",
+          "target": "Target2D",
+          "format": "RGBA32F",
+          "width": "10",
+          "height": "1",
+          "samples": 1,
+          "flipVertically": false
+        },
+        {
+          "type": "Target",
+          "id": 22,
+          "name": "Band State Target",
+          "frontFace": "CCW",
+          "cullMode": "Back",
+          "polygonMode": "Fill",
+          "logicOperation": "NoLogicOperation",
+          "blendConstant": "#ffffffff",
+          "items": [
+            {
+              "type": "Attachment",
+              "id": 23,
+              "name": "State",
+              "textureId": 12,
+              "level": 0,
+              "blendColorEq": "Add",
+              "blendColorSource": "One",
+              "blendColorDest": "Zero",
+              "blendAlphaEq": "Add",
+              "blendAlphaSource": "One",
+              "blendAlphaDest": "Zero",
+              "colorWriteMask": 15
+            }
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 30,
+          "name": "uSpectrum",
+          "bindingType": "Sampler",
+          "textureId": 105,
+          "minFilter": "Linear",
+          "magFilter": "Linear",
+          "anisotropic": false,
+          "wrapModeX": "ClampToEdge",
+          "wrapModeY": "ClampToEdge",
+          "wrapModeZ": "ClampToEdge",
+          "borderColor": "#ff000000",
+          "comparisonFunc": "NoComparisonFunc"
+        },
+        {
+          "type": "Binding",
+          "id": 31,
+          "name": "uPreviousState",
+          "bindingType": "Sampler",
+          "textureId": 11,
+          "minFilter": "Nearest",
+          "magFilter": "Nearest",
+          "anisotropic": false,
+          "wrapModeX": "ClampToEdge",
+          "wrapModeY": "ClampToEdge",
+          "wrapModeZ": "ClampToEdge",
+          "borderColor": "#ff000000",
+          "comparisonFunc": "NoComparisonFunc"
+        },
+        {
+          "type": "Binding",
+          "id": 70,
+          "name": "uSampleRate",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "44100"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 71,
+          "name": "uDecibelRange",
+          "bindingType": "Uniform",
+          "editor": "Expression2",
+          "values": [
+            "-30",
+            "-12"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 72,
+          "name": "uIntensityGamma",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "0.8"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 73,
+          "name": "uIntensityAttackRate",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "0.45"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 74,
+          "name": "uIntensityReleaseRate",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "0.08"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 80,
+          "name": "uBaselineRiseRate",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "0.025"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 81,
+          "name": "uBaselineFallRate",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "0.008"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 75,
+          "name": "uMinimumBeatLevel",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "0.12"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 76,
+          "name": "uMinimumBaselineDelta",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "0.06"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 77,
+          "name": "uBaselineThresholdScale",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "0.35"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 78,
+          "name": "uMinimumIntensityDelta",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "0.035"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 79,
+          "name": "uCooldownFrames",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "8"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 90,
+          "name": "uBandGainDecibels[0]",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "0"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 91,
+          "name": "uBandGainDecibels[1]",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "0"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 92,
+          "name": "uBandGainDecibels[2]",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "0"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 93,
+          "name": "uBandGainDecibels[3]",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "0"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 94,
+          "name": "uBandGainDecibels[4]",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "3"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 95,
+          "name": "uBandGainDecibels[5]",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "6"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 96,
+          "name": "uBandGainDecibels[6]",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "6"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 97,
+          "name": "uBandGainDecibels[7]",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "10"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 98,
+          "name": "uBandGainDecibels[8]",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "10"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 99,
+          "name": "uBandGainDecibels[9]",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "10"
+          ]
+        },
+        {
+          "type": "Program",
+          "id": 40,
+          "name": "Update Band State",
+          "items": [
+            {
+              "type": "Shader",
+              "id": 41,
+              "fileName": "fullscreen.vs",
+              "shaderType": "Vertex"
+            },
+            {
+              "type": "Shader",
+              "id": 42,
+              "fileName": "beat-state.fs",
+              "shaderType": "Fragment"
+            }
+          ]
+        },
+        {
+          "type": "Call",
+          "id": 50,
+          "name": "Clear Band State",
+          "checked": true,
+          "callType": "ClearTexture",
+          "textureId": 11,
+          "clearColor": "#00000000",
+          "clearDepth": 1.0,
+          "clearStencil": 0,
+          "executeOn": "ResetEvaluation"
+        },
+        {
+          "type": "Call",
+          "id": 51,
+          "name": "Clear Band State Scratch",
+          "checked": true,
+          "callType": "ClearTexture",
+          "textureId": 12,
+          "clearColor": "#00000000",
+          "clearDepth": 1.0,
+          "clearStencil": 0,
+          "executeOn": "ResetEvaluation"
+        },
+        {
+          "type": "Call",
+          "id": 53,
+          "name": "Detect Beats",
+          "checked": true,
+          "callType": "Draw",
+          "programId": 40,
+          "targetId": 22,
+          "vertexStreamId": 0,
+          "primitiveType": "TriangleStrip",
+          "count": "4",
+          "first": "0",
+          "instanceCount": "1",
+          "baseInstance": "0",
+          "executeOn": "EveryEvaluation"
+        },
+        {
+          "type": "Call",
+          "id": 54,
+          "name": "Store Band State",
+          "checked": true,
+          "callType": "SwapTextures",
+          "textureId": 11,
+          "fromTextureId": 12,
+          "executeOn": "EveryEvaluation"
+        }
+      ]
+    },
+    {
+      "type": "Group",
+      "id": 101,
+      "name": "Draw History",
+      "inlineScope": true,
+      "iterations": "1",
+      "items": [
+        {
+          "type": "Texture",
+          "id": 13,
+          "name": "Beat Detection History Scratch",
+          "target": "Target2D",
+          "format": "RGBA8_UNorm",
+          "width": "512",
+          "height": "100",
+          "samples": 1,
+          "flipVertically": false
+        },
+        {
+          "type": "Target",
+          "id": 20,
+          "name": "History Target",
+          "frontFace": "CCW",
+          "cullMode": "Back",
+          "polygonMode": "Fill",
+          "logicOperation": "NoLogicOperation",
+          "blendConstant": "#ffffffff",
+          "items": [
+            {
+              "type": "Attachment",
+              "id": 21,
+              "name": "Color",
+              "textureId": 13,
+              "level": 0,
+              "blendColorEq": "Add",
+              "blendColorSource": "One",
+              "blendColorDest": "Zero",
+              "blendAlphaEq": "Add",
+              "blendAlphaSource": "One",
+              "blendAlphaDest": "Zero",
+              "colorWriteMask": 15
+            }
+          ]
+        },
+        {
+          "type": "Call",
+          "id": 52,
+          "name": "Clear Beat History",
+          "checked": true,
+          "callType": "ClearTexture",
+          "textureId": 10,
+          "clearColor": "#ff000000",
+          "clearDepth": 1.0,
+          "clearStencil": 0,
+          "executeOn": "ResetEvaluation"
+        },
+        {
+          "type": "Call",
+          "id": 55,
+          "name": "Clear Beat History Scratch",
+          "checked": true,
+          "callType": "ClearTexture",
+          "textureId": 13,
+          "clearColor": "#ff000000",
+          "clearDepth": 1.0,
+          "clearStencil": 0,
+          "executeOn": "ResetEvaluation"
+        },
+        {
+          "type": "Binding",
+          "id": 32,
+          "name": "uState",
+          "bindingType": "Sampler",
+          "textureId": 11,
+          "minFilter": "Nearest",
+          "magFilter": "Nearest",
+          "anisotropic": false,
+          "wrapModeX": "ClampToEdge",
+          "wrapModeY": "ClampToEdge",
+          "wrapModeZ": "ClampToEdge",
+          "borderColor": "#ff000000",
+          "comparisonFunc": "NoComparisonFunc"
+        },
+        {
+          "type": "Binding",
+          "id": 33,
+          "name": "uHistory",
+          "bindingType": "Sampler",
+          "textureId": 10,
+          "minFilter": "Nearest",
+          "magFilter": "Nearest",
+          "anisotropic": false,
+          "wrapModeX": "ClampToEdge",
+          "wrapModeY": "ClampToEdge",
+          "wrapModeZ": "ClampToEdge",
+          "borderColor": "#ff000000",
+          "comparisonFunc": "NoComparisonFunc"
+        },
+        {
+          "type": "Program",
+          "id": 60,
+          "name": "Draw Beat History",
+          "items": [
+            {
+              "type": "Shader",
+              "id": 61,
+              "fileName": "fullscreen.vs",
+              "shaderType": "Vertex"
+            },
+            {
+              "type": "Shader",
+              "id": 62,
+              "fileName": "beat-display.fs",
+              "shaderType": "Fragment"
+            }
+          ]
+        },
+        {
+          "type": "Call",
+          "id": 63,
+          "name": "Draw Beat History",
+          "checked": true,
+          "callType": "Draw",
+          "programId": 60,
+          "targetId": 20,
+          "vertexStreamId": 0,
+          "primitiveType": "TriangleStrip",
+          "count": "4",
+          "first": "0",
+          "instanceCount": "1",
+          "baseInstance": "0",
+          "executeOn": "EveryEvaluation"
+        },
+        {
+          "type": "Call",
+          "id": 64,
+          "name": "Store Beat History",
+          "checked": true,
+          "callType": "SwapTextures",
+          "textureId": 10,
+          "fromTextureId": 13,
+          "executeOn": "EveryEvaluation"
+        }
+      ]
+    }
+  ]
+}

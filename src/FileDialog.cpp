@@ -22,12 +22,12 @@ namespace {
         "tga", "bmp", "jpeg", "jpg", "pbm", "pgm", "tif", "tiff", "raw" };
     const auto AudioFileExtensions = {
 #if defined(MULTIMEDIA_ENABLED)
-        "wav", "mp3", "flac", "aac", "aif", "aiff", "m4a", "oga", "opus", "wma"
+        "wav", "mp3", "flac", "aac", "aif", "aiff", "m4a", "ogg", "oga", "opus", "wma"
 #endif
     };
     const auto VideoFileExtensions = {
 #if defined(MULTIMEDIA_ENABLED)
-        "mp4", "webm", "mkv", "ogg", "mpg", "wmv", "mov", "avi"
+        "mp4", "webm", "mkv", "ogv", "mpg", "wmv", "mov", "avi"
 #endif
     };
 
