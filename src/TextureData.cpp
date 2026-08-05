@@ -515,7 +515,7 @@ namespace {
     {
         auto dimension =
             std::max(std::max(info.baseWidth, info.baseHeight), info.baseDepth);
-        auto levels = ktx_uint32_t{};
+        auto levels = ktx_uint32_t{ };
         for (; dimension; dimension >>= 1)
             ++levels;
         return levels;
@@ -564,12 +564,20 @@ namespace {
         for (auto i = 0; i < pixels; ++i) {
             for (auto c = 0; c < destComponents; ++c) {
                 const auto v = (c < sourceComponents ? source[c]
-                        : c < 3                      ? Source{}
+                        : c < 3 ? Source{ }
                                 : std::numeric_limits<Source>::max());
                 if constexpr (Shift < 0) {
-                    dest[c] = static_cast<Dest>(v >> -Shift);
+                    if constexpr (std::is_floating_point_v<Dest>) {
+                        dest[c] = static_cast<Dest>(v) / Dest{ 1ull << -Shift };
+                    } else {
+                        dest[c] = static_cast<Dest>(v >> -Shift);
+                    }
                 } else {
-                    dest[c] = static_cast<Dest>(v << Shift);
+                    if constexpr (std::is_floating_point_v<Dest>) {
+                        dest[c] = static_cast<Dest>(v) * Dest{ 1ull << Shift };
+                    } else {
+                        dest[c] = static_cast<Dest>(v << Shift);
+                    }
                 }
             }
             source += sourceComponents;
@@ -616,6 +624,10 @@ namespace {
         ADD(Uint32, uint32_t, Int8, int8_t, -17)
         ADD(Uint32, uint32_t, Int16, int16_t, -9)
         ADD(Uint32, uint32_t, Int32, int32_t, -1)
+
+        ADD(Uint8, uint8_t, Float32, float, -8)
+        ADD(Uint16, uint16_t, Float32, float, -16)
+        ADD(Uint32, uint32_t, Float32, float, -32)
 #undef ADD
         return false;
     }
@@ -627,25 +639,25 @@ namespace {
         if (!source || !dest || destWidth <= 0 || destHeight <= 0)
             return false;
 
-        auto pixelLayout = stbir_pixel_layout{};
+        auto pixelLayout = stbir_pixel_layout{ };
         switch (getTextureComponentCount(format)) {
         case 1:  pixelLayout = STBIR_1CHANNEL; break;
         case 2:  pixelLayout = STBIR_2CHANNEL; break;
         case 3:  pixelLayout = STBIR_RGB; break;
         case 4:  pixelLayout = STBIR_RGBA; break;
-        default: return {};
+        default: return { };
         }
 
-        auto dataType = stbir_datatype{};
+        auto dataType = stbir_datatype{ };
         switch (getTextureDataType(format)) {
         case TextureDataType::Packed:
         case TextureDataType::Compressed:
         case TextureDataType::Int8:
         case TextureDataType::Int16:
-        case TextureDataType::Int32:      return {};
+        case TextureDataType::Int32:      return { };
         case TextureDataType::Uint8:      dataType = STBIR_TYPE_UINT8_SRGB; break;
         case TextureDataType::Uint16:     dataType = STBIR_TYPE_UINT16; break;
-        case TextureDataType::Uint32:     return {};
+        case TextureDataType::Uint32:     return { };
         case TextureDataType::Float16:    dataType = STBIR_TYPE_FLOAT; break;
         case TextureDataType::Float32:    dataType = STBIR_TYPE_HALF_FLOAT; break;
         }
@@ -941,7 +953,7 @@ bool TextureData::create(Texture::Target target, Texture::Format format,
     if (width <= 0 || height <= 0 || depth <= 0 || layers <= 0)
         return false;
 
-    auto createInfo = ktxTextureCreateInfo{};
+    auto createInfo = ktxTextureCreateInfo{ };
     createInfo.glInternalformat = format;
     createInfo.baseWidth = static_cast<ktx_uint32_t>(width);
     createInfo.baseHeight = 1;
@@ -992,7 +1004,7 @@ bool TextureData::create(Texture::Target target, Texture::Format format,
             : canGenerateMipmaps(target, format) ? getLevelCount(createInfo)
                                                  : 1);
 
-    auto texture = std::add_pointer_t<ktxTexture1>{};
+    auto texture = std::add_pointer_t<ktxTexture1>{ };
     if (ktxTexture1_Create(&createInfo, KTX_TEXTURE_CREATE_ALLOC_STORAGE,
             &texture)
         == KTX_SUCCESS) {
@@ -1012,7 +1024,7 @@ TextureData TextureData::convert(Texture::Format format) const
     auto copy = TextureData();
     if (!copy.create(getTarget(), format, width(), height(), depth(), layers(),
             levels()))
-        return {};
+        return { };
 
     // only write first level, it will trigger the mipmap generation
     const auto level = 0;
@@ -1025,11 +1037,11 @@ TextureData TextureData::convert(Texture::Format format) const
             const auto *source = getData(level, layer, faceSlice);
             auto *dest = copy.getWriteonlyData(level, layer, faceSlice);
             if (!source || !dest)
-                return {};
+                return { };
             for (auto row = 0; row < levelHeight; ++row) {
                 if (!convertPlane(source + row * sourceStride, this->format(),
                         dest + row * destStride, format, levelWidth)) {
-                    return {};
+                    return { };
                 }
             }
         }
@@ -1043,14 +1055,14 @@ TextureData TextureData::resize(int width, int height, int depth,
     int layers) const
 {
     if (depth != this->depth() || layers != this->layers())
-        return {};
+        return { };
     if (width == this->width() && height == this->height())
         return *this;
 
     auto copy = TextureData();
     if (!copy.create(getTarget(), format(), width, height, depth, layers,
             (levels() == 1 ? 1 : 0)))
-        return {};
+        return { };
 
     const auto level = 0;
     for (auto layer = 0; layer < layers; ++layer)
@@ -1060,7 +1072,7 @@ TextureData TextureData::resize(int width, int height, int depth,
                     getLevelWidth(level), getLevelHeight(level),
                     getLevelStride(level), copy.getLevelWidth(level),
                     copy.getLevelHeight(level), copy.getLevelStride(level)))
-                return {};
+                return { };
 
     copy.setFlippedVertically(flippedVertically());
     return copy;
@@ -1071,7 +1083,7 @@ TextureData TextureData::convert(Texture::Format format, int width, int height,
 {
     auto converted = convert(format);
     if (converted.isNull())
-        return {};
+        return { };
     return converted.resize(width, height, depth, layers);
 }
 
@@ -1082,7 +1094,7 @@ bool TextureData::loadKtx(const QString &fileName, bool flipVertically)
         return false;
     auto guard = qScopeGuard([&]() { std::fclose(f); });
 
-    auto texturePtr = std::add_pointer_t<ktxTexture>{};
+    auto texturePtr = std::add_pointer_t<ktxTexture>{ };
     if (ktxTexture_CreateFromStdioStream(f,
             KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &texturePtr)
         != KTX_SUCCESS)
@@ -1231,8 +1243,8 @@ bool TextureData::loadPfm(const QString &fileName, bool flipVertically)
         return false;
     auto guard = qScopeGuard([&]() { std::fclose(f); });
 
-    auto c0 = char{};
-    auto c1 = char{};
+    auto c0 = char{ };
+    auto c1 = char{ };
     auto read = static_cast<size_t>(std::fscanf(f, "%c%c\n", &c0, &c1));
     if (c0 != 'P' || read != 2)
         return false;
@@ -1396,15 +1408,15 @@ bool TextureData::isConvertibleToImage() const
 QImage TextureData::toImage() const
 {
     if (!isConvertibleToImage())
-        return {};
+        return { };
 
     const auto imageFormat = getImageFormat(pixelFormat(), pixelType());
     if (imageFormat == QImage::Format_Invalid)
-        return {};
+        return { };
 
     auto image = QImage(width(), height(), imageFormat);
     if (static_cast<int>(image.sizeInBytes()) != getImageSize(0))
-        return {};
+        return { };
 
     std::memcpy(image.bits(), getData(0, 0, 0),
         static_cast<size_t>(getImageSize(0)));
@@ -1436,7 +1448,7 @@ Texture::Target TextureData::getTarget(int samples) const
 {
     Q_ASSERT(mKtxTexture);
     if (!mKtxTexture)
-        return {};
+        return { };
     const auto &texture = *mKtxTexture;
     if (texture.isCubemap)
         return (texture.isArray ? TT::TargetCubeMapArray : TT::TargetCubeMap);
@@ -1449,7 +1461,7 @@ Texture::Target TextureData::getTarget(int samples) const
         return (texture.isArray ? TT::Target2DArray : TT::Target2D);
     case 3: return TT::Target3D;
     }
-    return {};
+    return { };
 }
 
 Texture::Format TextureData::format() const
@@ -1630,7 +1642,7 @@ const uchar *TextureData::getData(int level, int layer, int faceSlice) const
     if (isNull())
         return nullptr;
 
-    auto offset = ktx_size_t{};
+    auto offset = ktx_size_t{ };
     if (ktxTexture_GetImageOffset(mKtxTexture.get(),
             static_cast<ktx_uint32_t>(level), static_cast<ktx_uint32_t>(layer),
             static_cast<ktx_uint32_t>(faceSlice), &offset)
@@ -1699,7 +1711,7 @@ bool TextureData::uploadGL(GLuint *textureId) const
     if (isNull() || !textureId)
         return false;
 
-    auto error = GLenum{};
+    auto error = GLenum{ };
     auto target = static_cast<GLenum>(getTarget());
     const auto result =
         ktxTexture_GLUpload(mKtxTexture.get(), textureId, &target, &error);
