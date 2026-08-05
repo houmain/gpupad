@@ -64,7 +64,7 @@ Q_SIGNALS:
 private:
     Renderer &mRenderer;
     std::unique_ptr<Device> mDevice;
-    bool mInitialized{};
+    bool mInitialized{ };
     MessagePtrSet mMessages;
 };
 
@@ -124,7 +124,8 @@ void Renderer::finish()
     for (auto i = 0; i < 100; ++i) {
         if (!mCurrentTask)
             return;
-        qApp->processEvents(QEventLoop::WaitForMoreEvents);
+        qApp->processEvents();
+        QThread::msleep(100);
     }
     Q_ASSERT(!"unreachable");
 }

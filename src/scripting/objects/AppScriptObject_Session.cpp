@@ -1042,8 +1042,9 @@ QVariant AppScriptObject::processShader(const QString &fileName,
     processSource.update();
 
     // block until process source signaled completion
-    while (processSource.updating())
-        qApp->processEvents(QEventLoop::WaitForMoreEvents);
-
+    while (processSource.updating()) {
+        qApp->processEvents();
+        QThread::msleep(10);
+    }
     return result;
 }

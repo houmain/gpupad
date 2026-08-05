@@ -32,7 +32,7 @@ namespace {
             if (file.open(QFile::ReadOnly | QFile::Text))
                 return QTextStream(&file).readAll();
         }
-        return {};
+        return { };
     }
 
     QString tweakChangeLog(QString text)
@@ -61,19 +61,29 @@ namespace {
             .arg(GLSLANG_VERSION_PATCH);
     }
 #endif
+
+    constexpr const char *currentYear()
+    {
+        const auto date = __DATE__;
+        return &date[7];
+    }
 } // namespace
+
+const char *copyrightAuthor = "Albert Kalchmair";
+const char *copyrightRangeBegin = "2016";
+const char *copyrightRangeEnd = currentYear();
 
 AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent)
 {
     const auto title = tr("About %1").arg(QApplication::applicationName());
     const auto format = QStringLiteral("<h3>%1 %2</h3>"
                                        "Copyright &copy; %3-%4<br>"
-                                       "Albert Kalchmair<br>"
-                                       "%5<br><br>"
-                                       "<a href='%6'>%6</a><br>");
+                                       "%5<br>"
+                                       "%6<br><br>"
+                                       "<a href='%7'>%7</a><br>");
     const auto header = format.arg(QApplication::applicationName(),
-        QApplication::applicationVersion(), "2016",
-        QStringLiteral(__DATE__).mid(7), tr("All Rights Reserved."),
+        QApplication::applicationVersion(), copyrightRangeBegin,
+        copyrightRangeEnd, copyrightAuthor, tr("All Rights Reserved."),
         "https://github.com/houmain/gpupad");
 
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);

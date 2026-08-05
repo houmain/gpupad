@@ -6,6 +6,7 @@
 #include "SynchronizeLogic.h"
 #include "FileCache.h"
 #include "windows/MainWindow.h"
+#include "windows/AboutDialog.h"
 #include "session/SessionModel.h"
 #include "scripting/ScriptEngine.h"
 #include "editors/EditorManager.h"
@@ -29,7 +30,7 @@ __declspec(dllexport) DWORD AmdPowerXpressRequestHighPerformance = 0x00000001;
 void SetForegroundWindowInternal(HWND hWnd)
 {
     // Press the "Alt" key
-    auto ip = INPUT{};
+    auto ip = INPUT{ };
     ip.type = INPUT_KEYBOARD;
     ip.ki.wVk = VK_MENU;
     SendInput(1, &ip, sizeof(INPUT));
@@ -52,18 +53,21 @@ void restoreProcessPriority()
     SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
 }
 
-bool attachToConsole()
+void attachToConsole()
 {
     if (!AttachConsole(ATTACH_PARENT_PROCESS))
-        return false;
+        return;
     FILE *in, *out, *err;
     freopen_s(&in, "CONIN$", "r", stdin);
     freopen_s(&out, "CONOUT$", "w", stdout);
     freopen_s(&err, "CONOUT$", "w", stderr);
-    return true;
+    std::fprintf(stdout, "\n");
+    std::fflush(stdout);
 }
 
 #else // !_WIN32
+
+void attachToConsole() { }
 
 void raiseProcessPriority() { }
 
@@ -112,11 +116,30 @@ void filteringMessageHandler(QtMsgType type, const QMessageLogContext &context,
     defaultMessageHandler(type, context, msg);
 }
 
+void outputHelpToStdout()
+{
+    attachToConsole();
+    std::fprintf(stdout,
+        "%s %s (c) %s-%s by %s\n"
+        "\n"
+        "Usage: gpupad [-options]\n"
+        "  --headless              run in headless mode.\n"
+        "  -h, --help              print this help.\n"
+        "\n"
+        "All Rights Reserved.\n"
+        "This program comes with absolutely no warranty.\n"
+        "See the GNU General Public License, version 3 for details.\n"
+        "\n",
+        qUtf8Printable(QCoreApplication::applicationName()),
+        qUtf8Printable(QCoreApplication::applicationVersion()),
+        copyrightRangeBegin, copyrightRangeEnd, copyrightAuthor);
+
+    std::fflush(stdout);
+}
+
 void outputMessagesToStdout()
 {
-#if defined(_WIN32)
     attachToConsole();
-#endif
     for (const auto &message : MessagePtrSet::getAllMessages()) {
         const auto severity = getMessageSeverity(*message);
         const auto severityText = (severity == MessageSeverity::Error
@@ -143,7 +166,7 @@ int runHeadless(int argc, char *argv[])
 
     auto singletons = Singletons(nullptr);
     for (const auto &argument : std::as_const(arguments)) {
-        auto messages = MessagePtrSet{};
+        auto messages = MessagePtrSet{ };
         const auto fileName =
             toNativeCanonicalFilePath(QFileInfo(argument).absoluteFilePath());
         auto source = QString();
@@ -260,9 +283,16 @@ int main(int argc, char *argv[])
     if (std::string_view(argv[0]).ends_with("gpupad-headless"))
         return runHeadless(argc, argv);
 
-    if (argc > 1 && std::string_view(argv[1]) == "--headless") {
+    if (const auto arg1 = std::string_view(argc > 1 ? argv[1] : "");
+        arg1.starts_with("-")) {
+
         argc = std::distance(argv, std::remove(argv, argv + argc, argv[1]));
-        return runHeadless(argc, argv);
+
+        if (arg1 == "--headless")
+            return runHeadless(argc, argv);
+
+        outputHelpToStdout();
+        return (arg1 == "-h" || arg1 == "--headless" ? 0 : 1);
     }
 
     if (forwardToInstance(argc, argv))
