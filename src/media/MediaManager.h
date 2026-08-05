@@ -18,10 +18,12 @@ public:
 
     void unloadAll();
     void seek(double time);
+    void pause();
     void handleMediaRequested(const QString &fileName, bool flipVertically);
 
 private:
     void handleMediaLoaded();
+    void seekToTargetTime();
 
     std::map<QString, std::unique_ptr<VideoStream>> mVideoStreams;
     std::chrono::milliseconds mTargetTime{ };

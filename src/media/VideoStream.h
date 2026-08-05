@@ -4,6 +4,9 @@
 
 #  include <QObject>
 #  include <QVideoFrame>
+#  include <chrono>
+
+class TextureData;
 
 class VideoStream : public QObject
 {
@@ -21,8 +24,11 @@ Q_SIGNALS:
 
 protected:
     void presentFrame(const QVideoFrame &frame);
+    void presentTexture(TextureData texture);
 
 private:
+    void setSize(int width, int height);
+
     QString mFileName;
     bool mFlipVertically{ };
     int mWidth{ };

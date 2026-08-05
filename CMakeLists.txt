@@ -45,6 +45,7 @@ set(SOURCES
   src/TextureData.cpp
   src/TextureData_DDS.cpp
   src/media/MediaManager.cpp
+  src/media/AudioSpectrum.cpp
   src/media/VideoStream.cpp
   src/media/VideoPlayer.cpp
   src/InputState.cpp
@@ -364,6 +365,11 @@ endif()
 
 option(GPUPAD_BUILD_SHARED "Dynamically Link Shared Libraries" OFF)
 set(BUILD_SHARED_LIBS ${GPUPAD_BUILD_SHARED})
+if (NOT GPUPAD_BUILD_SHARED)
+    set(GPUPAD_BUILD_STATIC TRUE)
+else()
+    set(GPUPAD_BUILD_STATIC FALSE)
+endif()
 
 option(GPUPAD_UNITY_BUILD_LIBRARIES "Unity Build Libraries" OFF)
 if (GPUPAD_UNITY_BUILD_LIBRARIES)
@@ -623,6 +629,28 @@ option(GPUPAD_ENABLE_MULTIMEDIA "Enable Multimedia" ${Qt6Multimedia_FOUND})
 if(GPUPAD_ENABLE_MULTIMEDIA)
     target_compile_definitions(${PROJECT_NAME} PRIVATE MULTIMEDIA_ENABLED)
     target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Multimedia)
+
+    set(CMAKE_FOLDER kissfft)
+    set(GPUPAD_KISSFFT_GIT_REPOSITORY
+        "https://github.com/mborgerding/kissfft.git" CACHE STRING "kissfft Git repository")
+    set(GPUPAD_KISSFFT_GIT_REVISION
+        "8f47a67f595a6641c566087bf5277034be64f24d" CACHE STRING "kissfft Git revision")
+    FetchSparse(kissfft
+        GIT_REPOSITORY ${GPUPAD_KISSFFT_GIT_REPOSITORY}
+        GIT_TAG ${GPUPAD_KISSFFT_GIT_REVISION}
+        CACHE_OPTIONS
+            KISSFFT_DATATYPE:STRING=float
+            KISSFFT_OPENMP:BOOL=OFF
+            KISSFFT_PKGCONFIG:BOOL=OFF
+            KISSFFT_STATIC:BOOL=${GPUPAD_BUILD_STATIC}
+            KISSFFT_TEST:BOOL=OFF
+            KISSFFT_TOOLS:BOOL=OFF
+        SPARSE_EXCLUDE
+            .github
+            test
+            tools
+    )
+    target_link_libraries(${PROJECT_NAME} PRIVATE kissfft)
 endif()
 
 # Qt6Quick -------------------------
@@ -663,9 +691,6 @@ if (GPUPAD_ENABLE_GLSLANG)
     option(GPUPAD_SPIRV_TOOLS_FIND_PACKAGE "Find spirv-tools package" ON)
     set(GPUPAD_SPIRV_TOOLS_GIT_REPOSITORY "https://github.com/KhronosGroup/SPIRV-Tools.git" CACHE STRING "spirv-tools Git repository")
     set(GPUPAD_SPIRV_TOOLS_GIT_REVISION "ee4f6beddb14cf6e9259288b86625405b4cdc4e1" CACHE STRING "spirv-tools Git revision")
-    if(NOT ${GPUPAD_BUILD_SHARED})
-        set(SPIRV_TOOLS_EXTRA_ARGS SPIRV_TOOLS_BUILD_STATIC:BOOL=ON)
-    endif()
     FetchSparse(spirv-tools
         FIND_PACKAGE ${GPUPAD_SPIRV_TOOLS_FIND_PACKAGE} SPIRV-Tools
         GIT_REPOSITORY ${GPUPAD_SPIRV_TOOLS_GIT_REPOSITORY}
@@ -677,7 +702,7 @@ if (GPUPAD_ENABLE_GLSLANG)
             SPIRV_SKIP_TESTS:BOOL=ON
             SPIRV_WERROR:BOOL=OFF
             SPIRV_TOOLS_USE_MIMALLOC:BOOL=OFF
-            ${SPIRV_TOOLS_EXTRA_ARGS}
+            SPIRV_TOOLS_BUILD_STATIC:BOOL=${GPUPAD_BUILD_STATIC}
     )
     if(NOT TARGET SPIRV-Tools-opt)
         find_package(SPIRV-Tools-opt REQUIRED)

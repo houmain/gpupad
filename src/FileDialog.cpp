@@ -3,7 +3,6 @@
 #include <QDesktopServices>
 #include <QFileDialog>
 #include <QMainWindow>
-#include <QMap>
 #include <QProcess>
 #include <QStandardPaths>
 #include <QRegularExpression>
@@ -21,7 +20,12 @@ namespace {
         "exr", "hdr",
 #endif
         "tga", "bmp", "jpeg", "jpg", "pbm", "pgm", "tif", "tiff", "raw" };
-    const auto VideoFileExtensions = std::initializer_list<const char *>{
+    const auto AudioFileExtensions = {
+#if defined(MULTIMEDIA_ENABLED)
+        "wav", "mp3", "flac", "aac", "aif", "aiff", "m4a", "oga", "opus", "wma"
+#endif
+    };
+    const auto VideoFileExtensions = {
 #if defined(MULTIMEDIA_ENABLED)
         "mp4", "webm", "mkv", "ogg", "mpg", "wmv", "mov", "avi"
 #endif
@@ -163,10 +167,26 @@ bool FileDialog::isVideoFileName(const QString &fileName)
     return false;
 }
 
+bool FileDialog::isAudioFileName(const QString &fileName)
+{
+    const auto extension = getFileExtension(fileName);
+    for (const auto &ext : AudioFileExtensions)
+        if (ext == extension)
+            return true;
+
+    return false;
+}
+
 bool FileDialog::isSequenceFileName(const QString &fileName)
 {
     static const auto imageSequencePattern = QRegularExpression("%\\d+d");
     return (QFileInfo(fileName).fileName().contains(imageSequencePattern));
+}
+
+bool FileDialog::isMediaFileName(const QString &fileName)
+{
+    return isVideoFileName(fileName) || isSequenceFileName(fileName)
+        || isAudioFileName(fileName);
 }
 
 //-------------------------------------------------------------------------
@@ -186,7 +206,7 @@ void FileDialog::setDirectory(QDir directory)
 QString FileDialog::fileName() const
 {
     if (mFileNames.isEmpty())
-        return {};
+        return { };
     return mFileNames.first();
 }
 
@@ -231,6 +251,11 @@ bool FileDialog::exec(Options options, QString currentFileName,
         for (auto format : VideoFileExtensions)
             videoFileFilter = videoFileFilter + " *." + QString(format);
 
+    auto audioFileFilter = QString();
+    if (AudioFileExtensions.size())
+        for (auto format : AudioFileExtensions)
+            audioFileFilter = audioFileFilter + " *." + QString(format);
+
     auto scriptFileFilter = QString();
     for (const auto &ext : ScriptFileExtensions)
         scriptFileFilter = scriptFileFilter + " *." + ext;
@@ -248,6 +273,8 @@ bool FileDialog::exec(Options options, QString currentFileName,
         filters.append(tr("Texture files") + " (" + textureFileFilter + ")");
     if ((options & TextureExtensions) && !videoFileFilter.isEmpty())
         filters.append(tr("Video files") + " (" + videoFileFilter + ")");
+    if ((options & TextureExtensions) && !audioFileFilter.isEmpty())
+        filters.append(tr("Audio files") + " (" + audioFileFilter + ")");
     if (options & ScriptExtensions)
         filters.append(tr("Script files") + " (" + scriptFileFilter + ")");
     const auto binaryFileFilter = QString(tr("Binary files") + " (*)");
@@ -460,12 +487,12 @@ std::optional<QDir> getUserDirectory(const QString &dirName)
 
 QList<QDir> getApplicationDirectories(const QString &dirName)
 {
-    auto result = QList<QDir>{};
+    auto result = QList<QDir>{ };
     for (const auto &path : {
-            getWorkingDirectory(dirName),
-            getUserDirectory(dirName),
-            getInstallDirectory(dirName),
-        })
+             getWorkingDirectory(dirName),
+             getUserDirectory(dirName),
+             getInstallDirectory(dirName),
+         })
         if (path.has_value())
             result.append(path.value());
 

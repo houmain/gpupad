@@ -24,10 +24,10 @@ public:
     bool getBinary(const QString &fileName, QByteArray *binary) const;
 
     void updateSource(const QString &fileName, QString source);
-    void updateTexture(const QString &fileName, bool flippedVertically,
-        TextureData texture);
+    void updateTexture(const QString &fileName, TextureData texture);
     void updateVideoTexture(const QString &fileName, bool flippedVertically,
         const QVideoFrame &frame);
+    void updateVideoTexture(const QString &fileName, TextureData texture);
     void updateBinary(const QString &fileName, QByteArray binary);
     void updateBinaryRange(const QString &fileName, int offset,
         const QByteArray &range);
@@ -52,8 +52,7 @@ Q_SIGNALS:
 
 public Q_SLOTS:
     void handleSourceReloaded(const QString &fileName, QString);
-    void handleTextureReloaded(const QString &fileName, bool flipVertically,
-        TextureData);
+    void handleTextureReloaded(const QString &fileName, TextureData);
     void handleBinaryReloaded(const QString &fileName, QByteArray);
     void handleReloadingFailed(const QString &fileName);
 

@@ -122,7 +122,7 @@ public Q_SLOTS:
     {
         auto texture = TextureData();
         if (::loadTexture(fileName, flipVertically, &texture))
-            Q_EMIT textureLoaded(fileName, flipVertically, std::move(texture));
+            Q_EMIT textureLoaded(fileName, std::move(texture));
         else
             Q_EMIT loadingFailed(fileName);
     }
@@ -148,8 +148,7 @@ public Q_SLOTS:
 
 Q_SIGNALS:
     void sourceLoaded(const QString &fileName, QString source);
-    void textureLoaded(const QString &fileName, bool flipVertically,
-        TextureData texture);
+    void textureLoaded(const QString &fileName, TextureData texture);
     void binaryLoaded(const QString &fileName, QByteArray binary);
     void loadingFailed(const QString &fileName);
 
@@ -167,7 +166,7 @@ private:
 
         auto texture = TextureData();
         if (texture.loadQImage(frame.toImage(), flipVertically))
-            Q_EMIT textureLoaded(fileName, flipVertically, std::move(texture));
+            Q_EMIT textureLoaded(fileName, std::move(texture));
 
         QMetaObject::invokeMethod(
             this, [this]() { convertNextVideoFrame(); }, Qt::QueuedConnection);
@@ -323,9 +322,8 @@ bool FileCache::getTexture(const QString &fileName, bool flipVertically,
 
     addFileSystemWatch(fileName);
 
-    if (FileDialog::isVideoFileName(fileName)
-        || FileDialog::isSequenceFileName(fileName)) {
-        texture->create(Texture::Target::Target2D, Texture::Format::RGB8_UNorm,
+    if (FileDialog::isMediaFileName(fileName)) {
+        texture->create(Texture::Target::Target2D, Texture::Format::RGBA8_UNorm,
             1, 1, 1, 1);
         texture->setFlippedVertically(flipVertically);
         texture->clear();
@@ -354,8 +352,7 @@ void FileCache::updateSource(const QString &fileName, QString source)
     }
 }
 
-void FileCache::updateTexture(const QString &fileName, bool flippedVertically,
-    TextureData texture)
+void FileCache::updateTexture(const QString &fileName, TextureData texture)
 {
     Q_ASSERT(!texture.isNull());
     Q_ASSERT(isNativeCanonicalFilePath(fileName));
@@ -366,6 +363,7 @@ void FileCache::updateTexture(const QString &fileName, bool flippedVertically,
         editor->replace(std::move(texture));
     } else {
         QMutexLocker lock(&mMutex);
+        const auto flippedVertically = texture.flippedVertically();
         mTextures[TextureKey(fileName, flippedVertically)] = std::move(texture);
         lock.unlock();
         Q_EMIT fileChanged(fileName);
@@ -377,6 +375,11 @@ void FileCache::updateVideoTexture(const QString &fileName,
 {
     Q_EMIT convertVideoFrame(fileName, flippedVertically, frame,
         QPrivateSignal());
+}
+
+void FileCache::updateVideoTexture(const QString &fileName, TextureData texture)
+{
+    handleTextureReloaded(fileName, std::move(texture));
 }
 
 void FileCache::updateBinary(const QString &fileName, QByteArray binary)
@@ -542,11 +545,13 @@ void FileCache::handleSourceReloaded(const QString &fileName, QString source)
 }
 
 void FileCache::handleTextureReloaded(const QString &fileName,
-    bool flipVertically, TextureData texture)
+    TextureData texture)
 {
     Q_ASSERT(onMainThread());
+    Q_ASSERT(!texture.isNull());
     QMutexLocker lock(&mMutex);
-    mTextures[TextureKey(fileName, flipVertically)] = texture;
+    const auto flippedVertically = texture.flippedVertically();
+    mTextures[TextureKey(fileName, flippedVertically)] = std::move(texture);
     lock.unlock();
 
     if (auto editor = Singletons::editorManager().getEditor(fileName))

@@ -41,7 +41,7 @@ namespace {
         auto metaType = QMetaEnum::fromType<T>();
         if (auto key = metaType.key(static_cast<int>(value)))
             return splitPascalCase(key);
-        return {};
+        return { };
     }
 
     template <typename T>
@@ -202,7 +202,7 @@ void SynchronizeLogic::setEvaluationMode(EvaluationMode mode)
                 mRenderSession->usedItems());
     } else {
         mEvaluationTimer->stop();
-        Singletons::sessionModel().setActiveItems({});
+        Singletons::sessionModel().setActiveItems({ });
     }
 }
 
@@ -482,8 +482,11 @@ void SynchronizeLogic::handleEvaluated()
     if (mEvaluationMode != EvaluationMode::Paused && mRenderSession)
         Singletons::sessionModel().setActiveItems(mRenderSession->usedItems());
 
-    if (mEvaluationMode == EvaluationMode::Steady)
+    if (mEvaluationMode == EvaluationMode::Steady) {
         triggerEvaluation(EvaluationType::Steady);
+    } else {
+        Singletons::mediaManager().pause();
+    }
 }
 
 void SynchronizeLogic::updateEditors()

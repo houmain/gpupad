@@ -40,12 +40,12 @@ namespace {
             }
             if (column->padding) {
                 if (padding.empty())
-                    return {};
+                    return { };
                 padding.back() += column->padding;
             }
         }
         if (elementTypes.empty())
-            return {};
+            return { };
 
         auto bytes = QByteArray();
         if (auto array = qobject_cast<const LibraryScriptObject_Array *>(
@@ -164,7 +164,7 @@ namespace {
         if (!textureData.create(texture.target, texture.format,
                 texture.width.toInt(), texture.height.toInt(),
                 texture.depth.toInt(), texture.layers.toInt()))
-            return {};
+            return { };
 
         const auto components = getTextureComponentCount(texture.format);
         const auto count = (textureData.width() * textureData.height()
@@ -262,7 +262,7 @@ namespace {
                 write(static_cast<float>(value.toNumber()));
                 break;
 
-            default: return {};
+            default: return { };
             }
         }
         return textureData;
@@ -368,7 +368,7 @@ JsonObject AppScriptObject::toJsonObject(const QJSValue &value)
                 jsonObject[jsonKey(key)] = jsonFromVariant(item->value(key));
             return jsonObject;
         }
-        return {};
+        return { };
     }
     const auto json = jsonFromVariant(value.toVariant());
     const auto object = jsonObject(json);
@@ -523,7 +523,7 @@ QModelIndex AppScriptObject::getOriginIndex(QJSValue originIdent)
     const auto origin = findSessionItem(originIdent);
     if (!origin) {
         throwJsError("Invalid origin");
-        return {};
+        return { };
     }
     return session.getIndex(origin);
 }
@@ -544,7 +544,7 @@ const Item *AppScriptObject::findSessionItem(QJSValue itemIdent,
     }
 
     if (itemIdent.isCallable()) {
-        auto result = std::add_pointer_t<const Item>{};
+        auto result = std::add_pointer_t<const Item>{ };
         const auto callback = [&](const Item &item) {
             if (!result && item.type != Item::Type::Root)
                 if (callFunction(itemIdent, makeItemObject(item.id)).toBool())
@@ -873,7 +873,7 @@ QJSValue AppScriptObject::openEditor(QJSValue fileNameOrItemIdent)
             }
         });
     if (fileName->isEmpty())
-        return {};
+        return { };
     return openEditor(*fileName);
 }
 
@@ -944,7 +944,7 @@ void AppScriptObject::setTextureData(QJSValue itemIdent, QJSValue data)
     if (!texture)
         return throwJsError("Invalid Texture item");
 
-    const auto textureData = toTextureData(data, *texture);
+    auto textureData = toTextureData(data, *texture);
     if (textureData.isNull())
         return throwJsError("Invalid data");
 
@@ -952,9 +952,11 @@ void AppScriptObject::setTextureData(QJSValue itemIdent, QJSValue data)
                          fileName = QString()](SessionModel &session) mutable {
         if (auto texture = session.findItem<Texture>(textureId)) {
             ensureFileName(session, *texture, &fileName);
-            if (onMainThread())
+            if (onMainThread()) {
+                textureData.setFlippedVertically(texture->flipVertically);
                 Singletons::fileCache().updateTexture(texture->fileName,
-                    texture->flipVertically, textureData);
+                    textureData);
+            }
         }
     });
 }

@@ -4,6 +4,8 @@
 #include "Singletons.h"
 #include "VideoPlayer.h"
 #include "Camera.h"
+#include "AudioSpectrum.h"
+#include "FileDialog.h"
 
 MediaManager::MediaManager(QObject *parent) : QObject(parent) { }
 
@@ -23,8 +25,13 @@ void MediaManager::handleMediaRequested(const QString &fileName,
     bool flipVertically)
 {
     Q_ASSERT(onMainThread());
-    auto videoPlayer = new VideoPlayer(fileName, flipVertically);
-    connect(videoPlayer, &VideoPlayer::loadingFinished, this,
+    auto videoStream = std::add_pointer_t<VideoStream>{ };
+    if (FileDialog::isAudioFileName(fileName))
+        videoStream = new AudioSpectrum(fileName, flipVertically);
+    else
+        videoStream = new VideoPlayer(fileName, flipVertically);
+
+    connect(videoStream, &VideoStream::loadingFinished, this,
         &MediaManager::handleMediaLoaded);
 }
 
@@ -41,6 +48,12 @@ void MediaManager::handleMediaLoaded()
     }
 }
 
+void MediaManager::seekToTargetTime()
+{
+    for (const auto &[fileName, videoStream] : mVideoStreams)
+        videoStream->seek(mTargetTime);
+}
+
 void MediaManager::seek(double time)
 {
     Q_ASSERT(onMainThread());
@@ -49,16 +62,21 @@ void MediaManager::seek(double time)
             std::chrono::duration<double>(time));
     if (mTargetTime == targetTime)
         return;
-
-    for (const auto &[fileName, videoStream] : mVideoStreams)
-        videoStream->seek(targetTime);
     mTargetTime = targetTime;
+    seekToTargetTime();
 }
+
+void MediaManager::pause()
+{
+    seekToTargetTime();
+}
+
 
 #else // !defined(MULTIMEDIA_ENABLED)
 
 void MediaManager::unloadAll() { }
 void MediaManager::handleMediaRequested(const QString &, bool) { }
 void MediaManager::seek(double time) { }
+void MediaManager::pause() { }
 
 #endif // !defined(MULTIMEDIA_ENABLED)

@@ -228,8 +228,7 @@ JsonArray SessionModel::generateJsonFromUrls(QModelIndex target,
             addFileItem(item, url);
         } else if (canContainType(target, Item::Type::Texture)
             && (FileDialog::isTextureFileName(fileName)
-                || FileDialog::isVideoFileName(fileName)
-                || FileDialog::isSequenceFileName(fileName))) {
+                || FileDialog::isMediaFileName(fileName))) {
             auto item = Texture();
             item.type = Item::Type::Texture;
             addFileItem(item, url);
@@ -237,8 +236,7 @@ JsonArray SessionModel::generateJsonFromUrls(QModelIndex target,
             && !FileDialog::isShaderFileName(fileName)
             && !FileDialog::isScriptFileName(fileName)
             && !FileDialog::isTextureFileName(fileName)
-            && !FileDialog::isVideoFileName(fileName)
-            && !FileDialog::isSequenceFileName(fileName)) {
+            && !FileDialog::isMediaFileName(fileName)) {
             auto item = Buffer();
             item.type = Item::Type::Buffer;
             addFileItem(item, url);
