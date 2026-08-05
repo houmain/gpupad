@@ -13,11 +13,13 @@ public:
         Texture::Format format, VKRenderSession &renderSession);
     VKTexture(TextureData data, int samples);
     VKTexture(TextureData data, int samples, KDGpu::Texture texture);
+    bool operator==(const VKTexture &rhs) const;
 
     void release(KDGpu::Device &device);
     void boundAsSampler() { addUsage(KDGpu::TextureUsageFlagBits::SampledBit); }
     void boundAsImage() { addUsage(KDGpu::TextureUsageFlagBits::StorageBit); }
     void addUsage(KDGpu::TextureUsageFlags usage);
+    void prepareForSwap(VKTexture &texture);
 
     KDGpu::Texture &texture() { return mTexture; }
     KDGpu::TextureLayout currentLayout() const { return mCurrentLayout; }

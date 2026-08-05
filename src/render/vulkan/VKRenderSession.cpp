@@ -33,6 +33,21 @@ struct VKRenderSession::CommandQueue
     std::map<ItemId, VKAccelerationStructure> accelerationStructures;
     std::deque<Command> commands;
     std::vector<VKProgram> failedPrograms;
+    std::vector<std::pair<VKTexture *, VKTexture *>> textureSwaps;
+
+    void addTextureSwap(VKTexture *texture, VKTexture *fromTexture)
+    {
+        if (texture && fromTexture)
+            textureSwaps.emplace_back(texture, fromTexture);
+    }
+
+    void prepareTextureSwaps()
+    {
+        // Multiple passes propagate usage across connected swap chains.
+        for (auto i = size_t{}; i < textureSwaps.size(); ++i)
+            for (const auto &[texture, fromTexture] : textureSwaps)
+                texture->prepareForSwap(*fromTexture);
+    }
 };
 
 VKRenderSession::VKRenderSession(RendererPtr renderer)

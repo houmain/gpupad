@@ -281,7 +281,10 @@ void GLCall::executeDraw(GLContext &gl, MessagePtrSet &messages,
 
     selectSubroutines(gl);
 
-    mTarget->bind(gl);
+    if (!mTarget->bind(gl)) {
+        unbindVertexStream(gl);
+        return;
+    }
 
     if (mIndexBuffer)
         mIndexBuffer->bindReadOnly(gl, GL_ELEMENT_ARRAY_BUFFER);

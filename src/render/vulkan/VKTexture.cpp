@@ -38,14 +38,29 @@ VKTexture::VKTexture(TextureData data, int samples, KDGpu::Texture texture)
     mSystemCopyModified = mDeviceCopyModified = false;
 }
 
+bool VKTexture::operator==(const VKTexture &rhs) const
+{
+    return TextureBase::operator==(rhs) && mUsage == rhs.mUsage;
+}
+
 void VKTexture::addUsage(KDGpu::TextureUsageFlags usage)
 {
+    if ((mUsage & usage) == usage)
+        return;
+
     // TODO: not ideal to update usage of already created texture
-    if (mTexture.isValid() && (mUsage & usage) != usage) {
+    if (mTexture.isValid()) {
         Q_ASSERT(!"unreachable");
         mTexture = {};
     }
     mUsage |= usage;
+}
+
+void VKTexture::prepareForSwap(VKTexture &texture)
+{
+    const auto usage = mUsage | texture.mUsage;
+    addUsage(usage);
+    texture.addUsage(usage);
 }
 
 KDGpu::TextureView &VKTexture::getView(int level, int layer,

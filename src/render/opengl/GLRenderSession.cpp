@@ -25,6 +25,9 @@ struct GLRenderSession::CommandQueue
     std::map<ItemId, GLAccelerationStructure> accelerationStructures;
     std::deque<Command> commands;
     std::vector<GLProgram> failedPrograms;
+
+    void addTextureSwap(GLTexture *, GLTexture *) { }
+    void prepareTextureSwaps() { }
 };
 
 GLRenderSession::GLRenderSession(RendererPtr renderer)

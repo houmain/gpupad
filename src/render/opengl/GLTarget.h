@@ -17,9 +17,12 @@ private:
     {
         GLTexture *texture{};
         GLenum attachmentPoint{};
+        GLuint attachedTextureId{};
     };
 
     bool create(GLContext &gl);
+    bool updateAttachments(GLContext &gl, bool validate = false);
+    bool checkFramebufferStatus(GLContext &gl);
     void applyStates(GLContext &gl);
     void applyAttachmentStates(GLContext &gl, const GLAttachment &attachment);
 

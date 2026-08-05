@@ -291,10 +291,17 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
 
                 case Call::CallType::ClearTexture:
                 case Call::CallType::CopyTexture:
-                case Call::CallType::SwapTextures:
                     queueCall.setTextures(addTextureOnce(call->textureId),
                         addTextureOnce(call->fromTextureId));
                     break;
+
+                case Call::CallType::SwapTextures: {
+                    auto texture = addTextureOnce(call->textureId);
+                    auto fromTexture = addTextureOnce(call->fromTextureId);
+                    queueCall.setTextures(texture, fromTexture);
+                    commandQueue.addTextureSwap(texture, fromTexture);
+                    break;
+                }
 
                 case Call::CallType::ClearBuffer:
                 case Call::CallType::CopyBuffer:
@@ -372,6 +379,7 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
                 }
         }
     });
+    commandQueue.prepareTextureSwaps();
 }
 
 template <typename CommandQueue>

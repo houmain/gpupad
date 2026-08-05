@@ -25,6 +25,9 @@ struct D3DRenderSession::CommandQueue
     std::map<ItemId, D3DAccelerationStructure> accelerationStructures;
     std::deque<Command> commands;
     std::vector<D3DProgram> failedPrograms;
+
+    void addTextureSwap(D3DTexture *, D3DTexture *) { }
+    void prepareTextureSwaps() { }
 };
 
 D3DRenderSession::D3DRenderSession(RendererPtr renderer)
