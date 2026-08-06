@@ -1,0 +1,552 @@
+{
+  "type": "Session",
+  "id": 138,
+  "name": "Session",
+  "renderer": "OpenGL",
+  "shaderLanguage": "GLSL",
+  "shaderCompiler": "Driver",
+  "shaderCompilerSettings": {},
+  "shaderPreamble": "",
+  "shaderIncludePaths": "",
+  "items": [
+    {
+      "type": "Texture",
+      "id": 93,
+      "name": "Color",
+      "target": "Target2D",
+      "format": "RGBA8_UNorm",
+      "width": "1024",
+      "height": "1024",
+      "samples": 4,
+      "flipVertically": false
+    },
+    {
+      "type": "Script",
+      "id": 103,
+      "fileName": "math.js",
+      "executeOn": "ManualEvaluation"
+    },
+    {
+      "type": "Binding",
+      "id": 77,
+      "name": "uModel",
+      "bindingType": "Uniform",
+      "editor": "Expression",
+      "values": [
+        "modelMatrix(app.time)"
+      ]
+    },
+    {
+      "type": "Binding",
+      "id": 78,
+      "name": "uView",
+      "bindingType": "Uniform",
+      "editor": "Expression",
+      "values": [
+        "translation(0, 0, -3.5)"
+      ]
+    },
+    {
+      "type": "Binding",
+      "id": 79,
+      "name": "uProjection",
+      "bindingType": "Uniform",
+      "editor": "Expression",
+      "values": [
+        "perspective(45, 1.0, 1, 100)"
+      ]
+    },
+    {
+      "type": "Binding",
+      "id": 123,
+      "name": "uLightProjection",
+      "bindingType": "Uniform",
+      "editor": "Expression",
+      "values": [
+        "ortho(-2,2,-2,2,-1,7)"
+      ]
+    },
+    {
+      "type": "Binding",
+      "id": 124,
+      "name": "uLightView",
+      "bindingType": "Uniform",
+      "editor": "Expression",
+      "values": [
+        "lookat(\n  [3 * app.mouse.coord[0], 3 * app.mouse.coord[1], 1],\n  [0, 0, 0],\n  [0, 1, 0]\n)"
+      ]
+    },
+    {
+      "type": "Group",
+      "id": 862,
+      "name": "DamagedHelmet",
+      "inlineScope": true,
+      "iterations": "1",
+      "items": [
+        {
+          "type": "Texture",
+          "id": 1,
+          "fileName": "../gltf Viewer/DamagedHelmet/Default_emissive.jpg",
+          "target": "Target2D",
+          "format": "RGBA8_UNorm",
+          "width": "1024",
+          "height": "1024",
+          "samples": 1,
+          "flipVertically": false
+        },
+        {
+          "type": "Texture",
+          "id": 897,
+          "fileName": "../gltf Viewer/DamagedHelmet/Default_normal.jpg",
+          "target": "Target2D",
+          "format": "RGBA8_UNorm",
+          "width": "1024",
+          "height": "1024",
+          "samples": 1,
+          "flipVertically": false
+        },
+        {
+          "type": "Texture",
+          "id": 865,
+          "fileName": "../gltf Viewer/DamagedHelmet/Default_AO.jpg",
+          "target": "Target2D",
+          "format": "R8_UNorm",
+          "width": "1024",
+          "height": "1024",
+          "samples": 1,
+          "flipVertically": false
+        },
+        {
+          "type": "Texture",
+          "id": 867,
+          "fileName": "../gltf Viewer/DamagedHelmet/Default_albedo.jpg",
+          "target": "Target2D",
+          "format": "RGBA8_UNorm",
+          "width": "1024",
+          "height": "1024",
+          "samples": 1,
+          "flipVertically": false
+        },
+        {
+          "type": "Texture",
+          "id": 869,
+          "fileName": "../gltf Viewer/DamagedHelmet/Default_metalRoughness.jpg",
+          "target": "Target2D",
+          "format": "RGBA8_UNorm",
+          "width": "512",
+          "height": "512",
+          "samples": 1,
+          "flipVertically": false
+        },
+        {
+          "type": "Buffer",
+          "id": 871,
+          "fileName": "../gltf Viewer/DamagedHelmet/DamagedHelmet.bin",
+          "items": [
+            {
+              "type": "Block",
+              "id": 889,
+              "name": "Indices",
+              "offset": "0",
+              "rowCount": "46356",
+              "items": [
+                {
+                  "type": "Field",
+                  "id": 882,
+                  "name": "INDEX",
+                  "dataType": "Uint16",
+                  "count": 1,
+                  "padding": 0
+                }
+              ]
+            },
+            {
+              "type": "Block",
+              "id": 887,
+              "name": "Position",
+              "offset": "92712",
+              "rowCount": "14556",
+              "items": [
+                {
+                  "type": "Field",
+                  "id": 874,
+                  "name": "POSITION",
+                  "dataType": "Float",
+                  "count": 3,
+                  "padding": 0
+                }
+              ]
+            },
+            {
+              "type": "Block",
+              "id": 885,
+              "name": "Normal",
+              "offset": "267384",
+              "rowCount": "14556",
+              "items": [
+                {
+                  "type": "Field",
+                  "id": 872,
+                  "name": "NORMAL",
+                  "dataType": "Float",
+                  "count": 3,
+                  "padding": 0
+                }
+              ]
+            },
+            {
+              "type": "Block",
+              "id": 888,
+              "name": "TexCoord",
+              "offset": "442056",
+              "rowCount": "14556",
+              "items": [
+                {
+                  "type": "Field",
+                  "id": 876,
+                  "name": "TEXCOORD_0",
+                  "dataType": "Float",
+                  "count": 2,
+                  "padding": 0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Stream",
+          "id": 877,
+          "name": "Stream",
+          "items": [
+            {
+              "type": "Attribute",
+              "id": 879,
+              "name": "aPosition",
+              "fieldId": 874,
+              "normalize": false,
+              "divisor": 0
+            },
+            {
+              "type": "Attribute",
+              "id": 878,
+              "name": "aNormal",
+              "fieldId": 872,
+              "normalize": false,
+              "divisor": 0
+            },
+            {
+              "type": "Attribute",
+              "id": 880,
+              "name": "aTexCoords",
+              "fieldId": 876,
+              "normalize": false,
+              "divisor": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Group",
+      "id": 109,
+      "name": "Shadowmap",
+      "inlineScope": true,
+      "iterations": "1",
+      "items": [
+        {
+          "type": "Texture",
+          "id": 98,
+          "name": "ShadowmapDepth",
+          "target": "Target2D",
+          "format": "D32",
+          "width": "1024",
+          "height": "1024",
+          "samples": 1,
+          "flipVertically": false
+        },
+        {
+          "type": "Target",
+          "id": 105,
+          "name": "ShadowmapTarget",
+          "frontFace": "CCW",
+          "cullMode": "NoCulling",
+          "polygonMode": "Fill",
+          "logicOperation": "NoLogicOperation",
+          "blendConstant": "#ff000000",
+          "items": [
+            {
+              "type": "Attachment",
+              "id": 107,
+              "name": "Depth",
+              "textureId": 98,
+              "level": 0,
+              "depthComparisonFunc": "Less",
+              "depthOffsetSlope": 0.0,
+              "depthOffsetConstant": 0.0,
+              "depthClamp": false,
+              "depthWrite": true
+            }
+          ]
+        },
+        {
+          "type": "Program",
+          "id": 88,
+          "name": "Shadow",
+          "items": [
+            {
+              "type": "Shader",
+              "id": 118,
+              "fileName": "shadowmap.vs",
+              "shaderType": "Vertex"
+            },
+            {
+              "type": "Shader",
+              "id": 119,
+              "fileName": "shadowmap.fs",
+              "shaderType": "Fragment"
+            }
+          ]
+        },
+        {
+          "type": "Call",
+          "id": 121,
+          "name": "Clear Depth",
+          "checked": true,
+          "callType": "ClearTexture",
+          "textureId": 98,
+          "clearColor": "#ff000000",
+          "clearDepth": 1.0,
+          "clearStencil": 0,
+          "executeOn": "EveryEvaluation"
+        },
+        {
+          "type": "Call",
+          "id": 114,
+          "name": "Draw Indexed",
+          "checked": true,
+          "callType": "DrawIndexed",
+          "programId": 88,
+          "targetId": 105,
+          "vertexStreamId": 877,
+          "primitiveType": "Triangles",
+          "count": "46356",
+          "first": "0",
+          "indexBufferBlockId": 889,
+          "baseVertex": "0",
+          "instanceCount": "1",
+          "baseInstance": "0",
+          "executeOn": "EveryEvaluation"
+        }
+      ]
+    },
+    {
+      "type": "Group",
+      "id": 110,
+      "name": "Render",
+      "inlineScope": false,
+      "iterations": "1",
+      "items": [
+        {
+          "type": "Texture",
+          "id": 108,
+          "name": "Depth",
+          "target": "Target2D",
+          "format": "D16",
+          "width": "1024",
+          "height": "1024",
+          "samples": 4,
+          "flipVertically": false
+        },
+        {
+          "type": "Target",
+          "id": 100,
+          "name": "Target",
+          "frontFace": "CCW",
+          "cullMode": "Back",
+          "polygonMode": "Fill",
+          "logicOperation": "NoLogicOperation",
+          "blendConstant": "#ff000000",
+          "items": [
+            {
+              "type": "Attachment",
+              "id": 101,
+              "name": "Color",
+              "textureId": 93,
+              "level": 0,
+              "blendColorEq": "Add",
+              "blendColorSource": "One",
+              "blendColorDest": "Zero",
+              "blendAlphaEq": "Add",
+              "blendAlphaSource": "One",
+              "blendAlphaDest": "Zero",
+              "colorWriteMask": 15
+            },
+            {
+              "type": "Attachment",
+              "id": 102,
+              "name": "Depth",
+              "textureId": 108,
+              "level": 0,
+              "depthComparisonFunc": "Less",
+              "depthOffsetSlope": 0.0,
+              "depthOffsetConstant": 0.0,
+              "depthClamp": false,
+              "depthWrite": true
+            }
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 99,
+          "name": "uAlbedo",
+          "bindingType": "Sampler",
+          "textureId": 867,
+          "minFilter": "LinearMipMapLinear",
+          "magFilter": "Linear",
+          "anisotropic": false,
+          "wrapModeX": "Repeat",
+          "wrapModeY": "Repeat",
+          "wrapModeZ": "Repeat",
+          "borderColor": "#ff000000",
+          "comparisonFunc": "NoComparisonFunc"
+        },
+        {
+          "type": "Binding",
+          "id": 898,
+          "name": "uNormal",
+          "bindingType": "Sampler",
+          "textureId": 897,
+          "minFilter": "LinearMipMapLinear",
+          "magFilter": "Linear",
+          "anisotropic": false,
+          "wrapModeX": "Repeat",
+          "wrapModeY": "Repeat",
+          "wrapModeZ": "Repeat",
+          "borderColor": "#ff000000",
+          "comparisonFunc": "NoComparisonFunc"
+        },
+        {
+          "type": "Binding",
+          "id": 900,
+          "name": "uAmbientOcclusion",
+          "bindingType": "Sampler",
+          "textureId": 865,
+          "minFilter": "LinearMipMapLinear",
+          "magFilter": "Linear",
+          "anisotropic": false,
+          "wrapModeX": "Repeat",
+          "wrapModeY": "Repeat",
+          "wrapModeZ": "Repeat",
+          "borderColor": "#ff000000",
+          "comparisonFunc": "NoComparisonFunc"
+        },
+        {
+          "type": "Binding",
+          "id": 901,
+          "name": "uMetalRoughness",
+          "bindingType": "Sampler",
+          "textureId": 869,
+          "minFilter": "LinearMipMapLinear",
+          "magFilter": "Linear",
+          "anisotropic": false,
+          "wrapModeX": "Repeat",
+          "wrapModeY": "Repeat",
+          "wrapModeZ": "Repeat",
+          "borderColor": "#ff000000",
+          "comparisonFunc": "NoComparisonFunc"
+        },
+        {
+          "type": "Binding",
+          "id": 899,
+          "name": "uEmissive",
+          "bindingType": "Sampler",
+          "textureId": 1,
+          "minFilter": "LinearMipMapLinear",
+          "magFilter": "Linear",
+          "anisotropic": false,
+          "wrapModeX": "Repeat",
+          "wrapModeY": "Repeat",
+          "wrapModeZ": "Repeat",
+          "borderColor": "#ff000000",
+          "comparisonFunc": "NoComparisonFunc"
+        },
+        {
+          "type": "Binding",
+          "id": 122,
+          "name": "uShadowMap",
+          "bindingType": "Sampler",
+          "textureId": 98,
+          "minFilter": "LinearMipMapLinear",
+          "magFilter": "Linear",
+          "anisotropic": false,
+          "wrapModeX": "ClampToEdge",
+          "wrapModeY": "ClampToEdge",
+          "wrapModeZ": "Repeat",
+          "borderColor": "#ff000000",
+          "comparisonFunc": "LessEqual"
+        },
+        {
+          "type": "Program",
+          "id": 111,
+          "name": "Program",
+          "items": [
+            {
+              "type": "Shader",
+              "id": 112,
+              "fileName": "render.vs",
+              "shaderType": "Vertex"
+            },
+            {
+              "type": "Shader",
+              "id": 113,
+              "fileName": "render.fs",
+              "shaderType": "Fragment"
+            }
+          ]
+        },
+        {
+          "type": "Call",
+          "id": 97,
+          "name": "Clear Color",
+          "checked": true,
+          "callType": "ClearTexture",
+          "textureId": 93,
+          "clearColor": "#ff464757",
+          "clearDepth": 1.0,
+          "clearStencil": 0,
+          "executeOn": "EveryEvaluation"
+        },
+        {
+          "type": "Call",
+          "id": 91,
+          "name": "Clear Depth",
+          "checked": true,
+          "callType": "ClearTexture",
+          "textureId": 108,
+          "clearColor": "#ff000000",
+          "clearDepth": 1.0,
+          "clearStencil": 0,
+          "executeOn": "EveryEvaluation"
+        },
+        {
+          "type": "Call",
+          "id": 92,
+          "name": "Draw Indexed",
+          "checked": true,
+          "callType": "DrawIndexed",
+          "programId": 111,
+          "targetId": 100,
+          "vertexStreamId": 877,
+          "primitiveType": "Triangles",
+          "count": "46356",
+          "first": "0",
+          "indexBufferBlockId": 889,
+          "baseVertex": "0",
+          "instanceCount": "1",
+          "baseInstance": "0",
+          "executeOn": "EveryEvaluation"
+        }
+      ]
+    }
+  ]
+}
