@@ -39,12 +39,13 @@ mat3 cotangentFrame(vec3 normal, vec3 position, vec2 texCoords) {
   vec3 positionDy = dFdy(position);
   vec2 texCoordsDx = dFdx(texCoords);
   vec2 texCoordsDy = dFdy(texCoords);
-  vec3 tangent = cross(positionDy, normal) * texCoordsDx.x
-    + cross(normal, positionDx) * texCoordsDy.x;
-  vec3 bitangent = cross(positionDy, normal) * texCoordsDx.y
-    + cross(normal, positionDx) * texCoordsDy.y;
-  float scale = inversesqrt(max(max(dot(tangent, tangent), dot(bitangent, bitangent)), 1e-8));
-  return mat3(tangent * scale, bitangent * scale, normal);
+  float determinant = texCoordsDx.x * texCoordsDy.y - texCoordsDy.x * texCoordsDx.y;
+  if (abs(determinant) < 1e-8)
+    return mat3(vec3(0), vec3(0), normal);
+  vec3 tangent = (texCoordsDy.y * positionDx - texCoordsDx.y * positionDy) / determinant;
+  tangent = normalize(tangent - normal * dot(normal, tangent));
+  vec3 bitangent = normalize(cross(normal, tangent));
+  return mat3(tangent, bitangent, normal);
 }
 
 void main() {

@@ -25,6 +25,7 @@ public:
     static bool isSequenceFileName(const QString &fileName);
     static bool isVideoFileName(const QString &fileName);
     static bool isAudioFileName(const QString &fileName);
+    static bool isCameraFileName(const QString &fileName);
     static bool isMediaFileName(const QString &fileName);
 
     enum OptionBit {

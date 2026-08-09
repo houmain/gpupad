@@ -22,12 +22,18 @@ namespace {
         "tga", "bmp", "jpeg", "jpg", "pbm", "pgm", "tif", "tiff", "raw" };
     const auto AudioFileExtensions = {
 #if defined(MULTIMEDIA_ENABLED)
-        "wav", "mp3", "flac", "aac", "aif", "aiff", "m4a", "ogg", "oga", "opus", "wma"
+        "wav", "mp3", "flac", "aac", "aif", "aiff", "m4a", "ogg", "oga", "opus",
+        "wma"
 #endif
     };
     const auto VideoFileExtensions = {
 #if defined(MULTIMEDIA_ENABLED)
         "mp4", "webm", "mkv", "ogv", "mpg", "wmv", "mov", "avi"
+#endif
+    };
+    const auto CameraFileExtensions = {
+#if defined(MULTIMEDIA_ENABLED)
+        "camera"
 #endif
     };
 
@@ -163,7 +169,6 @@ bool FileDialog::isVideoFileName(const QString &fileName)
     for (const auto &ext : VideoFileExtensions)
         if (ext == extension)
             return true;
-
     return false;
 }
 
@@ -173,7 +178,15 @@ bool FileDialog::isAudioFileName(const QString &fileName)
     for (const auto &ext : AudioFileExtensions)
         if (ext == extension)
             return true;
+    return false;
+}
 
+bool FileDialog::isCameraFileName(const QString &fileName)
+{
+    const auto extension = getFileExtension(fileName);
+    for (const auto &ext : CameraFileExtensions)
+        if (ext == extension)
+            return true;
     return false;
 }
 
@@ -186,7 +199,7 @@ bool FileDialog::isSequenceFileName(const QString &fileName)
 bool FileDialog::isMediaFileName(const QString &fileName)
 {
     return isVideoFileName(fileName) || isSequenceFileName(fileName)
-        || isAudioFileName(fileName);
+        || isAudioFileName(fileName) || isCameraFileName(fileName);
 }
 
 //-------------------------------------------------------------------------
@@ -256,6 +269,11 @@ bool FileDialog::exec(Options options, QString currentFileName,
         for (auto format : AudioFileExtensions)
             audioFileFilter = audioFileFilter + " *." + QString(format);
 
+    auto cameraFileFilter = QString();
+    if (CameraFileExtensions.size())
+        for (auto format : CameraFileExtensions)
+            cameraFileFilter = cameraFileFilter + " *." + QString(format);
+
     auto scriptFileFilter = QString();
     for (const auto &ext : ScriptFileExtensions)
         scriptFileFilter = scriptFileFilter + " *." + ext;
@@ -275,6 +293,8 @@ bool FileDialog::exec(Options options, QString currentFileName,
         filters.append(tr("Video files") + " (" + videoFileFilter + ")");
     if ((options & TextureExtensions) && !audioFileFilter.isEmpty())
         filters.append(tr("Audio files") + " (" + audioFileFilter + ")");
+    if ((options & TextureExtensions) && !cameraFileFilter.isEmpty())
+        filters.append(tr("Camera files") + " (" + cameraFileFilter + ")");
     if (options & ScriptExtensions)
         filters.append(tr("Script files") + " (" + scriptFileFilter + ")");
     const auto binaryFileFilter = QString(tr("Binary files") + " (*)");

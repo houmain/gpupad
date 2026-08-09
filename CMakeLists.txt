@@ -44,6 +44,7 @@ set(SOURCES
   src/SynchronizeLogic.cpp
   src/TextureData.cpp
   src/TextureData_DDS.cpp
+  src/media/Camera.cpp
   src/media/MediaManager.cpp
   src/media/AudioSpectrum.cpp
   src/media/VideoStream.cpp

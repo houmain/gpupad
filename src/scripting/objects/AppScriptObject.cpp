@@ -7,6 +7,7 @@
 #include "../ScriptEngine.h"
 #include "../ScriptTimeout.h"
 #include "../CustomActions.h"
+#include "../../media/Camera.h"
 #include "SynchronizeLogic.h"
 #include "Singletons.h"
 #include "FileCache.h"
@@ -86,7 +87,8 @@ QJSEngine &AppScriptObject::jsEngine()
     return *mJsEngine;
 }
 
-void AppScriptObject::throwJsError(const QString &error) {
+void AppScriptObject::throwJsError(const QString &error)
+{
     jsEngine().throwError(error);
 }
 
@@ -114,7 +116,7 @@ void AppScriptObject::dispatchToMainThread(
         function();
         return;
     }
-    auto done = std::atomic<bool>{};
+    auto done = std::atomic<bool>{ };
     QMetaObject::invokeMethod(
         mMainThreadObject,
         [&]() {
@@ -332,7 +334,7 @@ QJSValue AppScriptObject::loadLibrary(QString fileName)
         }
     }
     throwJsError("Loading library '" + fileName + "' failed");
-    return {};
+    return { };
 }
 
 void AppScriptObject::evaluateScript(QString fileName)
@@ -344,7 +346,8 @@ void AppScriptObject::evaluateScript(QString fileName)
 
     if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
         if (onMainThread())
-            Singletons::editorManager().openQmlView(fileName, mEnginePtr.lock());
+            Singletons::editorManager().openQmlView(fileName,
+                mEnginePtr.lock());
     } else {
         engine().evaluateScript(source, fileName);
     }
@@ -352,7 +355,7 @@ void AppScriptObject::evaluateScript(QString fileName)
 
 QJSValue AppScriptObject::callAction(QString id, QJSValue arguments)
 {
-    auto& engine = this->engine();
+    auto &engine = this->engine();
     engine.setGlobal("arguments", arguments);
 
     auto &customActions = Singletons::customActions();
@@ -374,7 +377,7 @@ QJSValue AppScriptObject::callAction(QString id)
 
 QJSValue AppScriptObject::openFileDialog(QString pattern)
 {
-    return openFileDialog(pattern, FileDialog::Options{});
+    return openFileDialog(pattern, FileDialog::Options{ });
 }
 
 QJSValue AppScriptObject::saveFileDialog(QString pattern)
@@ -393,7 +396,7 @@ QJSValue AppScriptObject::openFileDialog(QString pattern,
     });
     if (!result.isEmpty())
         return result;
-    return {};
+    return { };
 }
 
 QJSValue AppScriptObject::enumerate(QString pattern, bool directories)
@@ -463,10 +466,19 @@ QJSValue AppScriptObject::writeBinaryFile(QString fileName, QByteArray binary)
 QJSValue AppScriptObject::readTextFile(QString fileName)
 {
     if (fileName.isEmpty())
-        return {};
+        return { };
 
-    auto source = QString{};
+    auto source = QString{ };
     if (!Singletons::fileCache().getSource(getAbsolutePath(fileName), &source))
         return QJSValue::UndefinedValue;
     return source;
+}
+
+QJSValue AppScriptObject::enumerateCameras()
+{
+#if defined(MULTIMEDIA_ENABLED)
+    return engine().toJsValue(::enumerateCameras());
+#else
+    return { };
+#endif
 }

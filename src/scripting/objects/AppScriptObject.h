@@ -71,6 +71,7 @@ public:
     Q_INVOKABLE QJSValue writeTextFile(QString fileName, QString string);
     Q_INVOKABLE QJSValue writeBinaryFile(QString fileName, QByteArray binary);
     Q_INVOKABLE QJSValue readTextFile(QString fileName);
+    Q_INVOKABLE QJSValue enumerateCameras();
 
     // session
     Q_INVOKABLE void clearSession();

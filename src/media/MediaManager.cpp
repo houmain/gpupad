@@ -26,11 +26,13 @@ void MediaManager::handleMediaRequested(const QString &fileName,
 {
     Q_ASSERT(onMainThread());
     auto videoStream = std::add_pointer_t<VideoStream>{ };
-    if (FileDialog::isAudioFileName(fileName))
+    if (FileDialog::isAudioFileName(fileName)) {
         videoStream = new AudioSpectrum(fileName, flipVertically);
-    else
+    } else if (FileDialog::isCameraFileName(fileName)) {
+        videoStream = new Camera(fileName, flipVertically);
+    } else {
         videoStream = new VideoPlayer(fileName, flipVertically);
-
+    }
     connect(videoStream, &VideoStream::loadingFinished, this,
         &MediaManager::handleMediaLoaded);
 }
@@ -70,7 +72,6 @@ void MediaManager::pause()
 {
     seekToTargetTime();
 }
-
 
 #else // !defined(MULTIMEDIA_ENABLED)
 

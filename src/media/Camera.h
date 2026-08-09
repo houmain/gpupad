@@ -3,10 +3,13 @@
 #if defined(MULTIMEDIA_ENABLED)
 
 #  include "VideoStream.h"
+#  include <QJsonArray>
 
 class QMediaCaptureSession;
 class QCamera;
 class QVideoSink;
+
+QJsonArray enumerateCameras();
 
 class Camera final : public VideoStream
 {

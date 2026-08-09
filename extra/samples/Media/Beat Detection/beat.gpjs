@@ -240,101 +240,11 @@
         {
           "type": "Binding",
           "id": 90,
-          "name": "uBandGainDecibels[0]",
+          "name": "uBandGainDecibels",
           "bindingType": "Uniform",
           "editor": "Expression",
           "values": [
-            "0"
-          ]
-        },
-        {
-          "type": "Binding",
-          "id": 91,
-          "name": "uBandGainDecibels[1]",
-          "bindingType": "Uniform",
-          "editor": "Expression",
-          "values": [
-            "0"
-          ]
-        },
-        {
-          "type": "Binding",
-          "id": 92,
-          "name": "uBandGainDecibels[2]",
-          "bindingType": "Uniform",
-          "editor": "Expression",
-          "values": [
-            "0"
-          ]
-        },
-        {
-          "type": "Binding",
-          "id": 93,
-          "name": "uBandGainDecibels[3]",
-          "bindingType": "Uniform",
-          "editor": "Expression",
-          "values": [
-            "0"
-          ]
-        },
-        {
-          "type": "Binding",
-          "id": 94,
-          "name": "uBandGainDecibels[4]",
-          "bindingType": "Uniform",
-          "editor": "Expression",
-          "values": [
-            "3"
-          ]
-        },
-        {
-          "type": "Binding",
-          "id": 95,
-          "name": "uBandGainDecibels[5]",
-          "bindingType": "Uniform",
-          "editor": "Expression",
-          "values": [
-            "6"
-          ]
-        },
-        {
-          "type": "Binding",
-          "id": 96,
-          "name": "uBandGainDecibels[6]",
-          "bindingType": "Uniform",
-          "editor": "Expression",
-          "values": [
-            "6"
-          ]
-        },
-        {
-          "type": "Binding",
-          "id": 97,
-          "name": "uBandGainDecibels[7]",
-          "bindingType": "Uniform",
-          "editor": "Expression",
-          "values": [
-            "10"
-          ]
-        },
-        {
-          "type": "Binding",
-          "id": 98,
-          "name": "uBandGainDecibels[8]",
-          "bindingType": "Uniform",
-          "editor": "Expression",
-          "values": [
-            "10"
-          ]
-        },
-        {
-          "type": "Binding",
-          "id": 99,
-          "name": "uBandGainDecibels[9]",
-          "bindingType": "Uniform",
-          "editor": "Expression",
-          "values": [
-            "10"
+            "[0,0,0,0,3,3,6,6,10,10,10]"
           ]
         },
         {
