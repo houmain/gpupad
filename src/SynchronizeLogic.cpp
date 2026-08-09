@@ -622,14 +622,14 @@ void SynchronizeLogic::handleMouseStateChanged()
 {
     if (mRenderSession && mRenderSession->usesMouseState())
         if (mEvaluationMode == EvaluationMode::Automatic)
-            triggerEvaluation(EvaluationType::Steady);
+            triggerEvaluation(EvaluationType::Automatic);
 }
 
 void SynchronizeLogic::handleKeyboardStateChanged()
 {
     if (mRenderSession && mRenderSession->usesKeyboardState())
         if (mEvaluationMode == EvaluationMode::Automatic)
-            triggerEvaluation(EvaluationType::Steady);
+            triggerEvaluation(EvaluationType::Automatic);
 }
 
 void SynchronizeLogic::handleViewportSizeChanged(const QString &fileName)

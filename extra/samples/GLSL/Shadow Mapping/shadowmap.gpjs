@@ -33,7 +33,7 @@
       "bindingType": "Uniform",
       "editor": "Expression",
       "values": [
-        "modelMatrix(app.time)"
+        "modelMatrix(app.time + 2.0)"
       ]
     },
     {
