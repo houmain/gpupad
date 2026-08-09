@@ -5,6 +5,7 @@
 #include "editors/source/SourceEditor.h"
 #include "editors/texture/TextureEditor.h"
 #include "session/SessionModel.h"
+#include "media/MediaManager.h"
 #include <QTextStream>
 #include <QThread>
 
@@ -528,6 +529,7 @@ void FileCache::purgeFile(const QString &fileName)
     mBinaries.remove(fileName);
     mTextures.remove(TextureKey(fileName, true));
     mTextures.remove(TextureKey(fileName, false));
+    Singletons::mediaManager().unloadFile(fileName);
 }
 
 void FileCache::handleSourceReloaded(const QString &fileName, QString source)

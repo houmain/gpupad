@@ -17,6 +17,8 @@ public:
     ~MediaManager();
 
     void unloadAll();
+    void unloadFile(const QString &fileName);
+    void unloadFiles(std::function<bool(const QString &)> predicate);
     void seek(double time);
     void pause();
     void handleMediaRequested(const QString &fileName, bool flipVertically);

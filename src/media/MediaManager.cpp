@@ -16,9 +16,23 @@ MediaManager::~MediaManager() = default;
 void MediaManager::unloadAll()
 {
     Q_ASSERT(onMainThread());
-    for (const auto &[fileName, videoPlayer] : mVideoStreams)
-        Singletons::fileCache().invalidateFile(fileName);
     mVideoStreams.clear();
+}
+
+void MediaManager::unloadFile(const QString &fileName)
+{
+    Q_ASSERT(onMainThread());
+    mVideoStreams.erase(fileName);
+}
+
+void MediaManager::unloadFiles(std::function<bool(const QString &)> predicate)
+{
+    for (auto it = mVideoStreams.begin(); it != mVideoStreams.end();)
+        if (predicate(it->first)) {
+            it = mVideoStreams.erase(it);
+        } else {
+            ++it;
+        }
 }
 
 void MediaManager::handleMediaRequested(const QString &fileName,
@@ -70,12 +84,17 @@ void MediaManager::seek(double time)
 
 void MediaManager::pause()
 {
+    Q_ASSERT(onMainThread());
     seekToTargetTime();
 }
 
 #else // !defined(MULTIMEDIA_ENABLED)
 
 void MediaManager::unloadAll() { }
+void MediaManager::unloadFile(const QString &fileName) { }
+void MediaManager::unloadFiles(std::function<bool(const QString &)> predicate)
+{
+}
 void MediaManager::handleMediaRequested(const QString &, bool) { }
 void MediaManager::seek(double time) { }
 void MediaManager::pause() { }

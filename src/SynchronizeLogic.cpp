@@ -468,6 +468,11 @@ void SynchronizeLogic::handlePreparingEvaluation(bool &itemsChanged,
     evaluationType = mEvaluationType;
 
     Singletons::inputState().update(mEvaluationType);
+    if (itemsChanged)
+        Singletons::mediaManager().unloadFiles([](const QString &fileName) {
+            return (!Singletons::editorManager().getTextureEditor(fileName)
+                && !Singletons::sessionModel().findFileItem(fileName));
+        });
     Singletons::mediaManager().seek(Singletons::inputState().time());
 
     mEvaluationType = EvaluationType::Steady;

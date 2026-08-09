@@ -234,7 +234,7 @@
           "bindingType": "Uniform",
           "editor": "Expression",
           "values": [
-            "8"
+            "4"
           ]
         },
         {
@@ -244,7 +244,7 @@
           "bindingType": "Uniform",
           "editor": "Expression",
           "values": [
-            "[0,0,0,0,3,3,6,6,10,10,10]"
+            "[0,0,0,3,3,6,6,10,10,10]"
           ]
         },
         {
