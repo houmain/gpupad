@@ -79,6 +79,7 @@ enum class MessageType {
     MeshShadersNotAvailable,
     SpirvCrossError,
     ShaderCompilerNotAvailable,
+    InvalidCommandlineArguments,
 };
 
 struct Message

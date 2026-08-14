@@ -23,9 +23,14 @@ void main() {
   iChannelResolution[1] = vec3(textureSize(iChannel1, 0), 1);
   iChannelResolution[2] = vec3(textureSize(iChannel2, 0), 1);
   iChannelResolution[3] = vec3(textureSize(iChannel3, 0), 1);
-  
+  iChannelTime[0] = iTime;
+  iChannelTime[1] = iTime;
+  iChannelTime[2] = iTime;
+  iChannelTime[3] = iTime;
+
   oColor = vec4(vec3(0), 1);
   mainImage(oColor, vec2(gl_FragCoord.x, gl_FragCoord.y));
+  oColor.a = 1;
 }
 
 #define smooth smooth_

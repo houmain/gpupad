@@ -159,18 +159,31 @@ void SessionModel::setActiveItemColor(QColor color)
     mActiveItemsColor = color;
 }
 
+const Item *SessionModel::findItemByPath(const QModelIndex &originIndex,
+    const QString &path) const
+{
+    const auto parts = path.split('/');
+    auto index = originIndex;
+    for (const auto &part : parts) {
+        index = findChildByName(index, part);
+        if (!index.isValid())
+            return nullptr;
+    }
+    return &getItem(index);
+}
+
 QString SessionModel::getItemName(ItemId id) const
 {
     if (auto item = findItem(id))
         return item->name;
-    return {};
+    return { };
 }
 
 QString SessionModel::getFullItemName(ItemId id) const
 {
     auto item = findItem(id);
     if (!item)
-        return {};
+        return { };
     const auto fullwidthHyphenMinus = QChar(0xFF0D);
     auto name = item->name;
     const auto end = &sessionItem();
@@ -305,10 +318,10 @@ bool SessionModel::load(const QString &fileName)
     auto target = sessionItemIndex();
     if (!canDropMimeData(&data, Qt::CopyAction, rowCount(), 0, target)) {
         // try to replace session with dropped session
-        if (!canDropMimeData(&data, Qt::CopyAction, rowCount(), 0, {}))
+        if (!canDropMimeData(&data, Qt::CopyAction, rowCount(), 0, { }))
             return false;
         deleteItem(QModelIndex());
-        target = {};
+        target = { };
     }
 
     undoStack().clear();
@@ -402,7 +415,7 @@ JsonArray SessionModel::getJson(const QModelIndexList &indexes,
 {
     auto itemArray = JsonArray();
     if (indexes.size() == 1 && !indexes.first().isValid()) {
-        for (const Item *item : getItem({}).items) {
+        for (const Item *item : getItem({ }).items) {
             auto object = JsonObject();
             serialize(object, *item, true, serializingScriptItem);
             itemArray.push_back(object);

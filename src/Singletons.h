@@ -54,10 +54,10 @@ private:
     std::unique_ptr<Settings> mSettings;
     std::unique_ptr<FileCache> mFileCache;
     std::unique_ptr<FileDialog> mFileDialog;
+    std::unique_ptr<MediaManager> mMediaManager;
     std::unique_ptr<EditorManager> mEditorManager;
     std::unique_ptr<SessionModel> mSessionModel;
     std::unique_ptr<SynchronizeLogic> mSynchronizeLogic;
-    std::unique_ptr<MediaManager> mMediaManager;
     std::unique_ptr<InputState> mInputState;
     std::unique_ptr<CustomActions> mCustomActions;
     std::shared_ptr<ScriptEngine> mDefaultScriptEngine;

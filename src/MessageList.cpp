@@ -220,9 +220,11 @@ QString getMessageText(const Message &message)
     case OnlyLastBindingMayBeUnsizedArray:
         return tr("Only the last binding may be an unsized array (%1)")
             .arg(message.text);
-    case RayTracingNotAvailable:  return tr("Raytracing not available");
-    case MeshShadersNotAvailable: return tr("Mesh Shaders not available");
+    case RayTracingNotAvailable:     return tr("Raytracing not available");
+    case MeshShadersNotAvailable:    return tr("Mesh Shaders not available");
     case ShaderCompilerNotAvailable: return tr("Shader compiler not available");
+    case InvalidCommandlineArguments:
+        return tr("Invalid argument: %1").arg(message.text);
     }
     return message.text;
 #undef tr

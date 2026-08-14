@@ -199,9 +199,9 @@ Singletons::Singletons(QMainWindow *window)
     : mSettings(std::make_unique<Settings>())
     , mFileCache(std::make_unique<FileCache>())
     , mFileDialog(std::make_unique<FileDialog>(window))
+    , mMediaManager(std::make_unique<MediaManager>())
     , mEditorManager(std::make_unique<EditorManager>())
     , mSessionModel(std::make_unique<SessionModel>())
-    , mMediaManager(std::make_unique<MediaManager>())
     , mInputState(std::make_unique<InputState>())
     , mCustomActions(std::make_unique<CustomActions>())
 {
@@ -221,5 +221,4 @@ Singletons::~Singletons()
 #if defined(VULKAN_ENABLED)
     VKDevice::resetSharedDevice();
 #endif
-    sInstance = nullptr;
 }

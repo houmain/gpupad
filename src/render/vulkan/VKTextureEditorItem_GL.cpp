@@ -97,7 +97,7 @@ namespace {
             || !glTextureStorageMem3DMultisampleEXT)
             return false;
 
-        auto memoryObject = GLuint{};
+        auto memoryObject = GLuint{ };
         glCreateMemoryObjectsEXT(1, &memoryObject);
         auto dedicated = GLint{ shareHandle.dedicated ? GL_TRUE : GL_FALSE };
         glMemoryObjectParameterivEXT(memoryObject,
@@ -183,7 +183,8 @@ bool VKTextureEditorItem::copyGLTexture(VKContext &context,
 
     const auto sourceTextureId = static_cast<GLuint>(
         reinterpret_cast<std::uintptr_t>(shareHandle.handle));
-    Q_ASSERT(gl.glIsTexture(sourceTextureId));
+    if (!gl.glIsTexture(sourceTextureId))
+        return false;
 
     if (!mTexture) {
         auto cleanup = qScopeGuard([&] {

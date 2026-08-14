@@ -532,16 +532,8 @@ const Item *AppScriptObject::findSessionItem(QJSValue itemIdent,
     const QModelIndex &originIndex, bool searchSubItems)
 {
     const auto &session = threadSessionModel();
-    if (itemIdent.isString()) {
-        const auto parts = itemIdent.toString().split('/');
-        auto index = originIndex;
-        for (const auto &part : parts) {
-            index = session.findChildByName(index, part);
-            if (!index.isValid())
-                return nullptr;
-        }
-        return &session.getItem(index);
-    }
+    if (itemIdent.isString())
+        return session.findItemByPath(originIndex, itemIdent.toString());
 
     if (itemIdent.isCallable()) {
         auto result = std::add_pointer_t<const Item>{ };

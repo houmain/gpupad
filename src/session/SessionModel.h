@@ -45,6 +45,12 @@ public:
         bool updateExisting);
     bool save(const QString &fileName);
     bool load(const QString &fileName);
+    const Item *findItemByPath(const QModelIndex &index,
+        const QString &path) const;
+    const Item *findItemByPath(const QString &path) const
+    {
+        return findItemByPath(sessionItemIndex(), path);
+    }
 
     void setField(const Item *item, ColumnType column, const QVariant &value)
     {
@@ -73,13 +79,13 @@ public:
     template <typename F> // F(const Item&)
     void forEachItem(const F &function) const
     {
-        forEachItem(QModelIndex{}, function);
+        forEachItem(QModelIndex{ }, function);
     }
 
     template <typename T, typename F> // F(const T&)
     void forEachItem(const F &function) const
     {
-        forEachItem(QModelIndex{}, [&](const Item &item) {
+        forEachItem(QModelIndex{ }, [&](const Item &item) {
             if (auto typedItem = castItem<T>(item))
                 function(*typedItem);
         });
@@ -104,7 +110,7 @@ public:
 
     const Item *findFileItem(const QString &fileName) const
     {
-        auto item = std::add_pointer_t<const Item>{};
+        auto item = std::add_pointer_t<const Item>{ };
         forEachFileItem([&](const FileItem &fileItem) {
             if (fileItem.fileName == fileName)
                 item = &fileItem;
