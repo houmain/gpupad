@@ -165,6 +165,8 @@ void outputMessagesToStdout()
 
 int runHeadless(int argc, char *argv[])
 {
+    const auto workingDirectory = QDir::current();
+
     auto app = QApplication(argc, argv);
     auto arguments = app.arguments();
     arguments.removeFirst();
@@ -189,8 +191,8 @@ int runHeadless(int argc, char *argv[])
                     return invalidArgument("missing parameter");
 
                 const auto itemIdent = arguments[++i];
-                const auto fileName =
-                    toNativeCanonicalAbsoluteFilePath(arguments[++i]);
+                const auto fileName = toNativeCanonicalAbsoluteFilePath(
+                    workingDirectory.absoluteFilePath(arguments[++i]));
                 auto ok = false;
                 const auto id = itemIdent.toInt(&ok);
                 const auto *item = (ok
@@ -236,6 +238,7 @@ int runHeadless(int argc, char *argv[])
 
     outputMessagesToStdout();
     editorManager.closeAllEditors(false);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
     sessionModel.clear();
     synchronizeLogic.resetRenderSession();
     return 0;
@@ -243,20 +246,6 @@ int runHeadless(int argc, char *argv[])
 
 int run(int argc, char *argv[])
 {
-    QApplication::setAttribute(Qt::AA_CompressHighFrequencyEvents);
-
-#if defined(OPENGL_ENABLED)
-    QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
-    auto format = QSurfaceFormat();
-    format.setRenderableType(QSurfaceFormat::OpenGL);
-    format.setMajorVersion(4);
-    format.setMinorVersion(5);
-    format.setProfile(QSurfaceFormat::CoreProfile);
-    format.setOption(QSurfaceFormat::DebugContext);
-    format.setSwapInterval(0);
-    QSurfaceFormat::setDefaultFormat(format);
-#endif
-
     auto app = QApplication(argc, argv);
     defaultMessageHandler = qInstallMessageHandler(filteringMessageHandler);
 
@@ -331,6 +320,20 @@ int main(int argc, char *argv[])
     // prefer xwayland over wayland, since dragging editors can deadlock
     // pass "-platform wayland" to force wayland platform
     setenv("QT_QPA_PLATFORM", "xcb;wayland", 1);
+#endif
+
+    QApplication::setAttribute(Qt::AA_CompressHighFrequencyEvents);
+
+#if defined(OPENGL_ENABLED)
+    QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+    auto format = QSurfaceFormat();
+    format.setRenderableType(QSurfaceFormat::OpenGL);
+    format.setMajorVersion(4);
+    format.setMinorVersion(5);
+    format.setProfile(QSurfaceFormat::CoreProfile);
+    format.setOption(QSurfaceFormat::DebugContext);
+    format.setSwapInterval(0);
+    QSurfaceFormat::setDefaultFormat(format);
 #endif
 
     if (std::string_view(argv[0]).ends_with("gpupad-headless"))

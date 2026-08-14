@@ -22,7 +22,7 @@ namespace {
 
     KDGpu::SurfaceOptions surfaceOptions(QWindow &window)
     {
-        auto options = KDGpu::SurfaceOptions{};
+        auto options = KDGpu::SurfaceOptions{ };
 #if defined(Q_OS_WIN)
         options.hWnd = reinterpret_cast<HWND>(window.winId());
 #elif defined(Q_OS_LINUX)
@@ -144,9 +144,9 @@ struct VKWindow::State
     KDGpu::CompositeAlphaFlagBits compositeAlpha{
         KDGpu::CompositeAlphaFlagBits::OpaqueBit
     };
-    KDGpu::Extent2D swapchainExtent{};
-    uint32_t currentSwapchainImageIndex{};
-    uint32_t inFlightIndex{};
+    KDGpu::Extent2D swapchainExtent{ };
+    uint32_t currentSwapchainImageIndex{ };
+    uint32_t inFlightIndex{ };
     bool swapchainDirty{ true };
     std::optional<KDGpu::RenderPassCommandRecorder> renderPass;
 
@@ -160,12 +160,12 @@ QList<AdapterIdentity> VKWindow::getAdapterIdentities()
 {
     auto &instance = VKDevice::instance();
     if (!instance.isValid())
-        return {};
+        return { };
     auto result = QList<AdapterIdentity>();
     for (const auto adapter : instance.adapters()) {
         const auto &properties = adapter->properties();
 
-        auto identity = AdapterIdentity{};
+        auto identity = AdapterIdentity{ };
         identity.name = QString::fromStdString(properties.deviceName);
         std::copy(std::begin(properties.deviceUUID),
             std::end(properties.deviceUUID), identity.deviceUUIDs[0].begin());
@@ -194,7 +194,7 @@ VKWindow::VKWindow(bool enableVSync, QWindow *parent)
 
 VKWindow::~VKWindow()
 {
-    Q_ASSERT(!initialized());
+    releaseGpu();
 }
 
 VKDevice &VKWindow::device()
@@ -265,7 +265,7 @@ void VKWindow::submitCommandQueue(bool waitUntilIdle,
 
 void VKWindow::submitCommandQueueWaitIdle()
 {
-    submitCommandQueue(true, {});
+    submitCommandQueue(true, { });
 }
 
 KDGpu::RenderPassCommandRecorder &VKWindow::renderPass()
@@ -288,46 +288,19 @@ KDGpu::Extent2D VKWindow::swapchainExtent() const
 
 bool VKWindow::initializeGpu()
 {
-    Q_ASSERT(!mState);
+    if (mState)
+        return true;
 
     auto state = std::make_unique<State>(Singletons::selectedAdapter(),
         Singletons::selectedApiVersion());
-    auto deviceLock = state->device.lock();
-
-    if (!state->device.initialize())
-        return false;
-
-    auto &instance = deviceLock.instance();
-    state->surface = instance.createSurface(surfaceOptions(*this));
-    if (!state->surface.isValid())
-        return false;
-
-    auto &adapter = deviceLock.adapter();
-    auto &queue = deviceLock.queue();
-    if (!adapter.supportsPresentation(state->surface, queue.queueTypeIndex()))
-        return false;
-
-    const auto swapchainProperties =
-        adapter.swapchainProperties(state->surface);
-    if (swapchainProperties.formats.empty()
-        || swapchainProperties.presentModes.empty())
-        return false;
-
-    auto &device = deviceLock.device();
-    state->swapchainFormat =
-        chooseSwapchainFormat(swapchainProperties.formats, &state->colorSpace);
-    state->presentMode =
-        choosePresentMode(swapchainProperties.presentModes, mEnableVSync);
-    state->compositeAlpha = chooseCompositeAlpha(
-        swapchainProperties.capabilities.supportedCompositeAlpha);
-
-    for (auto i = 0u; i < MaxFramesInFlight; ++i) {
-        state->presentCompleteSemaphores[i] = device.createGpuSemaphore();
-        state->frameFences[i] = device.createFence({
-            .createSignalled = true,
-        });
+    {
+        auto deviceLock = state->device.lock();
+        if (!state->device.initialize())
+            return false;
     }
+
     mState = std::move(state);
+    Q_EMIT initializingGpu();
     return true;
 }
 
@@ -375,6 +348,38 @@ bool VKWindow::ensureSwapchain(VKDevice::Lock &deviceLock)
     auto &adapter = deviceLock.adapter();
     auto &device = deviceLock.device();
 
+    if (!state.surface.isValid()) {
+        auto &instance = deviceLock.instance();
+        auto surface = instance.createSurface(surfaceOptions(*this));
+        if (!surface.isValid())
+            return false;
+
+        auto &queue = deviceLock.queue();
+        if (!adapter.supportsPresentation(surface, queue.queueTypeIndex()))
+            return false;
+
+        const auto swapchainProperties = adapter.swapchainProperties(surface);
+        if (swapchainProperties.formats.empty()
+            || swapchainProperties.presentModes.empty())
+            return false;
+        state.surface = std::move(surface);
+
+        auto &device = deviceLock.device();
+        state.swapchainFormat = chooseSwapchainFormat(
+            swapchainProperties.formats, &state.colorSpace);
+        state.presentMode =
+            choosePresentMode(swapchainProperties.presentModes, mEnableVSync);
+        state.compositeAlpha = chooseCompositeAlpha(
+            swapchainProperties.capabilities.supportedCompositeAlpha);
+
+        for (auto i = 0u; i < MaxFramesInFlight; ++i) {
+            state.presentCompleteSemaphores[i] = device.createGpuSemaphore();
+            state.frameFences[i] = device.createFence({
+                .createSignalled = true,
+            });
+        }
+    }
+
     const auto dpr = devicePixelRatio();
     const auto requestedWidth =
         std::max(1u, static_cast<uint32_t>(width() * dpr + 0.5));
@@ -398,7 +403,7 @@ bool VKWindow::ensureSwapchain(VKDevice::Lock &deviceLock)
     device.waitUntilIdle();
     state.renderPass.reset();
     for (auto &commandBuffer : state.commandBuffers)
-        commandBuffer = {};
+        commandBuffer = { };
     for (auto &stagingBuffers : state.stagingBuffers)
         stagingBuffers.clear();
     state.swapchainViews.clear();
@@ -435,19 +440,13 @@ bool VKWindow::ensureSwapchain(VKDevice::Lock &deviceLock)
 
 void VKWindow::redraw()
 {
-    if (!isExposed())
-        return;
-
     if (mRedrawing)
         return;
     mRedrawing = true;
     auto redrawGuard = qScopeGuard([&] { mRedrawing = false; });
 
-    if (!mState) {
-        if (!initializeGpu())
-            return;
-        Q_EMIT initializingGpu();
-    }
+    if (!initializeGpu() || !isExposed())
+        return;
 
     auto deviceLock = beginCommandQueue();
     if (!ensureSwapchain(deviceLock))

@@ -120,7 +120,7 @@ bool TextureEditor::initializeRenderWidget()
         connect(window, &VKWindow::submittedGpu, mTextureItem,
             &TextureEditorItem::submittedGpu);
 
-        return true;
+        return window->initializeGpu();
     }
 #endif // defined(VULKAN_ENABLED)
 
@@ -140,7 +140,8 @@ bool TextureEditor::initializeRenderWidget()
         if (QObject::sender() == mRenderWidget->widgetWindow())
             paintGpu();
     });
-    return true;
+
+    return window->makeCurrent();
 #else
     return false;
 #endif // defined(OPENGL_ENABLED)
@@ -148,7 +149,10 @@ bool TextureEditor::initializeRenderWidget()
 
 void TextureEditor::releaseRenderWidget()
 {
+    auto *window = mRenderWidget->widgetWindow();
     mRenderWidget->setWidgetWindow(nullptr);
+    if (window && !window->parent())
+        delete window;
     mTextureItem = nullptr;
     mBackground = nullptr;
 }

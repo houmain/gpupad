@@ -33,7 +33,11 @@ namespace {
 
     uint32_t vulkanApiVersion(const QString &apiVersion)
     {
-        const auto [major, minor] = parseVersion(apiVersion);
+        auto [major, minor] = parseVersion(apiVersion);
+        if (!major) {
+            major = 1;
+            minor = 1;
+        }
         return KDGPU_MAKE_API_VERSION(0, major, minor, 0);
     }
 
@@ -80,11 +84,11 @@ struct VKDevice::SharedDevice
     const AdapterIdentity adapterIdentity;
     const QString apiVersion;
     std::recursive_mutex mutex;
-    KDGpu::Adapter *adapter{};
+    KDGpu::Adapter *adapter{ };
     KDGpu::Device device;
     KDGpu::Queue queue;
-    ktxVulkanDeviceInfo ktxDeviceInfo{};
-    VkCommandPool ktxCommandPool{};
+    ktxVulkanDeviceInfo ktxDeviceInfo{ };
+    VkCommandPool ktxCommandPool{ };
     MessagePtrSet messages;
 };
 
@@ -259,7 +263,7 @@ KDGpu::Instance &VKDevice::instance()
         });
 
         if (instance.isValid() && instance.adapters().empty())
-            instance = {};
+            instance = { };
 
         return instance;
     }();

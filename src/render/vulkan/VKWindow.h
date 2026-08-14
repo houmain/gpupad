@@ -23,6 +23,7 @@ public:
     explicit VKWindow(QWindow *parent) = delete;
     ~VKWindow() override;
 
+    bool initializeGpu();
     bool initialized() const { return static_cast<bool>(mState); }
     VKDevice &device();
     VKDevice::Lock lockDevice();
@@ -45,7 +46,6 @@ Q_SIGNALS:
 private:
     struct State;
 
-    bool initializeGpu();
     void releaseGpu();
     bool event(QEvent *event) override;
     void exposeEvent(QExposeEvent *event) override;
