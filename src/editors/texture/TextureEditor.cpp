@@ -107,8 +107,6 @@ bool TextureEditor::initializeRenderWidget()
 
         connect(window, &VKWindow::releasingGpu, mTextureItem,
             &TextureEditorItem::releaseGpu);
-        connect(window, &VKWindow::initializingGpu, this,
-            &TextureEditor::handleGpuInitialized);
         connect(window, &VKWindow::releasingGpu, mBackground,
             &TextureEditorBackground::releaseGpu);
         connect(window, &VKWindow::preparingGpu, mTextureItem,
@@ -132,8 +130,6 @@ bool TextureEditor::initializeRenderWidget()
 
     connect(window, &GLWindow::releasingGpu, mTextureItem,
         &TextureEditorItem::releaseGpu);
-    connect(window, &GLWindow::initializingGpu, this,
-        &TextureEditor::handleGpuInitialized);
     connect(window, &GLWindow::releasingGpu, mBackground,
         &TextureEditorBackground::releaseGpu);
     connect(window, &GLWindow::paintingGpu, this, [this] {
@@ -407,10 +403,8 @@ void TextureEditor::replace(TextureData texture, bool emitFileChanged)
     if (qApp->focusWidget() == this)
         updateEditorToolBar();
 
-    whenGpuInitialized([this]() {
-        mTextureItem->uploadImage(mTexture);
-        update();
-    });
+    mTextureItem->uploadImage(mTexture);
+    update();
 }
 
 void TextureEditor::copy()
@@ -429,10 +423,8 @@ void TextureEditor::copy()
 
 void TextureEditor::copySharedTexture(ShareHandle shareHandle, int samples)
 {
-    whenGpuInitialized([this, shareHandle, samples]() {
-        if (mTextureItem->copySharedTexture(shareHandle, samples, mTexture))
-            mRenderWidget->redraw();
-    });
+    if (mTextureItem->copySharedTexture(shareHandle, samples, mTexture))
+        mRenderWidget->redraw();
 }
 
 void TextureEditor::setModified()
@@ -690,22 +682,6 @@ void TextureEditor::updateScrollBars()
     horizontalScrollBar()->setVisible(sx != 0);
     verticalScrollBar()->setVisible(sy != 0);
     mRenderWidget->update();
-}
-
-void TextureEditor::whenGpuInitialized(std::function<void()> &&func)
-{
-    if (mGpuInitialized) {
-        func();
-    } else {
-        mOnGpuInitialized = std::move(func);
-    }
-}
-
-void TextureEditor::handleGpuInitialized()
-{
-    mGpuInitialized = true;
-    if (auto func = std::exchange(mOnGpuInitialized, { }))
-        func();
 }
 
 void TextureEditor::paintGpu()

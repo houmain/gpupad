@@ -69,8 +69,6 @@ protected:
 private:
     bool initializeRenderWidget();
     void releaseRenderWidget();
-    void handleGpuInitialized();
-    void whenGpuInitialized(std::function<void()> &&func);
     void paintGpu();
     void updateMousePosition(const QPoint &position);
     void setBounds(QRect bounds);
@@ -103,6 +101,4 @@ private:
     bool mZoomToFit{};
     int mZoom{ 100 };
     QPoint mPanStart{};
-    std::function<void()> mOnGpuInitialized;
-    bool mGpuInitialized{};
 };

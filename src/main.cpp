@@ -119,17 +119,15 @@ void filteringMessageHandler(QtMsgType type, const QMessageLogContext &context,
 
 void outputHelpToStdout()
 {
-    attachToConsole();
     std::fprintf(stdout,
         "%s %s (c) %s-%s by %s\n"
         "\n"
         "Usage: gpupad [--options] <filenames>\n"
-        "  --headless                          run in headless mode.\n"
-        "  --help                              print this help.\n"
+        "  --headless                        run in headless mode.\n"
+        "  --help                            print this help.\n"
         "\n"
-        "In headless mode the following parameters are available:"
-        "  --output <item-ident> <filename>    output the item data to a "
-        "file.\n"
+        "In headless mode the following parameters are available:\n"
+        "  --output <item-ident> <filename>  output an item's data to a file.\n"
         "\n"
         "All Rights Reserved.\n"
         "This program comes with absolutely no warranty.\n"
@@ -144,7 +142,6 @@ void outputHelpToStdout()
 
 void outputMessagesToStdout()
 {
-    attachToConsole();
     for (const auto &message : MessagePtrSet::getAllMessages()) {
         const auto severity = getMessageSeverity(*message);
         const auto severityText = (severity == MessageSeverity::Error
@@ -165,34 +162,81 @@ void outputMessagesToStdout()
 
 int runHeadless(int argc, char *argv[])
 {
-    const auto workingDirectory = QDir::current();
-
     auto app = QApplication(argc, argv);
-    auto arguments = app.arguments();
-    arguments.removeFirst();
-
-    auto messages = MessagePtrSet{ };
-    const auto invalidArgument = [&](QString message) {
-        messages.insert(MessageType::InvalidCommandlineArguments, message);
-        return 1;
-    };
+    defaultMessageHandler = qInstallMessageHandler(filteringMessageHandler);
+    attachToConsole();
 
     auto singletons = Singletons(nullptr);
     auto &editorManager = singletons.editorManager();
     auto &sessionModel = singletons.sessionModel();
     auto &synchronizeLogic = singletons.synchronizeLogic();
     auto editorsToSave = std::map<QString, IEditor *>();
+    auto messages = MessagePtrSet{ };
 
+    const auto toAbsoluteFileName = [workingDirectory = QDir::current()](
+                                        const QString &fileName) {
+        return toNativeCanonicalFilePath(
+            workingDirectory.absoluteFilePath(fileName));
+    };
+    const auto loadingFileFailed = [&](QString filename) {
+        messages.insert(MessageType::LoadingFileFailed, filename);
+        return 1;
+    };
+    const auto invalidArgument = [&](QString message) {
+        messages.insert(MessageType::InvalidCommandlineArguments, message);
+        return 1;
+    };
+
+    const auto evaluateSession = [&]() {
+        synchronizeLogic.manualEvaluation();
+        synchronizeLogic.finishEvaluation();
+        for (auto [itemIdent, editor] : std::exchange(editorsToSave, { }))
+            if (!editor->save()) {
+                invalidArgument("saving item '" + itemIdent + "' failed");
+                return false;
+            }
+        return true;
+    };
+
+    const auto closeSession = [&]() {
+        editorManager.closeAllEditors(false);
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+        sessionModel.clear();
+        outputMessagesToStdout();
+        messages.clear();
+    };
+
+    const auto cleanup = qScopeGuard([&]() {
+        closeSession();
+        synchronizeLogic.resetRenderSession();
+    });
+
+    auto arguments = app.arguments();
+    arguments.removeFirst();
     for (auto i = 0; i < arguments.size(); ++i) {
         const auto &argument = arguments[i];
+
+        const auto checkParameterCount = [&](int count) {
+            if (i + count >= arguments.size())
+                return false;
+            for (auto j = 0; j < count; ++j)
+                if (arguments[i + 1 + j].startsWith("--"))
+                    return false;
+            return true;
+        };
+
         if (argument.startsWith("--")) {
-            if (argument == "--output") {
-                if (i + 2 >= arguments.size())
-                    return invalidArgument("missing parameter");
+            if (argument == "--headless") {
+                continue;
+            } else if (argument == "--help") {
+                outputHelpToStdout();
+                return 0;
+            } else if (argument == "--output") {
+                if (!checkParameterCount(2))
+                    return invalidArgument("missing parameter to " + argument);
 
                 const auto itemIdent = arguments[++i];
-                const auto fileName = toNativeCanonicalAbsoluteFilePath(
-                    workingDirectory.absoluteFilePath(arguments[++i]));
+                const auto fileName = toAbsoluteFileName(arguments[++i]);
                 auto ok = false;
                 const auto id = itemIdent.toInt(&ok);
                 const auto *item = (ok
@@ -215,32 +259,26 @@ int runHeadless(int argc, char *argv[])
                 return invalidArgument("unknown option " + argument);
             }
         } else {
-            const auto fileName = toNativeCanonicalFilePath(
-                QFileInfo(argument).absoluteFilePath());
+            const auto fileName = toAbsoluteFileName(argument);
             auto source = QString();
-            if (FileDialog::isSessionFileName(fileName)
-                && sessionModel.load(fileName)) {
+            if (FileDialog::isSessionFileName(fileName)) {
+                if (!evaluateSession())
+                    return 1;
+                closeSession();
+                if (!sessionModel.load(fileName))
+                    loadingFileFailed(fileName);
             } else if (FileDialog::isScriptFileName(fileName)
                 && singletons.fileCache().getSource(fileName, &source)) {
                 singletons.defaultScriptEngine().evaluateScript(source,
                     fileName);
             } else {
-                messages.insert(MessageType::LoadingFileFailed, fileName);
+                if (!editorManager.openEditor(fileName))
+                    return loadingFileFailed(fileName);
             }
         }
     }
-
-    synchronizeLogic.manualEvaluation();
-    synchronizeLogic.finishEvaluation();
-    for (auto [itemIdent, editor] : editorsToSave)
-        if (!editor->save())
-            invalidArgument("saving item '" + itemIdent + "' failed");
-
-    outputMessagesToStdout();
-    editorManager.closeAllEditors(false);
-    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
-    sessionModel.clear();
-    synchronizeLogic.resetRenderSession();
+    if (!evaluateSession())
+        return 1;
     return 0;
 }
 
@@ -342,13 +380,12 @@ int main(int argc, char *argv[])
     if (const auto arg1 = std::string_view(argc > 1 ? argv[1] : "");
         arg1.starts_with("--")) {
 
-        argc = std::distance(argv, std::remove(argv, argv + argc, argv[1]));
-
         if (arg1 == "--headless")
             return runHeadless(argc, argv);
 
+        attachToConsole();
         outputHelpToStdout();
-        return (arg1 == "--headless" ? 0 : 1);
+        return (arg1 == "--help" ? 0 : 1);
     }
 
     if (forwardToInstance(argc, argv))
