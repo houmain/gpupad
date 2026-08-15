@@ -9,6 +9,9 @@
 #include "SynchronizeLogic.h"
 #include "Theme.h"
 #include "WindowTitle.h"
+#include "InputState.h"
+#include "FileCache.h"
+#include "media/MediaManager.h"
 #include "render/RenderWidget.h"
 #include "editors/EditorManager.h"
 #include "editors/IEditor.h"
@@ -1106,6 +1109,9 @@ bool MainWindow::closeSession()
     setEvaluationMode(EvaluationMode::Paused);
     Singletons::synchronizeLogic().resetRenderSession();
     Singletons::synchronizeLogic().handleSessionFileNameChanged("");
+    Singletons::mediaManager().unloadAll();
+    Singletons::fileCache().unloadAll();
+    Singletons::inputState().reset();
     mEditorManager.closeAllEditors(false);
     mOutputWindow->setText("");
     updateCurrentEditor();

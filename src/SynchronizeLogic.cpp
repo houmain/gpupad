@@ -160,9 +160,6 @@ void SynchronizeLogic::resetRenderSession()
 
     interruptRunningScriptEngines();
     Singletons::defaultScriptEngine().resetMessages();
-    Singletons::mediaManager().unloadAll();
-    Singletons::fileCache().unloadAll();
-    Singletons::inputState().reset();
     finishEvaluation();
     mProcessSource.reset();
     mRenderSession.reset();
