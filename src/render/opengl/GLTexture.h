@@ -32,7 +32,6 @@ public:
     GLuint getReadWriteTextureId(GLContext &gl);
     void beginDownload(GLContext &context);
     bool finishDownload();
-    ShareHandle getShareHandle();
 
 private:
     void reload(GLContext &gl, bool forWriting);

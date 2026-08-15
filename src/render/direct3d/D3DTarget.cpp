@@ -213,8 +213,7 @@ bool D3DTarget::bind(D3DContext &context)
         .MaxDepth = 1.0f,
     };
 
-    // inverse flip for now
-    if (!mFlipViewport) {
+    if (mFlipViewport) {
         viewport.TopLeftY = viewport.Height;
         viewport.Height = -viewport.Height;
     }

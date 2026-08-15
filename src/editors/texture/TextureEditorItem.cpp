@@ -59,10 +59,10 @@ Params pc = Params(uTransform, uTransformTexCoords, uFlipVertically);
 #endif // !defined(VULKAN)
 
 const vec2 data[4] = vec2[] (
-  vec2(-1.0,  1.0),
   vec2(-1.0, -1.0),
-  vec2( 1.0,  1.0),
-  vec2( 1.0, -1.0)
+  vec2( 1.0, -1.0),
+  vec2(-1.0,  1.0),
+  vec2( 1.0,  1.0)
 );
 
 void main() {
@@ -73,10 +73,10 @@ void main() {
 #endif
 
   mat4 transform = pc.transform;
-#if !defined(VULKAN)
-  transform[1][1] *= -1;
-  transform[3][1] *= -1;
-#endif
+//#if !defined(VULKAN)
+//  transform[1][1] *= -1;
+//  transform[3][1] *= -1;
+//#endif
 
   if (pc.transformTexCoords == 1) {
     vTexCoord = ((transform * vec4(pos, 0.0, 1.0)).xy + 1.0) / 2.0;
@@ -86,7 +86,7 @@ void main() {
     vTexCoord = (pos + 1.0) / 2.0;
     gl_Position = transform * vec4(pos, 0.0, 1.0);
   }
-  if (pc.flipVertically == 0)
+  if (pc.flipVertically != 0)
     vTexCoord.y = 1 - vTexCoord.y;
 }
 )";

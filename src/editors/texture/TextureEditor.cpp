@@ -136,8 +136,7 @@ bool TextureEditor::initializeRenderWidget()
         if (QObject::sender() == mRenderWidget->widgetWindow())
             paintGpu();
     });
-
-    return window->makeCurrent();
+    return true;
 #else
     return false;
 #endif // defined(OPENGL_ENABLED)
@@ -319,11 +318,7 @@ bool TextureEditor::load()
     }
 
     if (mTexture.isNull()) {
-        // automatically flip in editor when opening an image file
-        if (!FileDialog::isEmptyOrUntitled(mFileName)
-            && texture.dimensions() == 2 && !texture.isCubemap()) {
-            setFlipVertically(true);
-
+        if (!FileDialog::isEmptyOrUntitled(mFileName)) {
             // automatically fit big images in window and enable filtering
             const auto big = 1024;
             if (texture.width() > big || texture.height() > big) {
@@ -553,7 +548,7 @@ QPointF TextureEditor::mapFromScene(const QPointF &position) const
 void TextureEditor::updateMousePosition(const QPoint &position)
 {
     auto pos = mapToScene(position);
-    if (!mTextureItem->flipVertically())
+    if (mTextureItem->flipVertically())
         pos.setY(mTextureItem->boundingRect().height() - pos.y());
     pos = QPointF(qRound(pos.x() - 0.5), qRound(pos.y() - 0.5));
 
