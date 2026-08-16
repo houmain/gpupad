@@ -25,7 +25,8 @@ public:
         MirroredRepeat,
     };
 
-    explicit TextureEditorItem(QWindow *parent);
+    explicit TextureEditorItem(
+        QWindow *parent, TextureData::RowOrder windowRowOrder);
     ~TextureEditorItem() override;
 
     virtual void releaseGpu() = 0;
@@ -84,6 +85,11 @@ public:
         update();
     }
     bool flipVertically() const { return mFlipVertically; }
+    bool effectiveFlipVertically(TextureData::RowOrder textureRowOrder) const
+    {
+        return mFlipVertically
+            != (textureRowOrder != mWindowRowOrder);
+    }
     void setPickerEnabled(bool enabled) { mPickerEnabled = enabled; }
     bool pickerEnabled() const { return mPickerEnabled; }
     void setMappingRange(const Range &range);
@@ -139,7 +145,7 @@ protected:
     QMatrix4x4 getTransform(const QSizeF &bounds, const QPointF &offset);
     bool transformTextureCoordinates() const;
     Params getParams(const QMatrix4x4 &transform, int textureSamples,
-        int textureDepth) const;
+        int textureDepth, TextureData::RowOrder textureRowOrder) const;
 
     QRectF mBoundingRect;
     int mTextureSamples{ 1 };
@@ -150,6 +156,7 @@ protected:
     float mLayer{};
     int mSample{ -1 };
     bool mFlipVertically{};
+    TextureData::RowOrder mWindowRowOrder{};
     bool mPickerEnabled{};
     Range mMappingRange{ 0, 1 };
     Range mMappingSelection{ 0, 1 };

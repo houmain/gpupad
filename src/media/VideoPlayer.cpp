@@ -21,8 +21,8 @@ namespace {
     }
 } // namespace
 
-VideoPlayer::VideoPlayer(QString fileName, bool flipVertically, QObject *parent)
-    : VideoStream(fileName, flipVertically, parent)
+VideoPlayer::VideoPlayer(QString fileName, QObject *parent)
+    : VideoStream(fileName, parent)
 {
     mPlayer = new QMediaPlayer(this);
     mSink = new QVideoSink();

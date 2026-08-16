@@ -252,7 +252,7 @@ QList<QMetaObject::Connection> EditorManager::connectEditActions(
 {
     if (auto editor = currentEditor())
         return editor->connectEditActions(actions);
-    return {};
+    return { };
 }
 
 SourceEditor *EditorManager::openNewSourceEditor(const QString &fileName,
@@ -557,7 +557,7 @@ bool EditorManager::saveEditorAs()
 {
     if (auto editor = currentEditor()) {
         auto options = FileDialog::Options{ FileDialog::Saving };
-        auto sourceType = SourceType{};
+        auto sourceType = SourceType{ };
         if (const auto editor =
                 qobject_cast<SourceEditor *>(mCurrentDock->widget())) {
             options |= FileDialog::ShaderExtensions;
@@ -672,7 +672,7 @@ QSize EditorManager::getViewportSize(const QString &fileName)
             const auto size = dock->widget()->childrenRect().size();
             return dpr * size;
         }
-    return {};
+    return { };
 }
 
 bool EditorManager::canPasteInNewEditor() const
@@ -693,10 +693,8 @@ void EditorManager::pasteInNewEditor()
     if (mimeData->hasImage())
         if (auto editor = openNewTextureEditor(fileName)) {
             auto texture = TextureData();
-            if (texture.loadQImage(mimeData->imageData().value<QImage>(),
-                    false)) {
+            if (texture.loadQImage(mimeData->imageData().value<QImage>())) {
                 editor->replace(std::move(texture));
-                editor->setFlipVertically(true);
                 return;
             }
         }

@@ -585,7 +585,7 @@ namespace {
         }
     }
 
-    bool convertPlane(const uchar *source, Texture::Format sourceFormat,
+    bool convertRow(const uchar *source, Texture::Format sourceFormat,
         uchar *dest, Texture::Format destFormat, int pixels)
     {
         if (!source || !dest)
@@ -915,7 +915,7 @@ bool operator==(const TextureData &a, const TextureData &b)
     if (a.format() != b.format() || a.width() != b.width()
         || a.height() != b.height() || a.depth() != b.depth()
         || a.levels() != b.levels() || a.layers() != b.layers()
-        || a.faces() != b.faces())
+        || a.faces() != b.faces() || a.rowOrder() != b.rowOrder())
         return false;
 
     if (a.isSharedWith(b))
@@ -1011,19 +1011,21 @@ bool TextureData::create(Texture::Target target, Texture::Format format,
         fixFormat(*texture);
         mKtxTexture.reset(ktxTexture(texture),
             [](ktxTexture *tex) { ktxTexture_Destroy(tex); });
+        mRowOrder = RowOrder::TopToBottom;
         return true;
     }
     return false;
 }
 
-TextureData TextureData::convert(Texture::Format format) const
+TextureData TextureData::convert(Texture::Format destFormat) const
 {
-    if (format == this->format())
+    const auto sourceFormat = format();
+    if (sourceFormat == destFormat)
         return *this;
 
     auto copy = TextureData();
-    if (!copy.create(getTarget(), format, width(), height(), depth(), layers(),
-            levels()))
+    if (!copy.create(getTarget(), destFormat, width(), height(), depth(),
+            layers(), levels()))
         return { };
 
     // only write first level, it will trigger the mipmap generation
@@ -1038,16 +1040,14 @@ TextureData TextureData::convert(Texture::Format format) const
             auto *dest = copy.getWriteonlyData(level, layer, faceSlice);
             if (!source || !dest)
                 return { };
-            for (auto row = 0; row < levelHeight; ++row) {
-                if (!convertPlane(source + row * sourceStride, this->format(),
-                        dest + row * destStride, format, levelWidth)) {
+
+            for (auto row = 0; row < levelHeight; ++row)
+                if (!convertRow(source + sourceStride * row, sourceFormat,
+                        dest + row * destStride, destFormat, levelWidth))
                     return { };
-                }
-            }
         }
     }
-
-    copy.setFlippedVertically(flippedVertically());
+    copy.setRowOrder(rowOrder());
     return copy;
 }
 
@@ -1074,7 +1074,7 @@ TextureData TextureData::resize(int width, int height, int depth,
                     copy.getLevelHeight(level), copy.getLevelStride(level)))
                 return { };
 
-    copy.setFlippedVertically(flippedVertically());
+    copy.setRowOrder(rowOrder());
     return copy;
 }
 
@@ -1087,7 +1087,7 @@ TextureData TextureData::convert(Texture::Format format, int width, int height,
     return converted.resize(width, height, depth, layers);
 }
 
-bool TextureData::loadKtx(const QString &fileName, bool flipVertically)
+bool TextureData::loadKtx(const QString &fileName)
 {
     auto f = std::fopen(qUtf8Printable(fileName), "rb");
     if (!f)
@@ -1119,14 +1119,14 @@ bool TextureData::loadKtx(const QString &fileName, bool flipVertically)
         return false;
 
     mKtxTexture = std::move(texture);
-
-    if (flipVertically)
-        this->flipVertically();
+    mRowOrder = (mKtxTexture->orientation.y == KTX_ORIENT_Y_UP
+            ? RowOrder::BottomToTop
+            : RowOrder::TopToBottom);
 
     return true;
 }
 
-bool TextureData::loadOpenImageIO(const QString &fileName, bool flipVertically)
+bool TextureData::loadOpenImageIO(const QString &fileName)
 {
 #if !defined(OPENIMAGEIO_ENABLED)
     return false;
@@ -1188,14 +1188,11 @@ bool TextureData::loadOpenImageIO(const QString &fileName, bool flipVertically)
             OIIO::AutoStride, stride))
         return false;
 
-    if (flipVertically)
-        this->flipVertically();
-
     return true;
 #endif // OPENIMAGEIO_ENABLED
 }
 
-bool TextureData::loadQImage(const QString &fileName, bool flipVertically)
+bool TextureData::loadQImage(const QString &fileName)
 {
     auto imageReader = QImageReader(fileName);
     imageReader.setAutoTransform(true);
@@ -1205,10 +1202,10 @@ bool TextureData::loadQImage(const QString &fileName, bool flipVertically)
     if (!imageReader.read(&image))
         return false;
 
-    return loadQImage(std::move(image), flipVertically);
+    return loadQImage(std::move(image));
 }
 
-bool TextureData::loadQImage(QImage image, bool flipVertically)
+bool TextureData::loadQImage(QImage image)
 {
     image = std::move(image).convertToFormat(
         getNextNativeImageFormat(image.format()));
@@ -1222,21 +1219,11 @@ bool TextureData::loadQImage(QImage image, bool flipVertically)
 
     const auto stride = getLevelStride(0);
     auto *dest = getWriteonlyData(0, 0, 0);
-    if (flipVertically) {
-        for (auto y = 0; y < image.height(); ++y) {
-            std::memcpy(dest + y * stride,
-                image.constScanLine(image.height() - y - 1), stride);
-        }
-    } else {
-        std::memcpy(dest, image.constBits(),
-            static_cast<size_t>(getImageSize(0)));
-    }
-
-    mFlippedVertically = flipVertically;
+    std::memcpy(dest, image.constBits(), static_cast<size_t>(getImageSize(0)));
     return true;
 }
 
-bool TextureData::loadPfm(const QString &fileName, bool flipVertically)
+bool TextureData::loadPfm(const QString &fileName)
 {
     auto f = std::fopen(qUtf8Printable(fileName), "rb");
     if (!f)
@@ -1287,40 +1274,80 @@ bool TextureData::loadPfm(const QString &fileName, bool flipVertically)
     return (read == size);
 }
 
-bool TextureData::load(const QString &fileName, bool flipVertically)
+bool TextureData::load(const QString &fileName)
 {
-    return loadKtx(fileName, flipVertically)
-        || loadDDS(fileName, flipVertically)
-        || loadPfm(fileName, flipVertically)
-        || loadOpenImageIO(fileName, flipVertically)
-        || loadQImage(fileName, flipVertically);
+    return loadKtx(fileName) || loadDDS(fileName) || loadPfm(fileName)
+        || loadOpenImageIO(fileName) || loadQImage(fileName);
 }
 
-bool TextureData::saveKtx(const QString &fileName, bool flipVertically) const
+bool TextureData::saveKtx(const QString &fileName)
 {
     if (isNull())
         return false;
 
-    if (fileName.endsWith(".ktx2", Qt::CaseInsensitive)) {
-        if (mKtxTexture->classId == ktxTexture1_c)
-            return (ktxTexture1_WriteKTX2ToNamedFile(
-                        asTexture1(mKtxTexture.get()), qUtf8Printable(fileName))
+    const auto writeKtx2 = fileName.endsWith(".ktx2", Qt::CaseInsensitive);
+    const auto writeKtx1 = fileName.endsWith(".ktx", Qt::CaseInsensitive);
+    if ((!writeKtx1 && !writeKtx2)
+        || (writeKtx1 && mKtxTexture->classId != ktxTexture1_c))
+        return false;
+
+    auto *texture = mKtxTexture.get();
+    texture->orientation.y = (rowOrder() == RowOrder::BottomToTop
+            ? KTX_ORIENT_Y_UP
+            : KTX_ORIENT_Y_DOWN);
+
+    ktxHashList_DeleteKVPair(&texture->kvDataHead, KTX_ORIENTATION_KEY);
+
+    auto orientation = std::array<char, 16>{ };
+    auto orientationSize = 0u;
+    if (texture->classId == ktxTexture1_c) {
+        switch (texture->numDimensions) {
+        case 1:
+            orientationSize = static_cast<unsigned int>(
+                std::snprintf(orientation.data(), orientation.size(),
+                    KTX_ORIENTATION1_FMT, texture->orientation.x));
+            break;
+        case 2:
+            orientationSize = static_cast<unsigned int>(std::snprintf(
+                orientation.data(), orientation.size(), KTX_ORIENTATION2_FMT,
+                texture->orientation.x, texture->orientation.y));
+            break;
+        case 3:
+            orientationSize = static_cast<unsigned int>(
+                std::snprintf(orientation.data(), orientation.size(),
+                    KTX_ORIENTATION3_FMT, texture->orientation.x,
+                    texture->orientation.y, texture->orientation.z));
+            break;
+        default: return false;
+        }
+    } else {
+        orientation[0] = static_cast<char>(texture->orientation.x);
+        if (texture->numDimensions >= 2)
+            orientation[1] = static_cast<char>(texture->orientation.y);
+        if (texture->numDimensions >= 3)
+            orientation[2] = static_cast<char>(texture->orientation.z);
+        orientationSize = texture->numDimensions;
+    }
+
+    if (ktxHashList_AddKVPair(&texture->kvDataHead, KTX_ORIENTATION_KEY,
+            orientationSize + 1, orientation.data())
+        != KTX_SUCCESS)
+        return false;
+
+    if (writeKtx2) {
+        if (texture->classId == ktxTexture1_c)
+            return (ktxTexture1_WriteKTX2ToNamedFile(asTexture1(texture),
+                        qUtf8Printable(fileName))
                 == KTX_SUCCESS);
-        return (ktxTexture_WriteToNamedFile(mKtxTexture.get(),
-                    qUtf8Printable(fileName))
+        return (ktxTexture_WriteToNamedFile(texture, qUtf8Printable(fileName))
             == KTX_SUCCESS);
     }
 
-    if (!fileName.endsWith(".ktx", Qt::CaseInsensitive)
-        || mKtxTexture->classId != ktxTexture1_c)
-        return false;
-
-    return (
-        ktxTexture_WriteToNamedFile(mKtxTexture.get(), qUtf8Printable(fileName))
+    return (ktxTexture_WriteToNamedFile(texture, qUtf8Printable(fileName))
         == KTX_SUCCESS);
 }
 
-bool TextureData::savePfm(const QString &fileName, bool flipVertically) const
+bool TextureData::savePfm(const QString &fileName) const
 {
     if (!fileName.endsWith(".pfm", Qt::CaseInsensitive))
         return false;
@@ -1329,8 +1356,7 @@ bool TextureData::savePfm(const QString &fileName, bool flipVertically) const
     return false;
 }
 
-bool TextureData::saveOpenImageIO(const QString &fileName,
-    bool flipVertically) const
+bool TextureData::saveOpenImageIO(const QString &fileName) const
 {
 #if !defined(OPENIMAGEIO_ENABLED)
     return false;
@@ -1364,32 +1390,35 @@ bool TextureData::saveOpenImageIO(const QString &fileName,
     const auto spec = ImageSpec(width(), height(), channelCount, typeDesc);
     if (!output->open(qUtf8Printable(fileName), spec))
         return false;
-    if (!output->write_image(typeDesc, getData(0, 0, 0)))
+    const auto flipRows = (rowOrder() == RowOrder::BottomToTop);
+    const auto stride = getLevelStride(0);
+    const auto *data = getData(0, 0, 0)
+        + (flipRows ? (height() - 1) * stride : 0);
+    const auto yStride = static_cast<stride_t>(flipRows ? -stride : stride);
+    if (!output->write_image(typeDesc, data, AutoStride, yStride, AutoStride))
         return false;
     return true;
 #endif // OPENIMAGEIO_ENABLED
 }
 
-bool TextureData::saveQImage(const QString &fileName, bool flipVertically) const
+bool TextureData::saveQImage(const QString &fileName) const
 {
     auto image = toImage();
     if (image.isNull())
         return false;
 
-    if (flipVertically)
+    const auto flipRows = (rowOrder() == RowOrder::BottomToTop);
+    if (flipRows)
         image = flipImage(std::move(image));
 
     const auto hasExtension = !QFileInfo(fileName).suffix().isEmpty();
     return image.save(fileName, hasExtension ? nullptr : "PNG");
 }
 
-bool TextureData::save(const QString &fileName, bool flipVertically) const
+bool TextureData::save(const QString &fileName)
 {
-    return saveKtx(fileName, flipVertically)
-        || saveDDS(fileName, flipVertically)
-        || savePfm(fileName, flipVertically)
-        || saveOpenImageIO(fileName, flipVertically)
-        || saveQImage(fileName, flipVertically);
+    return saveKtx(fileName) || saveDDS(fileName) || savePfm(fileName)
+        || saveOpenImageIO(fileName) || saveQImage(fileName);
 }
 
 bool TextureData::isNull() const
@@ -1688,21 +1717,6 @@ void TextureData::clear()
         for (auto face = 0; face < faces(); ++face)
             std::memset(getWriteonlyData(level, layer, face), 0x00,
                 static_cast<size_t>(getImageSize(level)));
-}
-
-void TextureData::flipVertically()
-{
-    const auto pitch = getLevelStride(0);
-    const auto data = getWriteonlyData(0, 0, 0);
-    auto buffer = std::vector<std::byte>(pitch);
-    auto low = data;
-    auto high = &data[(height() - 1) * pitch];
-    for (; low < high; low += pitch, high -= pitch) {
-        std::memcpy(buffer.data(), low, pitch);
-        std::memcpy(low, high, pitch);
-        std::memcpy(high, buffer.data(), pitch);
-    }
-    mFlippedVertically = !mFlippedVertically;
 }
 
 #if defined(OPENGL_ENABLED)

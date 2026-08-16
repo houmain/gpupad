@@ -51,7 +51,7 @@ void VKTexture::addUsage(KDGpu::TextureUsageFlags usage)
     // TODO: not ideal to update usage of already created texture
     if (mTexture.isValid()) {
         Q_ASSERT(!"unreachable");
-        mTexture = {};
+        mTexture = { };
     }
     mUsage |= usage;
 }
@@ -109,6 +109,7 @@ bool VKTexture::prepareStorageImage(VKContext &context)
     createAndUpload(context);
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
+    mData.setRowOrder(TextureData::RowOrder::TopToBottom);
 
     memoryBarrier(*context.commandRecorder, KDGpu::TextureLayout::General,
         KDGpu::AccessFlagBit::ShaderStorageWriteBit
@@ -124,6 +125,7 @@ bool VKTexture::prepareAttachment(VKContext &context)
     createAndUpload(context);
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
+    mData.setRowOrder(TextureData::RowOrder::TopToBottom);
 
     const auto layout = (mKind.depth || mKind.stencil
             ? KDGpu::TextureLayout::DepthStencilAttachmentOptimal
@@ -165,6 +167,7 @@ bool VKTexture::clear(VKContext &context, std::array<double, 4> color,
     createAndUpload(context);
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
+    mData.setRowOrder(TextureData::RowOrder::TopToBottom);
 
     if (!mTexture.isValid())
         return false;
@@ -254,6 +257,7 @@ bool VKTexture::copy(VKContext &context, VKTexture &source)
         .regions = regions,
     });
 
+    mData.setRowOrder(source.mData.rowOrder());
     mMipmapsInvalidated = source.mMipmapsInvalidated;
     return true;
 }
@@ -306,14 +310,14 @@ void VKTexture::release(KDGpu::Device &device)
         const auto textureValid = mTexture.isValid();
         mShareHandle.reset();
         mTextureViews.clear();
-        mTexture = {};
+        mTexture = { };
 
         if (textureValid && mKtxTexture.vkDestroyImage) {
             auto vkDevice = static_cast<KDGpu::VulkanDevice *>(
                 device.graphicsApi()->resourceManager()->getDevice(device));
             ktxVulkanTexture_Destruct(&mKtxTexture, vkDevice->device, nullptr);
         }
-        mKtxTexture = {};
+        mKtxTexture = { };
     }
 }
 
@@ -531,7 +535,7 @@ bool VKTexture::finishDownload()
     std::memcpy(mData.getWriteonlyData(0, 0, 0), mappedData,
         mData.getDataSize());
     mDownloadBuffer.unmap();
-    mDownloadBuffer = {};
+    mDownloadBuffer = { };
     return true;
 }
 
@@ -598,7 +602,7 @@ ShareHandleData VKTexture::getExternalMemoryShareHandle(VKContext &context)
 
     const auto memory = mTexture.externalMemoryHandle();
     if (memory.handle.index() == 0)
-        return {};
+        return { };
 
 #if defined(KDGPU_PLATFORM_WIN32)
     return {

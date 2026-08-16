@@ -274,6 +274,7 @@ GLuint GLTexture::getReadWriteTextureId(GLContext &gl)
     upload(gl);
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
+    mData.setRowOrder(TextureData::RowOrder::BottomToTop);
     return mTextureObject;
 }
 

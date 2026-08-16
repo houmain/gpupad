@@ -19,14 +19,12 @@ public:
     ~FileCache();
 
     bool getSource(const QString &fileName, QString *source) const;
-    bool getTexture(const QString &fileName, bool flipVertically,
-        TextureData *texture) const;
+    bool getTexture(const QString &fileName, TextureData *texture) const;
     bool getBinary(const QString &fileName, QByteArray *binary) const;
 
     void updateSource(const QString &fileName, QString source);
     void updateTexture(const QString &fileName, TextureData texture);
-    void updateVideoTexture(const QString &fileName, bool flippedVertically,
-        const QVideoFrame &frame);
+    void updateVideoTexture(const QString &fileName, const QVideoFrame &frame);
     void updateVideoTexture(const QString &fileName, TextureData texture);
     void updateBinary(const QString &fileName, QByteArray binary);
     void updateBinaryRange(const QString &fileName, int offset,
@@ -42,13 +40,12 @@ public:
 
 Q_SIGNALS:
     void fileChanged(const QString &fileName);
-    void mediaRequested(const QString &fileName, bool flipVertically) const;
+    void mediaRequested(const QString &fileName) const;
     void reloadSource(const QString &fileName, QPrivateSignal);
-    void reloadTexture(const QString &fileName, bool flipVertically,
-        QPrivateSignal);
+    void reloadTexture(const QString &fileName, QPrivateSignal);
     void reloadBinary(const QString &fileName, QPrivateSignal);
-    void convertVideoFrame(const QString &fileName, bool flipVertically,
-        const QVideoFrame &frame, QPrivateSignal);
+    void convertVideoFrame(const QString &fileName, const QVideoFrame &frame,
+        QPrivateSignal);
 
 public Q_SLOTS:
     void handleSourceReloaded(const QString &fileName, QString);
@@ -58,7 +55,6 @@ public Q_SLOTS:
 
 private:
     class BackgroundLoader;
-    using TextureKey = QPair<QString, bool>;
 
     void handleFileSystemFileChanged(const QString &fileName);
     void addFileSystemWatch(const QString &fileName,
@@ -70,7 +66,7 @@ private:
 
     mutable QMutex mMutex;
     mutable QMap<QString, QString> mSources;
-    mutable QMap<TextureKey, TextureData> mTextures;
+    mutable QMap<QString, TextureData> mTextures;
     mutable QMap<QString, QByteArray> mBinaries;
     mutable QMap<QString, bool> mFileSystemWatchesToAdd;
 

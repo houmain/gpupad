@@ -12,8 +12,7 @@ class VideoStream : public QObject
 {
     Q_OBJECT
 public:
-    explicit VideoStream(QString fileName, bool flipVertically,
-        QObject *parent = nullptr);
+    explicit VideoStream(QString fileName, QObject *parent = nullptr);
     const QString &fileName() const { return mFileName; }
     int width() const { return mWidth; }
     int height() const { return mHeight; }
@@ -30,7 +29,6 @@ private:
     void setSize(int width, int height);
 
     QString mFileName;
-    bool mFlipVertically{ };
     int mWidth{ };
     int mHeight{ };
     QVideoFrame mCurrentFrame;

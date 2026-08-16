@@ -10,8 +10,7 @@ class QVideoSink;
 class VideoPlayer final : public VideoStream
 {
 public:
-    VideoPlayer(QString fileName, bool flipVertically,
-        QObject *parent = nullptr);
+    VideoPlayer(QString fileName, QObject *parent = nullptr);
 
     void seek(std::chrono::milliseconds time) override;
 

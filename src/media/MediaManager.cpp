@@ -35,17 +35,16 @@ void MediaManager::unloadFiles(std::function<bool(const QString &)> predicate)
         }
 }
 
-void MediaManager::handleMediaRequested(const QString &fileName,
-    bool flipVertically)
+void MediaManager::handleMediaRequested(const QString &fileName)
 {
     Q_ASSERT(onMainThread());
     auto videoStream = std::add_pointer_t<VideoStream>{ };
     if (FileDialog::isAudioFileName(fileName)) {
-        videoStream = new AudioSpectrum(fileName, flipVertically);
+        videoStream = new AudioSpectrum(fileName);
     } else if (FileDialog::isCameraFileName(fileName)) {
-        videoStream = new Camera(fileName, flipVertically);
+        videoStream = new Camera(fileName);
     } else {
-        videoStream = new VideoPlayer(fileName, flipVertically);
+        videoStream = new VideoPlayer(fileName);
     }
     connect(videoStream, &VideoStream::loadingFinished, this,
         &MediaManager::handleMediaLoaded);

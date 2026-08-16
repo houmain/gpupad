@@ -307,7 +307,7 @@ bool TextureEditor::load()
 {
     auto texture = TextureData();
     auto isRaw = false;
-    if (!Singletons::fileCache().getTexture(mFileName, false, &texture)) {
+    if (!Singletons::fileCache().getTexture(mFileName, &texture)) {
         auto binary = QByteArray();
         if (!Singletons::fileCache().getBinary(mFileName, &binary))
             if (!FileDialog::isEmptyOrUntitled(mFileName))
@@ -354,7 +354,7 @@ bool TextureEditor::save()
     if (!mTextureItem->downloadImage(&texture))
         return false;
 
-    if (!texture.save(fileName(), !mTextureItem->flipVertically()))
+    if (!texture.save(fileName()))
         return false;
 
     mTexture = std::move(texture);
@@ -548,7 +548,7 @@ QPointF TextureEditor::mapFromScene(const QPointF &position) const
 void TextureEditor::updateMousePosition(const QPoint &position)
 {
     auto pos = mapToScene(position);
-    if (mTextureItem->flipVertically())
+    if (mTextureItem->effectiveFlipVertically(mTexture.rowOrder()))
         pos.setY(mTextureItem->boundingRect().height() - pos.y());
     pos = QPointF(qRound(pos.x() - 0.5), qRound(pos.y() - 0.5));
 

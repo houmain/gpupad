@@ -47,7 +47,7 @@ private:
 };
 
 GLTextureEditorItem::GLTextureEditorItem(GLWindow *parent)
-    : TextureEditorItem(parent)
+    : TextureEditorItem(parent, TextureData::RowOrder::BottomToTop)
     , mProgramCache(new ProgramCache())
 {
 }
@@ -193,7 +193,8 @@ bool GLTextureEditorItem::renderTexture(const QMatrix4x4 &transform,
     if (!program)
         return false;
 
-    const auto params = getParams(transform, mTextureSamples, image.depth());
+    const auto params = getParams(transform, mTextureSamples, image.depth(),
+        image.rowOrder());
     program->bind();
     program->setUniformValue("uTexture", 0);
     program->setUniformValue("uTransform", transform);

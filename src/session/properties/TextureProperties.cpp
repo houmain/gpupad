@@ -481,7 +481,7 @@ void TextureProperties::applyFileFormat()
 {
     const auto fileName = mUi->file->currentData().toString();
     auto texture = TextureData();
-    if (Singletons::fileCache().getTexture(fileName, false, &texture)) {
+    if (Singletons::fileCache().getTexture(fileName, &texture)) {
         // automatically expand to 4 components
         // since 3 are usually to supported by device
         auto format = texture.format();

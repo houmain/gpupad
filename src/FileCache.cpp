@@ -78,14 +78,13 @@ namespace {
         return true;
     }
 
-    bool loadTexture(const QString &fileName, bool flipVertically,
-        TextureData *texture)
+    bool loadTexture(const QString &fileName, TextureData *texture)
     {
         if (!texture || FileDialog::isEmptyOrUntitled(fileName))
             return false;
 
         auto file = TextureData();
-        if (!file.load(fileName, flipVertically))
+        if (!file.load(fileName))
             return false;
 
         *texture = file;
@@ -119,10 +118,10 @@ public Q_SLOTS:
             Q_EMIT loadingFailed(fileName);
     }
 
-    void loadTexture(const QString &fileName, bool flipVertically)
+    void loadTexture(const QString &fileName)
     {
         auto texture = TextureData();
-        if (::loadTexture(fileName, flipVertically, &texture))
+        if (::loadTexture(fileName, &texture))
             Q_EMIT textureLoaded(fileName, std::move(texture));
         else
             Q_EMIT loadingFailed(fileName);
@@ -137,11 +136,11 @@ public Q_SLOTS:
             Q_EMIT loadingFailed(fileName);
     }
 
-    void convertVideoFrame(const QString &fileName, bool flipVertically,
+    void convertVideoFrame(const QString &fileName,
         const QVideoFrame &frame)
     {
 #if defined(MULTIMEDIA_ENABLED)
-        mPendingVideoFrames[{ fileName, flipVertically }] = frame;
+        mPendingVideoFrames[fileName] = frame;
         QMetaObject::invokeMethod(
             this, [this]() { convertNextVideoFrame(); }, Qt::QueuedConnection);
 #endif
@@ -161,19 +160,19 @@ private:
             return;
 
         const auto it = mPendingVideoFrames.begin();
-        const auto [fileName, flipVertically] = it.key();
+        const auto fileName = it.key();
         const auto frame = it.value();
         mPendingVideoFrames.erase(it);
 
         auto texture = TextureData();
-        if (texture.loadQImage(frame.toImage(), flipVertically))
+        if (texture.loadQImage(frame.toImage()))
             Q_EMIT textureLoaded(fileName, std::move(texture));
 
         QMetaObject::invokeMethod(
             this, [this]() { convertNextVideoFrame(); }, Qt::QueuedConnection);
     }
 
-    QMap<QPair<QString, bool>, QVideoFrame> mPendingVideoFrames;
+    QMap<QString, QVideoFrame> mPendingVideoFrames;
 #endif // defined(MULTIMEDIA_ENABLED)
 };
 
@@ -274,7 +273,7 @@ bool FileCache::updateFromEditor(const QString &fileName)
             return false;
 
         const auto &texture = editor->texture();
-        mTextures[TextureKey(fileName, texture.flippedVertically())] = texture;
+        mTextures[fileName] = texture;
         return true;
     }
     return false;
@@ -308,16 +307,14 @@ bool FileCache::getSource(const QString &fileName, QString *source) const
     return true;
 }
 
-bool FileCache::getTexture(const QString &fileName, bool flipVertically,
-    TextureData *texture) const
+bool FileCache::getTexture(const QString &fileName, TextureData *texture) const
 {
     Q_ASSERT(texture);
     Q_ASSERT(isNativeCanonicalFilePath(fileName));
     QMutexLocker lock(&mMutex);
 
-    const auto key = TextureKey(fileName, flipVertically);
-    if (mTextures.contains(key)) {
-        *texture = mTextures[key];
+    if (mTextures.contains(fileName)) {
+        *texture = mTextures[fileName];
         return true;
     }
 
@@ -326,14 +323,12 @@ bool FileCache::getTexture(const QString &fileName, bool flipVertically,
     if (FileDialog::isMediaFileName(fileName)) {
         texture->create(Texture::Target::Target2D, Texture::Format::RGBA8_UNorm,
             1, 1, 1, 1);
-        texture->setFlippedVertically(flipVertically);
         texture->clear();
-        Q_EMIT mediaRequested(fileName, flipVertically);
-    } else if (!loadTexture(fileName, flipVertically, texture)) {
+        Q_EMIT mediaRequested(fileName);
+    } else if (!loadTexture(fileName, texture)) {
         return false;
     }
-    Q_ASSERT(texture->flippedVertically() == flipVertically);
-    mTextures[key] = *texture;
+    mTextures[fileName] = *texture;
     return true;
 }
 
@@ -364,18 +359,16 @@ void FileCache::updateTexture(const QString &fileName, TextureData texture)
         editor->replace(std::move(texture));
     } else {
         QMutexLocker lock(&mMutex);
-        const auto flippedVertically = texture.flippedVertically();
-        mTextures[TextureKey(fileName, flippedVertically)] = std::move(texture);
+        mTextures[fileName] = std::move(texture);
         lock.unlock();
         Q_EMIT fileChanged(fileName);
     }
 }
 
 void FileCache::updateVideoTexture(const QString &fileName,
-    bool flippedVertically, const QVideoFrame &frame)
+    const QVideoFrame &frame)
 {
-    Q_EMIT convertVideoFrame(fileName, flippedVertically, frame,
-        QPrivateSignal());
+    Q_EMIT convertVideoFrame(fileName, frame, QPrivateSignal());
 }
 
 void FileCache::updateVideoTexture(const QString &fileName, TextureData texture)
@@ -510,10 +503,8 @@ bool FileCache::reloadFileInBackground(const QString &fileName)
 {
     if (mSources.contains(fileName)) {
         Q_EMIT reloadSource(fileName, QPrivateSignal());
-    } else if (mTextures.contains({ fileName, true })) {
-        Q_EMIT reloadTexture(fileName, true, QPrivateSignal());
-    } else if (mTextures.contains({ fileName, false })) {
-        Q_EMIT reloadTexture(fileName, false, QPrivateSignal());
+    } else if (mTextures.contains(fileName)) {
+        Q_EMIT reloadTexture(fileName, QPrivateSignal());
     } else if (mBinaries.contains(fileName)) {
         Q_EMIT reloadBinary(fileName, QPrivateSignal());
     } else {
@@ -527,8 +518,7 @@ void FileCache::purgeFile(const QString &fileName)
 {
     mSources.remove(fileName);
     mBinaries.remove(fileName);
-    mTextures.remove(TextureKey(fileName, true));
-    mTextures.remove(TextureKey(fileName, false));
+    mTextures.remove(fileName);
     Singletons::mediaManager().unloadFile(fileName);
 }
 
@@ -552,8 +542,7 @@ void FileCache::handleTextureReloaded(const QString &fileName,
     Q_ASSERT(onMainThread());
     Q_ASSERT(!texture.isNull());
     QMutexLocker lock(&mMutex);
-    const auto flippedVertically = texture.flippedVertically();
-    mTextures[TextureKey(fileName, flippedVertically)] = std::move(texture);
+    mTextures[fileName] = std::move(texture);
     lock.unlock();
 
     if (auto editor = Singletons::editorManager().getEditor(fileName))

@@ -266,7 +266,7 @@ struct VKTextureEditorItem::TextureBinding
 };
 
 VKTextureEditorItem::VKTextureEditorItem(VKWindow *parent)
-    : TextureEditorItem(parent)
+    : TextureEditorItem(parent, TextureData::RowOrder::TopToBottom)
 {
 }
 
@@ -468,8 +468,8 @@ bool VKTextureEditorItem::renderTexture(const QMatrix4x4 &transform,
             mMagnifyLinear, static_cast<WrapMode>(mWrapMode)))
         return false;
 
-    const auto constants =
-        getParams(transform, mTexture->samples(), image.depth());
+    const auto constants = getParams(transform, mTexture->samples(),
+        image.depth(), image.rowOrder());
 
     auto &renderPass = window().renderPass();
     renderPass.setPipeline(pipeline->pipeline);

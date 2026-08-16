@@ -14,7 +14,7 @@ QJsonArray enumerateCameras();
 class Camera final : public VideoStream
 {
 public:
-    Camera(QString fileName, bool flipVertically, QObject *parent = nullptr);
+    Camera(QString fileName, QObject *parent = nullptr);
 
     void seek(std::chrono::milliseconds time) override;
 

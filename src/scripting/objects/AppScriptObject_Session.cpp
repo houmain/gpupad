@@ -944,11 +944,9 @@ void AppScriptObject::setTextureData(QJSValue itemIdent, QJSValue data)
                          fileName = QString()](SessionModel &session) mutable {
         if (auto texture = session.findItem<Texture>(textureId)) {
             ensureFileName(session, *texture, &fileName);
-            if (onMainThread()) {
-                textureData.setFlippedVertically(texture->flipVertically);
+            if (onMainThread())
                 Singletons::fileCache().updateTexture(texture->fileName,
                     textureData);
-            }
         }
     });
 }

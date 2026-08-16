@@ -17,9 +17,8 @@ namespace {
     constexpr auto SeekThreshold = std::chrono::milliseconds(100);
 }
 
-AudioSpectrum::AudioSpectrum(QString fileName, bool flipVertically,
-    QObject *parent)
-    : VideoStream(fileName, flipVertically, parent)
+AudioSpectrum::AudioSpectrum(QString fileName, QObject *parent)
+    : VideoStream(fileName, parent)
 {
     mPlayer = new QMediaPlayer(this);
     mAudioOutput = new QAudioOutput(this);

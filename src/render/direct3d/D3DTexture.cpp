@@ -259,6 +259,7 @@ void D3DTexture::prepareUnorderedAccessView(D3DContext &context,
 
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
+    mData.setRowOrder(TextureData::RowOrder::TopToBottom);
 }
 
 void D3DTexture::prepareRenderTargetView(D3DContext &context)
@@ -268,6 +269,7 @@ void D3DTexture::prepareRenderTargetView(D3DContext &context)
     resourceBarrier(context, D3D12_RESOURCE_STATE_RENDER_TARGET);
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
+    mData.setRowOrder(TextureData::RowOrder::TopToBottom);
 }
 
 void D3DTexture::prepareDepthStencilView(D3DContext &context)
@@ -277,6 +279,7 @@ void D3DTexture::prepareDepthStencilView(D3DContext &context)
     resourceBarrier(context, D3D12_RESOURCE_STATE_DEPTH_WRITE);
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
+    mData.setRowOrder(TextureData::RowOrder::TopToBottom);
 }
 
 bool D3DTexture::clear(D3DContext &context, std::array<double, 4> color,
@@ -286,6 +289,7 @@ bool D3DTexture::clear(D3DContext &context, std::array<double, 4> color,
     create(context);
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
+    mData.setRowOrder(TextureData::RowOrder::TopToBottom);
 
     if (!mResource)
         return false;
@@ -335,6 +339,8 @@ bool D3DTexture::copy(D3DContext &context, D3DTexture &source)
     resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_DEST);
     source.resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_SOURCE);
     context.graphicsCommandList->CopyResource(resource(), source.resource());
+    mDeviceCopyModified = true;
+    mData.setRowOrder(source.mData.rowOrder());
     return true;
 }
 

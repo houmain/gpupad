@@ -97,8 +97,7 @@ TextureBase::TextureBase(const Buffer &buffer, Texture::Format format,
 }
 
 TextureBase::TextureBase(TextureData data, int samples)
-    : mFlipVertically(data.flippedVertically())
-    , mTarget(data.getTarget(samples))
+    : mTarget(data.getTarget(samples))
     , mFormat(toPowerOfTwoByteFormat(data.format()))
     , mWidth(std::max(data.width(), 1))
     , mHeight(std::max(data.height(), 1))
@@ -137,6 +136,9 @@ bool TextureBase::swap(TextureBase &other)
         return false;
 
     std::swap(mMipmapsInvalidated, other.mMipmapsInvalidated);
+    const auto rowOrder = mData.rowOrder();
+    mData.setRowOrder(other.mData.rowOrder());
+    other.mData.setRowOrder(rowOrder);
 
     mDeviceCopyModified = true;
     other.mDeviceCopyModified = true;
@@ -145,9 +147,8 @@ bool TextureBase::swap(TextureBase &other)
 
 void TextureBase::reload(bool forWriting)
 {
-    auto fileData = TextureData{};
-    if (Singletons::fileCache().getTexture(mFileName, mFlipVertically,
-            &fileData)) {
+    auto fileData = TextureData{ };
+    if (Singletons::fileCache().getTexture(mFileName, &fileData)) {
         // check if cache still matches the file before conversion
         if (!mFileData.isSharedWith(fileData)) {
             mFileData = fileData;
@@ -174,7 +175,6 @@ void TextureBase::reload(bool forWriting)
             mMessages.insert(mItemId, MessageType::CreatingTextureFailed);
         }
         mData.clear();
-        mData.setFlippedVertically(mFlipVertically);
         mSystemCopyModified = true;
     }
 }

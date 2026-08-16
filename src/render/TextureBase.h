@@ -38,24 +38,24 @@ protected:
     bool swap(TextureBase &other);
     void reload(bool forWriting);
 
-    ItemId mItemId{};
+    ItemId mItemId{ };
     MessagePtrSet mMessages;
     QString mFileName;
-    bool mFlipVertically{};
-    Texture::Target mTarget{};
-    Texture::Format mFormat{};
-    int mWidth{};
-    int mHeight{};
-    int mDepth{};
-    int mLayers{};
-    int mSamples{};
+    bool mFlipVertically{ };
+    Texture::Target mTarget{ };
+    Texture::Format mFormat{ };
+    int mWidth{ };
+    int mHeight{ };
+    int mDepth{ };
+    int mLayers{ };
+    int mSamples{ };
     TextureData mData;
     QSet<ItemId> mUsedItems;
-    TextureKind mKind{};
+    TextureKind mKind{ };
     TextureData mFileData;
-    bool mSystemCopyModified{};
-    bool mDeviceCopyModified{};
-    bool mMipmapsInvalidated{};
+    bool mSystemCopyModified{ };
+    bool mDeviceCopyModified{ };
+    bool mMipmapsInvalidated{ };
     ShareHandleSource mShareHandle;
 };
 

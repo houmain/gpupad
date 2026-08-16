@@ -112,8 +112,8 @@ QJsonArray enumerateCameras()
     return cameras;
 }
 
-Camera::Camera(QString fileName, bool flipVertically, QObject *parent)
-    : VideoStream(fileName, flipVertically, parent)
+Camera::Camera(QString fileName, QObject *parent)
+    : VideoStream(fileName, parent)
 {
     const auto [id, frameFormat] = parseCameraJson(fileName);
     const auto name = QFileInfo(fileName).baseName();

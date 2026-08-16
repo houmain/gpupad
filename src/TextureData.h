@@ -18,6 +18,11 @@
 class TextureData
 {
 public:
+    enum class RowOrder {
+        TopToBottom,
+        BottomToTop,
+    };
+
     bool isSharedWith(const TextureData &other) const;
     bool create(Texture::Target target, Texture::Format format, int width,
         int height, int depth, int layers, int levels = 0);
@@ -25,9 +30,9 @@ public:
     TextureData convert(Texture::Format format) const;
     TextureData convert(Texture::Format format, int width, int height,
         int depth, int layers) const;
-    bool load(const QString &fileName, bool flipVertically);
-    bool loadQImage(QImage image, bool flipVertically);
-    bool save(const QString &fileName, bool flipVertically) const;
+    bool load(const QString &fileName);
+    bool loadQImage(QImage image);
+    bool save(const QString &fileName);
     bool isNull() const;
     void clear();
     QImage toImage() const;
@@ -51,8 +56,8 @@ public:
     int levels() const;
     int layers() const;
     int faces() const;
-    void setFlippedVertically(bool flipped) { mFlippedVertically = flipped; }
-    bool flippedVertically() const { return mFlippedVertically; }
+    void setRowOrder(RowOrder rowOrder) { mRowOrder = rowOrder; }
+    RowOrder rowOrder() const { return mRowOrder; }
     uchar *getWriteonlyData();
     const uchar *getData() const;
     int getDataSize() const;
@@ -77,20 +82,19 @@ public:
     friend bool operator!=(const TextureData &a, const TextureData &b);
 
 private:
-    bool loadKtx(const QString &fileName, bool flipVertically);
-    bool loadDDS(const QString &fileName, bool flipVertically);
-    bool loadOpenImageIO(const QString &fileName, bool flipVertically);
-    bool loadQImage(const QString &fileName, bool flipVertically);
-    bool loadPfm(const QString &fileName, bool flipVertically);
-    bool saveKtx(const QString &fileName, bool flipVertically) const;
-    bool saveDDS(const QString &fileName, bool flipVertically) const;
-    bool saveQImage(const QString &fileName, bool flipVertically) const;
-    bool saveOpenImageIO(const QString &fileName, bool flipVertically) const;
-    bool savePfm(const QString &fileName, bool flipVertically) const;
-    void flipVertically();
+    bool loadKtx(const QString &fileName);
+    bool loadDDS(const QString &fileName);
+    bool loadOpenImageIO(const QString &fileName);
+    bool loadQImage(const QString &fileName);
+    bool loadPfm(const QString &fileName);
+    bool saveKtx(const QString &fileName);
+    bool saveDDS(const QString &fileName) const;
+    bool saveQImage(const QString &fileName) const;
+    bool saveOpenImageIO(const QString &fileName) const;
+    bool savePfm(const QString &fileName) const;
 
     std::shared_ptr<ktxTexture> mKtxTexture;
-    bool mFlippedVertically{};
+    RowOrder mRowOrder{ RowOrder::TopToBottom };
 };
 
 enum class TextureSampleType {

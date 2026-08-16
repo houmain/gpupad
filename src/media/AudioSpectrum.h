@@ -14,8 +14,7 @@ class QAudioOutput;
 class AudioSpectrum final : public VideoStream
 {
 public:
-    AudioSpectrum(QString fileName, bool flipVertically,
-        QObject *parent = nullptr);
+    AudioSpectrum(QString fileName, QObject *parent = nullptr);
 
     void seek(std::chrono::milliseconds targetTime) override;
 

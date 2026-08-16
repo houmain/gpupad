@@ -21,7 +21,7 @@ public:
     void unloadFiles(std::function<bool(const QString &)> predicate);
     void seek(double time);
     void pause();
-    void handleMediaRequested(const QString &fileName, bool flipVertically);
+    void handleMediaRequested(const QString &fileName);
 
 private:
     void handleMediaLoaded();

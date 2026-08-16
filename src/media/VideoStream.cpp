@@ -6,10 +6,9 @@
 #  include "FileCache.h"
 #  include "TextureData.h"
 
-VideoStream::VideoStream(QString fileName, bool flipVertically, QObject *parent)
+VideoStream::VideoStream(QString fileName, QObject *parent)
     : QObject(parent)
     , mFileName(fileName)
-    , mFlipVertically(flipVertically)
 {
 }
 
@@ -20,15 +19,13 @@ void VideoStream::presentFrame(const QVideoFrame &frame)
     if (mCurrentFrame == frame)
         return;
     mCurrentFrame = frame;
-    Singletons::fileCache().updateVideoTexture(mFileName, mFlipVertically,
-        frame);
+    Singletons::fileCache().updateVideoTexture(mFileName, frame);
 }
 
 void VideoStream::presentTexture(TextureData texture)
 {
     Q_ASSERT(onMainThread());
     Q_ASSERT(!texture.isNull());
-    texture.setFlippedVertically(mFlipVertically);
     setSize(texture.width(), texture.height());
     Singletons::fileCache().updateVideoTexture(mFileName, std::move(texture));
 }

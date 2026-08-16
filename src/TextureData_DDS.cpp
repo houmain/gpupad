@@ -267,7 +267,7 @@ namespace {
     }
 } // namespace
 
-bool TextureData::loadDDS(const QString &fileName, bool flipVertically)
+bool TextureData::loadDDS(const QString &fileName)
 {
     if (!fileName.endsWith(".dds", Qt::CaseInsensitive))
         return false;
@@ -299,6 +299,8 @@ bool TextureData::loadDDS(const QString &fileName, bool flipVertically)
             layers, static_cast<int>(metadata.mipLevels)))
         return false;
 
+    // TODO:
+    auto flipVertically = false;
     const auto copied = forEachImage(metadata, images, layers, faces,
         [&](int level, int layer, int faceSlice, const DirectX::Image &image) {
             return copyImage(getWriteonlyData(level, layer, faceSlice),
@@ -310,11 +312,12 @@ bool TextureData::loadDDS(const QString &fileName, bool flipVertically)
         return false;
     }
 
-    setFlippedVertically(flipVertically);
+    setRowOrder(flipVertically ? RowOrder::BottomToTop
+                               : RowOrder::TopToBottom);
     return true;
 }
 
-bool TextureData::saveDDS(const QString &fileName, bool flipVertically) const
+bool TextureData::saveDDS(const QString &fileName) const
 {
     if (!fileName.endsWith(".dds", Qt::CaseInsensitive) || isNull())
         return false;
@@ -363,6 +366,8 @@ bool TextureData::saveDDS(const QString &fileName, bool flipVertically) const
     if (FAILED(images.Initialize(metadata)))
         return false;
 
+    // TODO:
+    auto flipVertically = false;
     const auto copied = forEachImage(metadata, images, layers(), faces(),
         [&](int level, int layer, int faceSlice, const DirectX::Image &image) {
             return copyToDirectX(getData(level, layer, faceSlice),
