@@ -157,9 +157,9 @@ void InputState::update(EvaluationType evaluationType)
     Q_EMIT timeChanged(mTime);
 }
 
-void InputState::setFlipFragCoord(bool flipFragCoord)
+void InputState::setFlipCoordY(bool flipCoordY)
 {
-    mFlipFragCoord = flipFragCoord;
+    mFlipCoordY = flipCoordY;
 }
 
 void InputState::setFrameIndex(int frameIndex)

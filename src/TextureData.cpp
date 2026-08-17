@@ -1217,7 +1217,6 @@ bool TextureData::loadQImage(QImage image)
     if (static_cast<int>(image.sizeInBytes()) != getImageSize(0))
         return false;
 
-    const auto stride = getLevelStride(0);
     auto *dest = getWriteonlyData(0, 0, 0);
     std::memcpy(dest, image.constBits(), static_cast<size_t>(getImageSize(0)));
     return true;

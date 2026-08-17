@@ -34,7 +34,7 @@ void MouseScriptObject::update(const InputState &state)
     mPosition = state.mousePosition();
     mPrevPosition = state.prevMousePosition();
     mButtons = state.mouseButtonStates();
-    mFlipFragCoord = state.flipFragCoord();
+    mFlipCoordY = state.flipCoordY();
     Q_EMIT changed();
 }
 
@@ -44,6 +44,12 @@ QJsonValue MouseScriptObject::editorSize() const
     vector.append(mEditorSize.width());
     vector.append(mEditorSize.height());
     return vector;
+}
+
+QJsonValue MouseScriptObject::pos() const
+{
+    mWasRead = true;
+    return toPos(mPosition);
 }
 
 QJsonValue MouseScriptObject::coord() const
@@ -56,6 +62,12 @@ QJsonValue MouseScriptObject::fragCoord() const
 {
     mWasRead = true;
     return toFragCoord(mPosition);
+}
+
+QJsonValue MouseScriptObject::prevPos() const
+{
+    mWasRead = true;
+    return toPos(mPrevPosition);
 }
 
 QJsonValue MouseScriptObject::prevCoord() const
@@ -89,19 +101,34 @@ QJsonValue MouseScriptObject::buttons() const
     return array;
 }
 
-QJsonValue MouseScriptObject::toCoord(QPoint coord) const
+QJsonValue MouseScriptObject::toPos(QPoint pos) const
 {
     auto vector = QJsonArray();
-    vector.append((coord.x() + 0.5) / mEditorSize.width() * 2 - 1);
-    vector.append((coord.y() + 0.5) / mEditorSize.height() * 2 - 1);
+    vector.append(pos.x());
+    vector.append(pos.y());
     return vector;
 }
 
-QJsonValue MouseScriptObject::toFragCoord(QPoint coord) const
+QJsonValue MouseScriptObject::toCoord(QPoint pos) const
 {
     auto vector = QJsonArray();
-    vector.append(coord.x() + 0.5);
-    vector.append(
-        (mFlipFragCoord ? mEditorSize.height() - coord.y() : coord.y()) + 0.5);
+    auto x = (pos.x() + 0.5) / mEditorSize.width() * 2 - 1;
+    auto y = (pos.y() + 0.5) / mEditorSize.height() * 2 - 1;
+    if (mFlipCoordY)
+        y = -y;
+    vector.append(x);
+    vector.append(y);
+    return vector;
+}
+
+QJsonValue MouseScriptObject::toFragCoord(QPoint pos) const
+{
+    auto vector = QJsonArray();
+    auto x = pos.x() + 0.5;
+    auto y = pos.y() + 0.5;
+    if (mFlipCoordY)
+        y = mEditorSize.height() - y;
+    vector.append(x);
+    vector.append(y);
     return vector;
 }

@@ -470,7 +470,7 @@ void AppScriptObject::replaceItems(QJSValue parentIdent, QJSValue array)
             ItemInfo{ item->id, item->type, !item->items.empty() });
 
     // remove Items contained in new list
-    for (auto i = 0; i < update.size(); ++i) {
+    for (auto i = 0u; i < update.size(); ++i) {
         const auto &object = update[i].get_ref<const JsonObject &>();
         if (const auto id = jsonValue<int>(object, "id")) {
             const auto it = std::find_if(unusedItems.begin(), unusedItems.end(),
@@ -481,7 +481,7 @@ void AppScriptObject::replaceItems(QJSValue parentIdent, QJSValue array)
     }
 
     // reuse Items with same type and no sub items
-    for (auto i = 0; i < update.size(); ++i) {
+    for (auto i = 0u; i < update.size(); ++i) {
         auto object = update[i].get_ref<const JsonObject &>();
         if (!jsonValue<int>(object, "id")) {
             const auto type =
@@ -509,7 +509,7 @@ void AppScriptObject::replaceItems(QJSValue parentIdent, QJSValue array)
     updateItemProperties(parent);
 
     // update id in place
-    Q_ASSERT(parent->items.size() == update.size());
+    Q_ASSERT(parent->items.size() == static_cast<int>(update.size()));
     for (auto i = 0; i < parent->items.size(); ++i)
         array.property(i).setProperty("id", parent->items[i]->id);
 }

@@ -3,6 +3,30 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 4.3.0] - 2026-08-17
+
+### Added
+
+- Added camera video stream.
+- Added audio spectrum textures.
+- Added command line arguments --output and --help.
+- Added Audio Spectrum and Beat Detection samples.
+- Added Shadow Mapping sample.
+- Improved Sliders and Generate Mesh actions.
+
+### Changed
+
+- Mouse movement no longer advances app time.
+
+### Fixed
+
+- Fixed texture editor color picker being flipped vertically.
+- Fixed geometry transformation when generating HLSL from GLSL.
+- Not clearing cache when resetting renderer.
+- Fixed editor GPU initialization in headless mode.
+- Fixed texture swapping.
+- Fixed crash when no Vulkan adapter is available.
+
 ## [Version 4.2.0] - 2026-08-02
 
 ### Added
@@ -1133,6 +1157,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 4.3.0]: https://github.com/houmain/gpupad/compare/4.2.0...4.3.0
 [version 4.2.0]: https://github.com/houmain/gpupad/compare/4.1.0...4.2.0
 [version 4.1.0]: https://github.com/houmain/gpupad/compare/4.0.0...4.1.0
 [version 4.0.0]: https://github.com/houmain/gpupad/compare/3.4.1...4.0.0

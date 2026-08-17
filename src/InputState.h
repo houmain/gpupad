@@ -25,7 +25,7 @@ public:
     void restoreEditorSize(QSize size);
     void restoreMousePosition(const QPoint &position);
 
-    void setFlipFragCoord(bool flipFragCoord);
+    void setFlipCoordY(bool flipCoordY);
     void setFrameIndex(int index);
     void setTime(double time);
     void setEditorSize(QSize size);
@@ -36,7 +36,7 @@ public:
     void setKeyReleased(Qt::Key key);
     void update(EvaluationType evaluationType);
 
-    bool flipFragCoord() const { return mFlipFragCoord; }
+    bool flipCoordY() const { return mFlipCoordY; }
     int frameIndex() const { return mFrameIndex; }
     double time() const { return mTime; }
     const QSize &editorSize() const { return mEditorSize; }
@@ -63,7 +63,7 @@ private:
     ButtonStateQueue mNextMouseButtonStates;
     ButtonStateQueue mNextKeyStates;
 
-    bool mFlipFragCoord{ };
+    bool mFlipCoordY{ };
     int mFrameIndex{ };
     double mTime{ };
     double mManualTimeStep{ 1.0 / 60 };

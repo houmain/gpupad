@@ -3,11 +3,6 @@
 #include <vector>
 #include <memory>
 
-// added because of vk_mem_alloc.h warnings
-#if defined(__GNUC__)
-#  pragma GCC diagnostic ignored "-Wnullability-completeness"
-#endif
-
 // still missing declaration in KDGpu/texture_view.h?
 namespace KDGpu {
     class Texture;

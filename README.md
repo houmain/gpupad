@@ -158,10 +158,12 @@ There is one JavaScript state for the whole session and the scripts are evaluate
 ### Mouse
 
 - `button: [State]` - The state of each mouse button (0 = Up, 1 = Down, 2 = Pressed, -1 = Released).
-- `coord: [x, y]`
+- `pos: [x, y]`
+- `prevPos: [x, y]`
 - `delta: [x, y]`
-- `fragCoord: [x, y]`
+- `coord: [x, y]`
 - `prevCoord: [x, y]`
+- `fragCoord: [x, y]`
 - `prevFragCoord: [x, y]`
 - `editorSize: [width, height]`
 

@@ -12,6 +12,8 @@ class MouseScriptObject final : public QObject
     Q_PROPERTY(QJsonValue fragCoord READ fragCoord NOTIFY changed)
     Q_PROPERTY(QJsonValue prevCoord READ prevCoord NOTIFY changed)
     Q_PROPERTY(QJsonValue prevFragCoord READ prevFragCoord NOTIFY changed)
+    Q_PROPERTY(QJsonValue pos READ pos NOTIFY changed)
+    Q_PROPERTY(QJsonValue prevPos READ prevPos NOTIFY changed)
     Q_PROPERTY(QJsonValue delta READ delta NOTIFY changed)
     Q_PROPERTY(QJsonValue buttons READ buttons NOTIFY changed)
 
@@ -21,8 +23,10 @@ public:
     void update(const InputState &state);
 
     QJsonValue editorSize() const;
+    QJsonValue pos() const;
     QJsonValue coord() const;
     QJsonValue fragCoord() const;
+    QJsonValue prevPos() const;
     QJsonValue prevCoord() const;
     QJsonValue prevFragCoord() const;
     QJsonValue delta() const;
@@ -33,13 +37,14 @@ Q_SIGNALS:
     void changed();
 
 private:
-    QJsonValue toCoord(QPoint coord) const;
-    QJsonValue toFragCoord(QPoint coord) const;
+    QJsonValue toPos(QPoint pos) const;
+    QJsonValue toCoord(QPoint pos) const;
+    QJsonValue toFragCoord(QPoint pos) const;
 
     QSize mEditorSize{ };
     QPoint mPosition{ };
     QPoint mPrevPosition{ };
     QVector<ButtonState> mButtons;
-    bool mFlipFragCoord{ };
+    bool mFlipCoordY{ };
     mutable bool mWasRead{ };
 };

@@ -547,24 +547,21 @@ QPointF TextureEditor::mapFromScene(const QPointF &position) const
 
 void TextureEditor::updateMousePosition(const QPoint &position)
 {
-    const auto flipVertically =
-        mTextureItem->effectiveFlipVertically(mTexture.rowOrder());
-
     auto pos = mapToScene(position);
     pos = QPointF(qRound(pos.x() - 0.5), qRound(pos.y() - 0.5));
 
-    Singletons::inputState().setFlipFragCoord(flipVertically);
+    Singletons::inputState().setFlipCoordY(
+        mTextureItem->effectiveFlipVertically(mTexture.rowOrder()));
     Singletons::inputState().setMousePosition(pos.toPoint());
     Singletons::inputState().setEditorSize(
         { mTexture.width(), mTexture.height() });
 
-    if (flipVertically)
+    if (mTextureItem->effectiveFlipVertically(mTexture.rowOrder()))
         pos.setY(mTextureItem->boundingRect().height() - pos.y());
     mTextureInfoBar.setMousePosition(pos);
 
     const auto outsideItem = (pos.x() < 0 || pos.y() < 0
         || pos.x() >= mTexture.width() || pos.y() >= mTexture.height());
-
     const auto dpr = devicePixelRatioF();
     mTextureItem->setMousePosition(QPointF(position) * dpr);
     mTextureItem->setPickerEnabled(mTextureInfoBar.isPickerEnabled()
