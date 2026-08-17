@@ -129,15 +129,14 @@ void EditorManager::updateEditorToolBarVisibility()
 void EditorManager::updateEditorPropertiesVisibility()
 {
     // do not hide when non-editor dock is selected
-    mTextureInfoBar->setEnabled(hasCurrentEditor());
+    mTextureInfoBar->setPickerEnabled(false);
     if (hasEditor() && !hasCurrentEditor())
         return;
 
     const auto widget = (mCurrentDock ? mCurrentDock->widget() : nullptr);
     mFindReplaceBar->setVisible(qobject_cast<SourceEditor *>(widget));
     mTextureInfoBar->setVisible(qobject_cast<TextureEditor *>(widget));
-    mTextureInfoBar->setPickerEnabled(
-        mTextureInfoBar->parentWidget()->isVisible());
+    mTextureInfoBar->setPickerEnabled(mTextureInfoBar->isVisible());
 }
 
 bool EditorManager::eventFilter(QObject *watched, QEvent *event)

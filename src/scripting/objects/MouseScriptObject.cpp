@@ -34,6 +34,7 @@ void MouseScriptObject::update(const InputState &state)
     mPosition = state.mousePosition();
     mPrevPosition = state.prevMousePosition();
     mButtons = state.mouseButtonStates();
+    mFlipFragCoord = state.flipFragCoord();
     Q_EMIT changed();
 }
 
@@ -100,6 +101,7 @@ QJsonValue MouseScriptObject::toFragCoord(QPoint coord) const
 {
     auto vector = QJsonArray();
     vector.append(coord.x() + 0.5);
-    vector.append(coord.y() + 0.5);
+    vector.append(
+        (mFlipFragCoord ? mEditorSize.height() - coord.y() : coord.y()) + 0.5);
     return vector;
 }

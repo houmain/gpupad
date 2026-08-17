@@ -25,6 +25,7 @@ public:
     void restoreEditorSize(QSize size);
     void restoreMousePosition(const QPoint &position);
 
+    void setFlipFragCoord(bool flipFragCoord);
     void setFrameIndex(int index);
     void setTime(double time);
     void setEditorSize(QSize size);
@@ -35,6 +36,7 @@ public:
     void setKeyReleased(Qt::Key key);
     void update(EvaluationType evaluationType);
 
+    bool flipFragCoord() const { return mFlipFragCoord; }
     int frameIndex() const { return mFrameIndex; }
     double time() const { return mTime; }
     const QSize &editorSize() const { return mEditorSize; }
@@ -56,18 +58,19 @@ private:
     using Clock = std::chrono::system_clock;
     using ButtonStateQueue = std::vector<std::pair<int, ButtonState>>;
 
-    QSize mNextEditorSize{};
-    QPoint mNextMousePosition{};
+    QSize mNextEditorSize{ };
+    QPoint mNextMousePosition{ };
     ButtonStateQueue mNextMouseButtonStates;
     ButtonStateQueue mNextKeyStates;
 
-    int mFrameIndex{};
-    double mTime{};
+    bool mFlipFragCoord{ };
+    int mFrameIndex{ };
+    double mTime{ };
     double mManualTimeStep{ 1.0 / 60 };
     QSize mEditorSize;
     QPoint mMousePosition;
     QPoint mPrevMousePosition;
     QVector<ButtonState> mMouseButtonStates;
     QVector<ButtonState> mKeyStates;
-    Clock::time_point mLastUpdateTime{};
+    Clock::time_point mLastUpdateTime{ };
 };

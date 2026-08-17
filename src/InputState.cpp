@@ -140,22 +140,26 @@ void InputState::update(EvaluationType evaluationType)
         // do not advance time
         break;
 
-    case EvaluationType::Manual:
-        mTime += mManualTimeStep;
-        break;
+    case EvaluationType::Manual: mTime += mManualTimeStep; break;
 
     case EvaluationType::Steady:
         if (mLastUpdateTime.time_since_epoch().count() > 0)
-            mTime += std::chrono::duration<double>(now - mLastUpdateTime).count();
+            mTime +=
+                std::chrono::duration<double>(now - mLastUpdateTime).count();
         break;
     }
 
     // only measure elapsed time between two steady evaluations
-    mLastUpdateTime = (evaluationType == EvaluationType::Steady ?
-        now : Clock::time_point());
+    mLastUpdateTime =
+        (evaluationType == EvaluationType::Steady ? now : Clock::time_point());
 
     Q_EMIT frameIndexChanged(mFrameIndex);
     Q_EMIT timeChanged(mTime);
+}
+
+void InputState::setFlipFragCoord(bool flipFragCoord)
+{
+    mFlipFragCoord = flipFragCoord;
 }
 
 void InputState::setFrameIndex(int frameIndex)

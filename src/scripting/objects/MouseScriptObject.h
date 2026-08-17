@@ -36,9 +36,10 @@ private:
     QJsonValue toCoord(QPoint coord) const;
     QJsonValue toFragCoord(QPoint coord) const;
 
-    QSize mEditorSize{};
-    QPoint mPosition{};
-    QPoint mPrevPosition{};
+    QSize mEditorSize{ };
+    QPoint mPosition{ };
+    QPoint mPrevPosition{ };
     QVector<ButtonState> mButtons;
-    mutable bool mWasRead{};
+    bool mFlipFragCoord{ };
+    mutable bool mWasRead{ };
 };

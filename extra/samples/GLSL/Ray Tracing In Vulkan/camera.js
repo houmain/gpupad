@@ -7,11 +7,11 @@ const fovy = 20 * 3.14 / 180
 const aspect = 1280 / 720
 const eye = vec3.fromValues(13, 2, 3)
 const center = vec3.fromValues(0, 0, 0)
-const up = vec3.fromValues(0, 1, 0)
+const up = vec3.fromValues(0, -1, 0)
 
 const radius = 15
 const angle = app.mouse.coord[0]
-eye[0] = Math.cos(angle) * radius
+eye[0] = Math.cos(angle) * -radius
 eye[2] = Math.sin(angle) * radius
 center[1] = app.mouse.coord[1] * -2
 

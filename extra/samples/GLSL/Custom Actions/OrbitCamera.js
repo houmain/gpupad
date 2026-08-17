@@ -100,7 +100,7 @@ const camera = new OrbitCamera(center, up, radius, minRadius, azimuthAngle, pola
 function updateOrbitCamera() {
   if (app.mouse.buttons[0] == 1) {
     camera.rotateAzimuth(2 * app.mouse.delta[0])
-    camera.rotatePolar(2 * -app.mouse.delta[1])
+    camera.rotatePolar(2 * app.mouse.delta[1])
   }
   if (app.mouse.buttons[2] == 1) {
     camera.zoom(app.mouse.delta[1])
