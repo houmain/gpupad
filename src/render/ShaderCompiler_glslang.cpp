@@ -1,12 +1,12 @@
 
-#  include "ShaderCompiler.h"
-#  include "ShaderBase.h"
-#  include "Reflection.h"
-#  include <QRegularExpression>
-#  include <QFile>
-#  include <QTextStream>
-#  include <sstream>
-#  include <set>
+#include "ShaderCompiler.h"
+#include "ShaderBase.h"
+#include "Reflection.h"
+#include <QRegularExpression>
+#include <QFile>
+#include <QTextStream>
+#include <sstream>
+#include <set>
 
 #if defined(GLSLANG_ENABLED)
 #  define ENABLE_HLSL
@@ -58,7 +58,7 @@ namespace ShaderCompiler {
             case Session::ShaderLanguage::HLSL: return glslang::EShSourceHlsl;
             default:                            break;
             }
-            return {};
+            return { };
         }
 
         EShLanguage getStage(Shader::ShaderType shaderType)
@@ -83,7 +83,7 @@ namespace ShaderCompiler {
                 Q_ASSERT(!"unreachable");
                 break;
             }
-            return {};
+            return { };
         }
 
         glslang::EShClient getClient(Session::Renderer renderer)
@@ -126,15 +126,15 @@ namespace ShaderCompiler {
         {
             using enum glslang::EShTargetClientVersion;
             switch (version) {
-            case EShTargetOpenGL_450: return SPV_ENV_OPENGL_4_5;
-            case EShTargetVulkan_1_0: return SPV_ENV_VULKAN_1_0;
-            case EShTargetVulkan_1_1: return SPV_ENV_VULKAN_1_1;
-            case EShTargetVulkan_1_2: return SPV_ENV_VULKAN_1_2;
-            case EShTargetVulkan_1_3: return SPV_ENV_VULKAN_1_3;
-            case EShTargetVulkan_1_4: return SPV_ENV_VULKAN_1_4;
+            case EShTargetOpenGL_450:         return SPV_ENV_OPENGL_4_5;
+            case EShTargetVulkan_1_0:         return SPV_ENV_VULKAN_1_0;
+            case EShTargetVulkan_1_1:         return SPV_ENV_VULKAN_1_1;
+            case EShTargetVulkan_1_2:         return SPV_ENV_VULKAN_1_2;
+            case EShTargetVulkan_1_3:         return SPV_ENV_VULKAN_1_3;
+            case EShTargetVulkan_1_4:         return SPV_ENV_VULKAN_1_4;
             case EShTargetClientVersionCount: break;
             }
-            return {};
+            return { };
         }
 
         spv_target_env getTargetEnvironment(const Session &session)
@@ -372,7 +372,7 @@ namespace ShaderCompiler {
                     static_cast<EShMessages>(requestedMessages), includer)) {
                 parseGLSLangErrors(QString::fromUtf8(shader.getInfoLog()),
                     messages, input.itemId, input.fileNames);
-                return {};
+                return { };
             }
 
             // setGlobalUniformBinding and setGlobalUniformSet do not work
@@ -385,8 +385,8 @@ namespace ShaderCompiler {
 
         if (!program.link(EShMessages::EShMsgDefault)) {
             parseGLSLangErrors(QString::fromUtf8(program.getInfoLog()),
-                messages, programItemId, {});
-            return {};
+                messages, programItemId, { });
+            return { };
         }
 
         // do not auto map locations/bindings when targeting OpenGL
@@ -395,7 +395,7 @@ namespace ShaderCompiler {
             if (!program.mapIO()) {
                 messages.insert(programItemId, MessageType::ShaderError,
                     "mapping program IO failed");
-                return {};
+                return { };
             }
 
         auto spvOptions = glslang::SpvOptions{
@@ -434,7 +434,7 @@ namespace ShaderCompiler {
                 includer)) {
             parseGLSLangErrors(QString::fromUtf8(shader->getInfoLog()),
                 messages, itemId, fileNames);
-            return {};
+            return { };
         }
         return QString::fromUtf8(string);
     }
@@ -442,7 +442,7 @@ namespace ShaderCompiler {
     QString disassemble(const Spirv &spirv)
     {
         if (spirv.empty())
-            return {};
+            return { };
 
         auto ss = std::ostringstream();
         spv::Disassemble(ss, spirv);
@@ -453,26 +453,31 @@ namespace ShaderCompiler {
         MessagePtrSet &messages)
     try {
         if (spirv.empty())
-            return {};
+            return { };
 
         auto compiler = spirv_cross::CompilerGLSL(spirv);
-        auto options = spirv_cross::CompilerGLSL::Options{};
+        auto options = spirv_cross::CompilerGLSL::Options{ };
         compiler.set_common_options(options);
         return QString::fromStdString(compiler.compile());
     } catch (const std::exception &ex) {
         messages.insert(itemId, MessageType::SpirvCrossError, ex.what());
-        return {};
+        return { };
     }
 
     QString generateHLSL(const Spirv &spirv, ItemId itemId,
         MessagePtrSet &messages)
     try {
         if (spirv.empty())
-            return {};
+            return { };
 
         auto compiler = spirv_cross::CompilerHLSL(spirv);
 
-        const auto common = spirv_cross::CompilerGLSL::Options{};
+        auto common = spirv_cross::CompilerGLSL::Options{
+            .vertex = {
+                .fixup_clipspace = true,
+                .flip_vert_y = true,
+            },
+        };
         compiler.set_common_options(common);
 
         compiler.set_hlsl_options({
@@ -492,7 +497,7 @@ namespace ShaderCompiler {
         return QString::fromStdString(compiler.compile());
     } catch (const std::exception &ex) {
         messages.insert(itemId, MessageType::SpirvCrossError, ex.what());
-        return {};
+        return { };
     }
 
     QString generateAST(const Session &session, Shader::ShaderType shaderType,
@@ -513,7 +518,7 @@ namespace ShaderCompiler {
                 includer)) {
             parseGLSLangErrors(QString::fromUtf8(shader->getInfoLog()),
                 messages, itemId, fileNames);
-            return {};
+            return { };
         }
 
         auto program = glslang::TProgram();
@@ -521,7 +526,7 @@ namespace ShaderCompiler {
         if (!program.link(requestedMessages)) {
             parseGLSLangErrors(QString::fromUtf8(program.getInfoLog()),
                 messages, itemId, fileNames);
-            return {};
+            return { };
         }
         return program.getInfoDebugLog();
     }
@@ -570,7 +575,7 @@ namespace ShaderCompiler {
         ItemId programItemId, MessagePtrSet &messages)
     {
         messages.insert(programItemId, MessageType::ShaderCompilerNotAvailable);
-        return {};
+        return { };
     }
 
     QString preprocess(const Session &session, Shader::ShaderType shaderType,
@@ -579,26 +584,26 @@ namespace ShaderCompiler {
         MessagePtrSet &messages)
     {
         messages.insert(itemId, MessageType::ShaderCompilerNotAvailable);
-        return {};
+        return { };
     }
 
     QString disassemble(const Spirv &spirv)
     {
-        return {};
+        return { };
     }
 
     QString generateGLSL(const Spirv &spirv, ItemId itemId,
         MessagePtrSet &messages)
     {
         messages.insert(itemId, MessageType::ShaderCompilerNotAvailable);
-        return {};
+        return { };
     }
 
     QString generateHLSL(const Spirv &spirv, ItemId itemId,
         MessagePtrSet &messages)
     {
         messages.insert(itemId, MessageType::ShaderCompilerNotAvailable);
-        return {};
+        return { };
     }
 
     QString generateAST(const Session &session, Shader::ShaderType shaderType,
@@ -607,7 +612,7 @@ namespace ShaderCompiler {
         MessagePtrSet &messages)
     {
         messages.insert(itemId, MessageType::ShaderCompilerNotAvailable);
-        return {};
+        return { };
     }
 
     Spirv stripReflection(const Spirv &spirv)

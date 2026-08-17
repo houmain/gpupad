@@ -18,9 +18,9 @@ struct Item
 
     virtual ~Item() = default;
 
-    ItemId id{};
-    Type type{};
-    Item *parent{};
+    ItemId id{ };
+    Type type{ };
+    Item *parent{ };
     QList<Item *> items;
     QString name;
     QVariantMap custom;
@@ -53,15 +53,15 @@ struct Session : ScopeItem
     QVariantMap shaderCompilerSettings;
     QString shaderPreamble;
     QString shaderIncludePaths;
-    bool flipViewport{};
-    bool reverseCulling{ true };
+    bool flipViewport{ true };
+    bool reverseCulling{ };
 };
 
 struct Group : ScopeItem
 {
     QString iterations{ "1" };
-    bool inlineScope{};
-    bool dynamic{};
+    bool inlineScope{ };
+    bool dynamic{ };
 };
 
 struct Buffer : FileItem
@@ -95,7 +95,7 @@ struct Texture : FileItem
     QString depth{ "1" };
     QString layers{ "1" };
     int samples{ 1 };
-    bool flipVertically{};
+    bool flipVertically{ };
 };
 
 struct Program : Item
@@ -124,14 +124,14 @@ struct Binding : Item
     BindingType bindingType{ BindingType::Uniform };
     Editor editor{ Editor::Expression };
     QStringList values{ "0" };
-    ItemId textureId{};
-    ItemId bufferId{};
-    ItemId blockId{};
-    int level{};
+    ItemId textureId{ };
+    ItemId bufferId{ };
+    ItemId blockId{ };
+    int level{ };
     int layer{ -1 };
     Filter minFilter{ Filter::Nearest };
     Filter magFilter{ Filter::Nearest };
-    bool anisotropic{};
+    bool anisotropic{ };
     WrapMode wrapModeX{ WrapMode::Repeat };
     WrapMode wrapModeY{ WrapMode::Repeat };
     WrapMode wrapModeZ{ WrapMode::Repeat };
@@ -147,9 +147,9 @@ struct Stream : Item
 
 struct Attribute : Item
 {
-    ItemId fieldId{};
-    bool normalize{};
-    int divisor{};
+    ItemId fieldId{ };
+    bool normalize{ };
+    int divisor{ };
 };
 
 struct Target : Item
@@ -177,8 +177,8 @@ struct Attachment : Item
     using ComparisonFunc = ItemEnums::ComparisonFunc;
     using StencilOperation = ItemEnums2::StencilOperation;
 
-    ItemId textureId{};
-    int level{};
+    ItemId textureId{ };
+    int level{ };
     int layer{ -1 };
 
     BlendEquation blendColorEq{ BlendEquation::Add };
@@ -190,13 +190,13 @@ struct Attachment : Item
     unsigned int colorWriteMask{ 0xF };
 
     ComparisonFunc depthComparisonFunc{ ComparisonFunc::Less };
-    double depthOffsetSlope{};
-    double depthOffsetConstant{};
-    bool depthClamp{};
+    double depthOffsetSlope{ };
+    double depthOffsetConstant{ };
+    bool depthClamp{ };
     bool depthWrite{ true };
 
     ComparisonFunc stencilFrontComparisonFunc{ ComparisonFunc::Always };
-    int stencilFrontReference{};
+    int stencilFrontReference{ };
     unsigned int stencilFrontReadMask{ 0xFF };
     StencilOperation stencilFrontFailOp{ StencilOperation::Keep };
     StencilOperation stencilFrontDepthFailOp{ StencilOperation::Keep };
@@ -204,7 +204,7 @@ struct Attachment : Item
     unsigned int stencilFrontWriteMask{ 0xFF };
 
     ComparisonFunc stencilBackComparisonFunc{ ComparisonFunc::Always };
-    int stencilBackReference{};
+    int stencilBackReference{ };
     unsigned int stencilBackReadMask{ 0xFF };
     StencilOperation stencilBackFailOp{ StencilOperation::Keep };
     StencilOperation stencilBackDepthFailOp{ StencilOperation::Keep };
@@ -220,22 +220,22 @@ struct Call : Item
 
     ExecuteOn executeOn{ ExecuteOn::EveryEvaluation };
     bool checked{ true };
-    CallType callType{};
-    ItemId programId{};
-    ItemId targetId{};
-    ItemId vertexStreamId{};
+    CallType callType{ };
+    ItemId programId{ };
+    ItemId targetId{ };
+    ItemId vertexStreamId{ };
 
     PrimitiveType primitiveType{ PrimitiveType::Triangles };
     QString count;
     QString first{ "0" };
 
-    ItemId indexBufferBlockId{};
+    ItemId indexBufferBlockId{ };
     QString baseVertex{ "0" };
 
     QString instanceCount{ "1" };
     QString baseInstance{ "0" };
 
-    ItemId indirectBufferBlockId{};
+    ItemId indirectBufferBlockId{ };
     QString drawCount{ "1" };
 
     QString patchVertices{ "3" };
@@ -244,15 +244,15 @@ struct Call : Item
     QString workGroupsY{ "1" };
     QString workGroupsZ{ "1" };
 
-    ItemId textureId{};
-    ItemId fromTextureId{};
+    ItemId textureId{ };
+    ItemId fromTextureId{ };
     QColor clearColor{ Qt::black };
     double clearDepth{ 1.0 };
-    int clearStencil{};
+    int clearStencil{ };
 
-    ItemId bufferId{};
-    ItemId fromBufferId{};
-    ItemId accelerationStructureId{};
+    ItemId bufferId{ };
+    ItemId fromBufferId{ };
+    ItemId accelerationStructureId{ };
 };
 
 struct Script : FileItem
@@ -275,10 +275,10 @@ struct Geometry : Item
 {
     using GeometryType = ItemEnums2::GeometryType;
 
-    GeometryType geometryType{};
-    ItemId vertexBufferBlockId{};
-    ItemId indexBufferBlockId{};
-    ItemId transformBufferBlockId{};
+    GeometryType geometryType{ };
+    ItemId vertexBufferBlockId{ };
+    ItemId indexBufferBlockId{ };
+    ItemId transformBufferBlockId{ };
     QString count;
     QString offset{ "0" };
 };
