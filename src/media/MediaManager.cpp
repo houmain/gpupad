@@ -89,12 +89,14 @@ void MediaManager::pause()
 
 #else // !defined(MULTIMEDIA_ENABLED)
 
+class VideoStream {};
+
 void MediaManager::unloadAll() { }
 void MediaManager::unloadFile(const QString &fileName) { }
 void MediaManager::unloadFiles(std::function<bool(const QString &)> predicate)
 {
 }
-void MediaManager::handleMediaRequested(const QString &, bool) { }
+void MediaManager::handleMediaRequested(const QString &) { }
 void MediaManager::seek(double time) { }
 void MediaManager::pause() { }
 

@@ -20,18 +20,18 @@ namespace {
         "exr", "hdr",
 #endif
         "tga", "bmp", "jpeg", "jpg", "pbm", "pgm", "tif", "tiff", "raw" };
-    const auto AudioFileExtensions = {
+    const auto AudioFileExtensions = std::initializer_list<const char*>{
 #if defined(MULTIMEDIA_ENABLED)
         "wav", "mp3", "flac", "aac", "aif", "aiff", "m4a", "ogg", "oga", "opus",
         "wma"
 #endif
     };
-    const auto VideoFileExtensions = {
+    const auto VideoFileExtensions = std::initializer_list<const char*>{
 #if defined(MULTIMEDIA_ENABLED)
         "mp4", "webm", "mkv", "ogv", "mpg", "wmv", "mov", "avi"
 #endif
     };
-    const auto CameraFileExtensions = {
+    const auto CameraFileExtensions = std::initializer_list<const char*>{
 #if defined(MULTIMEDIA_ENABLED)
         "camera"
 #endif
