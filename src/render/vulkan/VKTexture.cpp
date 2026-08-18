@@ -532,8 +532,10 @@ bool VKTexture::finishDownload()
         return false;
 
     const auto mappedData = mDownloadBuffer.map();
+    const auto rowOrder = mData.rowOrder();
     std::memcpy(mData.getWriteonlyData(0, 0, 0), mappedData,
         mData.getDataSize());
+    mData.setRowOrder(rowOrder);
     mDownloadBuffer.unmap();
     mDownloadBuffer = { };
     return true;
