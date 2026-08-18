@@ -35,12 +35,13 @@ void MediaManager::unloadFiles(std::function<bool(const QString &)> predicate)
         }
 }
 
-void MediaManager::handleMediaRequested(const QString &fileName)
+void MediaManager::handleMediaRequested(const QString &fileName,
+    QSize resolution)
 {
     Q_ASSERT(onMainThread());
     auto videoStream = std::add_pointer_t<VideoStream>{ };
     if (FileDialog::isAudioFileName(fileName)) {
-        videoStream = new AudioSpectrum(fileName);
+        videoStream = new AudioSpectrum(fileName, resolution);
     } else if (FileDialog::isCameraFileName(fileName)) {
         videoStream = new Camera(fileName);
     } else {
@@ -89,14 +90,16 @@ void MediaManager::pause()
 
 #else // !defined(MULTIMEDIA_ENABLED)
 
-class VideoStream {};
+class VideoStream
+{
+};
 
 void MediaManager::unloadAll() { }
 void MediaManager::unloadFile(const QString &fileName) { }
 void MediaManager::unloadFiles(std::function<bool(const QString &)> predicate)
 {
 }
-void MediaManager::handleMediaRequested(const QString &) { }
+void MediaManager::handleMediaRequested(const QString &, QSize resolution) { }
 void MediaManager::seek(double time) { }
 void MediaManager::pause() { }
 

@@ -20,6 +20,8 @@ public:
 
     bool getSource(const QString &fileName, QString *source) const;
     bool getTexture(const QString &fileName, TextureData *texture) const;
+    bool getTexture(const QString &fileName, QSize requestedResolution,
+        TextureData *texture) const;
     bool getBinary(const QString &fileName, QByteArray *binary) const;
 
     void updateSource(const QString &fileName, QString source);
@@ -40,7 +42,8 @@ public:
 
 Q_SIGNALS:
     void fileChanged(const QString &fileName);
-    void mediaRequested(const QString &fileName) const;
+    void mediaRequested(const QString &fileName,
+        QSize requestedResolution) const;
     void reloadSource(const QString &fileName, QPrivateSignal);
     void reloadTexture(const QString &fileName, QPrivateSignal);
     void reloadBinary(const QString &fileName, QPrivateSignal);

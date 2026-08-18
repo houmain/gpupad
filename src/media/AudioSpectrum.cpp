@@ -17,8 +17,15 @@ namespace {
     constexpr auto SeekThreshold = std::chrono::milliseconds(100);
 }
 
-AudioSpectrum::AudioSpectrum(QString fileName, QObject *parent)
+AudioSpectrum::AudioSpectrum(QString fileName, QSize resolution,
+    QObject *parent)
     : VideoStream(fileName, parent)
+    , mAmplitudeCount(std::max(resolution.width(), 1))
+    , mSignalSize(mAmplitudeCount * 2)
+    , mSpectrumHopSize(mSignalSize / 2)
+    , mFft(mSignalSize, KissFFT::WindowType::hann)
+    , mSignal(mSignalSize)
+    , mOrderedSignal(mSignalSize)
 {
     mPlayer = new QMediaPlayer(this);
     mAudioOutput = new QAudioOutput(this);
@@ -78,9 +85,9 @@ void AudioSpectrum::handleAudioBuffer(const QAudioBuffer &buffer)
         appendSample(sample / channelCount);
     }
 
-    if (mSampleCount == SignalSize
-        && mSamplesSinceSpectrum >= SpectrumHopSize) {
-        mSamplesSinceSpectrum %= SpectrumHopSize;
+    if (mSampleCount == mSignalSize
+        && mSamplesSinceSpectrum >= mSpectrumHopSize) {
+        mSamplesSinceSpectrum %= mSpectrumHopSize;
         publishSpectrum();
     }
 }
@@ -88,25 +95,25 @@ void AudioSpectrum::handleAudioBuffer(const QAudioBuffer &buffer)
 void AudioSpectrum::appendSample(float sample)
 {
     mSignal[mWriteIndex] = sample;
-    mWriteIndex = (mWriteIndex + 1) % SignalSize;
-    mSampleCount = std::min(mSampleCount + 1, SignalSize);
+    mWriteIndex = (mWriteIndex + 1) % mSignalSize;
+    mSampleCount = std::min(mSampleCount + 1, mSignalSize);
     ++mSamplesSinceSpectrum;
 }
 
 void AudioSpectrum::publishSpectrum()
 {
-    for (auto i = 0; i < SignalSize; ++i)
-        mOrderedSignal[i] = mSignal[(mWriteIndex + i) % SignalSize];
+    for (auto i = 0; i < mSignalSize; ++i)
+        mOrderedSignal[i] = mSignal[(mWriteIndex + i) % mSignalSize];
 
     mFft.set_signal(mOrderedSignal.data());
     const auto &amplitudes = mFft.amplitudes();
 
     auto texture = TextureData{ };
     if (!texture.create(Texture::Target::Target2D, Texture::Format::R32F,
-            static_cast<int>(amplitudes.size()), 1, 1, 1, 1))
+            mAmplitudeCount, 1, 1, 1, 1))
         return;
     std::memcpy(texture.getWriteonlyData(), amplitudes.data(),
-        amplitudes.size() * sizeof(float));
+        mAmplitudeCount * sizeof(float));
     presentTexture(std::move(texture));
 }
 

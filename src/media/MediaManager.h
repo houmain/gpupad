@@ -21,7 +21,7 @@ public:
     void unloadFiles(std::function<bool(const QString &)> predicate);
     void seek(double time);
     void pause();
-    void handleMediaRequested(const QString &fileName);
+    void handleMediaRequested(const QString &fileName, QSize resolution);
 
 private:
     void handleMediaLoaded();

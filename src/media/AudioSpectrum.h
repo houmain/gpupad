@@ -5,7 +5,7 @@
 #  include "KissFFT.h"
 #  include "VideoStream.h"
 #  include <QMediaPlayer>
-#  include <array>
+#  include <vector>
 
 class QAudioBuffer;
 class QAudioBufferOutput;
@@ -14,14 +14,12 @@ class QAudioOutput;
 class AudioSpectrum final : public VideoStream
 {
 public:
-    AudioSpectrum(QString fileName, QObject *parent = nullptr);
+    AudioSpectrum(QString fileName, QSize resolution,
+        QObject *parent = nullptr);
 
     void seek(std::chrono::milliseconds targetTime) override;
 
 private:
-    static constexpr int SignalSize = 2048;
-    static constexpr int SpectrumHopSize = SignalSize / 2;
-
     void handleStatusChanged(QMediaPlayer::MediaStatus status);
     void handleAudioBuffer(const QAudioBuffer &buffer);
     void appendSample(float sample);
@@ -32,9 +30,12 @@ private:
     QMediaPlayer *mPlayer{ };
     QAudioOutput *mAudioOutput{ };
     QAudioBufferOutput *mBufferOutput{ };
-    KissFFT mFft{ SignalSize, KissFFT::WindowType::hann };
-    std::array<float, SignalSize> mSignal{ };
-    std::array<float, SignalSize> mOrderedSignal{ };
+    int mAmplitudeCount{ };
+    int mSignalSize{ };
+    int mSpectrumHopSize{ };
+    KissFFT mFft;
+    std::vector<float> mSignal;
+    std::vector<float> mOrderedSignal;
     std::chrono::milliseconds mTargetTime{ };
     int mWriteIndex{ };
     int mSampleCount{ };

@@ -136,8 +136,7 @@ public Q_SLOTS:
             Q_EMIT loadingFailed(fileName);
     }
 
-    void convertVideoFrame(const QString &fileName,
-        const QVideoFrame &frame)
+    void convertVideoFrame(const QString &fileName, const QVideoFrame &frame)
     {
 #if defined(MULTIMEDIA_ENABLED)
         mPendingVideoFrames[fileName] = frame;
@@ -309,6 +308,12 @@ bool FileCache::getSource(const QString &fileName, QString *source) const
 
 bool FileCache::getTexture(const QString &fileName, TextureData *texture) const
 {
+    return getTexture(fileName, QSize(), texture);
+}
+
+bool FileCache::getTexture(const QString &fileName, QSize requestedResolution,
+    TextureData *texture) const
+{
     Q_ASSERT(texture);
     Q_ASSERT(isNativeCanonicalFilePath(fileName));
     QMutexLocker lock(&mMutex);
@@ -322,9 +327,9 @@ bool FileCache::getTexture(const QString &fileName, TextureData *texture) const
 
     if (FileDialog::isMediaFileName(fileName)) {
         texture->create(Texture::Target::Target2D, Texture::Format::RGBA8_UNorm,
-            1, 1, 1, 1);
+            requestedResolution.width(), requestedResolution.height(), 1, 1);
         texture->clear();
-        Q_EMIT mediaRequested(fileName);
+        Q_EMIT mediaRequested(fileName, requestedResolution);
     } else if (!loadTexture(fileName, texture)) {
         return false;
     }

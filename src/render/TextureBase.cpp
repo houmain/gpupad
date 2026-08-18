@@ -148,7 +148,8 @@ bool TextureBase::swap(TextureBase &other)
 void TextureBase::reload(bool forWriting)
 {
     auto fileData = TextureData{ };
-    if (Singletons::fileCache().getTexture(mFileName, &fileData)) {
+    const auto resolution = QSize(mWidth, mHeight);
+    if (Singletons::fileCache().getTexture(mFileName, resolution, &fileData)) {
         // check if cache still matches the file before conversion
         if (!mFileData.isSharedWith(fileData)) {
             mFileData = fileData;
