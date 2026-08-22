@@ -1078,17 +1078,50 @@ TextureData TextureData::resize(int width, int height, int depth,
     return copy;
 }
 
+TextureData TextureData::reoriented(RowOrder rowOrder) const
+{
+    if (rowOrder == mRowOrder)
+        return *this;
+
+    auto copy = TextureData{ };
+    if (!copy.create(getTarget(), format(), width(), height(), depth(),
+            layers(), levels()))
+        return { };
+
+    for (auto level = 0; level < levels(); ++level) {
+        const auto stride = getLevelStride(level);
+        const auto levelHeight = getLevelHeight(level);
+        const auto *source = getData(level, 0, 0);
+        auto *dest = copy.getWriteonlyData(level, 0, 0);
+        if (!source || !dest)
+            return { };
+
+        for (auto y = 0; y < levelHeight; ++y)
+            std::memcpy(dest + y * stride,
+                source + (levelHeight - y - 1) * stride,
+                static_cast<size_t>(stride));
+    }
+    copy.setRowOrder(rowOrder);
+    copy.mKtxTexture->generateMipmaps = mKtxTexture->generateMipmaps;
+    return copy;
+}
+
 TextureData TextureData::convert(Texture::Format format, int width, int height,
-    int depth, int layers) const
+    int depth, int layers, RowOrder rowOrder) const
 {
     auto converted = convert(format);
     if (converted.isNull())
         return { };
-    return converted.resize(width, height, depth, layers);
+    converted = converted.resize(width, height, depth, layers);
+    return converted.reoriented(rowOrder);
 }
 
 bool TextureData::loadKtx(const QString &fileName)
 {
+    if (!fileName.endsWith(".ktx2", Qt::CaseInsensitive)
+        && !fileName.endsWith(".ktx", Qt::CaseInsensitive))
+        return false;
+
     auto f = std::fopen(qUtf8Printable(fileName), "rb");
     if (!f)
         return false;
@@ -1224,6 +1257,9 @@ bool TextureData::loadQImage(QImage image)
 
 bool TextureData::loadPfm(const QString &fileName)
 {
+    if (!fileName.endsWith(".pfm", Qt::CaseInsensitive))
+        return false;
+
     auto f = std::fopen(qUtf8Printable(fileName), "rb");
     if (!f)
         return false;

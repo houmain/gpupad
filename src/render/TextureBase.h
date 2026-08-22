@@ -28,7 +28,6 @@ public:
     int layers() const { return mLayers; }
     int levels() const { return (mSamples > 1 ? 1 : mData.levels()); }
     Texture::Format format() const { return mFormat; }
-    bool flippedVertically() const { return mFlipVertically; }
     const TextureData &data() const { return mData; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
     bool deviceCopyModified() const { return mDeviceCopyModified; }
@@ -41,7 +40,7 @@ protected:
     ItemId mItemId{ };
     MessagePtrSet mMessages;
     QString mFileName;
-    bool mFlipVertically{ };
+    TextureData::RowOrder mRowOrder{ };
     Texture::Target mTarget{ };
     Texture::Format mFormat{ };
     int mWidth{ };

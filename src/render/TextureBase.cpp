@@ -56,7 +56,8 @@ TextureBase::TextureBase(const Texture &texture,
     RenderSessionBase &renderSession)
     : mItemId(texture.id)
     , mFileName(texture.fileName)
-    , mFlipVertically(texture.flipVertically)
+    , mRowOrder(texture.flipVertically ? TextureData::RowOrder::BottomToTop
+                                       : TextureData::RowOrder::TopToBottom)
     , mTarget(texture.target)
     , mFormat(texture.format)
     , mSamples(texture.samples)
@@ -104,7 +105,7 @@ TextureBase::TextureBase(TextureData data, int samples)
     , mDepth(std::max(data.depth(), 1))
     , mLayers(std::max(data.layers(), 1))
     , mSamples(std::max(samples, 1))
-    , mData(data.convert(mFormat, mWidth, mHeight, mDepth, mLayers))
+    , mData(data.convert(mFormat, mWidth, mHeight, mDepth, mLayers, mRowOrder))
     , mKind(getKind(mTarget, mFormat))
     , mSystemCopyModified(true)
 {
@@ -121,7 +122,7 @@ TextureBase::TextureBase(TextureData data, int samples)
 bool TextureBase::operator==(const TextureBase &rhs) const
 {
     const auto properties = [](const TextureBase &a) {
-        return std::tie(a.mFileName, a.mFlipVertically, a.mTarget, a.mFormat,
+        return std::tie(a.mFileName, a.mRowOrder, a.mTarget, a.mFormat,
             a.mWidth, a.mHeight, a.mDepth, a.mLayers, a.mSamples);
     };
     return properties(*this) == properties(rhs);
@@ -153,12 +154,13 @@ void TextureBase::reload(bool forWriting)
         // check if cache still matches the file before conversion
         if (!mFileData.isSharedWith(fileData)) {
             mFileData = fileData;
-            fileData =
-                fileData.convert(mFormat, mWidth, mHeight, mDepth, mLayers);
-            if (!fileData.isNull()) {
-                if (!mData.isSharedWith(fileData)) {
+
+            const auto data = fileData.convert(mFormat, mWidth, mHeight, mDepth,
+                mLayers, mRowOrder);
+            if (!data.isNull()) {
+                if (!mData.isSharedWith(data)) {
                     mSystemCopyModified = true;
-                    mData = fileData;
+                    mData = data;
                 }
             } else if (!forWriting) {
                 mMessages.insert(mItemId, MessageType::ConvertingFileFailed,

@@ -27,9 +27,10 @@ public:
     bool create(Texture::Target target, Texture::Format format, int width,
         int height, int depth, int layers, int levels = 0);
     TextureData resize(int width, int height, int depth, int layers) const;
+    TextureData reoriented(RowOrder rowOrder) const;
     TextureData convert(Texture::Format format) const;
     TextureData convert(Texture::Format format, int width, int height,
-        int depth, int layers) const;
+        int depth, int layers, RowOrder rowOrder) const;
     bool load(const QString &fileName);
     bool loadQImage(QImage image);
     bool save(const QString &fileName);
