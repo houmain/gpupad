@@ -1,0 +1,55 @@
+{
+  "type": "Session",
+  "id": 1,
+  "name": "Keyboard Synth — QML Piano",
+  "renderer": "OpenGL",
+  "shaderLanguage": "GLSL",
+  "shaderCompiler": "glslang",
+  "shaderCompilerSettings": {
+    "autoMapBindings": "true",
+    "autoMapLocations": "true",
+    "autoSampledTextures": "true",
+    "spirvVersion": "1.0",
+    "vulkanRulesRelaxed": "true"
+  },
+  "shaderPreamble": "",
+  "shaderIncludePaths": "",
+  "items": [
+    {
+      "type": "Program",
+      "id": 8,
+      "name": "Synthesizer",
+      "items": [
+        {
+          "type": "Shader",
+          "id": 9,
+          "fileName": "sound.comp",
+          "shaderType": "Compute"
+        }
+      ]
+    },
+    {
+      "type": "Script",
+      "id": 12,
+      "fileName": "keyboard.js",
+      "executeOn": "ResetEvaluation"
+    },
+    {
+      "type": "Binding",
+      "id": 11,
+      "name": "noteState",
+      "bindingType": "Uniform",
+      "editor": "Expression",
+      "values": [
+      ]
+    },
+    {
+      "type": "Call",
+      "id": 25,
+      "name": "Play Synth",
+      "checked": true,
+      "callType": "ComputeSound",
+      "programId": 8
+    }
+  ]
+}

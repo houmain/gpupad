@@ -1,0 +1,92 @@
+#version 430
+
+layout(local_size_x = 256) in;
+
+layout(std430, binding = 0) buffer soundBuffer
+{
+    uint sampleBaseLow;
+    uint sampleBaseHigh;
+    uint sampleRate;
+    uint frameCount;
+    vec2 samples[];
+} sound;
+
+layout(location = 0) uniform vec4 noteState[13];
+
+const float Tau = 6.28318530718;
+
+float heldEnvelope(float age)
+{
+    if (age <= 0.0)
+        return 0.0;
+    float attack = smoothstep(0.0, 0.045, age);
+    float decay = mix(1.0, 0.72,
+        1.0 - exp(-max(age - 0.045, 0.0) * 4.0));
+    return attack * decay;
+}
+
+float envelope(vec4 state, float time)
+{
+    float start = state.x;
+    float release = state.y;
+    float age = time - start;
+    float value = heldEnvelope(age);
+    if (release >= start && time >= release) {
+        float releaseValue = heldEnvelope(release - start);
+        value = releaseValue * exp(-(time - release) * 6.5);
+    }
+    return value;
+}
+
+float oscillator(float phase)
+{
+    return 0.62 * sin(phase)
+        + 0.21 * sin(phase * 2.0 + 0.12)
+        + 0.10 * sin(phase * 3.0 + 0.31)
+        + 0.07 * sin(phase * 0.5);
+}
+
+float voice(vec4 state, float time, float detune)
+{
+    float env = envelope(state, time);
+    if (env < 0.0001)
+        return 0.0;
+    float frequency = 440.0 * exp2((state.w - 69.0) / 12.0);
+    float phase = Tau * frequency * max(time - state.x, 0.0) * detune;
+    return oscillator(phase) * env;
+}
+
+vec2 mainSound(int sampleIndex, float time)
+{
+    vec2 mixValue = vec2(0.0);
+    for (int note = 0; note < 13; ++note) {
+        vec4 state = noteState[note];
+        float pan = mix(-0.55, 0.55, float(note) / 12.0);
+        vec2 panGain = sqrt(0.5 * vec2(1.0 - pan, 1.0 + pan));
+
+        vec2 direct = vec2(voice(state, time, 0.9985),
+            voice(state, time, 1.0015));
+        vec2 echo = vec2(voice(state, time - 0.17, 1.001),
+            voice(state, time - 0.19, 0.999));
+        mixValue += panGain * (direct + 0.22 * echo);
+    }
+
+    return tanh(mixValue * 0.34) * 0.72;
+}
+
+void main()
+{
+    uint index = gl_GlobalInvocationID.x;
+    if (index >= sound.frameCount)
+        return;
+
+    uint sampleLow = sound.sampleBaseLow + index;
+    uint sampleHigh = sound.sampleBaseHigh
+        + uint(sampleLow < sound.sampleBaseLow);
+    int sampleIndex = int(sampleLow);
+    float absoluteSample = float(sampleHigh) * 4294967296.0
+        + float(sampleLow);
+    float time = absoluteSample / float(sound.sampleRate);
+
+    sound.samples[index] = mainSound(sampleIndex, time);
+}
