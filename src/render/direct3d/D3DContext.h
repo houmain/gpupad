@@ -12,6 +12,7 @@
 #include "FileDialog.h"
 #include "MessageList.h"
 #include "Singletons.h"
+#include <cstdint>
 
 struct D3DContext
 {
@@ -21,6 +22,7 @@ struct D3DContext
     ComPtr<ID3D12GraphicsCommandList> graphicsCommandList;
     std::vector<ComPtr<ID3D12Resource>> stagingBuffers;
     const UINT descriptorSize;
+    uint32_t soundWorkGroupCount{ };
 };
 
 #endif // D3D_ENABLED

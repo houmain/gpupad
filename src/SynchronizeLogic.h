@@ -5,6 +5,7 @@
 #include "render/ShareHandle.h"
 #include <QObject>
 #include <QSet>
+#include <optional>
 
 class QTimer;
 class SessionModel;
@@ -28,6 +29,7 @@ public:
     void resetEvaluation();
     void manualEvaluation();
     void finishEvaluation();
+    std::optional<double> soundGenerationTime() const;
     void invalidateRenderSession();
     bool resetRenderSessionInvalidationState();
     void updateEditor(ItemId itemId, bool activated);

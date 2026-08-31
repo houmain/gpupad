@@ -31,6 +31,7 @@ struct VKRenderSession::CommandQueue
     std::map<ItemId, VKTarget> targets;
     std::map<ItemId, VKStream> vertexStreams;
     std::map<ItemId, VKAccelerationStructure> accelerationStructures;
+    std::map<ItemId, VKBuffer> soundBuffers;
     std::deque<Command> commands;
     std::vector<VKProgram> failedPrograms;
     std::vector<std::pair<VKTexture *, VKTexture *>> textureSwaps;

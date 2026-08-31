@@ -157,10 +157,10 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
 
             // push binding scope
             if (!group->inlineScope)
-                addCommand([](BindingState &state) { state.push({}); });
+                addCommand([](BindingState &state) { state.push({ }); });
         } else if (castItem<ScopeItem>(item)) {
             // push binding scope
-            addCommand([](BindingState &state) { state.push({}); });
+            addCommand([](BindingState &state) { state.push({ }); });
         } else if (auto script = castItem<Script>(item)) {
             if (script->executeOn == Script::ExecuteOn::EveryEvaluation)
                 mUsedItems += script->id;
@@ -244,7 +244,6 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
             }
         } else if (auto call = castItem<Call>(item)) {
             if (call->checked) {
-
                 if (call->executeOn == Call::ExecuteOn::EveryEvaluation)
                     mUsedItems += call->id;
 
@@ -275,6 +274,7 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
 
                 case Call::CallType::Compute:
                 case Call::CallType::ComputeIndirect:
+                case Call::CallType::ComputeSound:
                     queueCall.setProgram(addProgramOnce(call->programId));
                     if (auto block = sessionModel.findItem<Block>(
                             call->indirectBufferBlockId))
@@ -310,15 +310,21 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
                         addBufferOnce(call->fromBufferId));
                     break;
                 }
+
                 addCommand([this, executeOn = call->executeOn,
-                               context = &commandQueue.context,
+                               commandQueue = &commandQueue,
                                queueCallPtr = std::move(queueCallPtr)](
                                BindingState &state) {
-                    auto &queueCall = *queueCallPtr;
-                    if (!shouldExecute(executeOn, mEvaluationType))
+                    auto &call = *queueCallPtr;
+                    const auto isComputeSound = call.kind().sound;
+                    if (!(isComputeSound
+                                ? mGenerateSound
+                                : shouldExecute(executeOn, mEvaluationType)))
                         return;
 
-                    auto merged = Bindings{};
+                    const auto callItemId = call.itemId();
+                    auto &context = commandQueue->context;
+                    auto merged = Bindings{ };
                     for (const Bindings &scope : state) {
                         for (const auto &[name, binding] : scope.uniforms)
                             merged.uniforms[name] = binding;
@@ -335,16 +341,28 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
                             merged.subroutines[name] = binding;
                     }
 
+                    if (isComputeSound) {
+                        const auto size = getSoundBufferSize();
+                        auto &soundBuffers = commandQueue->soundBuffers;
+                        auto it = soundBuffers.find(callItemId);
+                        if (it == soundBuffers.end())
+                            it = soundBuffers.emplace(callItemId, size).first;
+                        Q_ASSERT(it->second.size() == size);
+                        prepareSoundBuffer(merged, callItemId, it->second);
+                        context.soundWorkGroupCount =
+                            getSoundWorkGroupCount(size);
+                    }
+
                     auto &self = *static_cast<RenderSession *>(this);
                     auto timeQuery = std::shared_ptr<void>();
-                    if (auto index = addTimeQuery(queueCall.itemId()))
+                    if (auto index = addTimeQuery(callItemId))
                         timeQuery = self.beginTimeQuery(*index);
 
-                    queueCall.execute(*context, std::move(merged), mMessages,
+                    call.execute(context, std::move(merged), mMessages,
                         mScriptSession->engine());
 
                     if (executeOn == Call::ExecuteOn::EveryEvaluation)
-                        mUsedItems += queueCall.usedItems();
+                        mUsedItems += call.usedItems();
                 });
             }
         }
@@ -385,7 +403,8 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
 template <typename CommandQueue>
 void RenderSessionBase::executeCommandQueue(CommandQueue &commandQueue) noexcept
 {
-    auto state = BindingState{};
+    auto state = BindingState{ };
+    toggleSoundGeneration();
     mNextCommandQueueIndex = 0;
     while (mNextCommandQueueIndex < commandQueue.commands.size()) {
         const auto index = mNextCommandQueueIndex++;
@@ -412,6 +431,10 @@ void RenderSessionBase::beginDownloadModifiedResources(
             && (mItemsChanged || mEvaluationType != EvaluationType::Steady))
             buffer.beginDownload(commandQueue.context,
                 mEvaluationType != EvaluationType::Reset);
+
+    if (mGenerateSound)
+        for (auto &[itemId, buffer] : commandQueue.soundBuffers)
+            buffer.beginDownload(commandQueue.context, false);
 }
 
 template <typename CommandQueue>
@@ -433,6 +456,12 @@ void RenderSessionBase::finishCommandQueue(CommandQueue &commandQueue) noexcept
         if (buffer.finishDownload())
             synchronizeLogic.handleBufferDataChanged(buffer.itemId(),
                 buffer.data());
+
+    auto soundBuffers = std::vector<QByteArray>{ };
+    for (auto &[itemId, buffer] : commandQueue.soundBuffers)
+        if (buffer.finishDownload())
+            soundBuffers.push_back(getSoundBufferData(buffer));
+    mixSoundBuffers(std::move(soundBuffers));
 
     mPrevMessages.clear();
     if (mEvaluationType == EvaluationType::Reset)

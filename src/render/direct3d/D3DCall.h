@@ -17,6 +17,7 @@ public:
     ~D3DCall();
 
     ItemId itemId() const { return mCall.id; }
+    const CallKind& kind() const { return mKind; }
     D3DProgram *program() { return mProgram; }
     D3DTarget *target() { return mTarget; }
     D3DStream *vertexStream() { return mVertexStream; }
@@ -56,26 +57,26 @@ private:
     const CallKind mKind;
     const Session mSession;
     MessagePtrSet mMessages;
-    D3DProgram *mProgram{};
-    D3DTarget *mTarget{};
-    D3DStream *mVertexStream{};
-    D3DBuffer *mBuffer{};
-    D3DBuffer *mFromBuffer{};
-    D3DTexture *mTexture{};
-    D3DTexture *mFromTexture{};
-    D3DAccelerationStructure *mAccelerationStructure{};
+    D3DProgram *mProgram{ };
+    D3DTarget *mTarget{ };
+    D3DStream *mVertexStream{ };
+    D3DBuffer *mBuffer{ };
+    D3DBuffer *mFromBuffer{ };
+    D3DTexture *mTexture{ };
+    D3DTexture *mFromTexture{ };
+    D3DAccelerationStructure *mAccelerationStructure{ };
 
-    D3DBuffer *mIndexBuffer{};
+    D3DBuffer *mIndexBuffer{ };
     QString mIndirectOffset;
-    int mIndexSize{};
+    int mIndexSize{ };
     QString mIndicesOffset;
     QString mIndicesRowCount;
-    int mIndicesPerRow{};
+    int mIndicesPerRow{ };
     ComPtr<ID3D12Resource> mTempBuffer;
-    UINT64 mTempBufferCapacity{};
+    UINT64 mTempBufferCapacity{ };
 
-    D3DBuffer *mIndirectBuffer{};
-    int mIndirectStride{};
+    D3DBuffer *mIndirectBuffer{ };
+    int mIndirectStride{ };
 
     QSet<ItemId> mUsedItems;
     std::unique_ptr<D3DPipeline> mPipeline;

@@ -23,6 +23,7 @@ struct D3DRenderSession::CommandQueue
     std::map<ItemId, D3DTarget> targets;
     std::map<ItemId, D3DStream> vertexStreams;
     std::map<ItemId, D3DAccelerationStructure> accelerationStructures;
+    std::map<ItemId, D3DBuffer> soundBuffers;
     std::deque<Command> commands;
     std::vector<D3DProgram> failedPrograms;
 
@@ -94,11 +95,11 @@ void D3DRenderSession::createCommandQueue()
 std::vector<Duration> D3DRenderSession::resetTimeQueries(size_t count)
 {
     Q_ASSERT(count <= maxTimeQueries);
-    auto mappedData = std::add_pointer_t<void>{};
+    auto mappedData = std::add_pointer_t<void>{ };
     AssertIfFailed(mTimeQueryResolveBuffer->Map(0, nullptr, &mappedData));
     const auto *timestamps = static_cast<const uint64_t *>(mappedData);
     if (!timestamps)
-        return {};
+        return { };
 
     auto durations = std::vector<Duration>();
     durations.reserve(count);

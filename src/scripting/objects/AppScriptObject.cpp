@@ -218,6 +218,17 @@ void AppScriptObject::setTime(double time)
     dispatchToMainThread([&]() { Singletons::inputState().setTime(time); });
 }
 
+double AppScriptObject::soundTime()
+{
+    auto result = mTime;
+    dispatchToMainThread([&]() {
+        if (const auto time =
+                Singletons::synchronizeLogic().soundGenerationTime())
+            result = *time;
+    });
+    return result;
+}
+
 void AppScriptObject::handleTimeChanged(double time)
 {
     mTimeDelta = time - mTime;

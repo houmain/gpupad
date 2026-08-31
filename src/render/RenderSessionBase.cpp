@@ -1,6 +1,8 @@
 
 #include "RenderSessionBase.h"
+#include "BufferBase.h"
 #include "FileCache.h"
+#include "InputState.h"
 #include "Singletons.h"
 #include "SynchronizeLogic.h"
 #include "scripting/ScriptEngine.h"
@@ -9,6 +11,25 @@
 #include "opengl/GLRenderSession.h"
 #include "vulkan/VKRenderSession.h"
 #include "direct3d/D3DRenderSession.h"
+#include "media/SoundOutput.h"
+#include <algorithm>
+#include <cstdint>
+#include <cstring>
+
+namespace {
+    struct alignas(16) SoundBufferHeader
+    {
+        uint32_t sampleBaseLow;
+        uint32_t sampleBaseHigh;
+        uint32_t sampleRate;
+        uint32_t frameCount;
+    };
+
+    static_assert(sizeof(SoundBufferHeader) == 16);
+
+    inline constexpr auto soundWorkGroupSize = uint32_t{ 256 };
+    inline constexpr auto soundBufferBindingName = "soundBuffer";
+} // namespace
 
 std::unique_ptr<RenderSessionBase> RenderSessionBase::create(
     RendererPtr renderer)
@@ -33,11 +54,12 @@ std::unique_ptr<RenderSessionBase> RenderSessionBase::create(
 #endif
         break;
     }
-    return {};
+    return { };
 }
 
 RenderSessionBase::RenderSessionBase(RendererPtr renderer, QObject *parent)
     : RenderTask(std::move(renderer), parent)
+    , mSoundOutput(std::make_unique<SoundOutput>())
 {
 }
 
@@ -49,7 +71,7 @@ void RenderSessionBase::prepare(bool itemsChanged,
     Q_ASSERT(onMainThread());
     mItemsChanged = itemsChanged;
     mEvaluationType = evaluationType;
-    mPrevMessages = std::exchange(mMessages, {});
+    mPrevMessages = std::exchange(mMessages, { });
 
     if (itemsChanged)
         invalidateCachedProperties();
@@ -59,17 +81,96 @@ void RenderSessionBase::prepare(bool itemsChanged,
     } else {
         mEvaluationType = EvaluationType::Reset;
     }
-    if (mItemsChanged || mEvaluationType == EvaluationType::Reset) {
+    const auto sessionReset =
+        (mItemsChanged || mEvaluationType == EvaluationType::Reset);
+    if (sessionReset) {
         mUsedItems.clear();
         mSessionModelCopy = Singletons::sessionModel();
         mBindingValueOverrides.clear();
     }
+    mSoundOutput->setAppTime(Singletons::inputState().time(), sessionReset);
 }
 
 void RenderSessionBase::setBindingValues(ItemId bindingId, QStringList values)
 {
     Q_ASSERT(onMainThread());
     mBindingValueOverrides[bindingId] = std::move(values);
+}
+
+void RenderSessionBase::setSoundPlaying(bool playing)
+{
+    Q_ASSERT(onMainThread());
+    mSoundOutput->setPlaying(playing);
+}
+
+std::optional<double> RenderSessionBase::soundTime() const
+{
+    Q_ASSERT(onMainThread());
+    return mSoundOutput->playbackTime();
+}
+
+std::optional<double> RenderSessionBase::soundGenerationTime() const
+{
+    Q_ASSERT(onMainThread());
+    return mSoundOutput->generationTime();
+}
+
+void RenderSessionBase::synchronizeSoundToAppTime()
+{
+    Q_ASSERT(onMainThread());
+    mSoundOutput->synchronizeToAppTime();
+}
+
+int RenderSessionBase::getSoundBufferSize() const
+{
+    return static_cast<int>(sizeof(SoundBufferHeader))
+        + mSoundOutput->bufferFrameCount() * 2
+        * static_cast<int>(sizeof(float));
+}
+
+uint32_t RenderSessionBase::getSoundWorkGroupCount(int bufferSize) const
+{
+    const auto sampleDataSize = bufferSize
+        - static_cast<int>(sizeof(SoundBufferHeader));
+    constexpr auto frameSize = 2 * static_cast<int>(sizeof(float));
+    Q_ASSERT(sampleDataSize >= 0 && sampleDataSize % frameSize == 0);
+    const auto frameCount = static_cast<uint32_t>(sampleDataSize / frameSize);
+    return (frameCount + soundWorkGroupSize - 1) / soundWorkGroupSize;
+}
+
+void RenderSessionBase::toggleSoundGeneration()
+{
+    mGenerateSound = mSoundOutput->resetGenerationRequested();
+}
+
+void RenderSessionBase::prepareSoundBuffer(Bindings &bindings,
+    ItemId callItemId, BufferBase &buffer) const
+{
+    const auto sampleBase = mSoundOutput->sampleBase();
+    const auto sampleRate = std::max(mSoundOutput->sampleRate(), 1);
+    const auto header = SoundBufferHeader{
+        .sampleBaseLow = static_cast<uint32_t>(sampleBase),
+        .sampleBaseHigh = static_cast<uint32_t>(sampleBase >> 32),
+        .sampleRate = static_cast<uint32_t>(sampleRate),
+        .frameCount = static_cast<uint32_t>(mSoundOutput->bufferFrameCount()),
+    };
+    auto &data = buffer.writableData();
+    std::memcpy(data.data(), &header, sizeof(header));
+
+    const auto name = QString::fromLatin1(soundBufferBindingName);
+    bindings.buffers[name] =
+        BufferBinding{ callItemId, name, &buffer, 0, "", "", 0 };
+}
+
+QByteArray RenderSessionBase::getSoundBufferData(const BufferBase &buffer) const
+{
+    return buffer.data().mid(static_cast<int>(sizeof(SoundBufferHeader)));
+}
+
+void RenderSessionBase::mixSoundBuffers(std::vector<QByteArray> soundBuffers)
+{
+    Q_ASSERT(onMainThread());
+    mSoundOutput->mix(std::move(soundBuffers));
 }
 
 void RenderSessionBase::configure()

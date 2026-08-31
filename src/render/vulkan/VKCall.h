@@ -16,6 +16,7 @@ public:
     ~VKCall();
 
     ItemId itemId() const { return mCall.id; }
+    const CallKind& kind() const { return mKind; }
     VKProgram *program() { return mProgram; }
     VKTarget *target() { return mTarget; }
     VKStream *vertexStream() { return mVertexStream; }
@@ -52,24 +53,24 @@ private:
     const CallKind mKind;
     const Session mSession;
     MessagePtrSet mMessages;
-    VKProgram *mProgram{};
-    VKTarget *mTarget{};
-    VKStream *mVertexStream{};
-    VKBuffer *mBuffer{};
-    VKBuffer *mFromBuffer{};
-    VKTexture *mTexture{};
-    VKTexture *mFromTexture{};
-    VKAccelerationStructure *mAccelerationStructure{};
+    VKProgram *mProgram{ };
+    VKTarget *mTarget{ };
+    VKStream *mVertexStream{ };
+    VKBuffer *mBuffer{ };
+    VKBuffer *mFromBuffer{ };
+    VKTexture *mTexture{ };
+    VKTexture *mFromTexture{ };
+    VKAccelerationStructure *mAccelerationStructure{ };
 
-    VKBuffer *mIndexBuffer{};
+    VKBuffer *mIndexBuffer{ };
     QString mIndirectOffset;
-    KDGpu::IndexType mIndexType{};
+    KDGpu::IndexType mIndexType{ };
     QString mIndicesOffset;
     QString mIndicesRowCount;
-    int mIndicesPerRow{};
+    int mIndicesPerRow{ };
 
-    VKBuffer *mIndirectBuffer{};
-    int mIndirectStride{};
+    VKBuffer *mIndirectBuffer{ };
+    int mIndirectStride{ };
 
     QSet<ItemId> mUsedItems;
     std::unique_ptr<VKPipeline> mPipeline;

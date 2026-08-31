@@ -141,6 +141,8 @@ void CallProperties::updateWidgets()
 {
     const auto type = currentType();
     const auto kind = currentCallKind();
+    setFormVisibility(mUi->formLayout, mUi->labelExecuteOn, mUi->executeOn,
+        !kind.sound);
     setFormVisibility(mUi->formLayout, mUi->labelProgram, mUi->program,
         kind.draw || kind.compute || kind.trace);
     setFormVisibility(mUi->formLayout, mUi->labelTarget, mUi->target,
@@ -201,9 +203,12 @@ void CallProperties::updateWidgets()
             || type == Call::CallType::SwapBuffers);
 
     setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsX, mUi->workGroupsX,
-        (kind.compute || kind.mesh || kind.trace) && !kind.indirect);
+        (kind.compute || kind.mesh || kind.trace) && !kind.indirect
+            && !kind.sound);
     setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsY, mUi->workGroupsY,
-        (kind.compute || kind.mesh || kind.trace) && !kind.indirect);
+        (kind.compute || kind.mesh || kind.trace) && !kind.indirect
+            && !kind.sound);
     setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsZ, mUi->workGroupsZ,
-        (kind.compute || kind.mesh || kind.trace) && !kind.indirect);
+        (kind.compute || kind.mesh || kind.trace) && !kind.indirect
+            && !kind.sound);
 }

@@ -26,6 +26,7 @@ class AppScriptObject final : public QObject
             evaluationChanged)
     Q_PROPERTY(int frame READ frame WRITE setFrame NOTIFY frameChanged)
     Q_PROPERTY(double time READ time WRITE setTime NOTIFY timeChanged)
+    Q_PROPERTY(double soundTime READ soundTime NOTIFY timeChanged)
     Q_PROPERTY(double timeDelta READ timeDelta NOTIFY timeDeltaChanged)
     Q_PROPERTY(QJSValue date READ date CONSTANT)
     Q_PROPERTY(QJSValue session READ session CONSTANT)
@@ -49,6 +50,7 @@ public:
     void setFrame(int index);
     double time() const { return mTime; }
     void setTime(double time);
+    double soundTime();
     double timeDelta() const { return mTimeDelta; }
     QJSValue date();
     QJSValue session();

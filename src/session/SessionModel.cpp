@@ -724,11 +724,15 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         result &= (column != CallIndirectBufferBlockId || kind.indirect);
         result &= (column != CallDrawCount || (kind.draw && kind.indirect));
         result &= (column != CallWorkGroupsX
-            || ((kind.compute || kind.mesh || kind.trace) && !kind.indirect));
+            || ((kind.compute || kind.mesh || kind.trace) && !kind.indirect
+                && !kind.sound));
         result &= (column != CallWorkGroupsY
-            || ((kind.compute || kind.mesh || kind.trace) && !kind.indirect));
+            || ((kind.compute || kind.mesh || kind.trace) && !kind.indirect
+                && !kind.sound));
         result &= (column != CallWorkGroupsZ
-            || ((kind.compute || kind.mesh || kind.trace) && !kind.indirect));
+            || ((kind.compute || kind.mesh || kind.trace) && !kind.indirect
+                && !kind.sound));
+        result &= (column != CallExecuteOn || !kind.sound);
         result &= (column != CallTextureId
             || callType == Call::CallType::ClearTexture
             || callType == Call::CallType::CopyTexture

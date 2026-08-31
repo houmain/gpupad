@@ -48,8 +48,7 @@ void VKCall::setIndexBuffer(VKBuffer *indices, const Block &block)
         }
     const auto indexType = getKDIndexType(indexSize);
     if (!indexType || !indexSize) {
-        mMessages.insert(block.id,
-            MessageType::InvalidIndexType,
+        mMessages.insert(block.id, MessageType::InvalidIndexType,
             QStringLiteral("%1 bytes").arg(indexSize));
         return;
     }
@@ -75,8 +74,7 @@ void VKCall::setIndirectBuffer(VKBuffer *commands, const Block &block)
     const auto expectedStride =
         static_cast<int>((mKind.compute ? 3 : 4) * sizeof(uint32_t));
     if (mIndirectStride != expectedStride) {
-        mMessages.insert(block.id,
-            MessageType::InvalidIndirectStride,
+        mMessages.insert(block.id, MessageType::InvalidIndirectStride,
             QStringLiteral("%1/%2 bytes")
                 .arg(mIndirectStride)
                 .arg(expectedStride));
@@ -110,8 +108,7 @@ bool VKCall::validateShaderTypes()
         return false;
     for (const auto &shader : mProgram->shaders())
         if (!callTypeSupportsShaderType(mCall.callType, shader.type())) {
-            mMessages.insert(mCall.id,
-                MessageType::InvalidShaderTypeForCall);
+            mMessages.insert(mCall.id, MessageType::InvalidShaderTypeForCall);
             return false;
         }
     return true;
@@ -171,8 +168,7 @@ void VKCall::execute(VKContext &context, Bindings &&bindings,
     }
 
     if (mKind.indirect && !mIndirectBuffer) {
-        messages.insert(mCall.id,
-            MessageType::IndirectBufferNotAssigned);
+        messages.insert(mCall.id, MessageType::IndirectBufferNotAssigned);
         return;
     }
 
@@ -190,6 +186,7 @@ void VKCall::execute(VKContext &context, Bindings &&bindings,
         break;
     case Call::CallType::Compute:
     case Call::CallType::ComputeIndirect:
+    case Call::CallType::ComputeSound:
         executeCompute(context, messages, scriptEngine);
         break;
     case Call::CallType::TraceRays:
@@ -373,11 +370,13 @@ void VKCall::executeCompute(VKContext &context, MessagePtrSet &messages,
     if (!mPipeline->updatePushConstants(computePass, scriptEngine))
         return;
 
-    computePass.dispatchCompute(KDGpu::ComputeCommand{
-        .workGroupX = scriptEngine.evaluateUInt(mCall.workGroupsX, mCall.id),
-        .workGroupY = scriptEngine.evaluateUInt(mCall.workGroupsY, mCall.id),
-        .workGroupZ = scriptEngine.evaluateUInt(mCall.workGroupsZ, mCall.id),
-    });
+    const auto computeCommand = (mCall.callType == Call::CallType::ComputeSound
+            ? KDGpu::ComputeCommand{ context.soundWorkGroupCount, 1u, 1u }
+            : KDGpu::ComputeCommand{
+                  scriptEngine.evaluateUInt(mCall.workGroupsX, mCall.id),
+                  scriptEngine.evaluateUInt(mCall.workGroupsY, mCall.id),
+                  scriptEngine.evaluateUInt(mCall.workGroupsZ, mCall.id) });
+    computePass.dispatchCompute(computeCommand);
     computePass.end();
     mUsedItems += mPipeline->usedItems();
 }

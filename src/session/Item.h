@@ -301,6 +301,7 @@ struct CallKind
     bool mesh;
     bool patches;
     bool compute;
+    bool sound;
     bool trace;
 };
 

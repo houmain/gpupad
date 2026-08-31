@@ -47,6 +47,7 @@ set(SOURCES
   src/media/Camera.cpp
   src/media/MediaManager.cpp
   src/media/AudioSpectrum.cpp
+  src/media/SoundOutput.cpp
   src/media/VideoStream.cpp
   src/media/VideoPlayer.cpp
   src/InputState.cpp

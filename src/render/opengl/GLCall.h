@@ -1,5 +1,6 @@
 #pragma once
 
+#include "GLBuffer.h"
 #include "GLProgram.h"
 #include "../PipelineBase.h"
 
@@ -13,8 +14,10 @@ class GLCall : public PipelineBase
 {
 public:
     GLCall(const Call &call, const Session &session);
+    ~GLCall();
 
     ItemId itemId() const { return mCall.id; }
+    const CallKind& kind() const { return mKind; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
     GLProgram *program() { return mProgram; }
 
@@ -64,21 +67,21 @@ private:
 
     const Call mCall;
     const CallKind mKind;
-    GLProgram *mProgram{};
-    GLTarget *mTarget{};
-    GLStream *mVertexStream{};
-    GLBuffer *mBuffer{};
-    GLBuffer *mFromBuffer{};
-    GLTexture *mTexture{};
-    GLTexture *mFromTexture{};
+    GLProgram *mProgram{ };
+    GLTarget *mTarget{ };
+    GLStream *mVertexStream{ };
+    GLBuffer *mBuffer{ };
+    GLBuffer *mFromBuffer{ };
+    GLTexture *mTexture{ };
+    GLTexture *mFromTexture{ };
 
-    GLBuffer *mIndexBuffer{};
+    GLBuffer *mIndexBuffer{ };
     QString mIndirectOffset;
-    int mIndexSize{};
-    int mIndicesPerRow{};
+    int mIndexSize{ };
+    int mIndicesPerRow{ };
     QString mIndicesOffset;
     QString mIndicesRowCount;
 
-    GLBuffer *mIndirectBuffer{};
-    GLint mIndirectStride{};
+    GLBuffer *mIndirectBuffer{ };
+    GLint mIndirectStride{ };
 };

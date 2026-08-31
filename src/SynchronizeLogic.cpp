@@ -137,6 +137,7 @@ bool SynchronizeLogic::initializeRenderSession()
     mRenderSession = RenderSessionBase::create(sessionRenderer);
     if (!mRenderSession)
         return false;
+    mRenderSession->setSoundPlaying(mEvaluationMode == EvaluationMode::Steady);
     mProcessSource = std::make_unique<ProcessSource>(sessionRenderer);
 
     connect(mRenderSession.get(), &RenderTask::preparing, this,
@@ -152,6 +153,13 @@ void SynchronizeLogic::finishEvaluation()
 {
     if (mRenderSession)
         mRenderSession->renderer().finish();
+}
+
+std::optional<double> SynchronizeLogic::soundGenerationTime() const
+{
+    Q_ASSERT(onMainThread());
+    return mRenderSession ? mRenderSession->soundGenerationTime()
+                          : std::nullopt;
 }
 
 void SynchronizeLogic::resetRenderSession()
@@ -186,6 +194,8 @@ void SynchronizeLogic::setEvaluationMode(EvaluationMode mode)
     }
 
     mEvaluationMode = mode;
+    if (mRenderSession)
+        mRenderSession->setSoundPlaying(mode == EvaluationMode::Steady);
     Q_EMIT evaluationModeChanged(mEvaluationMode);
 
     if (mEvaluationMode == EvaluationMode::Steady) {
@@ -471,13 +481,25 @@ void SynchronizeLogic::handlePreparingEvaluation(bool &itemsChanged,
     itemsChanged = mRenderSessionInvalidated;
     evaluationType = mEvaluationType;
 
-    Singletons::inputState().update(mEvaluationType);
+    auto &inputState = Singletons::inputState();
+
+    if (mEvaluationType == EvaluationType::Reset) {
+        inputState.update(mEvaluationType);
+    } else {
+        const auto timeSeeked = inputState.resetTimeSeeked();
+        const auto soundTime =
+            (timeSeeked ? inputState.time() : mRenderSession->soundTime());
+        inputState.update(mEvaluationType, soundTime);
+        if (timeSeeked)
+            mRenderSession->synchronizeSoundToAppTime();
+    }
+
     if (itemsChanged)
         Singletons::mediaManager().unloadFiles([](const QString &fileName) {
             return (!Singletons::editorManager().getTextureEditor(fileName)
                 && !Singletons::sessionModel().findFileItem(fileName));
         });
-    Singletons::mediaManager().seek(Singletons::inputState().time());
+    Singletons::mediaManager().seek(inputState.time());
 
     mEvaluationType = EvaluationType::Steady;
     mRenderSessionInvalidated = false;

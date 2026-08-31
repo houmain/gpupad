@@ -7,6 +7,7 @@
 #include <QVector>
 #include <vector>
 #include <chrono>
+#include <optional>
 
 enum class ButtonState {
     Up = 0,
@@ -34,7 +35,9 @@ public:
     void setMouseButtonReleased(Qt::MouseButton button);
     void setKeyPressed(Qt::Key key);
     void setKeyReleased(Qt::Key key);
-    void update(EvaluationType evaluationType);
+    bool resetTimeSeeked();
+    void update(EvaluationType evaluationType,
+        std::optional<double> soundTime = std::nullopt);
 
     bool flipCoordY() const { return mFlipCoordY; }
     int frameIndex() const { return mFrameIndex; }
@@ -64,6 +67,7 @@ private:
     ButtonStateQueue mNextKeyStates;
 
     bool mFlipCoordY{ };
+    bool mTimeSeeked{ };
     int mFrameIndex{ };
     double mTime{ };
     double mManualTimeStep{ 1.0 / 60 };

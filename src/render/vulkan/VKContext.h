@@ -1,7 +1,8 @@
 #pragma once
 
-#include <vector>
+#include <cstdint>
 #include <memory>
+#include <vector>
 
 // still missing declaration in KDGpu/texture_view.h?
 namespace KDGpu {
@@ -43,6 +44,7 @@ struct VKContext
     std::vector<KDGpu::CommandBuffer> commandBuffers;
     std::optional<KDGpu::CommandRecorder> commandRecorder;
     std::vector<KDGpu::Buffer> stagingBuffers;
+    uint32_t soundWorkGroupCount{ };
 
     const KDGpu::AdapterFeatures &features() const
     {

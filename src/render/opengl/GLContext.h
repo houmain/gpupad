@@ -10,6 +10,7 @@
 #include "FileDialog.h"
 #include "MessageList.h"
 #include "Singletons.h"
+#include <cstdint>
 #include <memory>
 
 class GLContext final : public QObject, public QOpenGLFunctions_4_5_Core
@@ -21,6 +22,7 @@ public:
 
     bool initialize(QOpenGLContext *context);
     bool initialized() const { return static_cast<bool>(mContext); }
+    uint32_t soundWorkGroupCount{ };
     QOpenGLVertexArrayObject::Binder bindVertexArrayObject();
     QString getLastGLError();
     bool hasExtension(const char *name) { return mContext->hasExtension(name); }

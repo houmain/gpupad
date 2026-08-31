@@ -93,7 +93,8 @@ InputState::InputState()
     reset();
 }
 
-void InputState::update(EvaluationType evaluationType)
+void InputState::update(EvaluationType evaluationType,
+    std::optional<double> soundTime)
 {
     mEditorSize = mNextEditorSize;
     mPrevMousePosition = mMousePosition;
@@ -143,9 +144,12 @@ void InputState::update(EvaluationType evaluationType)
     case EvaluationType::Manual: mTime += mManualTimeStep; break;
 
     case EvaluationType::Steady:
-        if (mLastUpdateTime.time_since_epoch().count() > 0)
+        if (soundTime.has_value()) {
+            mTime = soundTime.value();
+        } else if (mLastUpdateTime.time_since_epoch().count() > 0) {
             mTime +=
                 std::chrono::duration<double>(now - mLastUpdateTime).count();
+        }
         break;
     }
 
@@ -170,12 +174,20 @@ void InputState::setFrameIndex(int frameIndex)
 
 void InputState::setTime(double time)
 {
-    if (std::exchange(mTime, time) != time)
+    if (std::exchange(mTime, time) != time) {
+        mTimeSeeked = true;
         Q_EMIT timeChanged(mTime);
+    }
+}
+
+bool InputState::resetTimeSeeked()
+{
+    return std::exchange(mTimeSeeked, false);
 }
 
 void InputState::reset()
 {
+    mTimeSeeked = false;
     mFrameIndex = 0;
     mTime = 0;
 }

@@ -68,8 +68,7 @@ void D3DCall::setIndirectBuffer(D3DBuffer *commands, const Block &block)
     const auto expectedStride =
         static_cast<int>((mKind.compute ? 3 : 4) * sizeof(uint32_t));
     if (mIndirectStride != expectedStride) {
-        mMessages.insert(block.id,
-            MessageType::InvalidIndirectStride,
+        mMessages.insert(block.id, MessageType::InvalidIndirectStride,
             QStringLiteral("%1/%2 bytes")
                 .arg(mIndirectStride)
                 .arg(expectedStride));
@@ -103,8 +102,7 @@ bool D3DCall::validateShaderTypes()
         return false;
     for (const auto &shader : mProgram->shaders())
         if (!callTypeSupportsShaderType(mCall.callType, shader.type())) {
-            mMessages.insert(mCall.id,
-                MessageType::InvalidShaderTypeForCall);
+            mMessages.insert(mCall.id, MessageType::InvalidShaderTypeForCall);
             return false;
         }
     return true;
@@ -114,14 +112,12 @@ void D3DCall::execute(D3DContext &context, Bindings &&bindings,
     MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
     if (mKind.trace) {
-        mMessages.insert(mCall.id, MessageType::NotImplemented,
-            "Ray Tracing");
+        mMessages.insert(mCall.id, MessageType::NotImplemented, "Ray Tracing");
         return;
     }
 
     if (mKind.mesh) {
-        mMessages.insert(mCall.id, MessageType::NotImplemented,
-            "Mesh Shaders");
+        mMessages.insert(mCall.id, MessageType::NotImplemented, "Mesh Shaders");
         return;
     }
 
@@ -163,8 +159,7 @@ void D3DCall::execute(D3DContext &context, Bindings &&bindings,
     }
 
     if (mKind.indirect && !mIndirectBuffer) {
-        messages.insert(mCall.id,
-            MessageType::IndirectBufferNotAssigned);
+        messages.insert(mCall.id, MessageType::IndirectBufferNotAssigned);
         return;
     }
 
@@ -182,6 +177,7 @@ void D3DCall::execute(D3DContext &context, Bindings &&bindings,
         break;
     case Call::CallType::Compute:
     case Call::CallType::ComputeIndirect:
+    case Call::CallType::ComputeSound:
         executeCompute(context, messages, scriptEngine);
         break;
     case Call::CallType::TraceRays:
@@ -277,8 +273,7 @@ void D3DCall::executeDraw(D3DContext &context, MessagePtrSet &messages,
         context.graphicsCommandList->DrawIndexedInstanced(count, instanceCount,
             first, baseVertex, firstInstance);
     } else {
-        mMessages.insert(mCall.id, MessageType::NotImplemented,
-            "Call Type");
+        mMessages.insert(mCall.id, MessageType::NotImplemented, "Call Type");
     }
     mUsedItems += mPipeline->usedItems();
 }
@@ -290,7 +285,7 @@ void D3DCall::bindIndexBuffer(D3DContext &context, ScriptEngine &scriptEngine)
         * mIndicesPerRow * mIndexSize;
 
     // really cannot use resource as index and vertex buffer simultaneously?
-    auto deviceAddress = UINT64{};
+    auto deviceAddress = UINT64{ };
     if (!mVertexStream->usesBuffer(mIndexBuffer)) {
         mIndexBuffer->prepareIndexBuffer(context);
         deviceAddress = mIndexBuffer->getDeviceAddress() + offset;
@@ -344,7 +339,10 @@ void D3DCall::executeCompute(D3DContext &context, MessagePtrSet &messages,
         || !mPipeline->bindCompute(context, scriptEngine))
         return;
 
-    if (mCall.callType == Call::CallType::Compute) {
+    if (mCall.callType == Call::CallType::ComputeSound) {
+        context.graphicsCommandList->Dispatch(
+            context.soundWorkGroupCount, 1, 1);
+    } else if (mCall.callType == Call::CallType::Compute) {
         context.graphicsCommandList->Dispatch(
             scriptEngine.evaluateUInt(mCall.workGroupsX, mCall.id),
             scriptEngine.evaluateUInt(mCall.workGroupsY, mCall.id),

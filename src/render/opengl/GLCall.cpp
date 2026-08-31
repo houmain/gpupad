@@ -65,7 +65,10 @@ GLCall::GLCall(const Call &call, const Session &session)
     , mCall(call)
     , mKind(getKind(call))
 {
+    Q_UNUSED(session)
 }
+
+GLCall::~GLCall() = default;
 
 void GLCall::setProgram(GLProgram *program)
 {
@@ -222,6 +225,7 @@ void GLCall::execute(GLContext &gl, MessagePtrSet &messages,
         break;
     case Call::CallType::Compute:
     case Call::CallType::ComputeIndirect:
+    case Call::CallType::ComputeSound:
         executeCompute(gl, messages, scriptEngine);
         break;
     case Call::CallType::TraceRays:
@@ -378,7 +382,9 @@ void GLCall::executeCompute(GLContext &gl, MessagePtrSet &messages,
     if (mIndirectBuffer)
         mIndirectBuffer->bindReadOnly(gl, GL_DISPATCH_INDIRECT_BUFFER);
 
-    if (mCall.callType == Call::CallType::Compute) {
+    if (mCall.callType == Call::CallType::ComputeSound) {
+        gl.glDispatchCompute(gl.soundWorkGroupCount, 1, 1);
+    } else if (mCall.callType == Call::CallType::Compute) {
         gl.glDispatchCompute(
             scriptEngine.evaluateInt(mCall.workGroupsX, mCall.id),
             scriptEngine.evaluateInt(mCall.workGroupsY, mCall.id),

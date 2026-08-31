@@ -458,6 +458,7 @@ namespace ItemEnums2 {
         ClearBuffer,
         CopyBuffer,
         SwapBuffers,
+        ComputeSound,
 
     };
     Q_ENUM_NS(CallType)

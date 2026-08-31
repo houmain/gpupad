@@ -1,5 +1,6 @@
 #pragma once
 
+#include "BufferBase.h"
 #include "RenderTask.h"
 #include "MessageList.h"
 #include "TextureData.h"
@@ -8,11 +9,12 @@
 #include "scripting/IScriptRenderSession.h"
 #include "scripting/ScriptSession.h"
 #include <map>
+#include <optional>
 #include <QMap>
 #include <QMutex>
 
-class BufferBase;
 class TextureBase;
+class SoundOutput;
 
 struct UniformBinding
 {
@@ -107,6 +109,11 @@ public:
     bool usesViewportSize(const QString &fileName) const;
     void setBindingValues(ItemId bindingId, QStringList values);
 
+    void setSoundPlaying(bool playing);
+    std::optional<double> soundTime() const;
+    std::optional<double> soundGenerationTime() const;
+    void synchronizeSoundToAppTime();
+
     int getBufferSize(const Buffer &buffer);
     void evaluateBlockProperties(const Block &block, int *offset, int *rowCount,
         bool cached = true);
@@ -156,9 +163,17 @@ private:
     void evaluateBindingValues(const Binding &binding,
         ScriptEngine &scriptEngine);
 
+    int getSoundBufferSize() const;
+    uint32_t getSoundWorkGroupCount(int bufferSize) const;
+    void toggleSoundGeneration();
+    void prepareSoundBuffer(Bindings &bindings, ItemId callItemId,
+        BufferBase &buffer) const;
+    QByteArray getSoundBufferData(const BufferBase &buffer) const;
+    void mixSoundBuffers(std::vector<QByteArray> soundBuffers);
+
     QSet<ItemId> mUsedItems;
-    bool mItemsChanged{};
-    EvaluationType mEvaluationType{};
+    bool mItemsChanged{ };
+    EvaluationType mEvaluationType{ };
     SessionModel mSessionModelCopy;
     std::unique_ptr<ScriptSession> mScriptSession;
     MessagePtrSet mMessages;
@@ -170,10 +185,12 @@ private:
     QSet<ItemId> mUsedItemsCopy;
     mutable QMutex mPropertyCacheMutex;
     QMap<ItemId, QList<int>> mPropertyCache;
-    size_t mNextCommandQueueIndex{};
+    size_t mNextCommandQueueIndex{ };
     QMap<ItemId, GroupIteration> mGroupIterations;
     QMap<ItemId, ScriptValueList> mBindingValues;
     QMap<ItemId, QStringList> mBindingValueOverrides;
+    std::unique_ptr<SoundOutput> mSoundOutput;
+    bool mGenerateSound{ };
 };
 
 template <typename T, typename Item, typename... Args>
