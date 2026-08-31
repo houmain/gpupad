@@ -288,7 +288,14 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
         mEditorItemsModified.insert(texture->id);
     }
 
-    if (mRenderSession && mRenderSession->usedItems().contains(item.id)) {
+    if (index.column() == SessionModel::BindingValues) {
+        if (const auto binding = castItem<Binding>(item))
+            if (mRenderSession) {
+                mRenderSession->setBindingValues(binding->id, binding->values);
+                triggerAutomaticEvaluation();
+            }
+    } else if (mRenderSession
+        && mRenderSession->usedItems().contains(item.id)) {
         invalidateRenderSession();
     } else if (index.column() == SessionModel::ScriptExecuteOn) {
         invalidateRenderSession();

@@ -62,7 +62,14 @@ void RenderSessionBase::prepare(bool itemsChanged,
     if (mItemsChanged || mEvaluationType == EvaluationType::Reset) {
         mUsedItems.clear();
         mSessionModelCopy = Singletons::sessionModel();
+        mBindingValueOverrides.clear();
     }
+}
+
+void RenderSessionBase::setBindingValues(ItemId bindingId, QStringList values)
+{
+    Q_ASSERT(onMainThread());
+    mBindingValueOverrides[bindingId] = std::move(values);
 }
 
 void RenderSessionBase::configure()
@@ -108,8 +115,12 @@ void RenderSessionBase::evaluateBindingValues(const Binding &binding,
 {
     auto &values = mBindingValues[binding.id];
     if (values.isEmpty()) {
-        values = scriptEngine.evaluateValues(binding.values, binding.id);
-
+        if (auto it = mBindingValueOverrides.constFind(binding.id);
+            it != mBindingValueOverrides.cend()) {
+            values = scriptEngine.evaluateValues(*it, binding.id);
+        } else {
+            values = scriptEngine.evaluateValues(binding.values, binding.id);
+        }
         // set global in script state
         scriptEngine.setGlobal(binding.name, values);
         mUsedItems += binding.id;

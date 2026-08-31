@@ -105,6 +105,7 @@ public:
     bool usesMouseState() const;
     bool usesKeyboardState() const;
     bool usesViewportSize(const QString &fileName) const;
+    void setBindingValues(ItemId bindingId, QStringList values);
 
     int getBufferSize(const Buffer &buffer);
     void evaluateBlockProperties(const Block &block, int *offset, int *rowCount,
@@ -172,6 +173,7 @@ private:
     size_t mNextCommandQueueIndex{};
     QMap<ItemId, GroupIteration> mGroupIterations;
     QMap<ItemId, ScriptValueList> mBindingValues;
+    QMap<ItemId, QStringList> mBindingValueOverrides;
 };
 
 template <typename T, typename Item, typename... Args>
