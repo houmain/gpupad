@@ -3,6 +3,7 @@
 
 #  include "D3DContext.h"
 #  include "render/TextureBase.h"
+#  include <vector>
 
 class D3DBuffer;
 
@@ -36,6 +37,16 @@ public:
     ShareHandle getShareHandle() const;
 
 private:
+    struct DownloadSubresource
+    {
+        D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
+        UINT rowCount;
+        UINT64 rowSize;
+        int level;
+        int layer;
+        int faceSlice;
+    };
+
     struct ViewOptions
     {
         int level;
@@ -61,6 +72,7 @@ private:
     bool mCreated{};
     ComPtr<ID3D12Resource> mResource;
     ComPtr<ID3D12Resource> mDownloadBuffer;
+    std::vector<DownloadSubresource> mDownloadSubresources;
     D3D12_RESOURCE_STATES mCurrentState{};
 };
 

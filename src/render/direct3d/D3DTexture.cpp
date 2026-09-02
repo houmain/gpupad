@@ -470,7 +470,11 @@ void D3DTexture::upload(D3DContext &context)
         return;
 
     const auto texDesc = mResource->GetDesc();
-    const auto numSubresources = texDesc.MipLevels * layers();
+    const auto faceCount = (mKind.cubeMap ? 6 : 1);
+    const auto arraySlices = (mKind.dimensions == 3
+            ? 1
+            : layers() * faceCount);
+    const auto numSubresources = texDesc.MipLevels * arraySlices;
     auto stagingBufferSize = uint64_t{};
     context.device.GetCopyableFootprints(&texDesc, 0, numSubresources, 0,
         nullptr, nullptr, nullptr, &stagingBufferSize);
@@ -480,14 +484,18 @@ void D3DTexture::upload(D3DContext &context)
     resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_DEST);
 
     auto subresourceData = std::vector<D3D12_SUBRESOURCE_DATA>();
-    for (auto level = 0; level < texDesc.MipLevels; ++level)
-        for (auto layer = 0; layer < layers(); ++layer) {
+    subresourceData.reserve(numSubresources);
+    for (auto arraySlice = 0; arraySlice < arraySlices; ++arraySlice) {
+        const auto layer = arraySlice / faceCount;
+        const auto face = arraySlice % faceCount;
+        for (auto level = 0; level < texDesc.MipLevels; ++level) {
             subresourceData.push_back({
-                .pData = mData.getData(level, layer, 0),
+                .pData = mData.getData(level, layer, face),
                 .RowPitch = mData.getLevelStride(level),
                 .SlicePitch = mData.getImageSize(level),
             });
         }
+    }
 
     UpdateSubresources(context.graphicsCommandList.Get(), resource(),
         stagingBuffer.Get(), 0, 0, static_cast<UINT>(subresourceData.size()),
@@ -508,34 +516,40 @@ void D3DTexture::beginDownload(D3DContext &context)
         return;
 
     const auto texDesc = mResource->GetDesc();
-    const auto numSubresources = texDesc.MipLevels * layers();
-    auto layouts = std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT>();
-    const auto format = toDXGIFormat(mFormat);
-    for (auto level = 0; level < texDesc.MipLevels; ++level)
-        for (auto layer = 0; layer < layers(); ++layer)
-            layouts.push_back({
-                .Offset = mData.getOffset(level, layer, 0),
-                .Footprint = {
-                    .Format = format,
-                    .Width = static_cast<UINT>(mData.getLevelWidth(level)),
-                    .Height = static_cast<UINT>(mData.getLevelHeight(level)),
-                    .Depth = static_cast<UINT>(mData.getLevelDepth(level)),
-                    .RowPitch = static_cast<UINT>(mData.getLevelStride(level)),
-                },
-            });
-
-    const auto stagingBufferSize = mData.getDataSize();
+    const auto faceCount = (mKind.cubeMap ? 6 : 1);
+    const auto arraySlices = (mKind.dimensions == 3
+            ? 1
+            : layers() * faceCount);
+    const auto numSubresources = texDesc.MipLevels * arraySlices;
+    auto layouts = std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT>(
+        numSubresources);
+    auto rowCounts = std::vector<UINT>(numSubresources);
+    auto rowSizes = std::vector<UINT64>(numSubresources);
+    auto stagingBufferSize = UINT64{};
+    context.device.GetCopyableFootprints(&texDesc, 0, numSubresources, 0,
+        layouts.data(), rowCounts.data(), rowSizes.data(),
+        &stagingBufferSize);
     const auto stagingBuffer = createStagingBuffer(context,
         D3D12_HEAP_TYPE_READBACK, stagingBufferSize);
 
     resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_SOURCE);
 
-    for (auto i = 0; i < numSubresources; ++i) {
-        auto source = CD3DX12_TEXTURE_COPY_LOCATION(resource(), i);
-        auto dest =
-            CD3DX12_TEXTURE_COPY_LOCATION(stagingBuffer.Get(), layouts[i]);
-        context.graphicsCommandList->CopyTextureRegion(&dest, 0, 0, 0, &source,
-            nullptr);
+    mDownloadSubresources.clear();
+    mDownloadSubresources.reserve(numSubresources);
+    for (auto arraySlice = 0; arraySlice < arraySlices; ++arraySlice) {
+        const auto layer = arraySlice / faceCount;
+        const auto face = arraySlice % faceCount;
+        for (auto level = 0; level < texDesc.MipLevels; ++level) {
+            const auto i = static_cast<UINT>(
+                level + arraySlice * texDesc.MipLevels);
+            auto source = CD3DX12_TEXTURE_COPY_LOCATION(resource(), i);
+            auto dest = CD3DX12_TEXTURE_COPY_LOCATION(
+                stagingBuffer.Get(), layouts[i]);
+            context.graphicsCommandList->CopyTextureRegion(&dest, 0, 0, 0,
+                &source, nullptr);
+            mDownloadSubresources.push_back({ layouts[i], rowCounts[i],
+                rowSizes[i], level, layer, face });
+        }
     }
 
     Q_ASSERT(!mDownloadBuffer);
@@ -549,12 +563,36 @@ bool D3DTexture::finishDownload()
         return false;
 
     auto mappedData = std::add_pointer_t<void>();
-    auto readRange = D3D12_RANGE{ 0, 0 };
+    auto readRange = D3D12_RANGE{ 0,
+        static_cast<SIZE_T>(mDownloadBuffer->GetDesc().Width) };
     AssertIfFailed(mDownloadBuffer->Map(0, &readRange, &mappedData));
-    std::memcpy(mData.getWriteonlyData(0, 0, 0), mappedData,
-        mData.getDataSize());
+    const auto *sourceBase = static_cast<const uchar *>(mappedData);
+    for (const auto &subresource : mDownloadSubresources) {
+        const auto &footprint = subresource.layout.Footprint;
+        const auto depth = static_cast<int>(footprint.Depth);
+        for (auto z = 0; z < depth; ++z) {
+            const auto faceSlice = (mKind.dimensions == 3
+                    ? z
+                    : subresource.faceSlice);
+            auto *dest = mData.getWriteonlyData(subresource.level,
+                subresource.layer, faceSlice);
+            if (!dest)
+                continue;
+            const auto *source = sourceBase + subresource.layout.Offset
+                + static_cast<size_t>(z) * footprint.RowPitch
+                    * subresource.rowCount;
+            const auto destStride = mData.getLevelStride(subresource.level);
+            const auto bytesPerRow = static_cast<size_t>(
+                std::min<UINT64>(subresource.rowSize, destStride));
+            for (auto row = 0u; row < subresource.rowCount; ++row)
+                std::memcpy(dest + static_cast<size_t>(row) * destStride,
+                    source + static_cast<size_t>(row) * footprint.RowPitch,
+                    bytesPerRow);
+        }
+    }
     mDownloadBuffer->Unmap(0, nullptr);
     mDownloadBuffer.Reset();
+    mDownloadSubresources.clear();
     return true;
 }
 
