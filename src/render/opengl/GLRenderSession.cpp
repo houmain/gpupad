@@ -16,6 +16,7 @@
 struct GLRenderSession::CommandQueue
 {
     using Call = GLCall;
+    using Texture = GLTexture;
     GLContext &context;
     std::map<ItemId, GLTexture> textures;
     std::map<ItemId, GLBuffer> buffers;
@@ -23,7 +24,8 @@ struct GLRenderSession::CommandQueue
     std::map<ItemId, GLTarget> targets;
     std::map<ItemId, GLStream> vertexStreams;
     std::map<ItemId, GLAccelerationStructure> accelerationStructures;
-    std::map<ItemId, GLBuffer> soundBuffers;
+    std::map<SoundBufferKey, GLBuffer> soundBuffers;
+    std::map<AudioTextureKey, GLTexture> audioTextures;
     std::deque<Command> commands;
     std::vector<GLProgram> failedPrograms;
 

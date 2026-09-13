@@ -16,6 +16,7 @@
 struct D3DRenderSession::CommandQueue
 {
     using Call = D3DCall;
+    using Texture = D3DTexture;
     D3DContext context;
     std::map<ItemId, D3DTexture> textures;
     std::map<ItemId, D3DBuffer> buffers;
@@ -23,7 +24,8 @@ struct D3DRenderSession::CommandQueue
     std::map<ItemId, D3DTarget> targets;
     std::map<ItemId, D3DStream> vertexStreams;
     std::map<ItemId, D3DAccelerationStructure> accelerationStructures;
-    std::map<ItemId, D3DBuffer> soundBuffers;
+    std::map<SoundBufferKey, D3DBuffer> soundBuffers;
+    std::map<AudioTextureKey, D3DTexture> audioTextures;
     std::deque<Command> commands;
     std::vector<D3DProgram> failedPrograms;
 

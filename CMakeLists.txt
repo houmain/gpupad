@@ -3,6 +3,7 @@ project(gpupad LANGUAGES CXX C)
 if(APPLE)
   enable_language(OBJCXX)
 endif()
+
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 set(QT_CREATOR_SKIP_MAINTENANCE_TOOL_PROVIDER ON)
 include(FetchSparse)
@@ -45,10 +46,19 @@ set(SOURCES
   src/TextureData.cpp
   src/TextureData_DDS.cpp
   src/media/Camera.cpp
+  src/media/AudioSamples.cpp
+  src/media/AudioSamples.h
+  src/media/AudioStream.cpp
+  src/media/AudioStream.h
+  src/media/DecodedAudio.cpp
+  src/media/DecodedAudio.h
   src/media/MediaManager.cpp
+  src/media/MediaSource.h
+  src/media/MediaStream.cpp
+  src/media/MediaStream.h
   src/media/AudioSpectrum.cpp
+  src/media/MediaFrameWriter.cpp
   src/media/SoundOutput.cpp
-  src/media/VideoStream.cpp
   src/media/VideoPlayer.cpp
   src/InputState.cpp
   src/SourceType.cpp
@@ -117,6 +127,8 @@ set(SOURCES
   src/scripting/objects/MouseScriptObject.cpp
   src/scripting/objects/KeyboardScriptObject.cpp
   src/scripting/objects/ItemScriptObject.cpp
+  src/scripting/objects/MediaEncoderScriptObject.cpp
+  src/scripting/objects/SessionRendererScriptObject.cpp
   src/session/Item.cpp
   src/resources.qrc
   src/session/properties/AccelerationStructureProperties.ui
@@ -626,7 +638,9 @@ if (WIN32)
 endif()
 
 # QtMultimedia -------------------------
-find_package(Qt6Multimedia CONFIG)
+if(Qt6_VERSION VERSION_GREATER_EQUAL 6.8)
+    find_package(Qt6Multimedia CONFIG)
+endif()
 option(GPUPAD_ENABLE_MULTIMEDIA "Enable Multimedia" ${Qt6Multimedia_FOUND})
 if(GPUPAD_ENABLE_MULTIMEDIA)
     target_compile_definitions(${PROJECT_NAME} PRIVATE MULTIMEDIA_ENABLED)

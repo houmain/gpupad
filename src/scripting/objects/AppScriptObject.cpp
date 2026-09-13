@@ -4,6 +4,8 @@
 #include "EditorScriptObject.h"
 #include "MouseScriptObject.h"
 #include "LibraryScriptObject.h"
+#include "MediaEncoderScriptObject.h"
+#include "SessionRendererScriptObject.h"
 #include "../ScriptEngine.h"
 #include "../ScriptTimeout.h"
 #include "../CustomActions.h"
@@ -16,6 +18,7 @@
 #include "editors/qml/QmlView.h"
 #include <QApplication>
 #include <QDirIterator>
+#include <QQmlEngine>
 #include <atomic>
 
 AppScriptObject::AppScriptObject(const ScriptEnginePtr &enginePtr,
@@ -260,6 +263,40 @@ QVariantMap AppScriptObject::palette() const
     palette["button"] = p.color(QPalette::Button);
     palette["buttonText"] = p.color(QPalette::ButtonText);
     return palette;
+}
+
+bool AppScriptObject::mediaEncodingAvailable() const
+{
+#if defined(MULTIMEDIA_ENABLED) && defined(QMLVIEW_ENABLED)
+    return true;
+#else
+    return false;
+#endif
+}
+
+QJSValue AppScriptObject::createSessionRenderer(QVariantMap options)
+{
+    if (!mediaEncodingAvailable())
+        return QJSValue::UndefinedValue;
+    auto object = new SessionRendererScriptObject(options);
+    QQmlEngine::setObjectOwnership(object, QQmlEngine::JavaScriptOwnership);
+    return jsEngine().newQObject(object);
+}
+
+QJSValue AppScriptObject::createMediaEncoder(QVariantMap options)
+{
+    if (!mediaEncodingAvailable())
+        return QJSValue::UndefinedValue;
+    auto object = new MediaEncoderScriptObject(options);
+    QQmlEngine::setObjectOwnership(object, QQmlEngine::JavaScriptOwnership);
+    return jsEngine().newQObject(object);
+}
+
+QJsonObject AppScriptObject::mediaEncoderConfigurations() const
+{
+    if (!mediaEncodingAvailable())
+        return { };
+    return MediaEncoderScriptObject::configurations();
 }
 
 QJSValue AppScriptObject::currentEditor()

@@ -21,9 +21,12 @@ struct VKRenderSession::CommandQueue
         context.device.waitUntilIdle();
         for (auto &[itemId, texture] : textures)
             texture.release(context.device);
+        for (auto &[key, texture] : audioTextures)
+            texture.release(context.device);
     }
 
     using Call = VKCall;
+    using Texture = VKTexture;
     VKContext context;
     std::map<ItemId, VKTexture> textures;
     std::map<ItemId, VKBuffer> buffers;
@@ -31,7 +34,8 @@ struct VKRenderSession::CommandQueue
     std::map<ItemId, VKTarget> targets;
     std::map<ItemId, VKStream> vertexStreams;
     std::map<ItemId, VKAccelerationStructure> accelerationStructures;
-    std::map<ItemId, VKBuffer> soundBuffers;
+    std::map<SoundBufferKey, VKBuffer> soundBuffers;
+    std::map<AudioTextureKey, VKTexture> audioTextures;
     std::deque<Command> commands;
     std::vector<VKProgram> failedPrograms;
     std::vector<std::pair<VKTexture *, VKTexture *>> textureSwaps;

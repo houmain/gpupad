@@ -5,6 +5,7 @@
 #include "Evaluation.h"
 #include "FileDialog.h"
 #include <QJSValue>
+#include <QJsonObject>
 #include <QModelIndex>
 #include <QDir>
 
@@ -35,6 +36,7 @@ class AppScriptObject final : public QObject
     Q_PROPERTY(
         QJSValue currentEditor READ currentEditor NOTIFY currentEditorChanged)
     Q_PROPERTY(QVariantMap palette READ palette NOTIFY paletteChanged)
+    Q_PROPERTY(bool mediaEncodingAvailable READ mediaEncodingAvailable CONSTANT)
 
 public:
     AppScriptObject(const ScriptEnginePtr &enginePtr, const QDir &basePath);
@@ -58,6 +60,7 @@ public:
     QJSValue keyboard() { return mKeyboardProperty; }
     QJSValue currentEditor();
     QVariantMap palette() const;
+    bool mediaEncodingAvailable() const;
 
     Q_INVOKABLE bool isUntitled(QString fileName);
     Q_INVOKABLE QString getFileTitle(QString fileName);
@@ -74,6 +77,9 @@ public:
     Q_INVOKABLE QJSValue writeBinaryFile(QString fileName, QByteArray binary);
     Q_INVOKABLE QJSValue readTextFile(QString fileName);
     Q_INVOKABLE QJSValue enumerateCameras();
+    Q_INVOKABLE QJSValue createSessionRenderer(QVariantMap options);
+    Q_INVOKABLE QJSValue createMediaEncoder(QVariantMap options);
+    Q_INVOKABLE QJsonObject mediaEncoderConfigurations() const;
 
     // session
     Q_INVOKABLE void clearSession();
