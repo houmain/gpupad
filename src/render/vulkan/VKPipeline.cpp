@@ -50,7 +50,7 @@ namespace {
                 //case Binding::WrapMode::MirrorClampToEdge: return KDGpu::AddressMode::MirrorClampToEdge;
             }
             Q_UNREACHABLE();
-            return KDGpu::AddressMode{};
+            return KDGpu::AddressMode{ };
         };
 
         return KDGpu::SamplerOptions{
@@ -344,7 +344,7 @@ bool VKPipeline::createGraphics(VKContext &context,
     if (!createLayout(context))
         return false;
 
-    auto vertexOptions = KDGpu::VertexOptions{};
+    auto vertexOptions = KDGpu::VertexOptions{ };
     if (mVertexStream) {
         vertexOptions = mVertexStream->getVertexOptions();
         if (vertexOptions.attributes.empty())
@@ -402,7 +402,7 @@ bool VKPipeline::createRayTracing(VKContext &context,
     mAccelerationStructure = accelStruct;
 
     // https://www.willusher.io/graphics/2019/11/20/the-sbt-three-ways/
-    auto options = KDGpu::RayTracingPipelineOptions{};
+    auto options = KDGpu::RayTracingPipelineOptions{ };
     options.shaderStages = mProgram.getShaderStages();
     options.layout = mPipelineLayout;
 
@@ -483,7 +483,7 @@ bool VKPipeline::createRayTracing(VKContext &context,
 
 bool VKPipeline::createLayout(VKContext &context)
 {
-    mPushConstantRange = KDGpu::PushConstantRange{};
+    mPushConstantRange = KDGpu::PushConstantRange{ };
     for (const auto &[stage, reflection] : mProgram.reflection()) {
         for (const auto &desc : reflection.descriptorBindings()) {
             if (!desc.accessed)
@@ -552,8 +552,8 @@ bool VKPipeline::createLayout(VKContext &context)
 bool VKPipeline::updateBindings(VKContext &context, ScriptEngine &scriptEngine)
 {
     for (auto &bindGroup : mBindGroups) {
-        bindGroup.resources = {};
-        bindGroup.bindGroup = {};
+        bindGroup.resources = { };
+        bindGroup.bindGroup = { };
     }
 
     auto canRender = true;
@@ -562,7 +562,7 @@ bool VKPipeline::updateBindings(VKContext &context, ScriptEngine &scriptEngine)
             if (!desc.accessed)
                 continue;
 
-            auto arrayElement = uint32_t{};
+            auto arrayElement = uint32_t{ };
             forEachArrayElementRec(desc, 0, arrayElement,
                 [&](const SpvReflectDescriptorBinding &desc,
                     uint32_t arrayElement, bool *variableLengthArrayDone) {
@@ -680,7 +680,7 @@ MessageType VKPipeline::updateBindings(VKContext &context,
 
     case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER: {
         auto buffer = std::add_pointer_t<VKBuffer>();
-        auto offset = uint32_t{};
+        auto offset = uint32_t{ };
         auto size = static_cast<uint32_t>(KDGpu::WholeSize);
         if (desc.type_description->type_name
             == PrintfBase::bufferBindingName()) {

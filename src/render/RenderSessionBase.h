@@ -9,11 +9,15 @@
 #include "scripting/IScriptRenderSession.h"
 #include "scripting/ScriptSession.h"
 #include <map>
+#include <functional>
 #include <optional>
+#include <utility>
+#include <vector>
 #include <QMap>
 #include <QMutex>
 
 class TextureBase;
+class MediaFrameWriter;
 class SoundOutput;
 
 struct UniformBinding
@@ -80,6 +84,8 @@ struct Bindings
 using Duration = std::chrono::duration<double>;
 using BindingState = QStack<Bindings>;
 using Command = std::function<void(BindingState &)>;
+using SoundBufferKey = std::pair<ItemId, int>;
+using AudioTextureKey = std::pair<ItemId, int>;
 
 class RenderSessionBase : public RenderTask, public IScriptRenderSession
 {
@@ -113,6 +119,7 @@ public:
     std::optional<double> soundTime() const;
     std::optional<double> soundGenerationTime() const;
     void synchronizeSoundToAppTime();
+    MediaFrameWriter &mediaFrameWriter() { return *mMediaFrameWriter; }
 
     int getBufferSize(const Buffer &buffer);
     void evaluateBlockProperties(const Block &block, int *offset, int *rowCount,
@@ -163,13 +170,30 @@ private:
     void evaluateBindingValues(const Binding &binding,
         ScriptEngine &scriptEngine);
 
+    static Bindings mergeBindings(const BindingState &state);
+
+    template <typename CommandQueue>
+    void applyAudioTextures(CommandQueue &commandQueue, Bindings &bindings,
+        int chunkIndex);
+    template <typename CommandQueue>
+    static BufferBase &getSoundBuffer(CommandQueue &commandQueue,
+        ItemId callItemId, int chunkIndex, int size);
+    template <typename CommandQueue>
+    Bindings prepareSoundChunkBindings(CommandQueue &commandQueue,
+        Bindings bindings, ItemId callItemId, int chunkIndex, int bufferSize);
+
     int getSoundBufferSize() const;
-    uint32_t getSoundWorkGroupCount(int bufferSize) const;
-    void toggleSoundGeneration();
+    int getSoundWorkGroupCount(int bufferSize) const;
+    bool hasAudio() const;
+    void prepareAudioGeneration();
+    void prepareAudioTextureFrames();
+    uint64_t advanceVisualAudioSampleBase();
     void prepareSoundBuffer(Bindings &bindings, ItemId callItemId,
-        BufferBase &buffer) const;
+        int chunkIndex, BufferBase &buffer) const;
     QByteArray getSoundBufferData(const BufferBase &buffer) const;
-    void mixSoundBuffers(std::vector<QByteArray> soundBuffers);
+    void writeAudioBuffers(
+        std::vector<std::pair<SoundBufferKey, QByteArray>> soundBuffers);
+    bool recording() const;
 
     QSet<ItemId> mUsedItems;
     bool mItemsChanged{ };
@@ -189,8 +213,15 @@ private:
     QMap<ItemId, GroupIteration> mGroupIterations;
     QMap<ItemId, ScriptValueList> mBindingValues;
     QMap<ItemId, QStringList> mBindingValueOverrides;
+    std::unique_ptr<MediaFrameWriter> mMediaFrameWriter;
     std::unique_ptr<SoundOutput> mSoundOutput;
-    bool mGenerateSound{ };
+    std::vector<QMap<ItemId, TextureData>> mAudioTextureFrames;
+    uint64_t mAudioSampleBase{ };
+    uint64_t mVisualAudioSampleBase{ };
+    int mAudioSampleRate{ };
+    int mAudioChunkSize{ };
+    int mAudioChunkCount{ };
+    bool mVisualAudioSampleBaseInitialized{ };
 };
 
 template <typename T, typename Item, typename... Args>

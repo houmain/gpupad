@@ -3,6 +3,7 @@
 #include "RenderSessionBase.h"
 #include "Singletons.h"
 #include "SynchronizeLogic.h"
+#include "media/MediaFrameWriter.h"
 #include <QStack>
 
 class VKTexture;
@@ -51,6 +52,66 @@ void RenderSessionBase::reuseUnmodifiedItems(CommandQueue &commandQueue,
                     program = std::move(prev);
                 }
             }
+}
+
+template <typename CommandQueue>
+void RenderSessionBase::applyAudioTextures(CommandQueue &commandQueue,
+    Bindings &bindings, int chunkIndex)
+{
+    if (chunkIndex >= static_cast<int>(mAudioTextureFrames.size()))
+        return;
+    const auto &frames = mAudioTextureFrames[static_cast<size_t>(chunkIndex)];
+    const auto setAudioTexture = [&](TextureBase *texture,
+                                     bool sampled) -> TextureBase * {
+        if (!texture)
+            return texture;
+        const auto itemId = texture->itemId();
+        const auto frame = frames.constFind(itemId);
+        if (frame == frames.cend())
+            return texture;
+
+        const auto key = AudioTextureKey{ itemId, chunkIndex };
+        auto it = commandQueue.audioTextures.try_emplace(key, *frame, 1, itemId)
+                      .first;
+        it->second.setDataOverride(*frame);
+        if (sampled)
+            it->second.boundAsSampler();
+        else
+            it->second.boundAsImage();
+        return &it->second;
+    };
+    for (auto &[name, binding] : bindings.samplers)
+        binding.texture = setAudioTexture(binding.texture, true);
+    for (auto &[name, binding] : bindings.images)
+        binding.texture = setAudioTexture(binding.texture, false);
+}
+
+template <typename CommandQueue>
+BufferBase &RenderSessionBase::getSoundBuffer(CommandQueue &commandQueue,
+    ItemId callItemId, int chunkIndex, int size)
+{
+    auto &soundBuffers = commandQueue.soundBuffers;
+    const auto key = SoundBufferKey{ callItemId, chunkIndex };
+    auto it = soundBuffers.find(key);
+    if (it != soundBuffers.end() && it->second.size() != size) {
+        soundBuffers.erase(it);
+        it = soundBuffers.end();
+    }
+    if (it == soundBuffers.end())
+        it = soundBuffers.emplace(key, size).first;
+    Q_ASSERT(it->second.size() == size);
+    return it->second;
+}
+
+template <typename CommandQueue>
+Bindings RenderSessionBase::prepareSoundChunkBindings(
+    CommandQueue &commandQueue, Bindings bindings, ItemId callItemId,
+    int chunkIndex, int bufferSize)
+{
+    applyAudioTextures(commandQueue, bindings, chunkIndex);
+    prepareSoundBuffer(bindings, callItemId, chunkIndex,
+        getSoundBuffer(commandQueue, callItemId, chunkIndex, bufferSize));
+    return bindings;
 }
 
 template <typename RenderSession, typename CommandQueue>
@@ -318,48 +379,33 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
                     auto &call = *queueCallPtr;
                     const auto isComputeSound = call.kind().sound;
                     if (!(isComputeSound
-                                ? mGenerateSound
+                                ? mAudioChunkCount > 0
                                 : shouldExecute(executeOn, mEvaluationType)))
                         return;
 
                     const auto callItemId = call.itemId();
                     auto &context = commandQueue->context;
-                    auto merged = Bindings{ };
-                    for (const Bindings &scope : state) {
-                        for (const auto &[name, binding] : scope.uniforms)
-                            merged.uniforms[name] = binding;
-                        for (const auto &[name, binding] : scope.samplers)
-                            if (binding.texture)
-                                merged.samplers[name] = binding;
-                        for (const auto &[name, binding] : scope.images)
-                            if (binding.texture)
-                                merged.images[name] = binding;
-                        for (const auto &[name, binding] : scope.buffers)
-                            if (binding.buffer)
-                                merged.buffers[name] = binding;
-                        for (const auto &[name, binding] : scope.subroutines)
-                            merged.subroutines[name] = binding;
-                    }
-
-                    if (isComputeSound) {
-                        const auto size = getSoundBufferSize();
-                        auto &soundBuffers = commandQueue->soundBuffers;
-                        auto it = soundBuffers.find(callItemId);
-                        if (it == soundBuffers.end())
-                            it = soundBuffers.emplace(callItemId, size).first;
-                        Q_ASSERT(it->second.size() == size);
-                        prepareSoundBuffer(merged, callItemId, it->second);
-                        context.soundWorkGroupCount =
-                            getSoundWorkGroupCount(size);
-                    }
+                    auto merged = mergeBindings(state);
 
                     auto &self = *static_cast<RenderSession *>(this);
                     auto timeQuery = std::shared_ptr<void>();
                     if (auto index = addTimeQuery(callItemId))
                         timeQuery = self.beginTimeQuery(*index);
 
-                    call.execute(context, std::move(merged), mMessages,
-                        mScriptSession->engine());
+                    if (isComputeSound) {
+                        const auto size = getSoundBufferSize();
+                        context.soundWorkGroupCount =
+                            getSoundWorkGroupCount(size);
+                        for (auto i = 0; i < mAudioChunkCount; ++i)
+                            call.execute(context,
+                                prepareSoundChunkBindings(*commandQueue, merged,
+                                    callItemId, i, size),
+                                mMessages, mScriptSession->engine());
+
+                    } else {
+                        call.execute(context, std::move(merged), mMessages,
+                            mScriptSession->engine());
+                    }
 
                     if (executeOn == Call::ExecuteOn::EveryEvaluation)
                         mUsedItems += call.usedItems();
@@ -404,7 +450,6 @@ template <typename CommandQueue>
 void RenderSessionBase::executeCommandQueue(CommandQueue &commandQueue) noexcept
 {
     auto state = BindingState{ };
-    toggleSoundGeneration();
     mNextCommandQueueIndex = 0;
     while (mNextCommandQueueIndex < commandQueue.commands.size()) {
         const auto index = mNextCommandQueueIndex++;
@@ -423,18 +468,24 @@ void RenderSessionBase::beginDownloadModifiedResources(
             program.printf().beginDownload(commandQueue.context);
 
     for (auto &[itemId, texture] : commandQueue.textures)
-        if (!texture.fileName().isEmpty())
+        if (!texture.fileName().isEmpty()
+            || mMediaFrameWriter->textureRequested(itemId))
             texture.updateMipmaps(commandQueue.context);
 
+    if (const auto textureItemId = mMediaFrameWriter->textureItemId())
+        if (auto texture = find(commandQueue.textures, textureItemId))
+            texture->beginDownload(commandQueue.context);
+
     for (auto &[itemId, buffer] : commandQueue.buffers)
-        if (!buffer.fileName().isEmpty()
+        if (!recording() && !buffer.fileName().isEmpty()
             && (mItemsChanged || mEvaluationType != EvaluationType::Steady))
             buffer.beginDownload(commandQueue.context,
                 mEvaluationType != EvaluationType::Reset);
 
-    if (mGenerateSound)
-        for (auto &[itemId, buffer] : commandQueue.soundBuffers)
-            buffer.beginDownload(commandQueue.context, false);
+    if (mAudioChunkCount > 0)
+        for (auto &[key, buffer] : commandQueue.soundBuffers)
+            if (key.second < mAudioChunkCount)
+                buffer.beginDownload(commandQueue.context, false);
 }
 
 template <typename CommandQueue>
@@ -448,20 +499,25 @@ void RenderSessionBase::finishCommandQueue(CommandQueue &commandQueue) noexcept
             mMessages += program.printf().finishDownload(program.itemId());
 
     for (auto &[itemId, texture] : commandQueue.textures)
-        if (texture.deviceCopyModified())
+        if (mMediaFrameWriter->textureRequested(itemId)) {
+            texture.finishDownload();
+            if (!texture.data().isNull())
+                mMediaFrameWriter->writeTexture(texture.data());
+        } else if (!recording() && texture.deviceCopyModified()) {
             synchronizeLogic.handleTextureDeviceDataChanged(texture.itemId(),
                 texture.data(), texture.shareHandle(), texture.samples());
+        }
 
     for (auto &[itemId, buffer] : commandQueue.buffers)
-        if (buffer.finishDownload())
+        if (!recording() && buffer.finishDownload())
             synchronizeLogic.handleBufferDataChanged(buffer.itemId(),
                 buffer.data());
 
-    auto soundBuffers = std::vector<QByteArray>{ };
-    for (auto &[itemId, buffer] : commandQueue.soundBuffers)
-        if (buffer.finishDownload())
-            soundBuffers.push_back(getSoundBufferData(buffer));
-    mixSoundBuffers(std::move(soundBuffers));
+    auto soundBuffers = std::vector<std::pair<SoundBufferKey, QByteArray>>{ };
+    for (auto &[key, buffer] : commandQueue.soundBuffers)
+        if (key.second < mAudioChunkCount && buffer.finishDownload())
+            soundBuffers.emplace_back(key, getSoundBufferData(buffer));
+    writeAudioBuffers(std::move(soundBuffers));
 
     mPrevMessages.clear();
     if (mEvaluationType == EvaluationType::Reset)

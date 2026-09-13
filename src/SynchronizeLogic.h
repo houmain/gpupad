@@ -85,6 +85,7 @@ private:
     void updateBinaryEditor(const Buffer &buffer, BinaryEditor &editor);
     void handleEvaluateTimout();
     void evaluate(EvaluationType evaluationType);
+    bool waitForAudioSources(EvaluationType &evaluationType);
     void handlePreparingEvaluation(bool &itemsChanged, EvaluationType &type);
     void handleEvaluated();
     void processSource();
@@ -96,6 +97,7 @@ private:
 
     QTimer *mEvaluationTimer{};
     EvaluationType mPendingEvaluationType{};
+    bool mWaitingForAudioSources{};
     EvaluationMode mEvaluationMode{};
     bool mRenderSessionInvalidated{};
     EvaluationType mEvaluationType{};

@@ -14,6 +14,8 @@
 #include "scripting/ScriptTimeout.h"
 #include "scripting/ScriptEngine.h"
 #include <QTimer>
+#include <QEventLoop>
+#include <QScopedValueRollback>
 #include <QMetaEnum>
 
 namespace {
@@ -87,7 +89,6 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
         &SynchronizeLogic::handleMouseStateChanged);
     connect(&Singletons::inputState(), &InputState::keysChanged, this,
         &SynchronizeLogic::handleKeyboardStateChanged);
-
     mUpdateEditorsTimer->start(100);
     mEvaluationTimer->setTimerType(Qt::PreciseTimer);
 
@@ -435,7 +436,9 @@ void SynchronizeLogic::handleFileItemRenamed(const FileItem &item,
 
 void SynchronizeLogic::triggerEvaluation(EvaluationType type, int delayMs)
 {
-    if (!mEvaluationTimer->isActive()) {
+    if (mWaitingForAudioSources) {
+        mPendingEvaluationType = std::max(mPendingEvaluationType, type);
+    } else if (!mEvaluationTimer->isActive()) {
         mPendingEvaluationType = type;
         mEvaluationTimer->start(delayMs);
     } else {
@@ -454,8 +457,47 @@ void SynchronizeLogic::handleEvaluateTimout()
     evaluate(mPendingEvaluationType);
 }
 
+bool SynchronizeLogic::waitForAudioSources(EvaluationType &evaluationType)
+{
+    if (mWaitingForAudioSources) {
+        mPendingEvaluationType =
+            std::max(mPendingEvaluationType, evaluationType);
+        return false;
+    }
+
+    auto &mediaManager = Singletons::mediaManager();
+    if (mediaManager.prepareAudioSources(mRenderSessionInvalidated))
+        return true;
+
+    mPendingEvaluationType = (mEvaluationTimer->isActive()
+            ? std::max(mPendingEvaluationType, evaluationType)
+            : evaluationType);
+    mEvaluationTimer->stop();
+    const auto waiting = QScopedValueRollback(mWaitingForAudioSources, true);
+
+    // Synchronous callers must be able to finish the submitted render after
+    // evaluate() returns. Audio decoding needs main-thread event delivery.
+    auto eventLoop = QEventLoop();
+    connect(&mediaManager, &MediaManager::audioSourcesReady, &eventLoop,
+        &QEventLoop::quit);
+    eventLoop.exec();
+
+    evaluationType = mPendingEvaluationType;
+    return true;
+}
+
 void SynchronizeLogic::evaluate(EvaluationType evaluationType)
 {
+    if (!waitForAudioSources(evaluationType))
+        return;
+
+    // The event loop may have processed a renderer change or session reset.
+    const auto sessionRenderer = Singletons::sessionRenderer();
+    if (mRenderSession && &mRenderSession->renderer() != sessionRenderer.get())
+        resetRenderSession();
+    if (!initializeRenderSession())
+        return;
+
     // interrupt script engines when resetting twice
     if (mEvaluationType == EvaluationType::Reset)
         interruptRunningScriptEngines();
@@ -463,13 +505,8 @@ void SynchronizeLogic::evaluate(EvaluationType evaluationType)
     // reset messages of default script engine
     const auto prevMessages = Singletons::defaultScriptEngine().resetMessages();
 
-    const auto sessionRenderer = Singletons::sessionRenderer();
-    if (mRenderSession && &mRenderSession->renderer() != sessionRenderer.get())
-        resetRenderSession();
-
     mEvaluationType = std::max(mEvaluationType, evaluationType);
-    if (initializeRenderSession())
-        mRenderSession->update();
+    mRenderSession->update();
 }
 
 void SynchronizeLogic::handlePreparingEvaluation(bool &itemsChanged,

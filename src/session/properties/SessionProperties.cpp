@@ -140,6 +140,10 @@ SessionProperties::SessionProperties(PropertiesEditor *propertiesEditor)
 
     fillComboBox<Session::Renderer>(mUi->renderer, true);
 
+    for (auto milliseconds = 50; milliseconds <= 500; milliseconds += 50)
+        mUi->audioBufferSize->addItem(
+            QString("%1 ms").arg(milliseconds), milliseconds);
+
     for (auto i = 1; i <= 4; ++i) {
         auto version = QString("1.%1").arg(i);
         mUi->apiVersion->addItem(version, version);
@@ -194,6 +198,12 @@ void SessionProperties::addMappings(QDataWidgetMapper &mapper)
 {
     mapper.addMapping(mUi->name, SessionModel::Name);
     mapper.addMapping(mUi->renderer, SessionModel::SessionRenderer);
+    mapper.addMapping(mUi->audioBufferSize,
+        SessionModel::SessionAudioBufferSize);
+    mapper.addMapping(mUi->audioChunkSize,
+        SessionModel::SessionAudioChunkSize);
+    mapper.addMapping(mUi->audioSampleRate,
+        SessionModel::SessionAudioSampleRate);
     mapper.addMapping(mUi->apiVersion, SessionModel::SessionApiVersion);
     mapper.addMapping(mUi->shaderLanguage, SessionModel::SessionShaderLanguage);
     mapper.addMapping(mUi->shaderCompiler, SessionModel::SessionShaderCompiler);

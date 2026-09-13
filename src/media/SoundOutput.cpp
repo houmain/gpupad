@@ -1,47 +1,28 @@
+#include "SoundOutput.h"
+#include <algorithm>
+#include <cmath>
+#include <limits>
+#include <utility>
+
 #if defined(MULTIMEDIA_ENABLED)
 
-#  include "SoundOutput.h"
 #  include <QAudioDevice>
 #  include <QAudioFormat>
 #  include <QAudioSink>
 #  include <QIODevice>
 #  include <QMediaDevices>
-#  include <algorithm>
-#  include <cmath>
-#  include <utility>
 
 namespace {
-    inline constexpr auto workGroupSize = uint32_t{ 256 };
-    inline constexpr auto maximumBufferFrameCount = uint32_t{ 65536 };
-
-    inline constexpr uint32_t getBufferFrameCount(int sampleRate)
-    {
-        constexpr auto targetDurationMilliseconds = uint64_t{ 50 };
-        constexpr auto alignment = static_cast<uint64_t>(workGroupSize);
-        constexpr auto maximum = static_cast<uint64_t>(maximumBufferFrameCount);
-        const auto rate = static_cast<uint64_t>(std::max(sampleRate, 1));
-        const auto durationFrames = (rate * targetDurationMilliseconds + 999)
-            / 1000;
-        const auto alignedFrames = (durationFrames + alignment - 1) / alignment
-            * alignment;
-        return static_cast<uint32_t>(
-            std::clamp(alignedFrames, alignment, maximum));
-    }
-
-    inline uint64_t getSampleAtTime(double time, int sampleRate)
-    {
-        if (!std::isfinite(time) || time <= 0.0)
-            return 0;
-        const auto sample = static_cast<long double>(time)
-            * std::max(sampleRate, 1);
-        const auto maximum =
-            static_cast<long double>(std::numeric_limits<uint64_t>::max()
-                - getBufferFrameCount(sampleRate));
-        return static_cast<uint64_t>(std::min(sample + 0.5L, maximum));
-    }
+    inline constexpr auto MinimumBufferDurationMilliseconds = 50;
+    inline constexpr auto MaximumBufferDurationMilliseconds = 1000;
+    inline constexpr auto MinimumSampleRate = 8'000;
+    inline constexpr auto MaximumSampleRate = 384'000;
+    inline constexpr auto MinimumChunkFrameCount = 1;
+    inline constexpr auto MaximumChunkFrameCount = 65'536;
+    inline constexpr auto MaximumChunksPerEvaluation = 64;
 } // namespace
 
-SoundOutput::SoundOutput() = default;
+SoundOutput::SoundOutput(QObject *parent) : QObject(parent) { }
 
 SoundOutput::~SoundOutput()
 {
@@ -51,25 +32,39 @@ SoundOutput::~SoundOutput()
 void SoundOutput::synchronizeToAppTime()
 {
     mSynchronizeToAppTime = true;
-    mGenerationRequested = false;
+}
+
+void SoundOutput::setBufferDuration(int milliseconds)
+{
+    milliseconds = std::clamp(milliseconds, MinimumBufferDurationMilliseconds,
+        MaximumBufferDurationMilliseconds);
+    if (std::exchange(mBufferDurationMilliseconds, milliseconds)
+        != milliseconds) {
+        synchronizeToAppTime();
+    }
+}
+
+void SoundOutput::setFormat(int sampleRate, int chunkFrameCount)
+{
+    sampleRate = std::clamp(sampleRate, MinimumSampleRate, MaximumSampleRate);
+    chunkFrameCount = std::clamp(chunkFrameCount, MinimumChunkFrameCount,
+        MaximumChunkFrameCount);
+    const auto changed = std::exchange(mSampleRate, sampleRate) != sampleRate
+        || mChunkFrameCount != chunkFrameCount;
+    mChunkFrameCount = chunkFrameCount;
+    if (changed)
+        synchronizeToAppTime();
 }
 
 void SoundOutput::setAppTime(double appTime, bool reset)
 {
-    if (reset)
-        mHasSoundCall = false;
-
     if (std::exchange(mSynchronizeToAppTime, false) || reset)
         start(appTime);
-
-    mGenerationSampleBase = mSampleBase;
-    if (mPlaying.load() && mGenerationRequested.load())
-        mGenerationSampleBase += getBufferFrameCount(sampleRate());
 }
 
 void SoundOutput::setPlaying(bool playing)
 {
-    const auto wasPlaying = mPlaying.exchange(playing);
+    const auto wasPlaying = std::exchange(mPlaying, playing);
     if (playing && !wasPlaying) {
         stop();
         mSynchronizeToAppTime = true;
@@ -82,12 +77,28 @@ void SoundOutput::setPlaying(bool playing)
             mSink->suspend();
         }
     }
-    mGenerationRequested = canAcceptBuffer();
 }
 
-bool SoundOutput::resetGenerationRequested()
+int SoundOutput::requestedChunkCount(bool hasAudio)
 {
-    return mGenerationRequested.exchange(false);
+    stream();
+    if (!hasAudio) {
+        mHasAudio = false;
+        return 0;
+    }
+    if (!mPlaying || !mSink)
+        return 0;
+
+    const auto processedFrameCount =
+        (mDevice ? (mSink->processedUSecs() * mSampleRate) / 1'000'000 : 0);
+    const auto generatedFrameCount = mSampleBase - mStartSampleBase;
+    const auto desiredFrameCount = mTargetBufferedFrameCount
+        + processedFrameCount;
+    const auto missingFrameCount = desiredFrameCount - generatedFrameCount;
+    const auto chunkFrameCount = mChunkFrameCount;
+    const auto chunkCount = (missingFrameCount + chunkFrameCount - 1)
+        / chunkFrameCount;
+    return static_cast<int>(std::min<qint64>(chunkCount, MaximumChunksPerEvaluation));
 }
 
 void SoundOutput::stop()
@@ -96,125 +107,96 @@ void SoundOutput::stop()
         mSink->stop();
     mDevice = nullptr;
     mSink.reset();
-    mBufferFrameCount = 0;
     mPending.clear();
+    mTargetBufferedFrameCount = 0;
+    mHasAudio = false;
 }
 
 void SoundOutput::start(double time)
 {
     stop();
 
+    Q_ASSERT(std::isfinite(time) && time >= 0);
+    mSampleBase = static_cast<uint64_t>(time * mSampleRate + 0.5);
+    mStartSampleBase = mSampleBase;
+    if (!mPlaying)
+        return;
+
     const auto device = QMediaDevices::defaultAudioOutput();
     if (device.isNull())
         return;
 
-    const auto rate = device.preferredFormat().sampleRate();
-    if (rate <= 0)
-        return;
-    mSampleRate = rate;
-    mBufferFrameCount = getBufferFrameCount(rate);
-
     auto format = QAudioFormat{ };
-    format.setSampleRate(rate);
-    format.setChannelCount(2);
+    format.setSampleRate(mSampleRate);
+    format.setChannelCount(ChannelCount);
     format.setSampleFormat(QAudioFormat::Float);
     if (!device.isFormatSupported(format))
         return;
 
     mSink = std::make_unique<QAudioSink>(device, format);
-    mSink->setBufferSize(mBufferFrameCount * format.bytesPerFrame());
-    mDevice = mSink->start();
-    if (!mDevice) {
-        mSink.reset();
-        return;
-    }
-    if (!mPlaying.load())
-        mSink->suspend();
-
-    mSampleBase = getSampleAtTime(time, sampleRate());
-    mStartSampleBase = mSampleBase;
-    mGenerationSampleBase = mSampleBase;
-    mGenerationRequested = canAcceptBuffer();
+    const auto durationFrameCount =
+        (mSampleRate * mBufferDurationMilliseconds + 999) / 1000;
+    const auto minimumBufferFrameCount =
+        std::max(mChunkFrameCount, durationFrameCount);
+    const auto targetChunkCount =
+        (minimumBufferFrameCount + mChunkFrameCount - 1) / mChunkFrameCount;
+    mTargetBufferedFrameCount = targetChunkCount * mChunkFrameCount;
+    mSink->setBufferSize(mTargetBufferedFrameCount * BytesPerFrame);
 }
 
 void SoundOutput::stream()
 {
-    if (!mPlaying.load() || !mDevice || mPending.isEmpty())
+    if (!mPlaying || !mDevice || mPending.isEmpty())
         return;
     const auto written = mDevice->write(mPending);
     if (written > 0)
         mPending.remove(0, written);
 }
 
-bool SoundOutput::canAcceptBuffer() const
-{
-    return mPlaying.load() && mDevice && mPending.isEmpty();
-}
-
 std::optional<double> SoundOutput::playbackTime() const
 {
-    if (!mPlaying.load() || !mHasSoundCall)
-        return std::nullopt;
-    if (!mSink || mSampleRate <= 0)
+    if (!mPlaying || !mHasAudio || !mSink || mSampleRate <= 0)
         return std::nullopt;
     return static_cast<double>(mStartSampleBase) / mSampleRate
-        + static_cast<double>(mSink->processedUSecs()) / 1'000'000.0;
+        + mSink->processedUSecs() / 1'000'000.0;
 }
 
 std::optional<double> SoundOutput::generationTime() const
 {
-    const auto rate = sampleRate();
-    if (!mPlaying.load() || !mDevice || rate <= 0)
+    if (!mPlaying || !mSink || !mHasAudio || mSampleRate <= 0)
         return std::nullopt;
-    return static_cast<double>(mGenerationSampleBase) / rate;
+    return static_cast<double>(mSampleBase) / mSampleRate;
 }
 
-void SoundOutput::mix(std::vector<QByteArray> soundBuffers)
+void SoundOutput::writeFrame(MediaFrame frame)
 {
-    if (!soundBuffers.empty())
-        mHasSoundCall = true;
-
+    const auto &samples = frame.audioSamples();
     stream();
-    if (!mHasSoundCall)
-        return;
-    if (soundBuffers.empty()) {
-        if (canAcceptBuffer())
-            mGenerationRequested = true;
-        return;
-    }
-    if (!canAcceptBuffer())
+    if (!mPlaying || !mSink || samples.isEmpty())
         return;
 
-    const auto bufferSize = soundBuffers.front().size();
-    const auto frameCount = bufferSize / (2 * static_cast<int>(sizeof(float)));
-    Q_ASSERT(frameCount == mBufferFrameCount);
-    if (frameCount != mBufferFrameCount)
+    if (frame.audioSampleRate() != mSampleRate
+        || samples.size() % BytesPerFrame != 0)
         return;
-    for (const auto &soundBuffer : soundBuffers) {
-        Q_ASSERT(soundBuffer.size() == bufferSize);
-        if (soundBuffer.size() != bufferSize)
-            return;
-    }
 
-    mPending = std::move(soundBuffers.front());
-    const auto floatCount = mPending.size() / static_cast<int>(sizeof(float));
-    auto *values = reinterpret_cast<float *>(mPending.data());
-    for (auto i = size_t{ 1 }; i < soundBuffers.size(); ++i) {
-        const auto &soundBuffer = soundBuffers[i];
-        const auto *source =
-            reinterpret_cast<const float *>(soundBuffer.constData());
-        for (auto j = 0; j < floatCount; ++j)
-            if (std::isfinite(source[j]))
-                values[j] += source[j];
-    }
-    for (auto i = 0; i < floatCount; ++i)
-        values[i] = (std::isfinite(values[i])
-                ? std::clamp(values[i], -1.0f, 1.0f)
-                : 0.0f);
-    stream();
+    const auto frameCount = samples.size() / BytesPerFrame;
+    if (frameCount <= 0 || frameCount % mChunkFrameCount != 0)
+        return;
+
+    mHasAudio = true;
+    mPending.append(samples);
     mSampleBase += static_cast<uint64_t>(frameCount);
-    if (canAcceptBuffer())
-        mGenerationRequested = true;
+    if (!mDevice
+        && mPending.size() >= mTargetBufferedFrameCount * BytesPerFrame)
+        mDevice = mSink->start();
+
+    if (!mDevice) {
+        mSink.reset();
+        mPending.clear();
+        mHasAudio = false;
+        return;
+    }
+    stream();
 }
 
 #endif // defined(MULTIMEDIA_ENABLED)

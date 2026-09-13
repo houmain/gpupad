@@ -1,69 +1,68 @@
 #pragma once
 
-#include <QByteArray>
-#include <atomic>
+#include "MediaFrame.h"
+#include <QObject>
 #include <cstdint>
 #include <memory>
 #include <optional>
-#include <vector>
 
 #if defined(MULTIMEDIA_ENABLED)
 
 class QAudioSink;
 class QIODevice;
 
-class SoundOutput
+class SoundOutput : public QObject
 {
 public:
-    SoundOutput();
+    explicit SoundOutput(QObject *parent = nullptr);
     ~SoundOutput();
 
     void synchronizeToAppTime();
+    void setBufferDuration(int milliseconds);
+    void setFormat(int sampleRate, int chunkFrameCount);
     void setAppTime(double time, bool resetTimeline);
     void setPlaying(bool playing);
-    bool resetGenerationRequested();
-    int sampleRate() const { return mSampleRate; }
-    int bufferFrameCount() const { return mBufferFrameCount; }
+    int requestedChunkCount(bool hasAudio);
     uint64_t sampleBase() const { return mSampleBase; }
     std::optional<double> playbackTime() const;
     std::optional<double> generationTime() const;
-    void mix(std::vector<QByteArray> soundBuffers);
+    void writeFrame(MediaFrame frame);
 
 private:
     void stop();
     void start(double time);
     void stream();
-    bool canAcceptBuffer() const;
 
     std::unique_ptr<QAudioSink> mSink;
     QIODevice *mDevice{ };
-    int mBufferFrameCount{ };
     QByteArray mPending;
+    int mTargetBufferedFrameCount{ };
     uint64_t mStartSampleBase{ };
-    std::atomic<bool> mPlaying{ };
-    std::atomic<bool> mGenerationRequested{ };
-    int mSampleRate{ 44100 };
+    bool mPlaying{ };
+    int mSampleRate{ };
+    int mChunkFrameCount{ };
+    int mBufferDurationMilliseconds{ 250 };
     uint64_t mSampleBase{ };
-    uint64_t mGenerationSampleBase{ };
     bool mSynchronizeToAppTime{ };
-    bool mHasSoundCall{ };
+    bool mHasAudio{ };
 };
 
 #else // !defined(MULTIMEDIA_ENABLED)
 
-class SoundOutput
+class SoundOutput : public QObject
 {
 public:
+    explicit SoundOutput(QObject *parent = nullptr) : QObject(parent) { }
     void synchronizeToAppTime() { }
+    void setBufferDuration(int) { }
+    void setFormat(int, int) { }
     void setAppTime(double, bool) { }
     void setPlaying(bool) { }
-    bool resetGenerationRequested() { return false; }
-    int sampleRate() const { return 44100; }
-    int bufferFrameCount() const { return 0; }
+    int requestedChunkCount(bool) { return 0; }
     uint64_t sampleBase() const { return 0; }
     std::optional<double> playbackTime() const { return std::nullopt; }
     std::optional<double> generationTime() const { return std::nullopt; }
-    void mix(std::vector<QByteArray>) { }
+    void writeFrame(MediaFrame) { }
 };
 
 #endif // defined(MULTIMEDIA_ENABLED)

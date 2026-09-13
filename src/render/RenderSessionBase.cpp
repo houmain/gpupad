@@ -5,16 +5,21 @@
 #include "InputState.h"
 #include "Singletons.h"
 #include "SynchronizeLogic.h"
+#include "media/MediaManager.h"
 #include "scripting/ScriptEngine.h"
 #include "scripting/ScriptSession.h"
 #include "session/SessionModel.h"
 #include "opengl/GLRenderSession.h"
 #include "vulkan/VKRenderSession.h"
 #include "direct3d/D3DRenderSession.h"
+#include "media/MediaFrameWriter.h"
 #include "media/SoundOutput.h"
+#include <QStack>
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 
 namespace {
     struct alignas(16) SoundBufferHeader
@@ -27,8 +32,8 @@ namespace {
 
     static_assert(sizeof(SoundBufferHeader) == 16);
 
-    inline constexpr auto soundWorkGroupSize = uint32_t{ 256 };
-    inline constexpr auto soundBufferBindingName = "soundBuffer";
+    inline constexpr auto SoundWorkGroupSize = 256;
+    inline constexpr auto SoundBufferBindingName = "soundBuffer";
 } // namespace
 
 std::unique_ptr<RenderSessionBase> RenderSessionBase::create(
@@ -59,8 +64,11 @@ std::unique_ptr<RenderSessionBase> RenderSessionBase::create(
 
 RenderSessionBase::RenderSessionBase(RendererPtr renderer, QObject *parent)
     : RenderTask(std::move(renderer), parent)
+    , mMediaFrameWriter(std::make_unique<MediaFrameWriter>())
     , mSoundOutput(std::make_unique<SoundOutput>())
 {
+    connect(mMediaFrameWriter.get(), &MediaFrameWriter::frameReady,
+        mSoundOutput.get(), &SoundOutput::writeFrame);
 }
 
 RenderSessionBase::~RenderSessionBase() = default;
@@ -88,7 +96,14 @@ void RenderSessionBase::prepare(bool itemsChanged,
         mSessionModelCopy = Singletons::sessionModel();
         mBindingValueOverrides.clear();
     }
-    mSoundOutput->setAppTime(Singletons::inputState().time(), sessionReset);
+    if (!recording()) {
+        mSoundOutput->setBufferDuration(session().audioBufferSize);
+        mSoundOutput->setFormat(session().audioSampleRate,
+            session().audioChunkSize);
+        mSoundOutput->setAppTime(Singletons::inputState().time(),
+            mEvaluationType == EvaluationType::Reset);
+    }
+    prepareAudioGeneration();
 }
 
 void RenderSessionBase::setBindingValues(ItemId bindingId, QStringList values)
@@ -112,6 +127,12 @@ std::optional<double> RenderSessionBase::soundTime() const
 std::optional<double> RenderSessionBase::soundGenerationTime() const
 {
     Q_ASSERT(onMainThread());
+    const auto frameCount = mMediaFrameWriter->audioFrameCount();
+    if (updating() && mAudioSampleRate > 0 && frameCount > 0) {
+        const auto sampleBase = mAudioSampleBase
+            + static_cast<uint64_t>(frameCount);
+        return static_cast<double>(sampleBase) / mAudioSampleRate;
+    }
     return mSoundOutput->generationTime();
 }
 
@@ -119,58 +140,206 @@ void RenderSessionBase::synchronizeSoundToAppTime()
 {
     Q_ASSERT(onMainThread());
     mSoundOutput->synchronizeToAppTime();
+    mVisualAudioSampleBaseInitialized = false;
+}
+
+bool RenderSessionBase::recording() const
+{
+    return mMediaFrameWriter->recording();
 }
 
 int RenderSessionBase::getSoundBufferSize() const
 {
     return static_cast<int>(sizeof(SoundBufferHeader))
-        + mSoundOutput->bufferFrameCount() * 2
-        * static_cast<int>(sizeof(float));
+        + mAudioChunkSize * BytesPerFrame;
 }
 
-uint32_t RenderSessionBase::getSoundWorkGroupCount(int bufferSize) const
+int RenderSessionBase::getSoundWorkGroupCount(int bufferSize) const
 {
-    const auto sampleDataSize = bufferSize
-        - static_cast<int>(sizeof(SoundBufferHeader));
-    constexpr auto frameSize = 2 * static_cast<int>(sizeof(float));
-    Q_ASSERT(sampleDataSize >= 0 && sampleDataSize % frameSize == 0);
-    const auto frameCount = static_cast<uint32_t>(sampleDataSize / frameSize);
-    return (frameCount + soundWorkGroupSize - 1) / soundWorkGroupSize;
+    const auto sampleDataSize =
+        static_cast<int>(bufferSize - sizeof(SoundBufferHeader));
+    Q_ASSERT(sampleDataSize >= 0 && sampleDataSize % BytesPerFrame == 0);
+    const auto frameCount = sampleDataSize / BytesPerFrame;
+    return (frameCount + SoundWorkGroupSize - 1) / SoundWorkGroupSize;
 }
 
-void RenderSessionBase::toggleSoundGeneration()
+bool RenderSessionBase::hasAudio() const
 {
-    mGenerateSound = mSoundOutput->resetGenerationRequested();
+    auto result = Singletons::mediaManager().hasAudio();
+    mSessionModelCopy.forEachItem<Call>([&](const Call &call) {
+        result |= call.checked && call.callType == Call::CallType::ComputeSound;
+    });
+    return result;
+}
+
+void RenderSessionBase::prepareAudioGeneration()
+{
+    if (mAudioSampleRate != session().audioSampleRate
+        || mAudioChunkSize != session().audioChunkSize)
+        mVisualAudioSampleBaseInitialized = false;
+    mAudioSampleRate = session().audioSampleRate;
+    mAudioChunkSize = session().audioChunkSize;
+
+    if (!recording())
+        mMediaFrameWriter->beginFrame({
+            .audioSampleBase = mSoundOutput->sampleBase(),
+            .audioFrameCount = mSoundOutput->requestedChunkCount(hasAudio())
+                * mAudioChunkSize,
+            .audioSampleRate = mAudioSampleRate,
+        });
+
+    mAudioSampleBase = mMediaFrameWriter->audioSampleBase();
+    mAudioChunkCount =
+        (mMediaFrameWriter->audioFrameCount() + mAudioChunkSize - 1)
+        / mAudioChunkSize;
+    prepareAudioTextureFrames();
+}
+
+void RenderSessionBase::prepareAudioTextureFrames()
+{
+    mAudioTextureFrames.clear();
+    mAudioTextureFrames.resize(static_cast<size_t>(mAudioChunkCount));
+    auto &mediaManager = Singletons::mediaManager();
+    for (auto chunkIndex = 0; chunkIndex < mAudioChunkCount; ++chunkIndex) {
+        mediaManager.prepareAudioFrame(mAudioSampleBase
+            + static_cast<uint64_t>(chunkIndex) * mAudioChunkSize);
+        mSessionModelCopy.forEachItem<Texture>([&](const Texture &texture) {
+            if (!isAudioSource(texture.sourceType))
+                return;
+
+            auto width = 0, height = 0, depth = 0, layers = 0;
+            evaluateTextureProperties(texture, &width, &height, &depth,
+                &layers);
+            auto data = TextureData{ };
+            const auto source = MediaSource{ texture.fileName,
+                texture.sourceType, texture.target, QSize(width, 1) };
+            if (Singletons::fileCache().getTexture(source, &data))
+                mAudioTextureFrames[chunkIndex].insert(texture.id,
+                    std::move(data));
+        });
+    }
+
+    mediaManager.prepareAudioFrame(advanceVisualAudioSampleBase());
+}
+
+uint64_t RenderSessionBase::advanceVisualAudioSampleBase()
+{
+    const auto time = Singletons::inputState().time();
+    Q_ASSERT(std::isfinite(time) && time >= 0.0);
+    const auto targetSampleBase =
+        static_cast<uint64_t>(time * std::max(mAudioSampleRate, 1));
+
+    if (recording() || mEvaluationType != EvaluationType::Steady
+        || !mVisualAudioSampleBaseInitialized) {
+        mVisualAudioSampleBase = targetSampleBase;
+        mVisualAudioSampleBaseInitialized = true;
+        return mVisualAudioSampleBase;
+    }
+
+    const auto chunkFrameCount = static_cast<uint64_t>(mAudioChunkSize);
+    const auto nextSampleBase = mVisualAudioSampleBase + chunkFrameCount;
+    const auto bufferDuration =
+        static_cast<uint64_t>(std::clamp(session().audioBufferSize, 50, 1000));
+    const auto bufferFrameCount =
+        (static_cast<uint64_t>(mAudioSampleRate) * bufferDuration + 999) / 1000;
+    const auto correctionThreshold =
+        std::max(chunkFrameCount * 2, bufferFrameCount / 2);
+
+    // Prefer one texture frame per evaluation. Only correct persistent drift;
+    // small playback-clock jitter must not change a feedback shader's input.
+    if (targetSampleBase + correctionThreshold < nextSampleBase)
+        return mVisualAudioSampleBase;
+
+    if (targetSampleBase > nextSampleBase + correctionThreshold) {
+        const auto distance = targetSampleBase - mVisualAudioSampleBase;
+        auto chunkCount = distance / chunkFrameCount;
+        if (distance % chunkFrameCount >= (chunkFrameCount + 1) / 2)
+            ++chunkCount;
+        mVisualAudioSampleBase += std::max<uint64_t>(chunkCount, 1)
+            * chunkFrameCount;
+    } else {
+        mVisualAudioSampleBase = nextSampleBase;
+    }
+    return mVisualAudioSampleBase;
+}
+
+Bindings RenderSessionBase::mergeBindings(const BindingState &state)
+{
+    auto merged = Bindings{ };
+    for (const Bindings &scope : state) {
+        for (const auto &[name, binding] : scope.uniforms)
+            merged.uniforms[name] = binding;
+        for (const auto &[name, binding] : scope.samplers)
+            if (binding.texture)
+                merged.samplers[name] = binding;
+        for (const auto &[name, binding] : scope.images)
+            if (binding.texture)
+                merged.images[name] = binding;
+        for (const auto &[name, binding] : scope.buffers)
+            if (binding.buffer)
+                merged.buffers[name] = binding;
+        for (const auto &[name, binding] : scope.subroutines)
+            merged.subroutines[name] = binding;
+    }
+    return merged;
 }
 
 void RenderSessionBase::prepareSoundBuffer(Bindings &bindings,
-    ItemId callItemId, BufferBase &buffer) const
+    ItemId callItemId, int chunkIndex, BufferBase &buffer) const
 {
-    const auto sampleBase = mSoundOutput->sampleBase();
-    const auto sampleRate = std::max(mSoundOutput->sampleRate(), 1);
+    const auto sampleBase = mAudioSampleBase + chunkIndex * mAudioChunkSize;
     const auto header = SoundBufferHeader{
         .sampleBaseLow = static_cast<uint32_t>(sampleBase),
         .sampleBaseHigh = static_cast<uint32_t>(sampleBase >> 32),
-        .sampleRate = static_cast<uint32_t>(sampleRate),
-        .frameCount = static_cast<uint32_t>(mSoundOutput->bufferFrameCount()),
+        .sampleRate = static_cast<uint32_t>(mAudioSampleRate),
+        .frameCount = static_cast<uint32_t>(mAudioChunkSize),
     };
     auto &data = buffer.writableData();
     std::memcpy(data.data(), &header, sizeof(header));
 
-    const auto name = QString::fromLatin1(soundBufferBindingName);
+    const auto name = QString::fromLatin1(SoundBufferBindingName);
     bindings.buffers[name] =
         BufferBinding{ callItemId, name, &buffer, 0, "", "", 0 };
 }
 
 QByteArray RenderSessionBase::getSoundBufferData(const BufferBase &buffer) const
 {
-    return buffer.data().mid(static_cast<int>(sizeof(SoundBufferHeader)));
+    return buffer.data().mid(sizeof(SoundBufferHeader));
 }
 
-void RenderSessionBase::mixSoundBuffers(std::vector<QByteArray> soundBuffers)
+void RenderSessionBase::writeAudioBuffers(
+    std::vector<std::pair<SoundBufferKey, QByteArray>> soundBuffers)
 {
     Q_ASSERT(onMainThread());
-    mSoundOutput->mix(std::move(soundBuffers));
+    if (mAudioChunkCount > 0) {
+        auto batches = QMap<ItemId, QByteArray>{ };
+        for (auto &[key, samples] : soundBuffers)
+            batches[key.first].append(samples);
+        const auto requestedByteCount = mMediaFrameWriter->audioFrameCount() * 2
+            * sizeof(float);
+        for (auto &samples : batches) {
+            samples.truncate(requestedByteCount);
+            mMediaFrameWriter->writeAudio(std::move(samples), 100);
+        }
+        mSessionModelCopy.forEachItem<Texture>([&](const Texture &texture) {
+            if (!isAudioSource(texture.sourceType))
+                return;
+
+            auto width = 0, height = 0, depth = 0, layers = 0;
+            evaluateTextureProperties(texture, &width, &height, &depth,
+                &layers);
+            const auto source = MediaSource{ texture.fileName,
+                texture.sourceType, texture.target, QSize(width, 1) };
+            auto samples = Singletons::mediaManager().audioSamples(source,
+                mMediaFrameWriter->audioSampleBase(),
+                mMediaFrameWriter->audioFrameCount());
+            if (!samples.isEmpty()) {
+                const auto volume = std::clamp(texture.audioVolume, 0, 100);
+                mMediaFrameWriter->writeAudio(std::move(samples), volume);
+            }
+        });
+    }
+    mMediaFrameWriter->endFrame();
 }
 
 void RenderSessionBase::configure()
@@ -234,7 +403,7 @@ void RenderSessionBase::configured()
     if (mScriptSession)
         mScriptSession->endSessionUpdate();
 
-    if (mEvaluationType != EvaluationType::Steady
+    if (!recording() && mEvaluationType != EvaluationType::Steady
         && Singletons::synchronizeLogic().resetRenderSessionInvalidationState())
         mItemsChanged = true;
 }
