@@ -112,14 +112,14 @@ QJsonArray enumerateCameras()
     return cameras;
 }
 
-Camera::Camera(QString fileName, QObject *parent)
-    : VideoStream(fileName, parent)
+Camera::Camera(MediaSource source, QObject *parent)
+    : MediaStream(source, parent)
 {
-    const auto [id, frameFormat] = parseCameraJson(fileName);
-    const auto name = QFileInfo(fileName).baseName();
+    const auto [id, frameFormat] = parseCameraJson(source.fileName);
+    const auto name = QFileInfo(source.fileName).baseName();
     const auto device = selectCameraDevice(id, name);
     if (device.isNull()) {
-        loadingFinished();
+        finishLoading();
         return;
     }
 
@@ -128,7 +128,7 @@ Camera::Camera(QString fileName, QObject *parent)
     connect(mCamera, &QCamera::errorOccurred, this,
         [this](QCamera::Error error) {
             if (error != QCamera::NoError && !width())
-                loadingFinished();
+                finishLoading();
         });
 
     const auto format = selectDeviceFormat(device, frameFormat);

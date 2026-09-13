@@ -2,21 +2,22 @@
 
 #if defined(MULTIMEDIA_ENABLED)
 
-#  include "VideoStream.h"
+#  include "MediaStream.h"
 #  include <QMediaPlayer>
 
 class QVideoSink;
 
-class VideoPlayer final : public VideoStream
+class VideoPlayer final : public MediaStream
 {
 public:
-    VideoPlayer(QString fileName, QObject *parent = nullptr);
+    VideoPlayer(MediaSource source, QObject *parent = nullptr);
 
     void seek(std::chrono::milliseconds time) override;
 
 private:
     void handleStatusChanged(QMediaPlayer::MediaStatus status);
     void handleFrameDecoded(QVideoFrame frame);
+    void updateTargetTime();
 
     QMediaPlayer *mPlayer{ };
     QVideoSink *mSink{ };

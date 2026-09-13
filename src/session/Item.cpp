@@ -58,7 +58,7 @@ int getBlockStride(const Block &block)
 
 TextureKind getKind(Texture::Target target, Texture::Format format)
 {
-    auto kind = TextureKind{};
+    auto kind = TextureKind{ };
 
     switch (target) {
     case Texture::Target::Target1D:
@@ -101,7 +101,7 @@ TextureKind getKind(const Texture &texture)
 
 CallKind getKind(const Call &call)
 {
-    auto kind = CallKind{};
+    auto kind = CallKind{ };
 
     switch (call.callType) {
     case Call::CallType::Draw:         kind.draw = true; break;
@@ -118,11 +118,9 @@ CallKind getKind(const Call &call)
     case Call::CallType::ComputeIndirect:
         kind.compute = kind.indirect = true;
         break;
-    case Call::CallType::ComputeSound:
-        kind.compute = kind.sound = true;
-        break;
-    case Call::CallType::TraceRays: kind.trace = true; break;
-    default:                        break;
+    case Call::CallType::ComputeSound: kind.compute = kind.sound = true; break;
+    case Call::CallType::TraceRays:    kind.trace = true; break;
+    default:                           break;
     }
 
     if (call.primitiveType == Call::PrimitiveType::Patches)
@@ -189,6 +187,33 @@ bool shouldExecute(Call::ExecuteOn executeOn, EvaluationType evaluationType)
 
     case Call::ExecuteOn::EveryEvaluation: break;
     }
+    return true;
+}
+
+bool isAudioSource(Texture::SourceType sourceType)
+{
+    return (sourceType == Texture::SourceType::AudioSpectrum
+        || sourceType == Texture::SourceType::AudioSamples);
+}
+
+bool initializeTextureSource(Texture &texture)
+{
+    switch (texture.sourceType) {
+    case Texture::SourceType::NoSource: return false;
+    case Texture::SourceType::Video:
+        texture.format = Texture::Format::RGBA8_UNorm;
+        break;
+    case Texture::SourceType::AudioSpectrum:
+    case Texture::SourceType::AudioSamples:
+        texture.format = (texture.sourceType == Texture::SourceType::AudioSpectrum
+                ? Texture::Format::R32F
+                : Texture::Format::RG32F);
+        texture.height = "1";
+        break;
+    }
+    texture.depth = "1";
+    texture.layers = "1";
+    texture.samples = 1;
     return true;
 }
 

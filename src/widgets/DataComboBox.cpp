@@ -8,9 +8,7 @@ DataComboBox::DataComboBox(QWidget *parent) : QComboBox(parent)
 
 void DataComboBox::setCurrentData(QVariant data)
 {
-    auto index = findData(data);
-    if (index >= 0)
-        setCurrentIndex(index);
+    setCurrentIndex(findData(data));
 }
 
 QSize DataComboBox::minimumSizeHint() const

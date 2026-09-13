@@ -136,10 +136,10 @@ public Q_SLOTS:
             Q_EMIT loadingFailed(fileName);
     }
 
-    void convertVideoFrame(const QString &fileName, const QVideoFrame &frame)
+    void convertVideoFrame(MediaSource source, const QVideoFrame &frame)
     {
 #if defined(MULTIMEDIA_ENABLED)
-        mPendingVideoFrames[fileName] = frame;
+        mPendingVideoFrames[std::move(source)] = frame;
         QMetaObject::invokeMethod(
             this, [this]() { convertNextVideoFrame(); }, Qt::QueuedConnection);
 #endif
@@ -149,35 +149,37 @@ Q_SIGNALS:
     void sourceLoaded(const QString &fileName, QString source);
     void textureLoaded(const QString &fileName, TextureData texture);
     void binaryLoaded(const QString &fileName, QByteArray binary);
+    void mediaTextureLoaded(MediaSource source, TextureData texture);
     void loadingFailed(const QString &fileName);
 
 private:
 #if defined(MULTIMEDIA_ENABLED)
     void convertNextVideoFrame()
     {
-        if (mPendingVideoFrames.isEmpty())
+        if (mPendingVideoFrames.empty())
             return;
 
         const auto it = mPendingVideoFrames.begin();
-        const auto fileName = it.key();
-        const auto frame = it.value();
+        const auto source = it->first;
+        const auto frame = it->second;
         mPendingVideoFrames.erase(it);
 
         auto texture = TextureData();
         if (texture.loadQImage(frame.toImage()))
-            Q_EMIT textureLoaded(fileName, std::move(texture));
+            Q_EMIT mediaTextureLoaded(source, std::move(texture));
 
         QMetaObject::invokeMethod(
             this, [this]() { convertNextVideoFrame(); }, Qt::QueuedConnection);
     }
 
-    QMap<QString, QVideoFrame> mPendingVideoFrames;
+    std::map<MediaSource, QVideoFrame> mPendingVideoFrames;
 #endif // defined(MULTIMEDIA_ENABLED)
 };
 
 FileCache::FileCache(QObject *parent) : QObject(parent)
 {
     qRegisterMetaType<TextureData>();
+    qRegisterMetaType<MediaSource>();
 
     connect(&mFileSystemWatcher, &QFileSystemWatcher::fileChanged, this,
         &FileCache::handleFileSystemFileChanged);
@@ -198,6 +200,8 @@ FileCache::FileCache(QObject *parent) : QObject(parent)
         &FileCache::handleSourceReloaded);
     connect(backgroundLoader, &BackgroundLoader::textureLoaded, this,
         &FileCache::handleTextureReloaded);
+    connect(backgroundLoader, &BackgroundLoader::mediaTextureLoaded, this,
+        &FileCache::handleMediaTextureLoaded);
     connect(backgroundLoader, &BackgroundLoader::binaryLoaded, this,
         &FileCache::handleBinaryReloaded);
     connect(backgroundLoader, &BackgroundLoader::loadingFailed, this,
@@ -234,6 +238,13 @@ void FileCache::invalidateFile(const QString &fileName)
     Q_ASSERT(isNativeCanonicalFilePath(fileName));
     QMutexLocker lock(&mMutex);
     purgeFile(fileName);
+}
+
+void FileCache::invalidateMedia(const MediaSource &source)
+{
+    Q_ASSERT(onMainThread());
+    QMutexLocker lock(&mMutex);
+    mTextures.erase(source);
 }
 
 void FileCache::handleEditorFileChanged(const QString &fileName,
@@ -308,32 +319,42 @@ bool FileCache::getSource(const QString &fileName, QString *source) const
 
 bool FileCache::getTexture(const QString &fileName, TextureData *texture) const
 {
-    return getTexture(fileName, QSize(), texture);
+    const auto type = (FileDialog::isMediaFileName(fileName)
+            ? Texture::SourceType::Video
+            : Texture::SourceType::NoSource);
+    return getTexture(MediaSource{ fileName, type }, texture);
 }
 
-bool FileCache::getTexture(const QString &fileName, QSize requestedResolution,
+bool FileCache::getTexture(const MediaSource &source,
     TextureData *texture) const
 {
     Q_ASSERT(texture);
-    Q_ASSERT(isNativeCanonicalFilePath(fileName));
+    Q_ASSERT(isNativeCanonicalFilePath(source.fileName));
     QMutexLocker lock(&mMutex);
 
-    if (mTextures.contains(fileName)) {
-        *texture = mTextures[fileName];
+    if (const auto it = mTextures.find(source); it != mTextures.end()) {
+        *texture = it->second;
         return true;
     }
 
+    const auto &fileName = source.fileName;
     addFileSystemWatch(fileName);
-
-    if (FileDialog::isMediaFileName(fileName)) {
-        texture->create(Texture::Target::Target2D, Texture::Format::RGBA8_UNorm,
-            requestedResolution.width(), requestedResolution.height(), 1, 1);
+    if (source.type != Texture::SourceType::NoSource
+        && !FileDialog::isEmptyOrUntitled(fileName)) {
+        auto item = Texture();
+        item.sourceType = source.type;
+        initializeTextureSource(item);
+        texture->create(source.target, item.format, source.width,
+            source.height, 1, 1);
         texture->clear();
-        Q_EMIT mediaRequested(fileName, requestedResolution);
-    } else if (!loadTexture(fileName, texture)) {
-        return false;
+        mTextures.emplace(source, *texture);
+        Q_EMIT mediaRequested(source);
+        return true;
     }
-    mTextures[fileName] = *texture;
+
+    if (!loadTexture(fileName, texture))
+        return false;
+    mTextures.emplace(source, *texture);
     return true;
 }
 
@@ -370,15 +391,16 @@ void FileCache::updateTexture(const QString &fileName, TextureData texture)
     }
 }
 
-void FileCache::updateVideoTexture(const QString &fileName,
+void FileCache::updateMediaTexture(const MediaSource &source,
     const QVideoFrame &frame)
 {
-    Q_EMIT convertVideoFrame(fileName, frame, QPrivateSignal());
+    Q_EMIT convertVideoFrame(source, frame, QPrivateSignal());
 }
 
-void FileCache::updateVideoTexture(const QString &fileName, TextureData texture)
+void FileCache::updateMediaTexture(const MediaSource &source,
+    TextureData texture)
 {
-    handleTextureReloaded(fileName, std::move(texture));
+    handleMediaTextureLoaded(source, std::move(texture));
 }
 
 void FileCache::updateBinary(const QString &fileName, QByteArray binary)
@@ -510,6 +532,11 @@ bool FileCache::reloadFileInBackground(const QString &fileName)
         Q_EMIT reloadSource(fileName, QPrivateSignal());
     } else if (mTextures.contains(fileName)) {
         Q_EMIT reloadTexture(fileName, QPrivateSignal());
+    } else if (
+        std::any_of(mTextures.begin(), mTextures.end(), [&](const auto &entry) {
+            return entry.first.fileName == fileName;
+        })) {
+        return false;
     } else if (mBinaries.contains(fileName)) {
         Q_EMIT reloadBinary(fileName, QPrivateSignal());
     } else {
@@ -523,7 +550,8 @@ void FileCache::purgeFile(const QString &fileName)
 {
     mSources.remove(fileName);
     mBinaries.remove(fileName);
-    mTextures.remove(fileName);
+    std::erase_if(mTextures,
+        [&](const auto &entry) { return entry.first.fileName == fileName; });
     Singletons::mediaManager().unloadFile(fileName);
 }
 
@@ -555,6 +583,22 @@ void FileCache::handleTextureReloaded(const QString &fileName,
 
     Q_EMIT fileChanged(fileName);
     mUpdateFileSystemWatchesTimer.start();
+}
+
+void FileCache::handleMediaTextureLoaded(MediaSource source,
+    TextureData texture)
+{
+    Q_ASSERT(onMainThread());
+    Q_ASSERT(!texture.isNull());
+    const auto fileName = source.fileName;
+    QMutexLocker lock(&mMutex);
+    mTextures[std::move(source)] = std::move(texture);
+    lock.unlock();
+
+    if (auto editor = Singletons::editorManager().getEditor(fileName))
+        editor->load();
+
+    Q_EMIT fileChanged(fileName);
 }
 
 void FileCache::handleBinaryReloaded(const QString &fileName, QByteArray binary)

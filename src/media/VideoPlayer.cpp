@@ -21,8 +21,8 @@ namespace {
     }
 } // namespace
 
-VideoPlayer::VideoPlayer(QString fileName, QObject *parent)
-    : VideoStream(fileName, parent)
+VideoPlayer::VideoPlayer(MediaSource source, QObject *parent)
+    : MediaStream(source, parent)
 {
     mPlayer = new QMediaPlayer(this);
     mSink = new QVideoSink();
@@ -30,7 +30,7 @@ VideoPlayer::VideoPlayer(QString fileName, QObject *parent)
         &VideoPlayer::handleStatusChanged);
     connect(mSink, &QVideoSink::videoFrameChanged, this,
         &VideoPlayer::handleFrameDecoded);
-    mPlayer->setSource(QUrl::fromLocalFile(fileName));
+    mPlayer->setSource(QUrl::fromLocalFile(source.fileName));
     mPlayer->setLoops(QMediaPlayer::Once);
     mPlayer->setPlaybackRate(DecodeSpeed);
     mPlayer->setVideoSink(mSink);
@@ -41,7 +41,7 @@ void VideoPlayer::handleStatusChanged(QMediaPlayer::MediaStatus status)
     if (status == QMediaPlayer::InvalidMedia) {
         mPlayer->deleteLater();
         mPlayer = nullptr;
-        Q_EMIT loadingFinished();
+        finishLoading();
     } else if (status == QMediaPlayer::LoadedMedia) {
         mPlayer->play();
     } else if (status == QMediaPlayer::EndOfMedia) {
@@ -52,7 +52,8 @@ void VideoPlayer::handleStatusChanged(QMediaPlayer::MediaStatus status)
 
 void VideoPlayer::handleFrameDecoded(QVideoFrame frame)
 {
-    if (!width()) {
+    const auto firstFrame = !width();
+    if (firstFrame) {
         mDuration = std::chrono::milliseconds(mPlayer->duration());
 
         // speedup image sequences from 25 to 60 fps
@@ -85,13 +86,25 @@ void VideoPlayer::handleFrameDecoded(QVideoFrame frame)
     // present frame at target time
     if (startTime(frame) <= mTargetTime && endTime(frame) > mTargetTime)
         presentFrame(frame);
+
+    if (firstFrame)
+        updateTargetTime();
 }
 
 void VideoPlayer::seek(std::chrono::milliseconds time)
 {
-    if (!mPlayer || mTargetTime == time || !mDuration.count())
+    if (mTargetTime == time)
         return;
     mTargetTime = time;
+
+    updateTargetTime();
+}
+
+void VideoPlayer::updateTargetTime()
+{
+    if (!mPlayer || !mDuration.count())
+        return;
+    const auto time = mTargetTime;
 
     // present frame at target time
     const auto bestFrame = [&]() -> QVideoFrame {

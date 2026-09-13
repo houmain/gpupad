@@ -16,8 +16,8 @@ VKTexture::VKTexture(const Buffer &buffer, VKBuffer *textureBuffer,
 {
 }
 
-VKTexture::VKTexture(TextureData data, int samples)
-    : TextureBase(std::move(data), samples)
+VKTexture::VKTexture(TextureData data, int samples, ItemId itemId)
+    : TextureBase(std::move(data), samples, itemId)
 {
     mUsage =
         KDGpu::TextureUsageFlags{ KDGpu::TextureUsageFlagBits::TransferSrcBit

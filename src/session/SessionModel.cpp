@@ -244,6 +244,11 @@ JsonArray SessionModel::generateJsonFromUrls(QModelIndex target,
                 || FileDialog::isMediaFileName(fileName))) {
             auto item = Texture();
             item.type = Item::Type::Texture;
+            if (FileDialog::isAudioFileName(fileName))
+                item.sourceType = Texture::SourceType::AudioSpectrum;
+            else if (FileDialog::isMediaFileName(fileName))
+                item.sourceType = Texture::SourceType::Video;
+            initializeTextureSource(item);
             addFileItem(item, url);
         } else if (canContainType(target, Item::Type::Buffer)
             && !FileDialog::isShaderFileName(fileName)
@@ -621,6 +626,10 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
     case Item::Type::Texture: {
         const auto &texture = static_cast<const Texture &>(item);
         auto kind = getKind(texture);
+        const auto audioSource = isAudioSource(texture.sourceType);
+        result &= (column != TextureSourceType
+            || texture.sourceType != Texture::SourceType::NoSource);
+        result &= (column != TextureAudioVolume || audioSource);
         result &=
             (column != TextureHeight || (kind.dimensions > 1 && !kind.cubeMap));
         result &= (column != TextureDepth || kind.dimensions > 2);

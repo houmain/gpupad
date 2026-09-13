@@ -14,6 +14,9 @@ public:
         FileName,
 
         SessionRenderer,
+        SessionAudioBufferSize,
+        SessionAudioChunkSize,
+        SessionAudioSampleRate,
         SessionApiVersion,
         SessionShaderLanguage,
         SessionShaderCompiler,
@@ -30,6 +33,8 @@ public:
         FieldDataType,
         FieldCount,
         FieldPadding,
+        TextureSourceType,
+        TextureAudioVolume,
         TextureTarget,
         TextureFormat,
         TextureWidth,

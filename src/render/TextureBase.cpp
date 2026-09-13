@@ -56,6 +56,7 @@ TextureBase::TextureBase(const Texture &texture,
     RenderSessionBase &renderSession)
     : mItemId(texture.id)
     , mFileName(texture.fileName)
+    , mSourceType(texture.sourceType)
     , mRowOrder(texture.flipVertically ? TextureData::RowOrder::BottomToTop
                                        : TextureData::RowOrder::TopToBottom)
     , mTarget(texture.target)
@@ -97,8 +98,9 @@ TextureBase::TextureBase(const Buffer &buffer, Texture::Format format,
     mUsedItems += buffer.id;
 }
 
-TextureBase::TextureBase(TextureData data, int samples)
-    : mTarget(data.getTarget(samples))
+TextureBase::TextureBase(TextureData data, int samples, ItemId itemId)
+    : mItemId(itemId)
+    , mTarget(data.getTarget(samples))
     , mFormat(toPowerOfTwoByteFormat(data.format()))
     , mWidth(std::max(data.width(), 1))
     , mHeight(std::max(data.height(), 1))
@@ -122,8 +124,8 @@ TextureBase::TextureBase(TextureData data, int samples)
 bool TextureBase::operator==(const TextureBase &rhs) const
 {
     const auto properties = [](const TextureBase &a) {
-        return std::tie(a.mFileName, a.mRowOrder, a.mTarget, a.mFormat,
-            a.mWidth, a.mHeight, a.mDepth, a.mLayers, a.mSamples);
+        return std::tie(a.mFileName, a.mSourceType, a.mRowOrder, a.mTarget,
+            a.mFormat, a.mWidth, a.mHeight, a.mDepth, a.mLayers, a.mSamples);
     };
     return properties(*this) == properties(rhs);
 }
@@ -146,11 +148,27 @@ bool TextureBase::swap(TextureBase &other)
     return true;
 }
 
+void TextureBase::setDataOverride(TextureData fileData)
+{
+    mDataOverride = true;
+    const auto data =
+        fileData.convert(mFormat, mWidth, mHeight, mDepth, mLayers, mRowOrder);
+    if (!data.isNull() && !mData.isSharedWith(data)) {
+        mData = data;
+        mSystemCopyModified = true;
+    }
+}
+
 void TextureBase::reload(bool forWriting)
 {
+    if (mDataOverride)
+        return;
+
     auto fileData = TextureData{ };
     const auto resolution = QSize(mWidth, mHeight);
-    if (Singletons::fileCache().getTexture(mFileName, resolution, &fileData)) {
+    if (Singletons::fileCache().getTexture(
+            MediaSource{ mFileName, mSourceType, mTarget, resolution },
+            &fileData)) {
         // check if cache still matches the file before conversion
         if (!mFileData.isSharedWith(fileData)) {
             mFileData = fileData;

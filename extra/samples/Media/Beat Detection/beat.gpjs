@@ -3,6 +3,9 @@
   "id": 897,
   "name": "Beat Detection",
   "renderer": "OpenGL",
+  "audioBufferSize": 250,
+  "audioChunkSize": 800,
+  "audioSampleRate": 48000,
   "shaderLanguage": "GLSL",
   "shaderCompiler": "Driver",
   "shaderCompilerSettings": {},
@@ -24,10 +27,10 @@
       "type": "Texture",
       "id": 105,
       "fileName": "../Audio Spectrum/3xBlast - Babe, You Look Poggers Tonight! (Looped).ogg",
-      "target": "Target2D",
+      "sourceType": "AudioSpectrum",
+      "target": "Target1D",
       "format": "R32F",
       "width": "1025",
-      "height": "1",
       "samples": 1,
       "flipVertically": false
     },
@@ -123,7 +126,7 @@
           "bindingType": "Uniform",
           "editor": "Expression",
           "values": [
-            "44100"
+            "app.session.audioSampleRate"
           ]
         },
         {

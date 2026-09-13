@@ -17,6 +17,7 @@ public:
     GLTexture(const Texture &texture, GLRenderSession &renderSession);
     GLTexture(const Buffer &buffer, GLBuffer *textureBuffer,
         Texture::Format format, GLRenderSession &renderSession);
+    GLTexture(TextureData data, int samples, ItemId itemId = 0);
     bool operator==(const GLTexture &rhs) const;
 
     void boundAsSampler() { }

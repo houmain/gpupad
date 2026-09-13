@@ -259,6 +259,11 @@ GLTexture::GLTexture(const Buffer &buffer, GLBuffer *textureBuffer,
 {
 }
 
+GLTexture::GLTexture(TextureData data, int samples, ItemId itemId)
+    : TextureBase(std::move(data), samples, itemId)
+{
+}
+
 GLuint GLTexture::getReadOnlyTextureId(GLContext &gl)
 {
     reload(gl, false);

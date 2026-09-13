@@ -13,6 +13,7 @@ public:
     D3DTexture(const Texture &texture, D3DRenderSession &renderSession);
     D3DTexture(const Buffer &buffer, D3DBuffer *textureBuffer,
         Texture::Format format, D3DRenderSession &renderSession);
+    D3DTexture(TextureData data, int samples, ItemId itemId = 0);
 
     void boundAsSampler() { }
     void boundAsImage() { }

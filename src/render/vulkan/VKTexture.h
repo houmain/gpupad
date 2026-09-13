@@ -11,7 +11,7 @@ public:
     VKTexture(const Texture &texture, VKRenderSession &renderSession);
     VKTexture(const Buffer &buffer, VKBuffer *textureBuffer,
         Texture::Format format, VKRenderSession &renderSession);
-    VKTexture(TextureData data, int samples);
+    VKTexture(TextureData data, int samples, ItemId itemId = 0);
     VKTexture(TextureData data, int samples, KDGpu::Texture texture);
     bool operator==(const VKTexture &rhs) const;
 

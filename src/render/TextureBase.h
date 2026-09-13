@@ -13,7 +13,7 @@ public:
     TextureBase(const Texture &texture, RenderSessionBase &renderSession);
     TextureBase(const Buffer &buffer, Texture::Format format,
         RenderSessionBase &renderSession);
-    TextureBase(TextureData data, int samples);
+    TextureBase(TextureData data, int samples, ItemId itemId = 0);
     virtual ~TextureBase() = default;
     bool operator==(const TextureBase &rhs) const;
 
@@ -32,6 +32,7 @@ public:
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
     bool deviceCopyModified() const { return mDeviceCopyModified; }
     ShareHandle shareHandle() const { return mShareHandle; }
+    void setDataOverride(TextureData data);
 
 protected:
     bool swap(TextureBase &other);
@@ -40,6 +41,7 @@ protected:
     ItemId mItemId{ };
     MessagePtrSet mMessages;
     QString mFileName;
+    Texture::SourceType mSourceType{ };
     TextureData::RowOrder mRowOrder{ };
     Texture::Target mTarget{ };
     Texture::Format mFormat{ };
@@ -55,6 +57,7 @@ protected:
     bool mSystemCopyModified{ };
     bool mDeviceCopyModified{ };
     bool mMipmapsInvalidated{ };
+    bool mDataOverride{ };
     ShareHandleSource mShareHandle;
 };
 

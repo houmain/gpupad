@@ -43,6 +43,14 @@ namespace ItemEnums {
     };
     Q_ENUM_NS(TextureTarget)
 
+    enum TextureSourceType {
+        NoSource,
+        Video,
+        AudioSpectrum,
+        AudioSamples,
+    };
+    Q_ENUM_NS(TextureSourceType)
+
     enum TextureFormat {
         NoFormat = 0,
 

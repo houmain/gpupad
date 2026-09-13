@@ -1,6 +1,6 @@
 #version 330
 
-uniform sampler2D uSpectrum;
+uniform sampler1D uSpectrum;
 uniform sampler2D uPreviousState;
 uniform float uSampleRate;
 uniform vec2 uDecibelRange;
@@ -34,7 +34,7 @@ const vec2 BAND_FREQUENCIES[BAND_COUNT] = vec2[10](
     vec2(10000.0, 20000.0));
 
 float readBandLevel(int band) {
-  float spectrumWidth = float(textureSize(uSpectrum, 0).x);
+  float spectrumWidth = float(textureSize(uSpectrum, 0));
   float firstBin = BAND_FREQUENCIES[band].x * FFT_SIZE / uSampleRate;
   float lastBin = BAND_FREQUENCIES[band].y * FFT_SIZE / uSampleRate;
   float power = 0.0;
@@ -43,7 +43,7 @@ float readBandLevel(int band) {
     float position = (float(sampleIndex) + 0.5) / float(SAMPLE_COUNT);
     float bin = mix(firstBin, lastBin, position);
     float spectrumU = (bin + 0.5) / spectrumWidth;
-    float amplitude = texture(uSpectrum, vec2(spectrumU, 0.5)).r;
+    float amplitude = texture(uSpectrum, spectrumU).r;
     power += amplitude * amplitude;
   }
 

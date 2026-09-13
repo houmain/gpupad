@@ -282,12 +282,23 @@ TextureProperties::TextureProperties(PropertiesEditor *propertiesEditor)
     connect(mUi->file, &ReferenceComboBox::currentDataChanged, this,
         &TextureProperties::updateWidgets);
 
+    connect(mUi->sourceType, &DataComboBox::currentDataChanged, this,
+        &TextureProperties::updateWidgets);
+    connect(mUi->sourceType, qOverload<int>(&QComboBox::activated), this,
+        &TextureProperties::applyFileFormat);
     connect(mUi->target, &DataComboBox::currentDataChanged, this,
         &TextureProperties::updateWidgets);
     connect(mUi->formatType, &DataComboBox::currentDataChanged, this,
         &TextureProperties::updateFormatDataWidget);
     connect(mUi->formatData, &DataComboBox::currentDataChanged, this,
         &TextureProperties::updateFormat);
+
+    fillComboBox<Texture::SourceType>(mUi->sourceType,
+        {
+            { "Video", Texture::SourceType::Video },
+            { "Audio Spectrum", Texture::SourceType::AudioSpectrum },
+            { "Audio Samples", Texture::SourceType::AudioSamples },
+        });
 
     fillComboBox<Texture::Target>(mUi->target,
         {
@@ -333,7 +344,7 @@ TextureKind TextureProperties::currentTextureKind() const
     if (auto texture = mPropertiesEditor.model().item<Texture>(
             mPropertiesEditor.currentModelIndex()))
         return getKind(*texture);
-    return {};
+    return { };
 }
 
 bool TextureProperties::hasFile() const
@@ -350,6 +361,8 @@ bool TextureProperties::hasFile() const
 void TextureProperties::addMappings(QDataWidgetMapper &mapper)
 {
     mapper.addMapping(mUi->file, SessionModel::FileName);
+    mapper.addMapping(mUi->sourceType, SessionModel::TextureSourceType);
+    mapper.addMapping(mUi->audioVolume, SessionModel::TextureAudioVolume);
     mapper.addMapping(mUi->target, SessionModel::TextureTarget);
     mapper.addMapping(this, SessionModel::TextureFormat);
     mapper.addMapping(mUi->width, SessionModel::TextureWidth);
@@ -379,14 +392,29 @@ void TextureProperties::setFormat(QVariant value)
 void TextureProperties::updateWidgets()
 {
     const auto fileName = mUi->file->currentData().toString();
+    const auto sourceType = static_cast<Texture::SourceType>(
+        mUi->sourceType->currentData().toInt());
+    const auto hasSource = sourceType != Texture::SourceType::NoSource;
+    const auto hasAudioSource = isAudioSource(sourceType);
     const auto kind = currentTextureKind();
+    mUi->formatType->setEnabled(!hasSource);
+    mUi->formatData->setEnabled(!hasSource);
+    setFormVisibility(mUi->formLayout, mUi->labelSourceType, mUi->sourceType,
+        hasSource);
+    setFormVisibility(mUi->formLayout, mUi->labelAudioVolume, mUi->audioVolume,
+        hasAudioSource);
+    setFormVisibility(mUi->formLayout, mUi->labelTarget, mUi->target, true);
+    setFormVisibility(mUi->formLayout, mUi->labelFormat, mUi->formatType, true);
+    setFormVisibility(mUi->formLayout, mUi->labelFormat, mUi->formatData, true);
+    setFormVisibility(mUi->formLayout, mUi->labelWidth, mUi->width, true);
     setFormVisibility(mUi->formLayout, mUi->labelHeight, mUi->height,
         (kind.dimensions > 1 && !kind.cubeMap));
     setFormVisibility(mUi->formLayout, mUi->labelDepth, mUi->depth,
         kind.dimensions > 2);
     setFormVisibility(mUi->formLayout, mUi->labelLayers, mUi->layers,
         kind.array);
-    setFormVisibility(mUi->formLayout, mUi->labelSamples, mUi->samples, true);
+    setFormVisibility(mUi->formLayout, mUi->labelSamples, mUi->samples,
+        !hasSource);
     setFormVisibility(mUi->formLayout, mUi->labelFlipVertically,
         mUi->flipVertically,
         !FileDialog::isEmptyOrUntitled(fileName)
@@ -480,10 +508,41 @@ void TextureProperties::updateFormat(QVariant formatData)
 void TextureProperties::applyFileFormat()
 {
     const auto fileName = mUi->file->currentData().toString();
+    auto sourceType = static_cast<Texture::SourceType>(
+        mUi->sourceType->currentData().toInt());
+    const auto sourceTypeSelected = QObject::sender() == mUi->sourceType;
+    if (FileDialog::isAudioFileName(fileName) && !sourceTypeSelected) {
+        sourceType = Texture::SourceType::AudioSpectrum;
+        mUi->sourceType->setCurrentData(sourceType);
+    } else if (FileDialog::isMediaFileName(fileName) && !sourceTypeSelected) {
+        sourceType = Texture::SourceType::Video;
+        mUi->sourceType->setCurrentData(sourceType);
+    } else if (!FileDialog::isMediaFileName(fileName)
+        && sourceType != Texture::SourceType::NoSource) {
+        sourceType = Texture::SourceType::NoSource;
+        mUi->sourceType->setCurrentData(sourceType);
+    }
+
+    auto item = Texture();
+    item.sourceType = sourceType;
+    item.height = mUi->height->text();
+    if (initializeTextureSource(item)) {
+        mUi->target->setCurrentData(item.target);
+        setFormat(item.format);
+        mUi->height->setText(item.height);
+        mUi->depth->setText(item.depth);
+        mUi->layers->setText(item.layers);
+        mUi->samples->setCurrentText(QString::number(item.samples));
+        if (isAudioSource(sourceType))
+            return;
+    }
+
     auto texture = TextureData();
-    if (Singletons::fileCache().getTexture(fileName, &texture)) {
+    if (Singletons::fileCache().getTexture(MediaSource{ fileName, sourceType },
+            &texture)
+        && !texture.isNull()) {
         // automatically expand to 4 components
-        // since 3 are usually to supported by device
+        // since 3 are usually not supported by device
         auto format = texture.format();
         if (format == Texture::Format::RGB8_UNorm)
             format = Texture::Format::RGBA8_UNorm;

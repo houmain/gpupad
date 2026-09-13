@@ -2,7 +2,7 @@
 
 #if defined(MULTIMEDIA_ENABLED)
 
-#  include "VideoStream.h"
+#  include "MediaStream.h"
 #  include <QJsonArray>
 
 class QMediaCaptureSession;
@@ -11,10 +11,10 @@ class QVideoSink;
 
 QJsonArray enumerateCameras();
 
-class Camera final : public VideoStream
+class Camera final : public MediaStream
 {
 public:
-    Camera(QString fileName, QObject *parent = nullptr);
+    Camera(MediaSource source, QObject *parent = nullptr);
 
     void seek(std::chrono::milliseconds time) override;
 

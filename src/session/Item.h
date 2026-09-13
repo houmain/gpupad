@@ -47,6 +47,9 @@ struct Session : ScopeItem
     using ShaderCompilerSetting = ItemEnums2::ShaderCompilerSetting;
 
     Renderer renderer{ Renderer::OpenGL };
+    int audioBufferSize{ 250 };
+    int audioChunkSize{ 800 };
+    int audioSampleRate{ 48'000 };
     QString apiVersion;
     ShaderLanguage shaderLanguage{ ShaderLanguage::GLSL };
     ShaderCompiler shaderCompiler{ ShaderCompiler::Driver };
@@ -86,8 +89,11 @@ struct Field : Item
 struct Texture : FileItem
 {
     using Target = ItemEnums::TextureTarget;
+    using SourceType = ItemEnums::TextureSourceType;
     using Format = ItemEnums::TextureFormat;
 
+    SourceType sourceType{ SourceType::NoSource };
+    int audioVolume{ 50 };
     Target target{ Target::Target2D };
     Format format{ Format::RGBA8_UNorm };
     QString width{ "256" };
@@ -316,6 +322,9 @@ CallKind getKind(const Call &call);
 bool callTypeSupportsShaderType(Call::CallType callType,
     Shader::ShaderType shaderType);
 bool shouldExecute(Call::ExecuteOn executeOn, EvaluationType evaluationType);
+bool isAudioSource(Texture::SourceType sourceType);
+// Returns true when the source type determines the texture properties.
+bool initializeTextureSource(Texture &texture);
 
 SourceType getSourceType(Session::ShaderLanguage language,
     Shader::ShaderType type);

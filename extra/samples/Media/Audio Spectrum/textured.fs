@@ -1,6 +1,6 @@
 #version 330
 
-uniform sampler2D uSpectrum;
+uniform sampler1D uSpectrum;
 uniform sampler2D uHistory;
 
 out vec4 oColor;
@@ -35,13 +35,13 @@ void main() {
 
   // Spread the linear FFT bins over a logarithmic frequency axis. The first
   // useful bin is at the bottom and Nyquist is at the top.
-  ivec2 spectrumSize = textureSize(uSpectrum, 0);
+  int spectrumSize = textureSize(uSpectrum, 0);
   float heightPosition = (float(pixel.y) + 0.5) / float(historySize.y);
   float firstBin = 1.0;
-  float lastBin = float(spectrumSize.x - 1);
+  float lastBin = float(spectrumSize - 1);
   float bin = exp2(mix(log2(firstBin), log2(lastBin), heightPosition));
-  float spectrumU = (bin + 0.5) / float(spectrumSize.x);
-  float amplitude = max(texture(uSpectrum, vec2(spectrumU, 0.5)).r, 1e-7);
+  float spectrumU = (bin + 0.5) / float(spectrumSize);
+  float amplitude = max(texture(uSpectrum, spectrumU).r, 1e-7);
 
   // Convert amplitude to decibels and slightly compensate high frequencies.
   float decibels = 20.0 * log(amplitude) / log(10.0);

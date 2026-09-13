@@ -109,6 +109,11 @@ D3DTexture::D3DTexture(const Buffer &buffer, D3DBuffer *textureBuffer,
 {
 }
 
+D3DTexture::D3DTexture(TextureData data, int samples, ItemId itemId)
+    : TextureBase(std::move(data), samples, itemId)
+{
+}
+
 D3D12_SHADER_RESOURCE_VIEW_DESC D3DTexture::shaderResourceViewDesc() const
 {
     auto desc = D3D12_SHADER_RESOURCE_VIEW_DESC{

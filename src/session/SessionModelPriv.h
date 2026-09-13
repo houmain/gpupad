@@ -6,6 +6,9 @@
 
 #define ADD_EACH_COLUMN_TYPE()                                                \
     ADD(SessionRenderer, Session, renderer)                                   \
+    ADD(SessionAudioBufferSize, Session, audioBufferSize)                     \
+    ADD(SessionAudioChunkSize, Session, audioChunkSize)                       \
+    ADD(SessionAudioSampleRate, Session, audioSampleRate)                     \
     ADD(SessionApiVersion, Session, apiVersion)                               \
     ADD(SessionShaderLanguage, Session, shaderLanguage)                       \
     ADD(SessionShaderCompiler, Session, shaderCompiler)                       \
@@ -22,6 +25,8 @@
     ADD(FieldDataType, Field, dataType)                                       \
     ADD(FieldCount, Field, count)                                             \
     ADD(FieldPadding, Field, padding)                                         \
+    ADD(TextureSourceType, Texture, sourceType)                               \
+    ADD(TextureAudioVolume, Texture, audioVolume)                             \
     ADD(TextureTarget, Texture, target)                                       \
     ADD(TextureFormat, Texture, format)                                       \
     ADD(TextureWidth, Texture, width)                                         \
