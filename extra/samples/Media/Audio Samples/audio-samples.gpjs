@@ -1,0 +1,115 @@
+{
+  "type": "Session",
+  "id": 1,
+  "name": "Audio Samples",
+  "renderer": "OpenGL",
+  "audioBufferSize": 250,
+  "audioChunkSize": 800,
+  "audioSampleRate": 48000,
+  "shaderLanguage": "GLSL",
+  "shaderCompiler": "Driver",
+  "shaderCompilerSettings": {},
+  "shaderPreamble": "",
+  "shaderIncludePaths": "",
+  "items": [
+    {
+      "type": "Texture",
+      "id": 2,
+      "name": "Waveforms",
+      "target": "Target2D",
+      "format": "RGBA8_UNorm",
+      "width": "960",
+      "height": "540",
+      "samples": 1,
+      "flipVertically": false
+    },
+    {
+      "type": "Target",
+      "id": 3,
+      "name": "Waveform Target",
+      "frontFace": "CCW",
+      "cullMode": "Back",
+      "polygonMode": "Fill",
+      "logicOperation": "NoLogicOperation",
+      "blendConstant": "#ffffffff",
+      "items": [
+        {
+          "type": "Attachment",
+          "id": 4,
+          "name": "Color",
+          "textureId": 2,
+          "level": 0,
+          "blendColorEq": "Add",
+          "blendColorSource": "One",
+          "blendColorDest": "Zero",
+          "blendAlphaEq": "Add",
+          "blendAlphaSource": "One",
+          "blendAlphaDest": "Zero",
+          "colorWriteMask": 15
+        }
+      ]
+    },
+    {
+      "type": "Texture",
+      "id": 5,
+      "fileName": "../Audio Spectrum/3xBlast - Babe, You Look Poggers Tonight! (Looped).ogg",
+      "sourceType": "AudioSamples",
+      "audioVolume": 50,
+      "target": "Target1D",
+      "format": "RG32F",
+      "width": "256",
+      "samples": 1,
+      "flipVertically": false
+    },
+    {
+      "type": "Binding",
+      "id": 6,
+      "name": "uAudioSamples",
+      "bindingType": "Sampler",
+      "textureId": 5,
+      "minFilter": "Linear",
+      "magFilter": "Linear",
+      "anisotropic": false,
+      "wrapModeX": "ClampToEdge",
+      "wrapModeY": "ClampToEdge",
+      "wrapModeZ": "ClampToEdge",
+      "borderColor": "#ff000000",
+      "comparisonFunc": "NoComparisonFunc"
+    },
+    {
+      "type": "Program",
+      "id": 7,
+      "name": "Stereo Oscilloscope",
+      "items": [
+        {
+          "type": "Shader",
+          "id": 8,
+          "fileName": "fullscreen.vs",
+          "shaderType": "Vertex"
+        },
+        {
+          "type": "Shader",
+          "id": 9,
+          "fileName": "waveforms.fs",
+          "shaderType": "Fragment"
+        }
+      ]
+    },
+    {
+      "type": "Call",
+      "id": 10,
+      "name": "Draw Stereo Waveforms",
+      "checked": true,
+      "callType": "Draw",
+      "programId": 7,
+      "targetId": 3,
+      "vertexStreamId": 0,
+      "primitiveType": "TriangleStrip",
+      "count": "4",
+      "first": "0",
+      "instanceCount": "1",
+      "baseInstance": "0",
+      "executeOn": "EveryEvaluation"
+    }
+  ]
+}
