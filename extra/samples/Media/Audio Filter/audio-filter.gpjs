@@ -1,0 +1,64 @@
+{
+  "type": "Session",
+  "id": 1,
+  "name": "ComputeSound Audio Filter",
+  "renderer": "OpenGL",
+  "audioBufferSize": 250,
+  "audioChunkSize": 800,
+  "audioSampleRate": 48000,
+  "shaderLanguage": "GLSL",
+  "shaderCompiler": "Driver",
+  "shaderCompilerSettings": {},
+  "shaderPreamble": "",
+  "shaderIncludePaths": "",
+  "items": [
+    {
+      "type": "Texture",
+      "id": 2,
+      "fileName": "../Audio Spectrum/3xBlast - Babe, You Look Poggers Tonight! (Looped).ogg",
+      "sourceType": "AudioSamples",
+      "audioVolume": 0,
+      "target": "Target1D",
+      "format": "RG32F",
+      "width": "800",
+      "samples": 1,
+      "flipVertically": false
+    },
+    {
+      "type": "Binding",
+      "id": 3,
+      "name": "uAudioSamples",
+      "bindingType": "Sampler",
+      "textureId": 2,
+      "minFilter": "Linear",
+      "magFilter": "Linear",
+      "anisotropic": false,
+      "wrapModeX": "ClampToEdge",
+      "wrapModeY": "ClampToEdge",
+      "wrapModeZ": "ClampToEdge",
+      "borderColor": "#ff000000",
+      "comparisonFunc": "NoComparisonFunc"
+    },
+    {
+      "type": "Program",
+      "id": 5,
+      "name": "Breathing Warmth Filter",
+      "items": [
+        {
+          "type": "Shader",
+          "id": 6,
+          "fileName": "filter.comp",
+          "shaderType": "Compute"
+        }
+      ]
+    },
+    {
+      "type": "Call",
+      "id": 7,
+      "name": "Filter Audio",
+      "checked": true,
+      "callType": "ComputeSound",
+      "programId": 5
+    }
+  ]
+}

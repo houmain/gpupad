@@ -1,0 +1,79 @@
+#version 430
+
+layout(local_size_x = 256) in;
+
+layout(std430, binding = 0) buffer soundBuffer
+{
+    uint sampleBaseLow;
+    uint sampleBaseHigh;
+    uint sampleRate;
+    uint frameCount;
+    vec2 samples[];
+} sound;
+
+uniform sampler1D uAudioSamples;
+
+const float Tau = 6.28318530718;
+const float GaussianWeights[7] = float[7](
+    0.1996756,
+    0.1762131,
+    0.1211094,
+    0.0648252,
+    0.0270232,
+    0.0087731,
+    0.0022182);
+
+vec2 sourceSample(float frame)
+{
+    float frameCount = float(textureSize(uAudioSamples, 0));
+    float coordinate = (clamp(frame, 0.0, frameCount - 1.0) + 0.5)
+        / frameCount;
+    return textureLod(uAudioSamples, coordinate, 0.0).rg;
+}
+
+vec2 lowPass(float frame, float spacing)
+{
+    vec2 result = sourceSample(frame) * GaussianWeights[0];
+    for (int tap = 1; tap < 7; ++tap) {
+        float offset = float(tap) * spacing;
+        result += (sourceSample(frame - offset)
+            + sourceSample(frame + offset)) * GaussianWeights[tap];
+    }
+    return result;
+}
+
+void main()
+{
+    uint index = gl_GlobalInvocationID.x;
+    if (index >= sound.frameCount)
+        return;
+
+    uint sampleLow = sound.sampleBaseLow + index;
+    uint sampleHigh = sound.sampleBaseHigh
+        + uint(sampleLow < sound.sampleBaseLow);
+    float absoluteSample = float(sampleHigh) * 4294967296.0
+        + float(sampleLow);
+    float time = absoluteSample / float(sound.sampleRate);
+
+    float sourceFrameCount = float(textureSize(uAudioSamples, 0));
+    if (float(index) >= sourceFrameCount) {
+        sound.samples[index] = vec2(0.0);
+        return;
+    }
+
+    float sourceFrame = float(index);
+    vec2 dry = sourceSample(sourceFrame);
+
+    // Slowly vary the tap spacing for a warm, breathing low-pass movement.
+    float movement = 0.5 + 0.5 * sin(Tau * 0.085 * time);
+    float spacing = mix(20.0, 50.0, movement);
+    vec2 filtered = mix(dry, lowPass(sourceFrame, spacing), 0.58);
+
+    // Add gentle stereo widening and tape-like soft saturation.
+    float mid = (filtered.x + filtered.y) * 0.5;
+    float side = (filtered.x - filtered.y) * 0.56;
+    vec2 processed = vec2(mid + side, mid - side);
+    processed = tanh(processed * 1.35) * 0.72;
+
+    sound.samples[index] = processed;
+}
