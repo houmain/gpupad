@@ -99,6 +99,7 @@ set(SOURCES
   src/editors/texture/TextureEditorItem.cpp
   src/editors/qml/QmlView.cpp
   src/main.cpp
+  src/headless.cpp
   src/render/RenderWidget.cpp
   src/render/Renderer.cpp
   src/render/ProcessSource.cpp
