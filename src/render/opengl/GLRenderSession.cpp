@@ -95,12 +95,15 @@ void GLRenderSession::render()
     }
 
     executeCommandQueue(*mCommandQueue);
+    Q_ASSERT(glGetError() == GL_NO_ERROR);
 
     beginDownloadModifiedResources(*mCommandQueue);
+    Q_ASSERT(glGetError() == GL_NO_ERROR);
+
     obtainTimeQueryResults();
+    Q_ASSERT(glGetError() == GL_NO_ERROR);
 
     gl.glFinish();
-
     Q_ASSERT(glGetError() == GL_NO_ERROR);
 }
 

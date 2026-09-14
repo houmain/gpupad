@@ -557,6 +557,14 @@ namespace {
             || sampleType == TextureSampleType::Float);
     }
 
+    template <typename Dest, typename T>
+    Dest saturate(T value)
+    {
+        const auto min = std::numeric_limits<Dest>::lowest();
+        const auto max = std::numeric_limits<Dest>::max();
+        return static_cast<Dest>(value < min ? min : max < value ? max : value);
+    }
+
     template <typename Source, typename Dest, int Shift>
     void convert(const Source *source, Dest *dest, int pixels,
         int sourceComponents, int destComponents)
@@ -567,16 +575,18 @@ namespace {
                         : c < 3 ? Source{ }
                                 : std::numeric_limits<Source>::max());
                 if constexpr (Shift < 0) {
-                    if constexpr (std::is_floating_point_v<Dest>) {
-                        dest[c] = static_cast<Dest>(v) / Dest{ 1ull << -Shift };
+                    if constexpr (std::is_floating_point_v<Dest>
+                        || std::is_floating_point_v<Source>) {
+                        dest[c] = saturate<Dest>(v / (1ull << -Shift));
                     } else {
-                        dest[c] = static_cast<Dest>(v >> -Shift);
+                        dest[c] = saturate<Dest>(v >> -Shift);
                     }
                 } else {
-                    if constexpr (std::is_floating_point_v<Dest>) {
-                        dest[c] = static_cast<Dest>(v) * Dest{ 1ull << Shift };
+                    if constexpr (std::is_floating_point_v<Dest>
+                        || std::is_floating_point_v<Source>) {
+                        dest[c] = saturate<Dest>(v * (1ull << Shift));
                     } else {
-                        dest[c] = static_cast<Dest>(v << Shift);
+                        dest[c] = saturate<Dest>(v << Shift);
                     }
                 }
             }
@@ -625,9 +635,21 @@ namespace {
         ADD(Uint32, uint32_t, Int16, int16_t, -9)
         ADD(Uint32, uint32_t, Int32, int32_t, -1)
 
+        ADD(Int8, int8_t, Float32, float, -7)
+        ADD(Int16, int16_t, Float32, float, -15)
+        ADD(Int32, int32_t, Float32, float, -31)
+
         ADD(Uint8, uint8_t, Float32, float, -8)
         ADD(Uint16, uint16_t, Float32, float, -16)
         ADD(Uint32, uint32_t, Float32, float, -32)
+
+        ADD(Float32, float, Int8, int8_t, 7)
+        ADD(Float32, float, Int16, int16_t, 15)
+        ADD(Float32, float, Int32, int32_t, 31)
+
+        ADD(Float32, float, Uint8, uint8_t, 8)
+        ADD(Float32, float, Uint16, uint16_t, 16)
+        ADD(Float32, float, Uint32, uint32_t, 32)
 #undef ADD
         return false;
     }

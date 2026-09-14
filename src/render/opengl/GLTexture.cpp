@@ -11,7 +11,7 @@ namespace {
     GLuint createFramebuffer(GLContext &gl, GLenum target, GLuint textureId,
         GLenum attachment)
     {
-        auto fbo = GLuint{};
+        auto fbo = GLuint{ };
         gl.glGenFramebuffers(1, &fbo);
         gl.glBindFramebuffer(target, fbo);
         gl.glFramebufferTexture(target, attachment, textureId, 0);
@@ -21,8 +21,8 @@ namespace {
     bool resolveTexture(GLContext &gl, GLuint sourceTextureId,
         GLuint destTextureId, int width, int height, Texture::Format format)
     {
-        auto blitMask = GLbitfield{};
-        auto attachment = GLenum{};
+        auto blitMask = GLbitfield{ };
+        auto attachment = GLenum{ };
         switch (format) {
         default:
             blitMask = GL_COLOR_BUFFER_BIT;
@@ -49,7 +49,7 @@ namespace {
             break;
         }
 
-        auto previousTarget = GLint{};
+        auto previousTarget = GLint{ };
         gl.glGetIntegerv(GL_FRAMEBUFFER_BINDING, &previousTarget);
         const auto sourceFbo = createFramebuffer(gl, GL_READ_FRAMEBUFFER,
             sourceTextureId, attachment);
@@ -72,7 +72,7 @@ namespace {
                 data.width(), data.height(), GL_FALSE);
 
             // upload single sample and resolve
-            auto singleSampleTextureId = GLuint{};
+            auto singleSampleTextureId = GLuint{ };
             const auto cleanup = qScopeGuard(
                 [&] { gl.glDeleteTextures(1, &singleSampleTextureId); });
             return (data.uploadGL(&singleSampleTextureId)
@@ -95,7 +95,7 @@ namespace {
         gl.glBindTexture(target, textureId);
         for (auto level = 0; level < data.levels(); ++level) {
             if (data.isCompressed()) {
-                auto size = GLint{};
+                auto size = GLint{ };
                 gl.glGetTexLevelParameteriv(target, level,
                     GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &size);
                 if (glGetError() != GL_NO_ERROR
@@ -124,7 +124,7 @@ namespace {
     {
         if (target == TT::Target2DMultisample) {
             // create single sample texture (=upload), resolve, download
-            auto singleSampleTextureId = GLuint{};
+            auto singleSampleTextureId = GLuint{ };
             const auto cleanup = qScopeGuard(
                 [&] { gl.glDeleteTextures(1, &singleSampleTextureId); });
             if (!data.uploadGL(&singleSampleTextureId)
@@ -146,7 +146,7 @@ namespace {
         GLuint textureId, int level)
     {
         const auto createFBO = [&]() {
-            auto fbo = GLuint{};
+            auto fbo = GLuint{ };
             gl.glGenFramebuffers(1, &fbo);
             return fbo;
         };
@@ -402,7 +402,7 @@ void GLTexture::createTexture(GLContext &gl)
         return;
 
     const auto createTexture = [&]() {
-        auto texture = GLuint{};
+        auto texture = GLuint{ };
         gl.glGenTextures(1, &texture);
 
         if (mTextureBuffer) {

@@ -19,7 +19,7 @@ struct MediaSource
     MediaSource() = default;
     MediaSource(QString fileName) : fileName(fileName) { }
     MediaSource(QString fileName, Texture::SourceType type,
-        Texture::Target target = Texture::Target::Target1D,
+        Texture::Target target = Texture::Target::Target2D,
         QSize resolution = { })
         : fileName(fileName)
         , type(type)

@@ -201,13 +201,16 @@ bool initializeTextureSource(Texture &texture)
     switch (texture.sourceType) {
     case Texture::SourceType::NoSource: return false;
     case Texture::SourceType::Video:
+        texture.target = Texture::Target::Target2D;
         texture.format = Texture::Format::RGBA8_UNorm;
         break;
     case Texture::SourceType::AudioSpectrum:
     case Texture::SourceType::AudioSamples:
-        texture.format = (texture.sourceType == Texture::SourceType::AudioSpectrum
-                ? Texture::Format::R32F
-                : Texture::Format::RG32F);
+        texture.target = Texture::Target::Target1D;
+        texture.format =
+            (texture.sourceType == Texture::SourceType::AudioSpectrum
+                    ? Texture::Format::R32F
+                    : Texture::Format::RG32F);
         texture.height = "1";
         break;
     }

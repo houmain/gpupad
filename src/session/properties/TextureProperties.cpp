@@ -394,15 +394,11 @@ void TextureProperties::updateWidgets()
     const auto fileName = mUi->file->currentData().toString();
     const auto sourceType = static_cast<Texture::SourceType>(
         mUi->sourceType->currentData().toInt());
-    const auto hasSource = sourceType != Texture::SourceType::NoSource;
+    const auto hasSource = (sourceType != Texture::SourceType::NoSource);
     const auto hasAudioSource = isAudioSource(sourceType);
     const auto kind = currentTextureKind();
-    mUi->formatType->setEnabled(!hasSource);
-    mUi->formatData->setEnabled(!hasSource);
     setFormVisibility(mUi->formLayout, mUi->labelSourceType, mUi->sourceType,
         hasSource);
-    setFormVisibility(mUi->formLayout, mUi->labelAudioVolume, mUi->audioVolume,
-        hasAudioSource);
     setFormVisibility(mUi->formLayout, mUi->labelTarget, mUi->target, true);
     setFormVisibility(mUi->formLayout, mUi->labelFormat, mUi->formatType, true);
     setFormVisibility(mUi->formLayout, mUi->labelFormat, mUi->formatData, true);
@@ -419,6 +415,8 @@ void TextureProperties::updateWidgets()
         mUi->flipVertically,
         !FileDialog::isEmptyOrUntitled(fileName)
             && (kind.dimensions == 2 || kind.cubeMap));
+    setFormVisibility(mUi->formLayout, mUi->labelAudioVolume, mUi->audioVolume,
+        hasAudioSource);
 }
 
 void TextureProperties::updateFormatDataWidget(QVariant formatType)
