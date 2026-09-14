@@ -10,12 +10,12 @@ const shaderFileName = app.currentEditor.fileName
 
 const json = app.processShader(shaderFileName, "json")
 if (!json)
-  throw "Invalid shader"
+  throw new Error("Invalid shader")
 const reflection = JSON.parse(json)
 
 const reuseFileName =
   app.findItem(item => (item.type == "Texture" &&
-               app.isUntitled(item.fileName)))?.fileName;
+    app.isUntitled(item.fileName)))?.fileName;
 
 app.clearSession()
 
@@ -25,11 +25,11 @@ let height = 512
 // Target
 const color = app.insertItem({
   type: "Texture",
-  name: "Color",  
+  name: "Color",
   width: width,
   height: height,
   format: "RGBA8_UNorm",
-  fileName: reuseFileName,  
+  fileName: reuseFileName,
 })
 
 app.openEditor(color)
@@ -49,19 +49,19 @@ for (let uniform of reflection.uniforms || []) {
   let values = undefined
   let textureId = undefined
   let editor = undefined
-  
+
   if (uniform.type.match(/^[ui]?sampler/) ||
-      uniform.type.match(/^[ui]?image/)) {
+    uniform.type.match(/^[ui]?image/)) {
     bindingType = (uniform.type.match(/^[ui]?sampler/) ?
       "Sampler" : "Image");
     textureId = app.insertItem({
       type: "Texture",
-      name: `Texture ${ uniform.name}`,
+      name: `Texture ${uniform.name}`,
       width: 10,
       height: 10,
       format: "RGBA8_UNorm",
     }).id;
-    
+
     const data = []
     for (let y = 0; y < 10; ++y)
       for (let x = 0; x < 10; ++x) {
@@ -74,40 +74,40 @@ for (let uniform of reflection.uniforms || []) {
     app.setTextureData(textureId, data);
   }
   else if (uniform.name.match(/time/) &&
-      uniform.type == 'float') {
+    uniform.type == 'float') {
     editor = "Expression";
     values = ['app.time'];
   }
-  else if (uniform.name.match(/resolution/)&&
-      uniform.type == 'vec2') {
+  else if (uniform.name.match(/resolution/) &&
+    uniform.type == 'vec2') {
     editor = "Expression2";
     values = [width, height];
   }
   else if (uniform.name.match(/mouse/) &&
-      uniform.type == 'vec2') {
+    uniform.type == 'vec2') {
     editor = "Expression";
     values = ['app.mouse.fragCoord'];
   }
   else if (uniform.name.match(/color/) &&
-      (uniform.type == 'vec3' || uniform.type == 'vec4')) {
+    (uniform.type == 'vec3' || uniform.type == 'vec4')) {
     editor = "Color";
-    values = [1,1,1,1];
+    values = [1, 1, 1, 1];
   }
   else {
     switch (uniform.type) {
-      case 'float':editor = "Expression";  values = [0]; break;
-      case 'vec2': editor = "Expression2"; values = [0,0]; break;
-      case 'vec3': editor = "Expression3"; values = [0,0,0]; break;
-      case 'vec4': editor = "Expression4"; values = [0,0,0,0]; break;
-    }    
+      case 'float': editor = "Expression"; values = [0]; break;
+      case 'vec2': editor = "Expression2"; values = [0, 0]; break;
+      case 'vec3': editor = "Expression3"; values = [0, 0, 0]; break;
+      case 'vec4': editor = "Expression4"; values = [0, 0, 0, 0]; break;
+    }
   }
-  
+
   app.insertItem({
     type: "Binding",
     name: uniform.name,
     bindingType: bindingType,
     editor: editor,
-    values: values,    
+    values: values,
     textureId: textureId,
   })
 }

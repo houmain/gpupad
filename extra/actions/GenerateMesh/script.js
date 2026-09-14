@@ -140,7 +140,7 @@ class Script {
     if (this.settings.indexed) {
       const vertices = lib.getVertices(geometry)
       if (!vertices.length)
-        throw "Generating geometry failed"
+        throw new Error("Generating geometry failed")
 
       this.vertices.items[2].padding = padding * 4
       this.vertices.rowCount = vertices.length / components
@@ -167,7 +167,7 @@ class Script {
     else {
       const vertices = lib.getVerticesUnweld(geometry)
       if (!vertices.length)
-        throw "Generating geometry failed"
+        throw new Error("Generating geometry failed")
 
       this.vertices.items[2].padding = this.settings.vertexPadding * 4
       this.vertices.rowCount = vertices.length / components

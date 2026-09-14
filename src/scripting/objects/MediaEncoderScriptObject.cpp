@@ -2,9 +2,13 @@
 
 #if defined(MULTIMEDIA_ENABLED)
 
+#  include "scripting/ScriptTimeout.h"
 #  include <QAudioBuffer>
 #  include <QAudioBufferInput>
 #  include <QAudioFormat>
+#  include <QCoreApplication>
+#  include <QElapsedTimer>
+#  include <QThread>
 #  include <QFileInfo>
 #  include <QMediaCaptureSession>
 #  include <QMediaFormat>
@@ -355,6 +359,8 @@ public:
 
     ~State() { disposeMediaObjects(); }
 
+    bool completed() const { return mCompleted; }
+
     void writeFrame(MediaFrame frame)
     {
         if (mCompleted)
@@ -643,6 +649,20 @@ void MediaEncoderScriptObject::writeFrame(MediaFrame frame)
     mState->writeFrame(std::move(frame));
 }
 
+bool MediaEncoderScriptObject::waitForFinished(int timeout)
+{
+    const auto guard = suspendScriptEngineTimeout();
+    auto timer = QElapsedTimer();
+    timer.start();
+    while (!mState->completed()) {
+        if (timer.elapsed() >= timeout)
+            return false;
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 10);
+        QThread::msleep(1);
+    }
+    return true;
+}
+
 void MediaEncoderScriptObject::close()
 {
     mState->close();
@@ -671,6 +691,11 @@ QJsonObject MediaEncoderScriptObject::configurations()
 void MediaEncoderScriptObject::writeFrame(MediaFrame)
 {
     Q_EMIT finished(tr("Media encoding is not available."));
+}
+
+bool MediaEncoderScriptObject::waitForFinished(int)
+{
+    return true;
 }
 
 void MediaEncoderScriptObject::close() { }

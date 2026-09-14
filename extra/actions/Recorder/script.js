@@ -10,7 +10,8 @@ class Script {
     this.configurations = app.mediaEncoderConfigurations()
     this.source = null
     this.encoder = null
-    this.ui = null
+    this.ui = {}
+    this.error = ""
     this.settings = null
     this.nextFrame = 0
     this.nextSample = 0
@@ -28,7 +29,7 @@ class Script {
     }
     this.sessionHasAudio = app.findItems(item =>
       item.type == "Call" && item.checked
-        && item.callType == "ComputeSound").length > 0
+      && item.callType == "ComputeSound").length > 0
       || app.findItems(item => item.type == "Texture"
         && (item.sourceType == "AudioSpectrum"
           || item.sourceType == "AudioSamples")
@@ -114,6 +115,11 @@ class Script {
   record(settings) {
     if (this.source || this.encoder)
       return
+    this.error = ""
+    if (!Number.isFinite(settings.startTime) || settings.startTime < 0
+      || !Number.isFinite(settings.endTime) || settings.endTime <= settings.startTime
+      || !Number.isFinite(settings.frameRate) || settings.frameRate <= 0)
+      return this.fail("Invalid recording time range or frame rate.")
     const hasVideo = Number(settings.textureId) != 0
     const hasAudio = this.sessionHasAudio
     if (!hasVideo && !hasAudio)
@@ -220,6 +226,7 @@ class Script {
       return
     const outputFile = this.settings.outputFile
     const hasVideo = this.settings.hasVideo
+    this.error = error ? String(error) : ""
     this.dispose()
     this.ui.running = false
     this.ui.status = error ? String(error)
@@ -229,6 +236,7 @@ class Script {
   }
 
   fail(error) {
+    this.error = String(error)
     this.dispose()
     if (this.ui) {
       this.ui.running = false
@@ -249,4 +257,44 @@ class Script {
 }
 
 this.script = new Script()
-app.openEditor("ui.qml").title = "Recorder"
+
+if (!this.arguments) {
+  app.openEditor("ui.qml").title = "Recorder"
+}
+else {
+  const settings = this.arguments
+  const textureId = settings.textureId ?? this.script.textures[this.script.defaultTextureIndex()].key
+  const hasVideo = Number(textureId) != 0
+  const formats = this.script.formats(hasVideo)
+  const fileFormat = settings.fileFormat ?? this.script.defaultKey(formats)
+  const format = formats[fileFormat]
+  const videoCodec = settings.videoCodec ?? this.script.defaultKey(format?.videoCodecs)
+  const audioCodec = settings.audioCodec ?? this.script.defaultKey(
+    hasVideo ? format?.videoCodecs?.[videoCodec]?.audioCodecs : format?.audioCodecs)
+
+  this.script.record(Object.assign({
+    textureId,
+    outputFile: this.script.replaceFileSuffix(this.script.defaultFileName(hasVideo), fileFormat, hasVideo),
+    fileFormat,
+    videoCodec,
+    audioCodec,
+    startTime: 0,
+    endTime: 10,
+    frameRate: 60,
+    videoBitRate: 12000,
+    audioBitRate: 192,
+  }, settings))
+
+  // Keep the encoder alive while callbacks dispose the recording resources.
+  const encoder = this.script.encoder
+  if (encoder && !encoder.waitForFinished(settings.timeout ?? 120000))
+    this.script.fail("Recording timed out.")
+
+  this.result = {
+    success: !this.script.error,
+    error: this.script.error,
+    outputFile: this.script.settings?.outputFile,
+  }
+  if (this.script.error)
+    throw new Error(this.script.error)
+}

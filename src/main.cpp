@@ -173,7 +173,8 @@ int runHeadless(int argc, char *argv[])
     auto editorsToSave = std::map<QString, IEditor *>();
     auto messages = MessagePtrSet{ };
 
-    const auto toAbsoluteFileName = [workingDirectory = QDir::current()](
+    const auto workingDirectory = QDir::current();
+    const auto toAbsoluteFileName = [workingDirectory](
                                         const QString &fileName) {
         return toNativeCanonicalFilePath(
             workingDirectory.absoluteFilePath(fileName));
@@ -188,8 +189,11 @@ int runHeadless(int argc, char *argv[])
     };
 
     const auto evaluateSession = [&]() {
-        synchronizeLogic.manualEvaluation();
+        synchronizeLogic.resetEvaluation();
         synchronizeLogic.finishEvaluation();
+        for (const auto &message : MessagePtrSet::getAllMessages())
+            if (getMessageSeverity(*message) == MessageSeverity::Error)
+                return false;
         for (auto [itemIdent, editor] : std::exchange(editorsToSave, { }))
             if (!editor->save()) {
                 invalidArgument("saving item '" + itemIdent + "' failed");
@@ -266,11 +270,18 @@ int runHeadless(int argc, char *argv[])
                     return 1;
                 closeSession();
                 if (!sessionModel.load(fileName))
-                    loadingFileFailed(fileName);
+                    return loadingFileFailed(fileName);
+                // Session loading changes cwd for the GUI. Keep headless output
+                // paths relative to the directory from which it was invoked.
+                QDir::setCurrent(workingDirectory.path());
             } else if (FileDialog::isScriptFileName(fileName)
                 && singletons.fileCache().getSource(fileName, &source)) {
                 singletons.defaultScriptEngine().evaluateScript(source,
                     fileName);
+                messages += singletons.defaultScriptEngine().resetMessages();
+                for (const auto &message : MessagePtrSet::getAllMessages())
+                    if (getMessageSeverity(*message) == MessageSeverity::Error)
+                        return 1;
             } else {
                 if (!editorManager.openEditor(fileName))
                     return loadingFileFailed(fileName);
