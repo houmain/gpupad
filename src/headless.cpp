@@ -98,6 +98,15 @@ int runHeadless(QApplication &app)
         if (argument.startsWith("--")) {
             if (argument == "--headless") {
                 continue;
+
+            } else if (argument == "--set") {
+                if (!checkParameterCount(2))
+                    return invalidArgument("missing parameter to " + argument);
+
+                const auto ident = arguments[++i];
+                const auto value = arguments[++i];
+                singletons.defaultScriptEngine().setGlobal(ident, value);
+
             } else if (argument == "--output") {
                 if (!checkParameterCount(2))
                     return invalidArgument("missing parameter to " + argument);
