@@ -83,6 +83,7 @@ public:
     Q_INVOKABLE QJsonObject mediaEncoderConfigurations() const;
 
     // session
+    Q_INVOKABLE void loadSession(QString fileName);
     Q_INVOKABLE void clearSession();
     Q_INVOKABLE QJSValue getParentItem(QJSValue itemIdent);
     Q_INVOKABLE QJSValue findItem(QJSValue itemIdent);

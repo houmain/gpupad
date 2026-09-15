@@ -640,6 +640,7 @@ bool EditorManager::closeAllEditors(bool promptSave)
     while (!mDocks.empty())
         closeDock(mDocks.begin()->first);
 
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
     return true;
 }
 

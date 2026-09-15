@@ -114,6 +114,7 @@ There is one JavaScript state for the whole session and the scripts are evaluate
 - `selection: [Item]`
 - `currentEditor - Editor?`
 
+- `loadSession(fileName)`
 - `clearSession()`
 - `findItem(ItemIdent, origin: ItemIdent?, subItems: Bool?) -> Item?`
 - `findItems(ItemIdent, origin: ItemIdent?, subItems: Bool?) -> [Item]`
@@ -139,6 +140,7 @@ There is one JavaScript state for the whole session and the scripts are evaluate
 - `getFileTitle(fileName) -> String`
 - `callAction(id, arguments...) -> result`
 - `evaluateScript(fileName)`
+- `makeDirectory(fileName) -> bool`
 - `enumerateFiles(pattern) -> [filename]`
 - `loadLibrary(filename) -> Library?`
 - `saveEditor(filename) -> bool`

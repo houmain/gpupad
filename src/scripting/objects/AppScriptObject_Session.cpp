@@ -789,9 +789,31 @@ QJSValue AppScriptObject::trackItems(QJSValue itemIdent, QJSValue callback)
     return trackItems(itemIdent, QJSValue::UndefinedValue, true, callback);
 }
 
+void AppScriptObject::loadSession(QString fileName)
+{
+    if (!onMainThread())
+        return throwJsError(
+            "Sessions can only be loaded from a main-thread script");
+
+    auto &sync = Singletons::synchronizeLogic();
+    sync.setEvaluationMode(EvaluationMode::Paused);
+    sync.finishEvaluation();
+
+    Singletons::editorManager().closeAllEditors(false);
+
+    clearSession();
+    mSessionProperty = QJSValue::UndefinedValue;
+
+    fileName = toNativeCanonicalAbsoluteFilePath(fileName);
+    if (!Singletons::sessionModel().load(fileName))
+        throwJsError("Loading session failed: " + fileName);
+}
+
 void AppScriptObject::clearSession()
 {
     clearItems(threadSessionModel().sessionItem().id);
+    Q_ASSERT(mItemObjects.empty());
+    mItemTrackings.clear();
 }
 
 void AppScriptObject::clearItems(QJSValue parentIdent)

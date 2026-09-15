@@ -70,7 +70,6 @@ int runHeadless(QApplication &app)
 
     const auto closeSession = [&]() {
         editorManager.closeAllEditors(false);
-        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
         sessionModel.clear();
         outputMessagesToStdout();
         messages.clear();
