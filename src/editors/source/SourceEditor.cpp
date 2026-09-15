@@ -221,6 +221,7 @@ QList<QMetaObject::Connection> SourceEditor::connectEditActions(
 
 void SourceEditor::setFileName(QString fileName)
 {
+    Q_ASSERT(isNativeCanonicalFilePath(fileName));
     if (mFileName != fileName) {
         mFileName = fileName;
         Q_EMIT fileNameChanged(mFileName);
@@ -279,7 +280,7 @@ void SourceEditor::replace(QString source, bool emitFileChanged)
                 --i, --j)
                 if (i < firstDiff || j < firstDiff || source[i] != current[j])
                     return { i + 1, j + 1 };
-            return {};
+            return { };
         }();
 
         auto cursor = textCursor();
@@ -919,10 +920,10 @@ QTextCursor SourceEditor::findMatchingBrace() const
     auto position = cursor.positionInBlock();
     auto block = cursor.block();
     if (position >= block.text().length())
-        return {};
+        return { };
     const auto beginChar = block.text().at(position);
 
-    auto endChar = QChar{};
+    auto endChar = QChar{ };
     auto direction = 1;
     switch (beginChar.unicode()) {
     case '{': endChar = '}'; break;
@@ -940,20 +941,20 @@ QTextCursor SourceEditor::findMatchingBrace() const
         endChar = '(';
         direction = -1;
         break;
-    default: return {};
+    default: return { };
     }
     for (auto level = 0, i = 0; i < limit; position += direction, ++i) {
         while (position < 0) {
             block = block.previous();
             if (!block.isValid())
-                return {};
+                return { };
             position += block.text().length();
         }
         while (position >= block.text().length()) {
             position -= block.text().length();
             block = block.next();
             if (!block.isValid())
-                return {};
+                return { };
         }
         const auto currentChar = block.text().at(position);
         if (currentChar == beginChar) {
@@ -966,7 +967,7 @@ QTextCursor SourceEditor::findMatchingBrace() const
             }
         }
     }
-    return {};
+    return { };
 }
 
 void SourceEditor::updateCompleterPopup(const QString &prefix, bool show)
@@ -1050,13 +1051,13 @@ QTextCursor SourceEditor::find(const QString &string, int from, int to,
             ? Qt::CaseSensitive
             : Qt::CaseInsensitive);
     if (forward ? from > to : from < to)
-        return {};
+        return { };
 
     auto block = document()->findBlock(from);
     for (;;) {
         if (!block.isValid() || (forward && block.position() >= to)
             || (backward && block.position() + block.length() <= to))
-            return {};
+            return { };
 
         const auto text = block.text();
         auto offset = std::min(std::max(from - block.position(), 0),
@@ -1073,9 +1074,9 @@ QTextCursor SourceEditor::find(const QString &string, int from, int to,
             if (backward && end > from)
                 continue;
             if (forward && end > to)
-                return {};
+                return { };
             if (backward && begin < to)
-                return {};
+                return { };
             if (wholeWord && offset - 1 >= 0
                 && text[offset - 1].isLetterOrNumber())
                 continue;
@@ -1246,7 +1247,7 @@ void SourceEditor::clearMarkedOccurrences()
 void SourceEditor::clearFindReplaceRange()
 {
     if (!mFindReplaceRange.isNull()) {
-        mFindReplaceRange = {};
+        mFindReplaceRange = { };
         // clear occurrences when they were constrainted by range
         clearMarkedOccurrences();
         updateExtraSelections();

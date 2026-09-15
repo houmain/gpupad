@@ -73,6 +73,7 @@ public:
     Q_INVOKABLE void evaluateScript(QString fileName);
     Q_INVOKABLE QJSValue enumerateFiles(QString pattern);
     Q_INVOKABLE QJSValue enumerateDirs(QString pattern);
+    Q_INVOKABLE bool makeDirectory(QString path);
     Q_INVOKABLE QJSValue writeTextFile(QString fileName, QString string);
     Q_INVOKABLE QJSValue writeBinaryFile(QString fileName, QByteArray binary);
     Q_INVOKABLE QJSValue readTextFile(QString fileName);

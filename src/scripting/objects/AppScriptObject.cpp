@@ -194,6 +194,8 @@ void AppScriptObject::setEvaluation(QString mode)
             synchronizeLogic.setEvaluationMode(EvaluationMode::Steady);
         } else if (mode == "Paused") {
             synchronizeLogic.setEvaluationMode(EvaluationMode::Paused);
+        } else if (mode == "Finish") {
+            synchronizeLogic.finishEvaluation();
         }
     });
 }
@@ -332,6 +334,7 @@ QJSValue AppScriptObject::getEditorObject(const QString &fileName)
 
 QJSValue AppScriptObject::saveEditor(QString fileName)
 {
+    fileName = toNativeCanonicalAbsoluteFilePath(fileName);
     auto saved = false;
     dispatchToMainThread([&]() {
         if (auto editor = Singletons::editorManager().getEditor(fileName))
@@ -387,8 +390,9 @@ QJSValue AppScriptObject::loadLibrary(QString fileName)
 
 void AppScriptObject::evaluateScript(QString fileName)
 {
+    fileName = toNativeCanonicalAbsoluteFilePath(fileName);
     auto source = QString();
-    if (!Singletons::fileCache().getSource(getAbsolutePath(fileName), &source))
+    if (!Singletons::fileCache().getSource(fileName, &source))
         return throwJsError(
             "Loading file '" + FileDialog::getFileTitle(fileName) + "' failed");
 
@@ -477,12 +481,17 @@ QJSValue AppScriptObject::enumerateDirs(QString pattern)
     return enumerate(pattern, true);
 }
 
+bool AppScriptObject::makeDirectory(QString path)
+{
+    return QDir().mkpath(getAbsolutePath(path));
+}
+
 QJSValue AppScriptObject::writeTextFile(QString fileName, QString string)
 {
     if (FileDialog::isEmptyOrUntitled(fileName))
         return false;
 
-    fileName = getAbsolutePath(fileName);
+    fileName = toNativeCanonicalAbsoluteFilePath(fileName);
     auto file = QFile(fileName);
     if (!file.open(QFile::WriteOnly | QFile::Text))
         return false;
@@ -500,7 +509,7 @@ QJSValue AppScriptObject::writeBinaryFile(QString fileName, QByteArray binary)
     if (binary.isNull())
         return false;
 
-    fileName = getAbsolutePath(fileName);
+    fileName = toNativeCanonicalAbsoluteFilePath(fileName);
     auto file = QFile(fileName);
     if (!file.open(QFile::WriteOnly))
         return false;
@@ -516,8 +525,9 @@ QJSValue AppScriptObject::readTextFile(QString fileName)
     if (fileName.isEmpty())
         return { };
 
+    fileName = toNativeCanonicalAbsoluteFilePath(fileName);
     auto source = QString{ };
-    if (!Singletons::fileCache().getSource(getAbsolutePath(fileName), &source))
+    if (!Singletons::fileCache().getSource(fileName, &source))
         return QJSValue::UndefinedValue;
     return source;
 }

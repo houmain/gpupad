@@ -287,6 +287,7 @@ void TextureEditor::updateEditorToolBar()
 
 void TextureEditor::setFileName(QString fileName)
 {
+    Q_ASSERT(isNativeCanonicalFilePath(fileName));
     if (mFileName != fileName) {
         mFileName = fileName;
         Q_EMIT fileNameChanged(mFileName);

@@ -48,12 +48,16 @@ void restoreProcessPriority()
 
 void attachToConsole()
 {
+    const auto hasStdout = GetFileType(GetStdHandle(STD_OUTPUT_HANDLE)) != FILE_TYPE_UNKNOWN;
+    const auto hasStderr = GetFileType(GetStdHandle(STD_ERROR_HANDLE)) != FILE_TYPE_UNKNOWN;
     if (!AttachConsole(ATTACH_PARENT_PROCESS))
         return;
     FILE *in, *out, *err;
     freopen_s(&in, "CONIN$", "r", stdin);
-    freopen_s(&out, "CONOUT$", "w", stdout);
-    freopen_s(&err, "CONOUT$", "w", stderr);
+    if (!hasStdout)
+        freopen_s(&out, "CONOUT$", "w", stdout);
+    if (!hasStderr)
+        freopen_s(&err, "CONOUT$", "w", stderr);
     std::fprintf(stdout, "\n");
     std::fflush(stdout);
 }

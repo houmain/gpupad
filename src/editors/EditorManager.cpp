@@ -462,6 +462,7 @@ IEditor *EditorManager::getEditor(const QString &fileName)
 
 SourceEditor *EditorManager::getSourceEditor(const QString &fileName)
 {
+    Q_ASSERT(isNativeCanonicalFilePath(fileName));
     for (SourceEditor *editor : std::as_const(mSourceEditors))
         if (editor->fileName() == fileName)
             return editor;
@@ -470,6 +471,7 @@ SourceEditor *EditorManager::getSourceEditor(const QString &fileName)
 
 BinaryEditor *EditorManager::getBinaryEditor(const QString &fileName)
 {
+    Q_ASSERT(isNativeCanonicalFilePath(fileName));
     for (BinaryEditor *editor : std::as_const(mBinaryEditors))
         if (editor->fileName() == fileName)
             return editor;
@@ -478,6 +480,7 @@ BinaryEditor *EditorManager::getBinaryEditor(const QString &fileName)
 
 TextureEditor *EditorManager::getTextureEditor(const QString &fileName)
 {
+    Q_ASSERT(isNativeCanonicalFilePath(fileName));
     for (TextureEditor *editor : std::as_const(mTextureEditors))
         if (editor->fileName() == fileName)
             return editor;
@@ -486,6 +489,7 @@ TextureEditor *EditorManager::getTextureEditor(const QString &fileName)
 
 QmlView *EditorManager::getQmlView(const QString &fileName)
 {
+    Q_ASSERT(isNativeCanonicalFilePath(fileName));
     for (QmlView *editor : std::as_const(mQmlViews))
         if (editor->fileName() == fileName)
             return editor;

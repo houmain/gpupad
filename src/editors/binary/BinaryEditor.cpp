@@ -40,7 +40,7 @@ namespace {
 QString toHexString(uint8_t value)
 {
     static const std::array<QString, 256> sHexStrings = []() {
-        auto strings = std::array<QString, 256>{};
+        auto strings = std::array<QString, 256>{ };
         for (auto i = 0; i < 256; ++i)
             strings[i] =
                 QString::number(i, 16).toUpper().rightJustified(2, '0');
@@ -137,6 +137,7 @@ QList<QMetaObject::Connection> BinaryEditor::connectEditActions(
 
 void BinaryEditor::setFileName(QString fileName)
 {
+    Q_ASSERT(isNativeCanonicalFilePath(fileName));
     if (mFileName != fileName) {
         mFileName = fileName;
         Q_EMIT fileNameChanged(mFileName);
@@ -248,7 +249,7 @@ void BinaryEditor::refresh()
         mDataModel->setData(&mData, *block);
 
         mEditableRegion->horizontalHeader()->setMinimumSectionSize(1);
-        for (auto i = 0; i < mDataModel->columnCount({}); ++i)
+        for (auto i = 0; i < mDataModel->columnCount({ }); ++i)
             mEditableRegion->horizontalHeader()->resizeSection(i,
                 mDataModel->getColumnSize(i) * (mColumnWidth + 3));
 
