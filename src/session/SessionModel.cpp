@@ -8,6 +8,61 @@
 #include <QSaveFile>
 #include <QUrl>
 
+namespace {
+    template <typename T>
+    QVariantMap propertyInfo(const QString &name)
+    {
+        auto result = QVariantMap{
+            { "name", name },
+        };
+        auto type = QString();
+        if constexpr (std::is_enum_v<T>) {
+            type = "enum";
+            const auto meta = QMetaEnum::fromType<T>();
+            auto values = QStringList();
+            for (auto i = 0; i < meta.keyCount(); ++i)
+                values.append(QString::fromLatin1(meta.key(i)));
+            result["values"] = values;
+        } else if constexpr (std::is_same_v<T, bool>) {
+            type = "boolean";
+        } else if constexpr (std::is_integral_v<T>) {
+            type = name.endsWith("Id") ? "reference" : "integer";
+            result["unsigned"] = std::is_unsigned_v<T>;
+        } else if constexpr (std::is_floating_point_v<T>) {
+            type = "number";
+        } else if constexpr (std::is_same_v<T, QString>) {
+            type = "string";
+        } else if constexpr (std::is_same_v<T, QColor>) {
+            type = "color";
+        } else if constexpr (std::is_same_v<T, QStringList>) {
+            type = "array";
+        } else {
+            type = "object";
+        }
+        result["type"] = type;
+        return result;
+    }
+} // namespace
+
+QVariantList SessionModel::itemProperties(const Item &item) const
+{
+    auto result = QVariantList{
+        propertyInfo<decltype(item.id)>("id"),
+        propertyInfo<decltype(item.type)>("type"),
+        propertyInfo<decltype(item.name)>("name"),
+        propertyInfo<decltype(item.custom)>("custom"),
+    };
+    if (const auto fileItem = castItem<FileItem>(&item))
+        result.append(propertyInfo<decltype(fileItem->fileName)>("fileName"));
+    result.append(QVariantMap{ { "name", "items" }, { "type", "array" } });
+#define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY) \
+    if (item.type == Item::Type::ITEM_TYPE)   \
+        result.append(propertyInfo<decltype(ITEM_TYPE::PROPERTY)>(#PROPERTY));
+    ADD_EACH_COLUMN_TYPE()
+#undef ADD
+    return result;
+}
+
 SessionModel::SessionModel(QObject *parent) : SessionModelCore(parent)
 {
     mTypeIcons[Item::Type::Session] = QIcon::fromTheme("folder");
@@ -552,28 +607,30 @@ void SessionModel::serialize(JsonObject &object, const Item &item,
     object["type"] = getTypeName(item.type);
     object["id"] = item.id;
     object["name"] = item.name;
-    if (!item.custom.isEmpty())
+    if (serializingScriptItem || !item.custom.isEmpty())
         object["custom"] = toJsonValue(item.custom);
 
     if (auto fileItem = castItem<FileItem>(item)) {
         const auto &fileName = fileItem->fileName;
-        if (!fileName.isEmpty()) {
+        if (serializingScriptItem || !fileName.isEmpty()) {
             if (FileDialog::isUntitled(fileName) && !serializingScriptItem) {
                 mDraggedUntitledFileNames[item.id] = fileName;
             } else {
                 object["fileName"] = (relativeFilePaths
                         ? toForwardSlashRelativeFilePath(fileName)
                         : fileName);
-                if (QFileInfo(fileName).fileName() == item.name)
+                if (!serializingScriptItem
+                    && QFileInfo(fileName).fileName() == item.name)
                     object.erase("name");
             }
         }
     }
 
-#define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY)        \
-    if (item.type == Item::Type::ITEM_TYPE           \
-        && shouldSerializeColumn(item, COLUMN_TYPE)) \
-        object[#PROPERTY] =                          \
+#define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY)             \
+    if (item.type == Item::Type::ITEM_TYPE                \
+        && (serializingScriptItem                         \
+            || shouldSerializeColumn(item, COLUMN_TYPE))) \
+        object[#PROPERTY] =                               \
             toJsonValue(static_cast<const ITEM_TYPE &>(item).PROPERTY);
 
     ADD_EACH_COLUMN_TYPE()

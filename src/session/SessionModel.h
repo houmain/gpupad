@@ -39,6 +39,7 @@ public:
     void setActiveItemColor(QColor color);
 
     void clear();
+    QVariantList itemProperties(const Item &item) const;
     JsonArray getJson(const QModelIndexList &indexes,
         bool serializingScriptItem = false) const;
     void dropJson(const JsonArray &json, int row, const QModelIndex &parent,

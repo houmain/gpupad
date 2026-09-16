@@ -800,20 +800,48 @@ void AppScriptObject::loadSession(QString fileName)
     sync.finishEvaluation();
 
     Singletons::editorManager().closeAllEditors(false);
-
     clearSession();
-    mSessionProperty = QJSValue::UndefinedValue;
 
     fileName = toNativeCanonicalAbsoluteFilePath(fileName);
     if (!Singletons::sessionModel().load(fileName))
         throwJsError("Loading session failed: " + fileName);
 }
 
+QJSValue AppScriptObject::itemProperties(QJSValue itemIdent)
+{
+    const auto item = findSessionItem(itemIdent);
+    if (!item) {
+        throwJsError("Invalid item");
+        return QJSValue::UndefinedValue;
+    }
+    return jsEngine().toScriptValue(threadSessionModel().itemProperties(*item));
+}
+
+QJSValue AppScriptObject::getMessages()
+{
+    auto result = QVariantList();
+    for (const auto &message : MessagePtrSet::getAllMessages()) {
+        const auto severity = getMessageSeverity(*message);
+        result.append(QVariantMap{
+            { "severity", severity == MessageSeverity::Error ? "error"
+                    : severity == MessageSeverity::Warning ? "warning" : "info" },
+            { "text", getMessageText(*message) },
+            { "fileName", message->fileName },
+            { "line", message->line },
+            { "itemId", message->itemId },
+        });
+    }
+    return jsEngine().toScriptValue(result);
+}
+
 void AppScriptObject::clearSession()
 {
-    clearItems(threadSessionModel().sessionItem().id);
-    Q_ASSERT(mItemObjects.empty());
+    mSessionProperty = QJSValue::UndefinedValue;
     mItemTrackings.clear();
+    for (const auto &[id, item] : mItemObjects)
+        item.object->deleteLater();
+    mItemObjects.clear();
+    clearItems(threadSessionModel().sessionItem().id);
 }
 
 void AppScriptObject::clearItems(QJSValue parentIdent)

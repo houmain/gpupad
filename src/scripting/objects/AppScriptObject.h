@@ -84,6 +84,8 @@ public:
 
     // session
     Q_INVOKABLE void loadSession(QString fileName);
+    Q_INVOKABLE QJSValue itemProperties(QJSValue itemIdent);
+    Q_INVOKABLE QJSValue getMessages();
     Q_INVOKABLE void clearSession();
     Q_INVOKABLE QJSValue getParentItem(QJSValue itemIdent);
     Q_INVOKABLE QJSValue findItem(QJSValue itemIdent);

@@ -18,6 +18,7 @@
 #include "editors/qml/QmlView.h"
 #include <QApplication>
 #include <QDirIterator>
+#include <QSaveFile>
 #include <QQmlEngine>
 #include <atomic>
 
@@ -492,11 +493,12 @@ QJSValue AppScriptObject::writeTextFile(QString fileName, QString string)
         return false;
 
     fileName = toNativeCanonicalAbsoluteFilePath(fileName);
-    auto file = QFile(fileName);
+    auto file = QSaveFile(fileName);
     if (!file.open(QFile::WriteOnly | QFile::Text))
         return false;
-    file.write(string.toUtf8());
-    file.close();
+    const auto data = string.toUtf8();
+    if (file.write(data) != data.size() || !file.commit())
+        return false;
 
     Singletons::fileCache().invalidateFile(fileName);
     return true;
