@@ -1711,9 +1711,12 @@ uchar *TextureData::getWriteonlyData(int level, int layer, int face)
     if (isNull())
         return nullptr;
 
-    if (mKtxTexture.use_count() > 1)
-        create(getTarget(), format(), width(), height(), depth(), layers(),
-            levels());
+    const auto rowOrder = mRowOrder;
+    if (mKtxTexture.use_count() > 1
+        && !create(getTarget(), format(), width(), height(), depth(), layers(),
+            levels()))
+        return nullptr;
+    mRowOrder = rowOrder;
 
     // generate mipmaps on next upload when level 0 is written
     mKtxTexture->generateMipmaps =

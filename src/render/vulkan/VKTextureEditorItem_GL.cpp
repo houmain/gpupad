@@ -216,7 +216,7 @@ bool VKTextureEditorItem::copyGLTexture(VKContext &context,
     // Put the Vulkan image in a preserving layout before OpenGL writes it.
     // Transitioning it from Undefined only after the GL copy discards the
     // externally written contents.
-    if (!mTexture->prepareExternalWrite(context))
+    if (!mTexture->prepareExternalWrite(context, image.rowOrder()))
         return false;
     window().submitCommandQueueWaitIdle();
 

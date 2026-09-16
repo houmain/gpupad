@@ -151,8 +151,10 @@ bool VKTexture::prepareTransferSource(VKContext &context)
     return mTexture.isValid();
 }
 
-bool VKTexture::prepareExternalWrite(VKContext &context)
+bool VKTexture::prepareExternalWrite(VKContext &context,
+    TextureData::RowOrder rowOrder)
 {
+    mData.setRowOrder(rowOrder);
     memoryBarrier(*context.commandRecorder, KDGpu::TextureLayout::General,
         KDGpu::AccessFlagBit::MemoryWriteBit,
         KDGpu::PipelineStageFlagBit::AllCommandsBit);

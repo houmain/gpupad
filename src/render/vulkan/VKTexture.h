@@ -31,7 +31,7 @@ public:
     bool prepareStorageImage(VKContext &context);
     bool prepareAttachment(VKContext &context);
     bool prepareTransferSource(VKContext &context);
-    bool prepareExternalWrite(VKContext &context);
+    bool prepareExternalWrite(VKContext &context, TextureData::RowOrder rowOrder);
     bool clear(VKContext &context, std::array<double, 4> color, double depth,
         int stencil);
     bool copy(VKContext &context, VKTexture &source);
