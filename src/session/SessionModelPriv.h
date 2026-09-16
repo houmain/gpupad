@@ -6,9 +6,6 @@
 
 #define ADD_EACH_COLUMN_TYPE()                                                \
     ADD(SessionRenderer, Session, renderer)                                   \
-    ADD(SessionAudioBufferSize, Session, audioBufferSize)                     \
-    ADD(SessionAudioChunkSize, Session, audioChunkSize)                       \
-    ADD(SessionAudioSampleRate, Session, audioSampleRate)                     \
     ADD(SessionApiVersion, Session, apiVersion)                               \
     ADD(SessionShaderLanguage, Session, shaderLanguage)                       \
     ADD(SessionShaderCompiler, Session, shaderCompiler)                       \
@@ -17,6 +14,9 @@
     ADD(SessionShaderIncludePaths, Session, shaderIncludePaths)               \
     ADD(SessionFlipViewport, Session, flipViewport)                           \
     ADD(SessionReverseCulling, Session, reverseCulling)                       \
+    ADD(SessionAudioBufferSize, Session, audioBufferSize)                     \
+    ADD(SessionAudioChunkSize, Session, audioChunkSize)                       \
+    ADD(SessionAudioSampleRate, Session, audioSampleRate)                     \
     ADD(GroupInlineScope, Group, inlineScope)                                 \
     ADD(GroupDynamic, Group, dynamic)                                         \
     ADD(GroupIterations, Group, iterations)                                   \

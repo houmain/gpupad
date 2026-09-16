@@ -1,395 +1,393 @@
 {
-    "autoMapBindings": false,
-    "autoMapLocations": false,
-    "autoSampledTextures": false,
-    "flipViewport": false,
-    "id": 1,
-    "items": [
+  "type": "Session",
+  "id": 1,
+  "name": "Session",
+  "renderer": "Vulkan",
+  "apiVersion": "1.2",
+  "shaderLanguage": "GLSL",
+  "shaderCompiler": "glslang",
+  "shaderCompilerSettings": {
+    "autoMapBindings": "true",
+    "autoMapLocations": "true",
+    "autoSampledTextures": "true",
+    "spirvVersion": "1.4",
+    "vulkanRulesRelaxed": "true"
+  },
+  "shaderPreamble": "",
+  "shaderIncludePaths": "",
+  "flipViewport": false,
+  "reverseCulling": true,
+  "audioBufferSize": 250,
+  "audioChunkSize": 800,
+  "audioSampleRate": 48000,
+  "items": [
+    {
+      "type": "Texture",
+      "id": 10031,
+      "name": "OutputImage",
+      "target": "Target2D",
+      "format": "RGBA8_UNorm",
+      "width": "1280",
+      "height": "720",
+      "samples": 1,
+      "flipVertically": false
+    },
+    {
+      "type": "Texture",
+      "id": 10058,
+      "name": "AccumulationImage",
+      "target": "Target2D",
+      "format": "RGBA32F",
+      "width": "1280",
+      "height": "720",
+      "samples": 1,
+      "flipVertically": false
+    },
+    {
+      "type": "Buffer",
+      "id": 10049,
+      "name": "Materials",
+      "items": [
         {
-            "flipVertically": false,
-            "format": "RGBA8_UNorm",
-            "height": "720",
-            "id": 10031,
-            "name": "OutputImage",
-            "samples": 1,
-            "target": "Target2D",
-            "type": "Texture",
-            "width": "1280"
-        },
-        {
-            "flipVertically": false,
-            "format": "RGBA32F",
-            "height": "720",
-            "id": 10058,
-            "name": "AccumulationImage",
-            "samples": 1,
-            "target": "Target2D",
-            "type": "Texture",
-            "width": "1280"
-        },
-        {
-            "id": 10049,
-            "items": [
-                {
-                    "id": 10050,
-                    "items": [
-                        {
-                            "count": 4,
-                            "dataType": "Float",
-                            "id": 10051,
-                            "name": "Diffuse",
-                            "padding": 0,
-                            "type": "Field"
-                        },
-                        {
-                            "count": 1,
-                            "dataType": "Int32",
-                            "id": 10052,
-                            "name": "DiffuseTextureId",
-                            "padding": 0,
-                            "type": "Field"
-                        },
-                        {
-                            "count": 1,
-                            "dataType": "Float",
-                            "id": 10053,
-                            "name": "Fuzziness",
-                            "padding": 0,
-                            "type": "Field"
-                        },
-                        {
-                            "count": 1,
-                            "dataType": "Float",
-                            "id": 10054,
-                            "name": "RefractionIndex",
-                            "padding": 0,
-                            "type": "Field"
-                        },
-                        {
-                            "count": 1,
-                            "dataType": "Uint32",
-                            "id": 10055,
-                            "name": "MaterialModel",
-                            "padding": 0,
-                            "type": "Field"
-                        }
-                    ],
-                    "name": "Material",
-                    "offset": "0",
-                    "rowCount": "4",
-                    "type": "Block"
-                }
-            ],
-            "name": "Materials",
-            "type": "Buffer"
-        },
-        {
-            "fileName": "../Cube/planks.jpg",
-            "flipVertically": false,
-            "format": "SRGB8_Alpha8",
-            "height": "512",
-            "id": 10225,
-            "samples": 1,
-            "target": "Target2D",
-            "type": "Texture",
-            "width": "512"
-        },
-        {
-            "executeOn": "ResetEvaluation",
-            "fileName": "generateScene.js",
-            "id": 903,
-            "type": "Script"
-        },
-        {
-            "executeOn": "EveryEvaluation",
-            "fileName": "camera.js",
-            "id": 103,
-            "type": "Script"
-        },
-        {
-            "dynamic": true,
-            "id": 10195,
-            "inlineScope": true,
-            "iterations": "1",
-            "name": "Scene",
-            "type": "Group"
-        },
-        {
-            "dynamic": false,
-            "id": 10033,
-            "inlineScope": true,
-            "items": [
-                {
-                    "bindingType": "Uniform",
-                    "editor": "Expression",
-                    "id": 10034,
-                    "name": "UniformBufferObjectStruct.Camera[0].ModelView",
-                    "type": "Binding",
-                    "values": [
-                        "view"
-                    ]
-                },
-                {
-                    "bindingType": "Uniform",
-                    "editor": "Expression",
-                    "id": 10035,
-                    "name": "UniformBufferObjectStruct.Camera[0].Projection",
-                    "type": "Binding",
-                    "values": [
-                        "projection"
-                    ]
-                },
-                {
-                    "bindingType": "Uniform",
-                    "editor": "Expression",
-                    "id": 10036,
-                    "name": "UniformBufferObjectStruct.Camera[0].ModelViewInverse",
-                    "type": "Binding",
-                    "values": [
-                        "viewInverse"
-                    ]
-                },
-                {
-                    "bindingType": "Uniform",
-                    "editor": "Expression",
-                    "id": 10037,
-                    "name": "UniformBufferObjectStruct.Camera[0].ProjectionInverse",
-                    "type": "Binding",
-                    "values": [
-                        "projectionInverse"
-                    ]
-                },
-                {
-                    "bindingType": "Uniform",
-                    "editor": "Expression",
-                    "id": 10038,
-                    "name": "UniformBufferObjectStruct.Camera[0].Aperture",
-                    "type": "Binding",
-                    "values": [
-                        "0.1"
-                    ]
-                },
-                {
-                    "bindingType": "Uniform",
-                    "editor": "Expression",
-                    "id": 10039,
-                    "name": "UniformBufferObjectStruct.Camera[0].FocusDistance",
-                    "type": "Binding",
-                    "values": [
-                        "5"
-                    ]
-                },
-                {
-                    "bindingType": "Uniform",
-                    "editor": "Expression",
-                    "id": 10040,
-                    "name": "UniformBufferObjectStruct.Camera[0].HeatmapScale",
-                    "type": "Binding",
-                    "values": [
-                        "1.5"
-                    ]
-                },
-                {
-                    "bindingType": "Uniform",
-                    "editor": "Expression",
-                    "id": 10042,
-                    "name": "UniformBufferObjectStruct.Camera[0].NumberOfSamples",
-                    "type": "Binding",
-                    "values": [
-                        "samples"
-                    ]
-                },
-                {
-                    "bindingType": "Uniform",
-                    "editor": "Expression",
-                    "id": 10041,
-                    "name": "UniformBufferObjectStruct.Camera[0].TotalNumberOfSamples",
-                    "type": "Binding",
-                    "values": [
-                        "totalSamples"
-                    ]
-                },
-                {
-                    "bindingType": "Uniform",
-                    "editor": "Expression",
-                    "id": 10043,
-                    "name": "UniformBufferObjectStruct.Camera[0].NumberOfBounces",
-                    "type": "Binding",
-                    "values": [
-                        "16"
-                    ]
-                },
-                {
-                    "bindingType": "Uniform",
-                    "editor": "Expression",
-                    "id": 10044,
-                    "name": "UniformBufferObjectStruct.Camera[0].RandomSeed",
-                    "type": "Binding",
-                    "values": [
-                        "1"
-                    ]
-                },
-                {
-                    "bindingType": "Uniform",
-                    "editor": "Expression",
-                    "id": 10045,
-                    "name": "UniformBufferObjectStruct.Camera[0].HasSky",
-                    "type": "Binding",
-                    "values": [
-                        "1"
-                    ]
-                },
-                {
-                    "bindingType": "Image",
-                    "id": 10032,
-                    "imageFormat": "Internal",
-                    "layer": -1,
-                    "level": 0,
-                    "name": "OutputImage",
-                    "textureId": 10031,
-                    "type": "Binding"
-                },
-                {
-                    "bindingType": "Image",
-                    "id": 10057,
-                    "imageFormat": "Internal",
-                    "layer": -1,
-                    "level": 0,
-                    "name": "AccumulationImage",
-                    "textureId": 10058,
-                    "type": "Binding"
-                },
-                {
-                    "bindingType": "BufferBlock",
-                    "blockId": 10050,
-                    "id": 10056,
-                    "name": "MaterialArray",
-                    "type": "Binding"
-                },
-                {
-                    "bindingType": "BufferBlock",
-                    "blockId": 10231,
-                    "id": 10078,
-                    "name": "VertexArray",
-                    "type": "Binding"
-                },
-                {
-                    "bindingType": "BufferBlock",
-                    "blockId": 10239,
-                    "id": 10079,
-                    "name": "IndexArray",
-                    "type": "Binding"
-                },
-                {
-                    "anisotropic": true,
-                    "bindingType": "Sampler",
-                    "borderColor": "#ff000000",
-                    "comparisonFunc": "NoComparisonFunc",
-                    "id": 10228,
-                    "magFilter": "Linear",
-                    "minFilter": "LinearMipMapLinear",
-                    "name": "TextureSamplers[0]",
-                    "textureId": 10225,
-                    "type": "Binding",
-                    "wrapModeX": "Repeat",
-                    "wrapModeY": "Repeat",
-                    "wrapModeZ": "Repeat"
-                }
-            ],
-            "iterations": "1",
-            "name": "Bindings",
-            "type": "Group"
-        },
-        {
-            "id": 10021,
-            "items": [
-                {
-                    "fileName": "Material.glsl",
-                    "id": 10024,
-                    "language": "GLSL",
-                    "shaderType": "Includable",
-                    "type": "Shader"
-                },
-                {
-                    "fileName": "Vertex.glsl",
-                    "id": 10064,
-                    "language": "GLSL",
-                    "shaderType": "Includable",
-                    "type": "Shader"
-                },
-                {
-                    "fileName": "UniformBufferObject.glsl",
-                    "id": 10025,
-                    "language": "GLSL",
-                    "shaderType": "Includable",
-                    "type": "Shader"
-                },
-                {
-                    "fileName": "Scatter.glsl",
-                    "id": 10026,
-                    "language": "GLSL",
-                    "shaderType": "Includable",
-                    "type": "Shader"
-                },
-                {
-                    "fileName": "Random.glsl",
-                    "id": 10155,
-                    "language": "GLSL",
-                    "shaderType": "Includable",
-                    "type": "Shader"
-                },
-                {
-                    "fileName": "RayPayload.glsl",
-                    "id": 10156,
-                    "language": "GLSL",
-                    "shaderType": "Includable",
-                    "type": "Shader"
-                },
-                {
-                    "fileName": "RayTracing.rgen",
-                    "id": 10022,
-                    "language": "GLSL",
-                    "shaderType": "RayGeneration",
-                    "type": "Shader"
-                },
-                {
-                    "fileName": "RayTracing.rmiss",
-                    "id": 10028,
-                    "language": "GLSL",
-                    "shaderType": "RayMiss",
-                    "type": "Shader"
-                },
-                {
-                    "fileName": "RayTracing.rchit",
-                    "id": 10029,
-                    "language": "GLSL",
-                    "shaderType": "RayClosestHit",
-                    "type": "Shader"
-                }
-            ],
-            "name": "Program",
-            "type": "Program"
-        },
-        {
-            "accelerationStructureId": 10241,
-            "callType": "TraceRays",
-            "checked": true,
-            "executeOn": "EveryEvaluation",
-            "id": 10023,
-            "name": "Trace Rays",
-            "programId": 10021,
-            "type": "Call",
-            "workGroupsX": "1280",
-            "workGroupsY": "720",
-            "workGroupsZ": "1"
+          "type": "Block",
+          "id": 10050,
+          "name": "Material",
+          "offset": "0",
+          "rowCount": "4",
+          "items": [
+            {
+              "type": "Field",
+              "id": 10051,
+              "name": "Diffuse",
+              "dataType": "Float",
+              "count": 4,
+              "padding": 0
+            },
+            {
+              "type": "Field",
+              "id": 10052,
+              "name": "DiffuseTextureId",
+              "dataType": "Int32",
+              "count": 1,
+              "padding": 0
+            },
+            {
+              "type": "Field",
+              "id": 10053,
+              "name": "Fuzziness",
+              "dataType": "Float",
+              "count": 1,
+              "padding": 0
+            },
+            {
+              "type": "Field",
+              "id": 10054,
+              "name": "RefractionIndex",
+              "dataType": "Float",
+              "count": 1,
+              "padding": 0
+            },
+            {
+              "type": "Field",
+              "id": 10055,
+              "name": "MaterialModel",
+              "dataType": "Uint32",
+              "count": 1,
+              "padding": 0
+            }
+          ]
         }
-    ],
-    "name": "Session",
-    "renderer": "Vulkan",
-    "reverseCulling": true,
-    "shaderIncludePaths": "",
-    "shaderPreamble": "",
-    "spirvVersion": 15,
-    "type": "Session",
-    "vulkanRulesRelaxed": false
+      ]
+    },
+    {
+      "type": "Texture",
+      "id": 10225,
+      "fileName": "../Cube/planks.jpg",
+      "target": "Target2D",
+      "format": "SRGB8_Alpha8",
+      "width": "512",
+      "height": "512",
+      "samples": 1,
+      "flipVertically": false
+    },
+    {
+      "type": "Script",
+      "id": 903,
+      "fileName": "generateScene.js",
+      "executeOn": "ResetEvaluation"
+    },
+    {
+      "type": "Script",
+      "id": 103,
+      "fileName": "camera.js",
+      "executeOn": "EveryEvaluation"
+    },
+    {
+      "type": "Group",
+      "id": 10195,
+      "name": "Scene",
+      "inlineScope": true,
+      "dynamic": true,
+      "iterations": "1"
+    },
+    {
+      "type": "Group",
+      "id": 10033,
+      "name": "Bindings",
+      "inlineScope": true,
+      "iterations": "1",
+      "items": [
+        {
+          "type": "Binding",
+          "id": 10034,
+          "name": "UniformBufferObjectStruct.Camera[0].ModelView",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "view"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 10035,
+          "name": "UniformBufferObjectStruct.Camera[0].Projection",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "projection"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 10036,
+          "name": "UniformBufferObjectStruct.Camera[0].ModelViewInverse",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "viewInverse"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 10037,
+          "name": "UniformBufferObjectStruct.Camera[0].ProjectionInverse",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "projectionInverse"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 10038,
+          "name": "UniformBufferObjectStruct.Camera[0].Aperture",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "0.1"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 10039,
+          "name": "UniformBufferObjectStruct.Camera[0].FocusDistance",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "5"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 10040,
+          "name": "UniformBufferObjectStruct.Camera[0].HeatmapScale",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "1.5"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 10042,
+          "name": "UniformBufferObjectStruct.Camera[0].NumberOfSamples",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "samples"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 10041,
+          "name": "UniformBufferObjectStruct.Camera[0].TotalNumberOfSamples",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "totalSamples"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 10043,
+          "name": "UniformBufferObjectStruct.Camera[0].NumberOfBounces",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "16"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 10044,
+          "name": "UniformBufferObjectStruct.Camera[0].RandomSeed",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "1"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 10045,
+          "name": "UniformBufferObjectStruct.Camera[0].HasSky",
+          "bindingType": "Uniform",
+          "editor": "Expression",
+          "values": [
+            "1"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 10032,
+          "name": "OutputImage",
+          "bindingType": "Image",
+          "textureId": 10031,
+          "level": 0,
+          "layer": -1,
+          "imageFormat": "Internal"
+        },
+        {
+          "type": "Binding",
+          "id": 10057,
+          "name": "AccumulationImage",
+          "bindingType": "Image",
+          "textureId": 10058,
+          "level": 0,
+          "layer": -1,
+          "imageFormat": "Internal"
+        },
+        {
+          "type": "Binding",
+          "id": 10056,
+          "name": "MaterialArray",
+          "bindingType": "BufferBlock",
+          "blockId": 10050
+        },
+        {
+          "type": "Binding",
+          "id": 10078,
+          "name": "VertexArray",
+          "bindingType": "BufferBlock",
+          "blockId": 10231
+        },
+        {
+          "type": "Binding",
+          "id": 10079,
+          "name": "IndexArray",
+          "bindingType": "BufferBlock",
+          "blockId": 10239
+        },
+        {
+          "type": "Binding",
+          "id": 10228,
+          "name": "TextureSamplers[0]",
+          "bindingType": "Sampler",
+          "textureId": 10225,
+          "minFilter": "LinearMipMapLinear",
+          "magFilter": "Linear",
+          "anisotropic": true,
+          "wrapModeX": "Repeat",
+          "wrapModeY": "Repeat",
+          "wrapModeZ": "Repeat",
+          "borderColor": "#ff000000",
+          "comparisonFunc": "NoComparisonFunc"
+        }
+      ]
+    },
+    {
+      "type": "Program",
+      "id": 10021,
+      "name": "Program",
+      "items": [
+        {
+          "type": "Shader",
+          "id": 10024,
+          "fileName": "Material.glsl",
+          "shaderType": "Includable"
+        },
+        {
+          "type": "Shader",
+          "id": 10064,
+          "fileName": "Vertex.glsl",
+          "shaderType": "Includable"
+        },
+        {
+          "type": "Shader",
+          "id": 10025,
+          "fileName": "UniformBufferObject.glsl",
+          "shaderType": "Includable"
+        },
+        {
+          "type": "Shader",
+          "id": 10026,
+          "fileName": "Scatter.glsl",
+          "shaderType": "Includable"
+        },
+        {
+          "type": "Shader",
+          "id": 10155,
+          "fileName": "Random.glsl",
+          "shaderType": "Includable"
+        },
+        {
+          "type": "Shader",
+          "id": 10156,
+          "fileName": "RayPayload.glsl",
+          "shaderType": "Includable"
+        },
+        {
+          "type": "Shader",
+          "id": 10022,
+          "fileName": "RayTracing.rgen",
+          "shaderType": "RayGeneration"
+        },
+        {
+          "type": "Shader",
+          "id": 10028,
+          "fileName": "RayTracing.rmiss",
+          "shaderType": "RayMiss"
+        },
+        {
+          "type": "Shader",
+          "id": 10029,
+          "fileName": "RayTracing.rchit",
+          "shaderType": "RayClosestHit"
+        }
+      ]
+    },
+    {
+      "type": "Call",
+      "id": 10023,
+      "name": "Trace Rays",
+      "checked": true,
+      "callType": "TraceRays",
+      "programId": 10021,
+      "workGroupsX": "1280",
+      "workGroupsY": "720",
+      "workGroupsZ": "1",
+      "executeOn": "EveryEvaluation",
+      "accelerationStructureId": 10241
+    }
+  ]
 }

@@ -47,10 +47,7 @@ struct Session : ScopeItem
     using ShaderCompilerSetting = ItemEnums2::ShaderCompilerSetting;
 
     Renderer renderer{ Renderer::OpenGL };
-    int audioBufferSize{ 250 };
-    int audioChunkSize{ 800 };
-    int audioSampleRate{ 48'000 };
-    QString apiVersion;
+    QString apiVersion{ "1.2" };
     ShaderLanguage shaderLanguage{ ShaderLanguage::GLSL };
     ShaderCompiler shaderCompiler{ ShaderCompiler::Driver };
     QVariantMap shaderCompilerSettings;
@@ -58,6 +55,9 @@ struct Session : ScopeItem
     QString shaderIncludePaths;
     bool flipViewport{ true };
     bool reverseCulling{ };
+    int audioBufferSize{ 250 };
+    int audioChunkSize{ 800 };
+    int audioSampleRate{ 48'000 };
 };
 
 struct Group : ScopeItem
