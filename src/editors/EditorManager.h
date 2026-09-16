@@ -89,7 +89,6 @@ public:
     bool closeEditor();
     bool promptSaveAllEditors();
     bool closeAllEditors(bool promptSave = true);
-    bool closeAllTextureEditors();
     QString getEditorObjectName(const IEditor *editor) const;
     void setEditorObjectName(IEditor *editor, const QString &name);
     void pasteInNewEditor();
@@ -121,6 +120,7 @@ private:
     bool promptSaveDock(QDockWidget *dock);
     void closeDockEditor(QDockWidget *dock);
     void closeDock(QDockWidget *dock);
+    void syncDockClosing();
     void autoRaise(QWidget *editor);
     void updateEditorToolBarVisibility();
     void updateEditorPropertiesVisibility();

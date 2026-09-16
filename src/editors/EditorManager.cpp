@@ -621,6 +621,7 @@ bool EditorManager::closeEditor()
     if (!mCurrentDock || !promptSaveDock(mCurrentDock))
         return false;
     closeDock(mCurrentDock);
+    syncDockClosing();
     return true;
 }
 
@@ -640,18 +641,7 @@ bool EditorManager::closeAllEditors(bool promptSave)
     while (!mDocks.empty())
         closeDock(mDocks.begin()->first);
 
-    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
-    return true;
-}
-
-bool EditorManager::closeAllTextureEditors()
-{
-    for (auto [dock, editor] : mDocks)
-        if (qobject_cast<TextureEditor *>(dock->widget())) {
-            if (!promptSaveDock(dock))
-                return false;
-            closeDock(dock);
-        }
+    syncDockClosing();
     return true;
 }
 
@@ -898,6 +888,12 @@ void EditorManager::closeDock(QDockWidget *dock)
 
     if (mDocks.empty())
         clearNavigationStack();
+}
+
+void EditorManager::syncDockClosing()
+{
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    qApp->processEvents();
 }
 
 void EditorManager::autoRaise(QWidget *editor)
