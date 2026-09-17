@@ -438,7 +438,7 @@ void TextureEditor::setModified(bool modified)
 
 void TextureEditor::wheelEvent(QWheelEvent *event)
 {
-    setFocus();
+    setFocus(Qt::MouseFocusReason);
 
     if (!event->modifiers()) {
         const auto scenePosition = mapToScene(event->position());
@@ -482,6 +482,8 @@ void TextureEditor::mouseDoubleClickEvent(QMouseEvent *event)
 
 void TextureEditor::mousePressEvent(QMouseEvent *event)
 {
+    setFocus(Qt::MouseFocusReason);
+
     if (event->button() == Qt::MiddleButton) {
         const auto dpr = devicePixelRatioF();
         const auto pos = getEventPosition(event) * dpr * 2;
