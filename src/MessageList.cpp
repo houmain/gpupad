@@ -103,6 +103,16 @@ MessageSeverity getMessageSeverity(const Message &message)
     }
 }
 
+QString getMessageSeverityText(const Message &message)
+{
+    switch (getMessageSeverity(message)) {
+    case MessageSeverity::Error:   return "ERROR";
+    case MessageSeverity::Warning: return "WARNING";
+    case MessageSeverity::Info:    return "INFO";
+    }
+    return "";
+}
+
 QString getMessageText(const Message &message)
 {
 #define tr qApp->tr

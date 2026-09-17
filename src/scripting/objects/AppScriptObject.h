@@ -6,6 +6,7 @@
 #include "FileDialog.h"
 #include <QJSValue>
 #include <QJsonObject>
+#include <QJsonArray>
 #include <QModelIndex>
 #include <QDir>
 
@@ -35,9 +36,10 @@ class AppScriptObject final : public QObject
     Q_PROPERTY(QJSValue keyboard READ keyboard CONSTANT)
     Q_PROPERTY(
         QJSValue currentEditor READ currentEditor NOTIFY currentEditorChanged)
-    Q_PROPERTY(QVariantMap palette READ palette NOTIFY paletteChanged)
-    Q_PROPERTY(bool mediaEncodingAvailable READ mediaEncodingAvailable CONSTANT)
-
+    Q_PROPERTY(QJsonObject palette READ palette NOTIFY paletteChanged)
+    Q_PROPERTY(QJsonArray messages READ messages NOTIFY messagesChanged)
+    Q_PROPERTY(QJsonObject mediaEncoderConfigurations READ
+            mediaEncoderConfigurations CONSTANT);
 public:
     AppScriptObject(const ScriptEnginePtr &enginePtr, const QDir &basePath);
     ~AppScriptObject();
@@ -59,8 +61,9 @@ public:
     QJSValue mouse() { return mMouseProperty; }
     QJSValue keyboard() { return mKeyboardProperty; }
     QJSValue currentEditor();
-    QVariantMap palette() const;
-    bool mediaEncodingAvailable() const;
+    QJsonObject palette() const;
+    QJsonArray messages() const;
+    QJsonObject mediaEncoderConfigurations() const;
 
     Q_INVOKABLE bool isUntitled(QString fileName);
     Q_INVOKABLE QString getFileTitle(QString fileName);
@@ -75,17 +78,17 @@ public:
     Q_INVOKABLE QJSValue enumerateDirs(QString pattern);
     Q_INVOKABLE bool makeDirectory(QString path);
     Q_INVOKABLE QJSValue writeTextFile(QString fileName, QString string);
+    Q_INVOKABLE QJSValue appendTextFile(QString fileName, QString string);
     Q_INVOKABLE QJSValue writeBinaryFile(QString fileName, QByteArray binary);
+    Q_INVOKABLE QJSValue appendBinaryFile(QString fileName, QByteArray binary);
     Q_INVOKABLE QJSValue readTextFile(QString fileName);
     Q_INVOKABLE QJSValue enumerateCameras();
     Q_INVOKABLE QJSValue createSessionRenderer(QVariantMap options);
     Q_INVOKABLE QJSValue createMediaEncoder(QVariantMap options);
-    Q_INVOKABLE QJsonObject mediaEncoderConfigurations() const;
 
     // session
     Q_INVOKABLE void loadSession(QString fileName);
-    Q_INVOKABLE QJSValue itemProperties(QJSValue itemIdent);
-    Q_INVOKABLE QJSValue getMessages();
+    Q_INVOKABLE QJSValue getItemProperties(QJSValue itemIdent);
     Q_INVOKABLE void clearSession();
     Q_INVOKABLE QJSValue getParentItem(QJSValue itemIdent);
     Q_INVOKABLE QJSValue findItem(QJSValue itemIdent);
@@ -133,6 +136,7 @@ Q_SIGNALS:
     void timeDeltaChanged();
     void currentEditorChanged();
     void paletteChanged();
+    void messagesChanged();
 
 private:
     friend class ItemScriptObject;
@@ -210,28 +214,28 @@ private:
     }
 
     WeakScriptEnginePtr mEnginePtr;
-    QJSEngine *mJsEngine{};
+    QJSEngine *mJsEngine{ };
     QDir mBasePath;
-    MouseScriptObject *mMouseScriptObject{};
-    KeyboardScriptObject *mKeyboardScriptObject{};
+    MouseScriptObject *mMouseScriptObject{ };
+    KeyboardScriptObject *mKeyboardScriptObject{ };
     std::map<EditorScriptObject *, QJSValue> mEditorScriptObjects;
 
     QJSValue mMouseProperty;
     QJSValue mKeyboardProperty;
     QJSValue mDateProperty;
     QMap<QString, QJSValue> mLoadedLibraries;
-    QObject *mMainThreadObject{};
-    EvaluationMode mEvaluationMode{};
-    int mFrame{};
-    double mTime{};
-    double mTimeDelta{};
+    QObject *mMainThreadObject{ };
+    EvaluationMode mEvaluationMode{ };
+    int mFrame{ };
+    double mTime{ };
+    double mTimeDelta{ };
 
     // session
     QJSValue mSelectionProperty;
     QJSValue mSessionProperty;
-    IScriptRenderSession *mRenderSession{};
+    IScriptRenderSession *mRenderSession{ };
     std::vector<UpdateSessionFunction> mPendingSessionUpdates;
     std::map<ItemId, ItemObject> mItemObjects;
     std::map<int, ItemTracking> mItemTrackings;
-    int mNextItemTrackingIndex{};
+    int mNextItemTrackingIndex{ };
 };

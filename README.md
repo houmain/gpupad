@@ -113,6 +113,8 @@ There is one JavaScript state for the whole session and the scripts are evaluate
 - `session: Item`
 - `selection: [Item]`
 - `currentEditor - Editor?`
+- `messages -> [Message]`
+- `mediaEncoderFormats -> [EncoderFormat]`
 
 - `loadSession(fileName)`
 - `clearSession()`
@@ -123,6 +125,7 @@ There is one JavaScript state for the whole session and the scripts are evaluate
 - `insertItem(parent: ItemIdent?, object) -> Item`
 - `insertItemAfter(sibling: ItemIdent, object) -> Item`
 - `insertItemBefore(sibling: ItemIdent, object) -> Item`
+- `getItemProperties(QJSValue itemIdent) -> [ItemProperty]`
 - `deleteItem(ItemIdent)`
 - `clearItems(ItemIdent)`
 - `replaceItems(parent: ItemIdent, [Object])`
@@ -148,7 +151,9 @@ There is one JavaScript state for the whole session and the scripts are evaluate
 - `saveFileDialog(pattern) -> filename: String?`
 - `readTextFile(filename) -> String?`
 - `writeTextFile(filename, String) -> Bool`
+- `appendTextFile(filename, String) -> Bool`
 - `writeBinaryFile(filename, Data) -> Bool`
+- `appendBinaryFile(filename, Data) -> Bool`
 
 ### Editor
 

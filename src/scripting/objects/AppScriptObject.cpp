@@ -22,6 +22,34 @@
 #include <QQmlEngine>
 #include <atomic>
 
+namespace {
+    bool writeFile(QString fileName, const QByteArray &data,
+        QIODevice::OpenMode mode)
+    {
+        fileName = toNativeCanonicalAbsoluteFilePath(fileName);
+        if (FileDialog::isEmptyOrUntitled(fileName))
+            return false;
+
+        auto saveFile = QSaveFile(fileName);
+        auto appendFile = QFile(fileName);
+        const auto append = mode.testFlag(QFile::Append);
+        auto &file = (append ? static_cast<QFileDevice &>(appendFile)
+                             : static_cast<QFileDevice &>(saveFile));
+        if (!file.open(mode) || file.write(data) != data.size())
+            return false;
+
+        if (append) {
+            if (!appendFile.flush())
+                return false;
+            appendFile.close();
+        } else if (!saveFile.commit()) {
+            return false;
+        }
+        Singletons::fileCache().invalidateFile(fileName);
+        return true;
+    }
+} // namespace
+
 AppScriptObject::AppScriptObject(const ScriptEnginePtr &enginePtr,
     const QDir &basePath)
     : QObject(static_cast<QObject *>(enginePtr.get()))
@@ -254,33 +282,40 @@ QJSValue AppScriptObject::date()
     return mDateProperty;
 }
 
-QVariantMap AppScriptObject::palette() const
+QJsonObject AppScriptObject::palette() const
 {
     const auto p = qApp->palette();
-    auto palette = QVariantMap();
-    palette["alternateBase"] = p.color(QPalette::AlternateBase);
-    palette["base"] = p.color(QPalette::Base);
-    palette["text"] = p.color(QPalette::Text);
-    palette["window"] = p.color(QPalette::Window);
-    palette["windowText"] = p.color(QPalette::WindowText);
-    palette["button"] = p.color(QPalette::Button);
-    palette["buttonText"] = p.color(QPalette::ButtonText);
+    auto palette = QJsonObject();
+    palette["alternateBase"] = p.color(QPalette::AlternateBase).name();
+    palette["base"] = p.color(QPalette::Base).name();
+    palette["text"] = p.color(QPalette::Text).name();
+    palette["window"] = p.color(QPalette::Window).name();
+    palette["windowText"] = p.color(QPalette::WindowText).name();
+    palette["button"] = p.color(QPalette::Button).name();
+    palette["buttonText"] = p.color(QPalette::ButtonText).name();
     return palette;
 }
 
-bool AppScriptObject::mediaEncodingAvailable() const
+QJsonArray AppScriptObject::messages() const
 {
-#if defined(MULTIMEDIA_ENABLED) && defined(QMLVIEW_ENABLED)
-    return true;
-#else
-    return false;
-#endif
+    auto result = QJsonArray();
+    for (const auto &message : MessagePtrSet::getAllMessages()) {
+        auto object = QJsonObject{ };
+        object["severity"] = getMessageSeverityText(*message);
+        object["text"] = getMessageText(*message);
+        if (!message->fileName.isEmpty())
+            object["fileName"] = message->fileName;
+        if (message->line)
+            object["line"] = message->line;
+        if (message->itemId)
+            object["itemId"] = message->itemId;
+        result.append(object);
+    }
+    return result;
 }
 
 QJSValue AppScriptObject::createSessionRenderer(QVariantMap options)
 {
-    if (!mediaEncodingAvailable())
-        return QJSValue::UndefinedValue;
     auto object = new SessionRendererScriptObject(options);
     QQmlEngine::setObjectOwnership(object, QQmlEngine::JavaScriptOwnership);
     return jsEngine().newQObject(object);
@@ -288,8 +323,6 @@ QJSValue AppScriptObject::createSessionRenderer(QVariantMap options)
 
 QJSValue AppScriptObject::createMediaEncoder(QVariantMap options)
 {
-    if (!mediaEncodingAvailable())
-        return QJSValue::UndefinedValue;
     auto object = new MediaEncoderScriptObject(options);
     QQmlEngine::setObjectOwnership(object, QQmlEngine::JavaScriptOwnership);
     return jsEngine().newQObject(object);
@@ -297,8 +330,6 @@ QJSValue AppScriptObject::createMediaEncoder(QVariantMap options)
 
 QJsonObject AppScriptObject::mediaEncoderConfigurations() const
 {
-    if (!mediaEncodingAvailable())
-        return { };
     return MediaEncoderScriptObject::configurations();
 }
 
@@ -489,37 +520,27 @@ bool AppScriptObject::makeDirectory(QString path)
 
 QJSValue AppScriptObject::writeTextFile(QString fileName, QString string)
 {
-    if (FileDialog::isEmptyOrUntitled(fileName))
-        return false;
+    return writeFile(fileName, string.toUtf8(), QFile::WriteOnly | QFile::Text);
+}
 
-    fileName = toNativeCanonicalAbsoluteFilePath(fileName);
-    auto file = QSaveFile(fileName);
-    if (!file.open(QFile::WriteOnly | QFile::Text))
-        return false;
-    const auto data = string.toUtf8();
-    if (file.write(data) != data.size() || !file.commit())
-        return false;
-
-    Singletons::fileCache().invalidateFile(fileName);
-    return true;
+QJSValue AppScriptObject::appendTextFile(QString fileName, QString string)
+{
+    return writeFile(fileName, string.toUtf8(),
+        QFile::WriteOnly | QFile::Append | QFile::Text);
 }
 
 QJSValue AppScriptObject::writeBinaryFile(QString fileName, QByteArray binary)
 {
-    if (FileDialog::isEmptyOrUntitled(fileName))
-        return false;
     if (binary.isNull())
         return false;
+    return writeFile(fileName, binary, QFile::WriteOnly);
+}
 
-    fileName = toNativeCanonicalAbsoluteFilePath(fileName);
-    auto file = QFile(fileName);
-    if (!file.open(QFile::WriteOnly))
+QJSValue AppScriptObject::appendBinaryFile(QString fileName, QByteArray binary)
+{
+    if (binary.isNull())
         return false;
-    file.write(binary);
-    file.close();
-
-    Singletons::fileCache().invalidateFile(fileName);
-    return true;
+    return writeFile(fileName, binary, QFile::WriteOnly | QFile::Append);
 }
 
 QJSValue AppScriptObject::readTextFile(QString fileName)

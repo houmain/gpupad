@@ -147,4 +147,5 @@ public:
 
 QString formatDuration(const std::chrono::duration<double> &duration);
 MessageSeverity getMessageSeverity(const Message &message);
+QString getMessageSeverityText(const Message &message);
 QString getMessageText(const Message &message);

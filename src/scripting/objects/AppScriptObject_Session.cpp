@@ -807,7 +807,7 @@ void AppScriptObject::loadSession(QString fileName)
         throwJsError("Loading session failed: " + fileName);
 }
 
-QJSValue AppScriptObject::itemProperties(QJSValue itemIdent)
+QJSValue AppScriptObject::getItemProperties(QJSValue itemIdent)
 {
     const auto item = findSessionItem(itemIdent);
     if (!item) {
@@ -815,23 +815,6 @@ QJSValue AppScriptObject::itemProperties(QJSValue itemIdent)
         return QJSValue::UndefinedValue;
     }
     return jsEngine().toScriptValue(threadSessionModel().itemProperties(*item));
-}
-
-QJSValue AppScriptObject::getMessages()
-{
-    auto result = QVariantList();
-    for (const auto &message : MessagePtrSet::getAllMessages()) {
-        const auto severity = getMessageSeverity(*message);
-        result.append(QVariantMap{
-            { "severity", severity == MessageSeverity::Error ? "error"
-                    : severity == MessageSeverity::Warning ? "warning" : "info" },
-            { "text", getMessageText(*message) },
-            { "fileName", message->fileName },
-            { "line", message->line },
-            { "itemId", message->itemId },
-        });
-    }
-    return jsEngine().toScriptValue(result);
 }
 
 void AppScriptObject::clearSession()
