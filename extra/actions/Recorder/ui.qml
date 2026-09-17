@@ -70,7 +70,7 @@ ThemedScrollView {
     refreshCodecs()
     if (replaceSuffix && !initializing) {
       fileName.text = script.replaceFileSuffix(fileName.text,
-        comboValue(fileFormat), hasVideo)
+        comboValue(fileFormat))
     }
   }
 
@@ -151,7 +151,7 @@ ThemedScrollView {
           root.refreshCodecs()
           if (!root.initializing) {
             fileName.text = script.replaceFileSuffix(fileName.text,
-              root.comboValue(fileFormat), root.hasVideo)
+              root.comboValue(fileFormat))
           }
         }
       }

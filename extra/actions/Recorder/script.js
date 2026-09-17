@@ -2,12 +2,12 @@
 
 const manifest = {
   name: "&Recorder...",
-  applicable: app.mediaEncodingAvailable,
+  applicable: Object.keys(app.mediaEncoderFormats).length > 0,
 }
 
 class Script {
   constructor() {
-    this.configurations = app.mediaEncoderConfigurations()
+    this.encoderFormats = app.mediaEncoderFormats
     this.source = null
     this.encoder = null
     this.ui = {}
@@ -61,9 +61,13 @@ class Script {
   }
 
   formats(hasVideo) {
-    return hasVideo
-      ? (this.configurations.videoFormats || {})
-      : (this.configurations.audioFormats || {})
+    const result = {}
+    for (const key of Object.keys(this.encoderFormats)) {
+      const format = this.encoderFormats[key]
+      if (hasVideo ? format.videoCodecs : format.audioCodecs)
+        result[key] = format
+    }
+    return result
   }
 
   entries(object) {
@@ -84,20 +88,20 @@ class Script {
   }
 
   videoCodecEntries(formatKey) {
-    const format = (this.configurations.videoFormats || {})[formatKey]
+    const format = this.encoderFormats[formatKey]
     return this.entries(format?.videoCodecs)
   }
 
   audioCodecEntries(formatKey, videoCodecKey, hasVideo) {
-    const format = this.formats(hasVideo)[formatKey]
+    const format = this.encoderFormats[formatKey]
     const codecs = hasVideo
       ? format?.videoCodecs?.[videoCodecKey]?.audioCodecs
       : format?.audioCodecs
     return this.entries(codecs)
   }
 
-  replaceFileSuffix(fileName, formatKey, hasVideo) {
-    const suffix = this.formats(hasVideo)[formatKey]?.suffix
+  replaceFileSuffix(fileName, formatKey) {
+    const suffix = this.encoderFormats[formatKey]?.suffix
     if (!suffix || !fileName)
       return fileName
     const slash = Math.max(fileName.lastIndexOf("/"), fileName.lastIndexOf("\\"))
@@ -274,7 +278,7 @@ else {
 
   this.script.record(Object.assign({
     textureId,
-    outputFile: this.script.replaceFileSuffix(this.script.defaultFileName(hasVideo), fileFormat, hasVideo),
+    outputFile: this.script.replaceFileSuffix(this.script.defaultFileName(hasVideo), fileFormat),
     fileFormat,
     videoCodec,
     audioCodec,

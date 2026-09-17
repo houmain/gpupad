@@ -38,8 +38,8 @@ class AppScriptObject final : public QObject
         QJSValue currentEditor READ currentEditor NOTIFY currentEditorChanged)
     Q_PROPERTY(QJsonObject palette READ palette NOTIFY paletteChanged)
     Q_PROPERTY(QJsonArray messages READ messages NOTIFY messagesChanged)
-    Q_PROPERTY(QJsonObject mediaEncoderConfigurations READ
-            mediaEncoderConfigurations CONSTANT);
+    Q_PROPERTY(
+        QJsonObject mediaEncoderFormats READ mediaEncoderFormats CONSTANT)
 public:
     AppScriptObject(const ScriptEnginePtr &enginePtr, const QDir &basePath);
     ~AppScriptObject();
@@ -63,7 +63,7 @@ public:
     QJSValue currentEditor();
     QJsonObject palette() const;
     QJsonArray messages() const;
-    QJsonObject mediaEncoderConfigurations() const;
+    QJsonObject mediaEncoderFormats() const;
 
     Q_INVOKABLE bool isUntitled(QString fileName);
     Q_INVOKABLE QString getFileTitle(QString fileName);

@@ -328,9 +328,9 @@ QJSValue AppScriptObject::createMediaEncoder(QVariantMap options)
     return jsEngine().newQObject(object);
 }
 
-QJsonObject AppScriptObject::mediaEncoderConfigurations() const
+QJsonObject AppScriptObject::mediaEncoderFormats() const
 {
-    return MediaEncoderScriptObject::configurations();
+    return MediaEncoderScriptObject::formats();
 }
 
 QJSValue AppScriptObject::currentEditor()

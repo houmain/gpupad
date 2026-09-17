@@ -8,6 +8,7 @@
 #  include <QAudioFormat>
 #  include <QCoreApplication>
 #  include <QElapsedTimer>
+#  include <QJsonObject>
 #  include <QThread>
 #  include <QFileInfo>
 #  include <QMediaCaptureSession>
@@ -185,14 +186,16 @@ namespace {
         return result;
     }
 
-    void chooseFormatDefault(std::vector<FormatConfiguration *> formats,
+    void chooseFormatDefault(std::vector<FormatConfiguration> &formats,
         bool video)
     {
-        if (formats.empty())
-            return;
-        auto selected = formats.front();
+        auto selected = static_cast<FormatConfiguration *>(nullptr);
         auto selectedScore = -1;
-        for (auto format : formats) {
+        for (auto &candidate : formats) {
+            const auto isVideo = !candidate.videoCodecs.empty();
+            if (video != isVideo || (!video && candidate.audioCodecs.empty()))
+                continue;
+            auto format = &candidate;
             auto score = 0;
             if (format->key == "MPEG4")
                 score += video ? 100 : 20;
@@ -219,12 +222,13 @@ namespace {
                     [](const auto &entry) { return entry.key == "MP3"; })) {
                 score += 1000;
             }
-            if (score > selectedScore) {
+            if (!selected || score > selectedScore) {
                 selected = format;
                 selectedScore = score;
             }
         }
-        selected->isDefault = true;
+        if (selected)
+            selected->isDefault = true;
     }
 
     QJsonObject audioCodecsJson(
@@ -242,59 +246,39 @@ namespace {
         return result;
     }
 
-    QJsonObject configurationsJson()
+    QJsonObject formatsJson()
     {
-        auto configurations = probeConfigurations();
-        auto videoFormats = std::vector<FormatConfiguration *>();
-        auto audioFormats = std::vector<FormatConfiguration *>();
-        for (auto &format : configurations) {
-            if (!format.videoCodecs.empty())
-                videoFormats.push_back(&format);
-            if (!format.audioCodecs.empty())
-                audioFormats.push_back(&format);
-        }
-        chooseFormatDefault(videoFormats, true);
+        auto formats = probeConfigurations();
+        chooseFormatDefault(formats, true);
+        chooseFormatDefault(formats, false);
 
-        auto videoFormatsJson = QJsonObject();
-        for (const auto format : videoFormats) {
-            auto videoCodecs = QJsonObject();
-            for (const auto &codec : format->videoCodecs) {
-                auto codecObject = QJsonObject{
-                    { "name", codec.name },
-                    { "audioCodecs", audioCodecsJson(codec.audioCodecs) },
-                };
-                if (codec.isDefault)
-                    codecObject.insert("default", true);
-                videoCodecs.insert(codec.key, codecObject);
+        auto result = QJsonObject();
+        for (const auto &format : formats) {
+            auto formatObject = QJsonObject{
+                { "name", format.name },
+                { "suffix", format.suffix },
+            };
+            if (!format.videoCodecs.empty()) {
+                auto videoCodecs = QJsonObject();
+                for (const auto &codec : format.videoCodecs) {
+                    auto codecObject = QJsonObject{
+                        { "name", codec.name },
+                        { "audioCodecs", audioCodecsJson(codec.audioCodecs) },
+                    };
+                    if (codec.isDefault)
+                        codecObject.insert("default", true);
+                    videoCodecs.insert(codec.key, codecObject);
+                }
+                formatObject.insert("videoCodecs", videoCodecs);
+            } else {
+                formatObject.insert("audioCodecs",
+                    audioCodecsJson(format.audioCodecs));
             }
-            auto formatObject = QJsonObject{
-                { "name", format->name },
-                { "suffix", format->suffix },
-                { "videoCodecs", videoCodecs },
-            };
-            if (format->isDefault)
+            if (format.isDefault)
                 formatObject.insert("default", true);
-            videoFormatsJson.insert(format->key, formatObject);
+            result.insert(format.key, formatObject);
         }
-
-        for (auto &format : configurations)
-            format.isDefault = false;
-        chooseFormatDefault(audioFormats, false);
-        auto audioFormatsJson = QJsonObject();
-        for (const auto format : audioFormats) {
-            auto formatObject = QJsonObject{
-                { "name", format->name },
-                { "suffix", format->suffix },
-                { "audioCodecs", audioCodecsJson(format->audioCodecs) },
-            };
-            if (format->isDefault)
-                formatObject.insert("default", true);
-            audioFormatsJson.insert(format->key, formatObject);
-        }
-        return {
-            { "videoFormats", videoFormatsJson },
-            { "audioFormats", audioFormatsJson },
-        };
+        return result;
     }
 } // namespace
 
@@ -639,9 +623,9 @@ MediaEncoderScriptObject::MediaEncoderScriptObject(const QVariantMap &options,
 
 MediaEncoderScriptObject::~MediaEncoderScriptObject() = default;
 
-QJsonObject MediaEncoderScriptObject::configurations()
+QJsonObject MediaEncoderScriptObject::formats()
 {
-    return configurationsJson();
+    return formatsJson();
 }
 
 void MediaEncoderScriptObject::writeFrame(MediaFrame frame)
@@ -683,7 +667,7 @@ MediaEncoderScriptObject::MediaEncoderScriptObject(const QVariantMap &,
 
 MediaEncoderScriptObject::~MediaEncoderScriptObject() = default;
 
-QJsonObject MediaEncoderScriptObject::configurations()
+QJsonObject MediaEncoderScriptObject::formats()
 {
     return { };
 }

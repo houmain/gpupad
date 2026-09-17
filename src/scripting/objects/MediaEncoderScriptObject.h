@@ -15,7 +15,7 @@ public:
         QObject *parent = nullptr);
     ~MediaEncoderScriptObject() override;
 
-    static QJsonObject configurations();
+    static QJsonObject formats();
 
     Q_INVOKABLE void writeFrame(MediaFrame frame);
     Q_INVOKABLE bool waitForFinished(int timeout);

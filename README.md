@@ -114,7 +114,7 @@ There is one JavaScript state for the whole session and the scripts are evaluate
 - `selection: [Item]`
 - `currentEditor - Editor?`
 - `messages -> [Message]`
-- `mediaEncoderFormats -> [EncoderFormat]`
+- `mediaEncoderFormats -> EncoderFormats`
 
 - `loadSession(fileName)`
 - `clearSession()`
