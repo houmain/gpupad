@@ -123,6 +123,7 @@ void outputHelpToStdout()
         "  --help                            print this help.\n"
         "\n"
         "In headless mode the following parameters are available:\n"
+        "  --verbose                         output INFO messages.\n"
         "  --set <ident> <value>             sets a script variable's value.\n"
         "  --output <item-ident> <filename>  output an item's data to a file.\n"
         "\n"

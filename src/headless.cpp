@@ -10,22 +10,28 @@
 #include "editors/IEditor.h"
 #include <QApplication>
 
-void outputMessagesToStdout()
+void outputMessagesToStdout(const SessionModel &sessionModel, bool verbose)
 {
     for (const auto &message : MessagePtrSet::getAllMessages()) {
         const auto severity = getMessageSeverity(*message);
-        const auto severityText = (severity == MessageSeverity::Error
-                ? "ERROR: "
-                : severity == MessageSeverity::Warning ? "WARNING: "
-                : severity == MessageSeverity::Info    ? "INFO: "
-                                                       : "");
-        const auto format = message->fileName.isEmpty() ? "%s%s.\n"
-            : message->line <= 0                        ? "%s%s%s%s\n"
-                                                        : "%s%s%s%s:%i\n";
-        std::fprintf(stdout, format, severityText,
-            qUtf8Printable(getMessageText(*message)), "\n  in ",
-            qUtf8Printable(FileDialog::getFileTitle(message->fileName)),
-            message->line);
+        if (severity == MessageSeverity::Info && !verbose)
+            continue;
+        const auto severityText = (severity == MessageSeverity::Error ? "ERROR"
+                : severity == MessageSeverity::Warning ? "WARNING"
+                                                       : "INFO");
+        auto text = QString::fromLatin1(severityText);
+        if (!message->fileName.isEmpty()) {
+            text += " in '" + FileDialog::getFileTitle(message->fileName) + "'";
+            if (message->line > 0)
+                text += ":" + QString::number(message->line);
+        }
+        if (message->itemId)
+            if (const auto item = sessionModel.findItem(message->itemId))
+                text += " " + item->name;
+        text += ": ";
+        text += getMessageText(*message);
+        text += "\n";
+        std::fputs(qUtf8Printable(text), stdout);
     }
     std::fflush(stdout);
 }
@@ -38,6 +44,7 @@ int runHeadless(QApplication &app)
     auto &synchronizeLogic = singletons.synchronizeLogic();
     auto editorsToSave = std::map<QString, IEditor *>();
     auto messages = MessagePtrSet{ };
+    auto verbose = false;
 
     const auto workingDirectory = QDir::current();
     const auto toAbsoluteFileName = [workingDirectory](
@@ -70,8 +77,8 @@ int runHeadless(QApplication &app)
 
     const auto closeSession = [&]() {
         editorManager.closeAllEditors(false);
+        outputMessagesToStdout(sessionModel, verbose);
         sessionModel.clear();
-        outputMessagesToStdout();
         messages.clear();
     };
 
@@ -97,6 +104,9 @@ int runHeadless(QApplication &app)
         if (argument.startsWith("--")) {
             if (argument == "--headless") {
                 continue;
+
+            } else if (argument == "--verbose") {
+                verbose = true;
 
             } else if (argument == "--set") {
                 if (!checkParameterCount(2))
