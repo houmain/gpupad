@@ -7,9 +7,13 @@
 GLDevice::GLDevice()
     : Device(Type::OpenGL)
     , mContext(this)
-    , mSurface(nullptr, this)
+    , mSurface(new QOffscreenSurface(nullptr, qApp))
     , mGL(this)
 {
+    Q_ASSERT(QThread::currentThread() == qApp->thread());
+    mSurface->setFormat(mContext.format());
+    mSurface->create();
+    connect(this, &QObject::destroyed, mSurface, &QObject::deleteLater);
 }
 
 GLDevice::~GLDevice()
@@ -23,9 +27,7 @@ bool GLDevice::initialize()
     Q_ASSERT(mContext.thread() == QThread::currentThread());
 
     mContext.setShareContext(QOpenGLContext::globalShareContext());
-    mSurface.setFormat(mContext.format());
-    mSurface.create();
-    if (!mContext.create() || !mContext.makeCurrent(&mSurface)
+    if (!mContext.create() || !mContext.makeCurrent(mSurface)
         || !mGL.initialize(&mContext)) {
         mMessages.insert(MessageType::OpenGLVersionNotAvailable, "4.5");
         return false;

@@ -19,7 +19,7 @@ public:
 
 private:
     QOpenGLContext mContext;
-    QOffscreenSurface mSurface;
+    QOffscreenSurface *mSurface;
     GLContext mGL;
     MessagePtrSet mMessages;
 };
