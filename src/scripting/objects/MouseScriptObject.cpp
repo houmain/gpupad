@@ -1,5 +1,6 @@
 #include "MouseScriptObject.h"
 #include <QJsonArray>
+#include <QJsonObject>
 
 namespace {
     std::atomic<int> gLastEditorWidth{ 2 };
@@ -95,10 +96,13 @@ QJsonValue MouseScriptObject::delta() const
 QJsonValue MouseScriptObject::buttons() const
 {
     mWasRead = true;
-    auto array = QJsonArray();
-    for (auto button : mButtons)
-        array.append(static_cast<int>(button));
-    return array;
+    auto buttons = QJsonObject();
+    for (auto button : { Qt::LeftButton, Qt::RightButton, Qt::MiddleButton,
+             Qt::BackButton, Qt::ForwardButton })
+        buttons.insert(QString::number(button), static_cast<int>(ButtonState::Up));
+    for (auto it = mButtons.cbegin(); it != mButtons.cend(); ++it)
+        buttons.insert(QString::number(it.key()), static_cast<int>(it.value()));
+    return buttons;
 }
 
 QJsonValue MouseScriptObject::toPos(QPoint pos) const

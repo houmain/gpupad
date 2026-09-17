@@ -4,7 +4,6 @@
 #include <QObject>
 #include <QPoint>
 #include <QSize>
-#include <QVector>
 #include <QMap>
 #include <vector>
 #include <chrono>
@@ -46,7 +45,7 @@ public:
     const QSize &editorSize() const { return mEditorSize; }
     const QPoint &mousePosition() const { return mMousePosition; }
     const QPoint &prevMousePosition() const { return mPrevMousePosition; }
-    const QVector<ButtonState> &mouseButtonStates() const
+    const QMap<int, ButtonState> &mouseButtonStates() const
     {
         return mMouseButtonStates;
     }
@@ -75,7 +74,7 @@ private:
     QSize mEditorSize;
     QPoint mMousePosition;
     QPoint mPrevMousePosition;
-    QVector<ButtonState> mMouseButtonStates;
+    QMap<int, ButtonState> mMouseButtonStates;
     QMap<int, ButtonState> mKeyStates;
     Clock::time_point mLastUpdateTime{ };
 };

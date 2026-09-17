@@ -164,7 +164,7 @@ There is one JavaScript state for the whole session and the scripts are evaluate
 
 ### Mouse
 
-- `button: [State]` - The state of each mouse button (0 = Up, 1 = Down, 2 = Pressed, -1 = Released).
+- `buttons: {Qt.MouseButton: State}` - States indexed by Qt button values, e.g. `app.mouse.buttons[Qt.LeftButton]` (0 = Up, 1 = Down, 2 = Pressed, -1 = Released).
 - `pos: [x, y]`
 - `prevPos: [x, y]`
 - `delta: [x, y]`
@@ -176,8 +176,8 @@ There is one JavaScript state for the whole session and the scripts are evaluate
 
 ### Keyboard
 
-- `keys: [State]` - The state of each key (0 = Up, 1 = Down, 2 = Pressed, -1 = Released).
-- `keysByKeyCode: [State]`
+- `keys: {Qt.Key: State}` - States indexed by Qt key values, e.g. `app.keyboard.keys[Qt.Key_Left]` (1 = Down, 2 = Pressed, -1 = Released; absent keys are Up).
+- `keysByKeyCode: [State]` - 256-element browser key-code array (0 = Up, 1 = Down, 2 = Pressed, -1 = Released).
 
 </details>
 

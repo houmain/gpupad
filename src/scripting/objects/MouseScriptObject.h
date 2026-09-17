@@ -44,7 +44,7 @@ private:
     QSize mEditorSize{ };
     QPoint mPosition{ };
     QPoint mPrevPosition{ };
-    QVector<ButtonState> mButtons;
+    QMap<int, ButtonState> mButtons;
     bool mFlipCoordY{ };
     mutable bool mWasRead{ };
 };

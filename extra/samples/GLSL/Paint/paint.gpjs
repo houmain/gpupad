@@ -78,7 +78,7 @@
             "name": "uMousePressed",
             "type": "Binding",
             "values": [
-                "app.mouse.buttons[0]"
+                "app.mouse.buttons[Qt.LeftButton]"
             ]
         },
         {
