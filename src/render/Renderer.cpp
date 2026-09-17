@@ -2,6 +2,7 @@
 #include "MessageList.h"
 #include "RenderTask.h"
 #include <QApplication>
+#include <QElapsedTimer>
 #include <QSemaphore>
 
 class Renderer::Worker final : public QObject
@@ -121,11 +122,15 @@ QThread *Renderer::renderThread()
 
 void Renderer::finish()
 {
-    for (auto i = 0; i < 100; ++i) {
+    auto timer = QElapsedTimer();
+    timer.start();
+    while (timer.elapsed() < 10'000) {
         if (!mCurrentTask)
             return;
         qApp->processEvents();
-        QThread::msleep(100);
+        if (!mCurrentTask)
+            return;
+        QThread::msleep(1);
     }
     Q_ASSERT(!"unreachable");
 }

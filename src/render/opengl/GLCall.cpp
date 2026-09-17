@@ -14,7 +14,7 @@ namespace {
             return name;
         if (auto bracket = name.lastIndexOf('['))
             return getBaseName(name.left(bracket));
-        return {};
+        return { };
     }
 
     std::vector<int> getArrayIndices(QStringView name)
@@ -37,12 +37,12 @@ namespace {
     {
         // bindings can only less specific (contain more values)
         if (bindingIndices.size() >= uniformIndices.size())
-            return {};
+            return { };
 
         // but the specified indices must match
         if (!std::equal(bindingIndices.begin(), bindingIndices.end(),
                 uniformIndices.begin()))
-            return {};
+            return { };
 
         auto offset = 0;
         auto count = 1;
@@ -54,9 +54,20 @@ namespace {
             offset += uniformIndices[0];
         } else {
             Q_ASSERT(!"higher dimensions are not supported yet");
-            return {};
+            return { };
         }
         return { offset, count };
+    }
+
+    GLenum getMagFilter(Binding::Filter filter)
+    {
+        switch (filter) {
+        case Binding::Filter::Linear:
+        case Binding::Filter::LinearMipMapNearest:
+        case Binding::Filter::LinearMipMapLinear:  return GL_LINEAR;
+        default:                                   break;
+        }
+        return GL_NEAREST;
     }
 } // namespace
 
@@ -354,9 +365,11 @@ void GLCall::executeDraw(GLContext &gl, MessagePtrSet &messages,
         }
     } else if (mCall.callType == Call::CallType::DrawMeshTasksIndirect) {
         static auto glDrawMeshTasksIndirectNV =
-            gl.getProcAddress<PFNGLDRAWMESHTASKSINDIRECTNVPROC>("glDrawMeshTasksIndirectNV");
+            gl.getProcAddress<PFNGLDRAWMESHTASKSINDIRECTNVPROC>(
+                "glDrawMeshTasksIndirectNV");
         static auto glMultiDrawMeshTasksIndirectNV =
-            gl.getProcAddress<PFNGLMULTIDRAWMESHTASKSINDIRECTNVPROC>("glMultiDrawMeshTasksIndirectNV");
+            gl.getProcAddress<PFNGLMULTIDRAWMESHTASKSINDIRECTNVPROC>(
+                "glMultiDrawMeshTasksIndirectNV");
         const auto offset = static_cast<intptr_t>(indirectOffset);
         if (drawCount == 1 && glDrawMeshTasksIndirectNV) {
             glDrawMeshTasksIndirectNV(offset);
@@ -512,7 +525,7 @@ bool GLCall::updateBindings(GLContext &gl, ScriptEngine &scriptEngine)
         if (!desc.accessed)
             continue;
 
-        auto arrayElement = uint32_t{};
+        auto arrayElement = uint32_t{ };
         forEachArrayElementRec(desc, 0, arrayElement,
             [&](const SpvReflectDescriptorBinding &desc, uint32_t arrayElement,
                 bool *variableLengthArrayDone) {
@@ -592,8 +605,8 @@ MessageType GLCall::applyBinding(const SpvReflectDescriptorBinding &desc,
     case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER: {
         const auto &name = desc.type_description->type_name;
         auto buffer = std::add_pointer_t<GLBuffer>();
-        auto offset = uint32_t{};
-        auto size = uint32_t{};
+        auto offset = uint32_t{ };
+        auto size = uint32_t{ };
         if (name == PrintfBase::bufferBindingName()) {
             buffer = &mProgram->printf().getInitializedBuffer(gl);
         } else if (const auto bufferBinding = find(mBindings.buffers, name)) {
@@ -786,7 +799,7 @@ bool GLCall::applySamplerBinding(const SpvReflectDescriptorBinding &desc,
         gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER,
             static_cast<GLint>(binding.minFilter));
         gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER,
-            static_cast<GLint>(binding.magFilter));
+            getMagFilter(binding.magFilter));
         if (binding.minFilter != Binding::Filter::Nearest) {
             auto anisotropy = 1.0f;
             if (binding.anisotropic)
