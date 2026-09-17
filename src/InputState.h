@@ -5,6 +5,7 @@
 #include <QPoint>
 #include <QSize>
 #include <QVector>
+#include <QMap>
 #include <vector>
 #include <chrono>
 #include <optional>
@@ -49,7 +50,7 @@ public:
     {
         return mMouseButtonStates;
     }
-    const QVector<ButtonState> &keyStates() const { return mKeyStates; }
+    const QMap<int, ButtonState> &keyStates() const { return mKeyStates; }
 
 Q_SIGNALS:
     void frameIndexChanged(int frameIndex);
@@ -75,6 +76,6 @@ private:
     QPoint mMousePosition;
     QPoint mPrevMousePosition;
     QVector<ButtonState> mMouseButtonStates;
-    QVector<ButtonState> mKeyStates;
+    QMap<int, ButtonState> mKeyStates;
     Clock::time_point mLastUpdateTime{ };
 };

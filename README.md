@@ -177,6 +177,7 @@ There is one JavaScript state for the whole session and the scripts are evaluate
 ### Keyboard
 
 - `keys: [State]` - The state of each key (0 = Up, 1 = Down, 2 = Pressed, -1 = Released).
+- `keysByKeyCode: [State]`
 
 </details>
 

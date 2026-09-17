@@ -1,7 +1,7 @@
 
-toggled = this.toggled || []
+toggled = this.toggled || new Array(256).fill(0)
 
-const keys = app.keyboard.keys
+const keys = app.keyboard.keysByKeyCode
 const data = []
 for (let i = 0; i < 256; ++i) {
   const key = keys[i]
