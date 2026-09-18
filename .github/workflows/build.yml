@@ -55,9 +55,10 @@ jobs:
         sudo apt install libgl1-mesa-dev libxcb*-dev libx11-dev libxrandr-dev qt6-wayland qt6-wayland-dev qt6-base-private-dev libvulkan-dev
         sudo apt install qml6-module-qtqml qml6-module-qtqml-workerscript qml6-module-qtqml-models 
         sudo apt install qml6-module-qtquick qml6-module-qtquick-controls qml6-module-qtquick-shapes qml6-module-qtquick-layouts qml6-module-qtquick-templates qml6-module-qtquick-window
+        sudo apt install qt6-multimedia-dev
         # to fix OIIO: https://github.com/colmap/colmap/issues/3811
         #sudo mkdir -p /usr/include/opencv4
-        #sudo apt install qt6-multimedia-dev libopenimageio-dev libopenexr-dev libz-dev openimageio-tools
+        #sudo apt install libopenimageio-dev libopenexr-dev libz-dev openimageio-tools
 
     - name: Install Qt
       if: runner.os != 'Linux'
