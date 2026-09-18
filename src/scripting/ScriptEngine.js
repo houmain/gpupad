@@ -6,7 +6,7 @@
        for (var i = 0, n = arguments.length; i < n; i++) {
          text += (i == 0 ? '' : ' ')
          if (arguments[i] === Qt)
-           text += "Qt"
+           text += "{}"
          else if (typeof arguments[i] === 'object')
            text += JSON.stringify(arguments[i], null, 2)
          else

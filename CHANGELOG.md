@@ -3,6 +3,39 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+Not resetting RenderTask when updating binding values
+
+## [Version 4.4.0] - 2026-09-18
+
+### Added
+
+- Added call type `ComputeSound`.
+- Added audio sample textures.
+- Allow to set audio sample rate and buffer size in session properties.
+- Added App script object methods and properties: `loadSession`, `getItemProperties`, `makeDirectory`, `appendTextFile`, `appendBinaryFile`, `messages`.
+- Added headless arguments `--set` and `--verbose`.
+- Added Recorder action.
+- Added Audio Filter, Audio Samples and Keyboard Synth samples.
+
+### Changed
+
+- Not resetting evaluation when updating binding values.
+- Allow to index keyboard keys by `Qt.Key_A`...
+- Allow to index mouse buttons by `Qt.LeftButton`...
+
+### Fixed
+
+- Fixed D3D texture download layout.
+- Fixed flipped image when saving OpenGL target.
+- Fixed crash when opening dock too quickly after closing.
+- Focusing texture editor on first click.
+
+## [Version 4.3.1] - 2026-08-22
+
+### Fixed
+
+- Fixed Texture flipVertically option (#52)
+
 ## [Version 4.3.0] - 2026-08-17
 
 ### Added
@@ -1157,6 +1190,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 4.4.0]: https://github.com/houmain/gpupad/compare/4.3.1...4.4.0
+[version 4.3.1]: https://github.com/houmain/gpupad/compare/4.3.0...4.3.1
 [version 4.3.0]: https://github.com/houmain/gpupad/compare/4.2.0...4.3.0
 [version 4.2.0]: https://github.com/houmain/gpupad/compare/4.1.0...4.2.0
 [version 4.1.0]: https://github.com/houmain/gpupad/compare/4.0.0...4.1.0
