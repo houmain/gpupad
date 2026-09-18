@@ -31,7 +31,7 @@ struct MediaSource
 
     QSize resolution() const { return QSize(width, height); }
 
-    auto operator<=>(const MediaSource &) const = default;
+    std::strong_ordering operator<=>(const MediaSource &) const = default;
 };
 
 Q_DECLARE_METATYPE(MediaSource)
