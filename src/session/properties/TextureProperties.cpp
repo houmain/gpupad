@@ -261,6 +261,7 @@ TextureProperties::TextureProperties(PropertiesEditor *propertiesEditor)
     , mUi(new Ui::TextureProperties)
 {
     mUi->setupUi(this);
+    mUi->sourceType->setAllowNoSelection(true);
 
     buildFormatMappings();
 

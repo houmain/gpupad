@@ -10,9 +10,14 @@ class DataComboBox final : public QComboBox
 public:
     explicit DataComboBox(QWidget *parent = nullptr);
     void setCurrentData(QVariant data);
+    void setAllowNoSelection(bool allow) { mAllowNoSelection = allow; }
+    bool allowNoSelection() const { return mAllowNoSelection; }
 
     QSize minimumSizeHint() const override;
 
 Q_SIGNALS:
     void currentDataChanged(QVariant data);
+
+private:
+    bool mAllowNoSelection{ };
 };
