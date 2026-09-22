@@ -20,6 +20,8 @@ namespace ShaderCompiler {
             case Shader::ShaderType::TessControl:    return "hs";
             case Shader::ShaderType::TessEvaluation: return "ds";
             case Shader::ShaderType::Compute:        return "cs";
+            case Shader::ShaderType::Task:           return "as";
+            case Shader::ShaderType::Mesh:           return "ms";
             default:                                 return "";
             }
         }
@@ -206,7 +208,13 @@ namespace ShaderCompiler {
             ComPtr<ID3DBlob> &binary,
             ComPtr<ID3D12ShaderReflection> *d3dReflection = nullptr)
         {
-            const auto target = getTarget(input.shaderType, 6, 0);
+            const auto shaderModelMinor =
+                (input.shaderType == Shader::ShaderType::Task
+                        || input.shaderType == Shader::ShaderType::Mesh)
+                ? 5
+                : 0;
+            const auto target =
+                getTarget(input.shaderType, 6, shaderModelMinor);
             if (target.isEmpty()) {
                 messages.insert(input.itemId,
                     MessageType::UnsupportedShaderType);

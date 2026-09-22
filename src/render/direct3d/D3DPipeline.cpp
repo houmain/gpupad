@@ -14,29 +14,36 @@ namespace {
         bool anisotropic, bool comparison)
     {
         using Filter = Binding::Filter;
-        switch (min) {
-        case Filter::Nearest:
-        case Filter::NearestMipMapNearest:
-            return (mag == Filter::Linear
-                    ? D3D12_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT
-                    : anisotropic ? D3D12_FILTER_MIN_MAG_ANISOTROPIC_MIP_POINT
-                                  : D3D12_FILTER_MIN_MAG_MIP_POINT);
-        case Filter::NearestMipMapLinear:
-            return (mag == Filter::Linear
-                    ? D3D12_FILTER_MIN_POINT_MAG_MIP_LINEAR
-                    : D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR);
-        case Filter::LinearMipMapNearest:
-            return (mag == Filter::Linear
-                    ? D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT
-                    : D3D12_FILTER_MIN_LINEAR_MAG_MIP_POINT);
-        case Filter::Linear:
-        case Filter::LinearMipMapLinear:
-            return (mag == Filter::Nearest
-                    ? D3D12_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR
-                    : anisotropic ? D3D12_FILTER_ANISOTROPIC
-                                  : D3D12_FILTER_MIN_MAG_MIP_LINEAR);
-        }
-        return D3D12_FILTER_MIN_MAG_MIP_POINT;
+        const auto filter = [&] {
+            switch (min) {
+            case Filter::Nearest:
+            case Filter::NearestMipMapNearest:
+                return (mag == Filter::Linear
+                        ? D3D12_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT
+                        : anisotropic
+                        ? D3D12_FILTER_MIN_MAG_ANISOTROPIC_MIP_POINT
+                        : D3D12_FILTER_MIN_MAG_MIP_POINT);
+            case Filter::NearestMipMapLinear:
+                return (mag == Filter::Linear
+                        ? D3D12_FILTER_MIN_POINT_MAG_MIP_LINEAR
+                        : D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR);
+            case Filter::LinearMipMapNearest:
+                return (mag == Filter::Linear
+                        ? D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT
+                        : D3D12_FILTER_MIN_LINEAR_MAG_MIP_POINT);
+            case Filter::Linear:
+            case Filter::LinearMipMapLinear:
+                return (mag == Filter::Nearest
+                        ? D3D12_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR
+                        : anisotropic ? D3D12_FILTER_ANISOTROPIC
+                                      : D3D12_FILTER_MIN_MAG_MIP_LINEAR);
+            }
+            return D3D12_FILTER_MIN_MAG_MIP_POINT;
+        }();
+        return (comparison ? static_cast<D3D12_FILTER>(static_cast<UINT>(filter)
+                                 | (D3D12_FILTER_REDUCTION_TYPE_COMPARISON
+                                     << D3D12_FILTER_REDUCTION_TYPE_SHIFT))
+                           : filter);
     }
 
     D3D12_STATIC_BORDER_COLOR getStaticBorderColor(const QColor &color)
@@ -85,6 +92,25 @@ D3DPipeline::D3DPipeline(ItemId itemId, D3DProgram *program)
 
 D3DPipeline::~D3DPipeline() = default;
 
+bool D3DPipeline::setupGraphicsPipelineState(Call::PrimitiveType primitiveType,
+    D3DTarget *target, D3D12_GRAPHICS_PIPELINE_STATE_DESC *state)
+{
+    *state = D3D12_GRAPHICS_PIPELINE_STATE_DESC{ };
+    state->RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+    state->BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+    state->DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+    state->DepthStencilState.DepthEnable = FALSE;
+
+    if (!mProgram.setupPipelineState(*state))
+        return false;
+
+    if (target && !target->setupPipelineState(*state))
+        return false;
+
+    state->PrimitiveTopologyType = toD3DTopologyType(primitiveType);
+    return true;
+}
+
 bool D3DPipeline::createGraphics(D3DContext &context,
     Call::PrimitiveType primitiveType, D3DTarget *target,
     D3DStream *vertexStream)
@@ -94,19 +120,11 @@ bool D3DPipeline::createGraphics(D3DContext &context,
 
     mVertexStream = vertexStream;
 
-    auto state = D3D12_GRAPHICS_PIPELINE_STATE_DESC{};
-    state.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-    state.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-    state.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-    state.DepthStencilState.DepthEnable = FALSE;
-
-    if (!mProgram.setupPipelineState(state))
+    auto state = D3D12_GRAPHICS_PIPELINE_STATE_DESC{ };
+    if (!setupGraphicsPipelineState(primitiveType, target, &state))
         return false;
 
-    if (target && !target->setupPipelineState(state))
-        return false;
-
-    auto inputLayout = std::vector<D3D12_INPUT_ELEMENT_DESC>{};
+    auto inputLayout = std::vector<D3D12_INPUT_ELEMENT_DESC>{ };
     if (!createInputLayout(&inputLayout))
         return false;
     state.InputLayout = { inputLayout.data(),
@@ -118,9 +136,72 @@ bool D3DPipeline::createGraphics(D3DContext &context,
     createDescriptorHeap(context);
 
     state.pRootSignature = mRootSignature.Get();
-    state.PrimitiveTopologyType = toD3DTopologyType(primitiveType);
 
-    if (FAILED(context.device.CreateGraphicsPipelineState(&state,
+    const auto result = context.device.CreateGraphicsPipelineState(&state,
+        IID_PPV_ARGS(&mPipelineState));
+    if (FAILED(result)) {
+        mMessages.insert(mItemId, MessageType::CreatingPipelineFailed);
+        return false;
+    }
+    return true;
+}
+
+bool D3DPipeline::createMesh(D3DContext &context,
+    Call::PrimitiveType primitiveType, D3DTarget *target)
+{
+    if (std::exchange(mCreated, true))
+        return (mPipelineState && mRootSignature);
+
+    auto state = D3D12_GRAPHICS_PIPELINE_STATE_DESC{ };
+    if (!setupGraphicsPipelineState(primitiveType, target, &state))
+        return false;
+
+    if (!createRootSignature(context))
+        return false;
+
+    createDescriptorHeap(context);
+
+    auto meshState = D3DX12_MESH_SHADER_PIPELINE_STATE_DESC{
+        .pRootSignature = mRootSignature.Get(),
+        .PS = state.PS,
+        .BlendState = state.BlendState,
+        .SampleMask = state.SampleMask,
+        .RasterizerState = state.RasterizerState,
+        .DepthStencilState = state.DepthStencilState,
+        .PrimitiveTopologyType = state.PrimitiveTopologyType,
+        .NumRenderTargets = state.NumRenderTargets,
+        .DSVFormat = state.DSVFormat,
+        .SampleDesc = state.SampleDesc,
+        .NodeMask = state.NodeMask,
+        .CachedPSO = state.CachedPSO,
+        .Flags = state.Flags,
+    };
+    std::copy_n(state.RTVFormats, state.NumRenderTargets, meshState.RTVFormats);
+
+    const auto meshShader = mProgram.getShader(Shader::ShaderType::Mesh);
+    if (!meshShader) {
+        mMessages.insert(mItemId, MessageType::CreatingPipelineFailed);
+        return false;
+    }
+    meshState.MS = D3D12_SHADER_BYTECODE{
+        meshShader->binary()->GetBufferPointer(),
+        meshShader->binary()->GetBufferSize(),
+    };
+    if (const auto taskShader = mProgram.getShader(Shader::ShaderType::Task))
+        meshState.AS = D3D12_SHADER_BYTECODE{
+            taskShader->binary()->GetBufferPointer(),
+            taskShader->binary()->GetBufferSize(),
+        };
+
+    auto pipelineStream = CD3DX12_PIPELINE_STATE_STREAM2(meshState);
+    const auto streamDesc = D3D12_PIPELINE_STATE_STREAM_DESC{
+        .SizeInBytes = sizeof(pipelineStream),
+        .pPipelineStateSubobjectStream = &pipelineStream,
+    };
+
+    auto device = ComPtr<ID3D12Device2>();
+    if (FAILED(context.device.QueryInterface(IID_PPV_ARGS(&device)))
+        || FAILED(device->CreatePipelineState(&streamDesc,
             IID_PPV_ARGS(&mPipelineState)))) {
         mMessages.insert(mItemId, MessageType::CreatingPipelineFailed);
         return false;
@@ -133,7 +214,7 @@ bool D3DPipeline::createCompute(D3DContext &context)
     if (std::exchange(mCreated, true))
         return (mPipelineState && mRootSignature);
 
-    auto state = D3D12_COMPUTE_PIPELINE_STATE_DESC{};
+    auto state = D3D12_COMPUTE_PIPELINE_STATE_DESC{ };
 
     if (!mProgram.setupPipelineState(state))
         return false;
@@ -161,12 +242,12 @@ bool D3DPipeline::createInputLayout(
         return true;
 
     auto reflection = vertexShader->d3dReflection();
-    auto desc = D3D12_SHADER_DESC{};
+    auto desc = D3D12_SHADER_DESC{ };
     reflection->GetDesc(&desc);
 
     auto canRender = true;
     for (auto i = 0u; i < desc.InputParameters; ++i) {
-        auto paramDesc = D3D12_SIGNATURE_PARAMETER_DESC{};
+        auto paramDesc = D3D12_SIGNATURE_PARAMETER_DESC{ };
         reflection->GetInputParameterDesc(i, &paramDesc);
 
         if (paramDesc.SystemValueType != D3D_NAME_UNDEFINED)
@@ -219,15 +300,15 @@ bool D3DPipeline::createRootSignature(D3DContext &context)
     };
     auto descriptorTableDescs = std::vector<DescriptorTableDesc>();
     auto staticSamplers = std::vector<CD3DX12_STATIC_SAMPLER_DESC>();
-    auto descriptorHeapOffset = UINT{};
+    auto descriptorHeapOffset = UINT{ };
     for (const auto [stage, reflection] : mProgram.d3dReflection()) {
         const auto visibility = stageToVisibility(stage);
         auto rangesPerType =
             std::vector<std::vector<CD3DX12_DESCRIPTOR_RANGE>>();
-        auto shaderDesc = D3D12_SHADER_DESC{};
+        auto shaderDesc = D3D12_SHADER_DESC{ };
         reflection->GetDesc(&shaderDesc);
         for (auto i = 0u; i < shaderDesc.BoundResources; ++i) {
-            auto bindDesc = D3D12_SHADER_INPUT_BIND_DESC{};
+            auto bindDesc = D3D12_SHADER_INPUT_BIND_DESC{ };
             reflection->GetResourceBindingDesc(i, &bindDesc);
 
             if (bindDesc.Type == D3D_SIT_SAMPLER) {
@@ -290,7 +371,7 @@ bool D3DPipeline::createRootSignature(D3DContext &context)
         }
 
         for (auto &ranges : rangesPerType) {
-            auto numDescriptors = UINT{};
+            auto numDescriptors = UINT{ };
             for (const auto &range : ranges)
                 numDescriptors += range.NumDescriptors;
             mDescriptorTableEntries.push_back(numDescriptors);
@@ -324,7 +405,7 @@ bool D3DPipeline::createRootSignature(D3DContext &context)
 void D3DPipeline::createDescriptorHeap(D3DContext &context)
 {
     const auto numDescriptors = std::accumulate(mDescriptorTableEntries.begin(),
-        mDescriptorTableEntries.end(), UINT{});
+        mDescriptorTableEntries.end(), UINT{ });
     if (!numDescriptors)
         return;
 
@@ -365,10 +446,10 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
     auto canRender = true;
     for (const auto [stage, reflection] : mProgram.d3dReflection()) {
         const auto visibility = stageToVisibility(stage);
-        auto shaderDesc = D3D12_SHADER_DESC{};
+        auto shaderDesc = D3D12_SHADER_DESC{ };
         reflection->GetDesc(&shaderDesc);
         for (auto i = 0u; i < shaderDesc.BoundResources; ++i) {
-            auto bindDesc = D3D12_SHADER_INPUT_BIND_DESC{};
+            auto bindDesc = D3D12_SHADER_INPUT_BIND_DESC{ };
             reflection->GetResourceBindingDesc(i, &bindDesc);
 
             if (bindDesc.Type == D3D_SIT_SAMPLER)
@@ -388,7 +469,7 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
 
             switch (bindDesc.Type) {
             case D3D_SIT_CBUFFER: {
-                auto buffer = std::add_pointer_t<D3DBuffer>{};
+                auto buffer = std::add_pointer_t<D3DBuffer>{ };
                 if (auto bufferBinding = find(mBindings.buffers, bindingName)) {
                     buffer = static_cast<D3DBuffer *>(bufferBinding->buffer);
                     mUsedItems += bufferBinding->bindingItemId;
@@ -401,7 +482,7 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
 
                     if (auto cbuffer = reflection->GetConstantBufferByName(
                             bindDesc.Name)) {
-                        auto cbufferDesc = D3D12_SHADER_BUFFER_DESC{};
+                        auto cbufferDesc = D3D12_SHADER_BUFFER_DESC{ };
                         cbuffer->GetDesc(&cbufferDesc);
                         if (!dynamic.buffer)
                             dynamic.buffer.emplace(cbufferDesc.Size);
@@ -440,7 +521,7 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
             case D3D_SIT_BYTEADDRESS:
             case D3D_SIT_UAV_RWSTRUCTURED:
             case D3D_SIT_UAV_RWBYTEADDRESS: {
-                auto buffer = std::add_pointer_t<D3DBuffer>{};
+                auto buffer = std::add_pointer_t<D3DBuffer>{ };
                 if (bindingName == PrintfBase::bufferBindingName()) {
                     buffer = &mProgram.printf().getInitializedBuffer(context);
                 } else if (

@@ -20,6 +20,8 @@ public:
 
     bool createGraphics(D3DContext &context, Call::PrimitiveType primitiveType,
         D3DTarget *target, D3DStream *vertexStream);
+    bool createMesh(D3DContext &context, Call::PrimitiveType primitiveType,
+        D3DTarget *target);
     bool createCompute(D3DContext &context);
     bool bindGraphics(D3DContext &context, ScriptEngine &scriptEngine);
     bool bindCompute(D3DContext &context, ScriptEngine &scriptEngine);
@@ -45,6 +47,8 @@ private:
         std::optional<D3DBuffer> buffer;
     };
 
+    bool setupGraphicsPipelineState(Call::PrimitiveType primitiveType,
+        D3DTarget *target, D3D12_GRAPHICS_PIPELINE_STATE_DESC *state);
     bool createInputLayout(std::vector<D3D12_INPUT_ELEMENT_DESC> *inputLayout);
     bool createRootSignature(D3DContext &context);
     void createDescriptorHeap(D3DContext &context);

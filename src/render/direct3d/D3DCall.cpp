@@ -116,11 +116,6 @@ void D3DCall::execute(D3DContext &context, Bindings &&bindings,
         return;
     }
 
-    if (mKind.mesh) {
-        mMessages.insert(mCall.id, MessageType::NotImplemented, "Mesh Shaders");
-        return;
-    }
-
     if (mKind.draw || mKind.compute || mKind.trace) {
         if (!mProgram) {
             messages.insert(mCall.id, MessageType::ProgramNotAssigned);
@@ -243,10 +238,14 @@ void D3DCall::executeDraw(D3DContext &context, MessagePtrSet &messages,
         return;
     }
 
-    if (!mPipeline
-        || !mPipeline->createGraphics(context, mCall.primitiveType, mTarget,
-            mVertexStream)
-        || !mPipeline->bindGraphics(context, scriptEngine))
+    if (!mPipeline)
+        return;
+
+    const auto pipelineCreated = (mKind.mesh
+            ? mPipeline->createMesh(context, mCall.primitiveType, mTarget)
+            : mPipeline->createGraphics(context, mCall.primitiveType, mTarget,
+                  mVertexStream));
+    if (!pipelineCreated || !mPipeline->bindGraphics(context, scriptEngine))
         return;
 
     if (mIndexBuffer)
@@ -257,16 +256,24 @@ void D3DCall::executeDraw(D3DContext &context, MessagePtrSet &messages,
         mUsedItems += mVertexStream->itemId();
     }
 
-    context.graphicsCommandList->IASetPrimitiveTopology(
-        toD3DPrimitiveTopology(mCall.primitiveType,
-            scriptEngine.evaluateUInt(mCall.patchVertices, mCall.id)));
+    if (!mKind.mesh)
+        context.graphicsCommandList->IASetPrimitiveTopology(
+            toD3DPrimitiveTopology(mCall.primitiveType,
+                scriptEngine.evaluateUInt(mCall.patchVertices, mCall.id)));
 
     if (mTarget && !mTarget->bind(context)) {
         mMessages.insert(mCall.id, MessageType::TargetNotAssigned);
         return;
     }
 
-    if (mCall.callType == Call::CallType::Draw) {
+    if (mCall.callType == Call::CallType::DrawMeshTasks) {
+        auto commandList = ComPtr<ID3D12GraphicsCommandList6>();
+        if (SUCCEEDED(context.graphicsCommandList.As(&commandList)))
+            commandList->DispatchMesh(
+                scriptEngine.evaluateUInt(mCall.workGroupsX, mCall.id),
+                scriptEngine.evaluateUInt(mCall.workGroupsY, mCall.id),
+                scriptEngine.evaluateUInt(mCall.workGroupsZ, mCall.id));
+    } else if (mCall.callType == Call::CallType::Draw) {
         context.graphicsCommandList->DrawInstanced(count, instanceCount, first,
             firstInstance);
     } else if (mCall.callType == Call::CallType::DrawIndexed) {
@@ -359,8 +366,8 @@ void D3DCall::executeCompute(D3DContext &context, MessagePtrSet &messages,
         return;
 
     if (mCall.callType == Call::CallType::ComputeSound) {
-        context.graphicsCommandList->Dispatch(
-            context.soundWorkGroupCount, 1, 1);
+        context.graphicsCommandList->Dispatch(context.soundWorkGroupCount, 1,
+            1);
     } else if (mCall.callType == Call::CallType::Compute) {
         context.graphicsCommandList->Dispatch(
             scriptEngine.evaluateUInt(mCall.workGroupsX, mCall.id),
@@ -384,8 +391,8 @@ void D3DCall::executeCompute(D3DContext &context, MessagePtrSet &messages,
             scriptEngine.evaluateUInt(mIndirectOffset, mCall.id);
         mIndirectBuffer->prepareIndirectBuffer(context);
         context.graphicsCommandList->ExecuteIndirect(
-            mIndirectCommandSignature.Get(), 1,
-            mIndirectBuffer->resource(), indirectOffset, nullptr, 0);
+            mIndirectCommandSignature.Get(), 1, mIndirectBuffer->resource(),
+            indirectOffset, nullptr, 0);
     }
     mUsedItems += mPipeline->usedItems();
 }

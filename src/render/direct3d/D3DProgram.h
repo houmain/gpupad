@@ -19,6 +19,8 @@ public:
     const StageD3DReflection &d3dReflection() const { return mD3DReflection; }
     const std::vector<D3DShader> &shaders() const { return mShaders; }
     const D3DShader *getVertexShader() const;
+    const D3DShader *getShader(Shader::ShaderType type) const;
+    bool hasShader(Shader::ShaderType type) const;
     const SpvReflectDescriptorBinding *getSpirvDescriptorBinding(
         Shader::ShaderType stage, const QString &name) const;
     D3DPrintf &printf() { return mPrintf; }

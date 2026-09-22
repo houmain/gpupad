@@ -81,10 +81,20 @@ bool D3DProgram::link(D3DContext &context)
 
 const D3DShader *D3DProgram::getVertexShader() const
 {
+    return getShader(Shader::ShaderType::Vertex);
+}
+
+const D3DShader *D3DProgram::getShader(Shader::ShaderType type) const
+{
     for (const auto &shader : mShaders)
-        if (shader.type() == Shader::ShaderType::Vertex)
+        if (shader.type() == type)
             return &shader;
     return nullptr;
+}
+
+bool D3DProgram::hasShader(Shader::ShaderType type) const
+{
+    return getShader(type) != nullptr;
 }
 
 const SpvReflectDescriptorBinding *D3DProgram::getSpirvDescriptorBinding(
@@ -98,9 +108,13 @@ const SpvReflectDescriptorBinding *D3DProgram::getSpirvDescriptorBinding(
 
 bool D3DProgram::setupPipelineState(D3D12_GRAPHICS_PIPELINE_STATE_DESC &state)
 {
-    for (auto &shader : mShaders)
+    for (auto &shader : mShaders) {
+        if (shader.type() == Shader::ShaderType::Task
+            || shader.type() == Shader::ShaderType::Mesh)
+            continue;
         if (!setByteCode(state, shader.type(), shader.binary()))
             return false;
+    }
 
     return true;
 }
