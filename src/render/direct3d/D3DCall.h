@@ -77,6 +77,7 @@ private:
 
     D3DBuffer *mIndirectBuffer{ };
     int mIndirectStride{ };
+    ComPtr<ID3D12CommandSignature> mIndirectCommandSignature;
 
     QSet<ItemId> mUsedItems;
     std::unique_ptr<D3DPipeline> mPipeline;

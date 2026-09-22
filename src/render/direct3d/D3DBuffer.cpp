@@ -220,6 +220,12 @@ void D3DBuffer::prepareIndexBuffer(D3DContext &context)
     resourceBarrier(context, D3D12_RESOURCE_STATE_INDEX_BUFFER);
 }
 
+void D3DBuffer::prepareIndirectBuffer(D3DContext &context)
+{
+    updateReadOnlyBuffer(context);
+    resourceBarrier(context, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+}
+
 void D3DBuffer::prepareConstantBufferView(D3DContext &context,
     D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
 {

@@ -272,8 +272,27 @@ void D3DCall::executeDraw(D3DContext &context, MessagePtrSet &messages,
     } else if (mCall.callType == Call::CallType::DrawIndexed) {
         context.graphicsCommandList->DrawIndexedInstanced(count, instanceCount,
             first, baseVertex, firstInstance);
-    } else {
-        mMessages.insert(mCall.id, MessageType::NotImplemented, "Call Type");
+    } else if (mCall.callType == Call::CallType::DrawIndirect
+        || mCall.callType == Call::CallType::DrawIndexedIndirect) {
+        if (!mIndirectCommandSignature) {
+            const auto argument = D3D12_INDIRECT_ARGUMENT_DESC{
+                .Type = (mCall.callType == Call::CallType::DrawIndirect
+                        ? D3D12_INDIRECT_ARGUMENT_TYPE_DRAW
+                        : D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED),
+            };
+            const auto signature = D3D12_COMMAND_SIGNATURE_DESC{
+                .ByteStride = static_cast<UINT>(mIndirectStride),
+                .NumArgumentDescs = 1,
+                .pArgumentDescs = &argument,
+            };
+            if (FAILED(context.device.CreateCommandSignature(&signature,
+                    nullptr, IID_PPV_ARGS(&mIndirectCommandSignature))))
+                return mMessages.insert(mCall.id, MessageType::CallFailed);
+        }
+        mIndirectBuffer->prepareIndirectBuffer(context);
+        context.graphicsCommandList->ExecuteIndirect(
+            mIndirectCommandSignature.Get(), drawCount,
+            mIndirectBuffer->resource(), indirectOffset, nullptr, 0);
     }
     mUsedItems += mPipeline->usedItems();
 }
@@ -347,6 +366,26 @@ void D3DCall::executeCompute(D3DContext &context, MessagePtrSet &messages,
             scriptEngine.evaluateUInt(mCall.workGroupsX, mCall.id),
             scriptEngine.evaluateUInt(mCall.workGroupsY, mCall.id),
             scriptEngine.evaluateUInt(mCall.workGroupsZ, mCall.id));
+    } else if (mCall.callType == Call::CallType::ComputeIndirect) {
+        if (!mIndirectCommandSignature) {
+            const auto argument = D3D12_INDIRECT_ARGUMENT_DESC{
+                .Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH,
+            };
+            const auto signature = D3D12_COMMAND_SIGNATURE_DESC{
+                .ByteStride = static_cast<UINT>(mIndirectStride),
+                .NumArgumentDescs = 1,
+                .pArgumentDescs = &argument,
+            };
+            if (FAILED(context.device.CreateCommandSignature(&signature,
+                    nullptr, IID_PPV_ARGS(&mIndirectCommandSignature))))
+                return mMessages.insert(mCall.id, MessageType::CallFailed);
+        }
+        const auto indirectOffset =
+            scriptEngine.evaluateUInt(mIndirectOffset, mCall.id);
+        mIndirectBuffer->prepareIndirectBuffer(context);
+        context.graphicsCommandList->ExecuteIndirect(
+            mIndirectCommandSignature.Get(), 1,
+            mIndirectBuffer->resource(), indirectOffset, nullptr, 0);
     }
     mUsedItems += mPipeline->usedItems();
 }

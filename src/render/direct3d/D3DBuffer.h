@@ -25,6 +25,7 @@ public:
     void prepareCopySource(D3DContext &context);
     void prepareVertexBuffer(D3DContext &context);
     void prepareIndexBuffer(D3DContext &context);
+    void prepareIndirectBuffer(D3DContext &context);
     void prepareConstantBufferView(D3DContext &context,
         D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
     void prepareUnorderedAccessView(D3DContext &context,
