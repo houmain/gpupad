@@ -7,6 +7,7 @@
 
 DXGI_FORMAT toDXGIFormat(Texture::Format format);
 DXGI_FORMAT toDXGITypelessFormat(Texture::Format format);
+DXGI_FORMAT toDXGIShaderResourceFormat(Texture::Format format);
 DXGI_FORMAT toDXGIFormat(Field::DataType type, int count);
 DXGI_SAMPLE_DESC toDXGISampleDesc(int samples);
 D3D12_PRIMITIVE_TOPOLOGY_TYPE toD3DTopologyType(Call::PrimitiveType type);

@@ -14,6 +14,9 @@ public:
     D3DTexture(const Buffer &buffer, D3DBuffer *textureBuffer,
         Texture::Format format, D3DRenderSession &renderSession);
     D3DTexture(TextureData data, int samples, ItemId itemId = 0);
+    D3DTexture(D3DTexture &&) noexcept = default;
+    D3DTexture &operator=(D3DTexture &&) noexcept = default;
+    ~D3DTexture();
 
     void boundAsSampler() { }
     void boundAsImage() { }
@@ -33,6 +36,7 @@ public:
     bool swap(D3DTexture &other);
     bool updateMipmaps(D3DContext &context);
     bool deviceCopyModified() const { return mDeviceCopyModified; }
+    void prepareExternalRead(D3DContext &context);
     void beginDownload(D3DContext &context);
     bool finishDownload();
     ShareHandle getShareHandle() const;

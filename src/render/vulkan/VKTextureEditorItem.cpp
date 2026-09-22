@@ -375,11 +375,19 @@ bool VKTextureEditorItem::copySharedTexture(ShareHandle shareHandle,
 {
     if (!window().initialized())
         return false;
+
+    const auto shareHandleData = shareHandle.lock();
+    const auto shareHandleChanged =
+        shareHandleData != mCurrentShareHandle.lock();
+    if (shareHandleChanged) {
+        auto deviceLock = window().beginCommandQueue();
+        window().submitCommandQueueWaitIdle();
+    }
+
     auto deviceLock = window().beginCommandQueue();
     auto &context = window().context();
 
-    const auto shareHandleData = shareHandle.lock();
-    if (shareHandleData != mCurrentShareHandle.lock())
+    if (shareHandleChanged)
         releaseTextureSharing(context);
 
     if (!shareHandleData)

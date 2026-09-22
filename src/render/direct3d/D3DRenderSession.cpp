@@ -147,6 +147,9 @@ void D3DRenderSession::render()
 
     beginDownloadModifiedResources(*mCommandQueue);
 
+    for (auto &[itemId, texture] : mCommandQueue->textures)
+        texture.prepareExternalRead(context);
+
     context.graphicsCommandList->ResolveQueryData(mTimeQueryHeap.Get(),
         D3D12_QUERY_TYPE_TIMESTAMP, 0, static_cast<UINT>(timeQueryCount() * 2),
         mTimeQueryResolveBuffer.Get(), 0);

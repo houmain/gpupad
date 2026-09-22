@@ -148,12 +148,13 @@ DXGI_FORMAT toDXGITypelessFormat(Texture::Format format)
     //case TF::RGB5A1:
     //case TF::RGBA4:
     case TF::RGB10A2:               return DXGI_FORMAT_R10G10B10A2_TYPELESS;
-    //case TF::D16:
+    case TF::D16:                   return DXGI_FORMAT_R16_TYPELESS;
     //case TF::D24:
-    //case TF::D24S8:
+    case TF::D24S8:                 return DXGI_FORMAT_R24G8_TYPELESS;
     //case TF::D32:
-    //case TF::D32F:
-    //case TF::D32FS8X24:
+    case TF::D32:
+    case TF::D32F:                  return DXGI_FORMAT_R32_TYPELESS;
+    case TF::D32FS8X24:             return DXGI_FORMAT_R32G8X24_TYPELESS;
     //case TF::S8:
     case TF::RGB_DXT1:
     case TF::RGBA_DXT1:             return DXGI_FORMAT_BC1_TYPELESS;
@@ -245,7 +246,7 @@ DXGI_SAMPLE_DESC toDXGISampleDesc(int samples)
 {
     return {
         static_cast<UINT>(samples),
-        (samples > 1 ? DXGI_STANDARD_MULTISAMPLE_QUALITY_PATTERN : 0),
+        0,
     };
 }
 
@@ -387,4 +388,17 @@ D3D12_TEXTURE_ADDRESS_MODE toD3D(Binding::WrapMode wrapMode)
     }
     Q_ASSERT(!"not handled");
     return D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+}
+
+DXGI_FORMAT toDXGIShaderResourceFormat(Texture::Format format)
+{
+    using TF = Texture::Format;
+    switch (format) {
+    case TF::D16:       return DXGI_FORMAT_R16_UNORM;
+    case TF::D24S8:     return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+    case TF::D32:
+    case TF::D32F:      return DXGI_FORMAT_R32_FLOAT;
+    case TF::D32FS8X24: return DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
+    default:            return toDXGIFormat(format);
+    }
 }

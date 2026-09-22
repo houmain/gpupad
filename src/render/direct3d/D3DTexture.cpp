@@ -114,10 +114,15 @@ D3DTexture::D3DTexture(TextureData data, int samples, ItemId itemId)
 {
 }
 
+D3DTexture::~D3DTexture()
+{
+    mShareHandle.reset();
+}
+
 D3D12_SHADER_RESOURCE_VIEW_DESC D3DTexture::shaderResourceViewDesc() const
 {
     auto desc = D3D12_SHADER_RESOURCE_VIEW_DESC{
-        .Format = toDXGIFormat(mFormat),
+        .Format = toDXGIShaderResourceFormat(mFormat),
         .ViewDimension = toSRVDimension(mTarget, mSamples),
         .Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
     };
@@ -269,7 +274,7 @@ void D3DTexture::prepareUnorderedAccessView(D3DContext &context,
 
 void D3DTexture::prepareRenderTargetView(D3DContext &context)
 {
-    reload(false);
+    reload(true);
     create(context);
     resourceBarrier(context, D3D12_RESOURCE_STATE_RENDER_TARGET);
     mDeviceCopyModified = true;
@@ -279,7 +284,7 @@ void D3DTexture::prepareRenderTargetView(D3DContext &context)
 
 void D3DTexture::prepareDepthStencilView(D3DContext &context)
 {
-    reload(false);
+    reload(true);
     create(context);
     resourceBarrier(context, D3D12_RESOURCE_STATE_DEPTH_WRITE);
     mDeviceCopyModified = true;
@@ -357,6 +362,7 @@ bool D3DTexture::swap(D3DTexture &other)
     std::swap(mTextureBuffer, other.mTextureBuffer);
     std::swap(mCreated, other.mCreated);
     std::swap(mResource, other.mResource);
+    std::swap(mShareHandle, other.mShareHandle);
     std::swap(mCurrentState, other.mCurrentState);
     return true;
 }
@@ -399,23 +405,31 @@ bool D3DTexture::updateMipmaps(D3DContext &context)
     return true;
 }
 
+void D3DTexture::prepareExternalRead(D3DContext &context)
+{
+    if (mDeviceCopyModified)
+        resourceBarrier(context, D3D12_RESOURCE_STATE_COMMON);
+}
+
 void D3DTexture::create(D3DContext &context)
 {
     if (std::exchange(mCreated, true))
         return;
 
-    auto dxgiFormat = toDXGITypelessFormat(format());
-    if (!dxgiFormat)
-        dxgiFormat = toDXGIFormat(format());
+    auto dxgiFormat = (mKind.depth || mKind.stencil
+            ? toDXGITypelessFormat(format())
+            : toDXGIFormat(format()));
     if (!dxgiFormat) {
         mMessages.insert(mItemId, MessageType::UnsupportedTextureFormat);
         return;
     }
 
-    const auto flags = D3D12_RESOURCE_FLAGS{ mKind.depth || mKind.stencil
+    auto flags = D3D12_RESOURCE_FLAGS{ mKind.depth || mKind.stencil
             ? D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
-            : D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
-                | D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS };
+            : D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET };
+    if (!mKind.depth && !mKind.stencil && samples() == 1)
+        flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
+            | D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS;
 
     const auto faceSlices = depth() * (isCubemapTarget(target()) ? 6 : 1);
     const auto resourceDesc = D3D12_RESOURCE_DESC{
@@ -432,7 +446,10 @@ void D3DTexture::create(D3DContext &context)
     };
     const auto heapProperties =
         CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-    const auto heapFlags = D3D12_HEAP_FLAG_SHARED;
+    const auto cannotShare =
+        samples() > 1 && (mKind.depth || mKind.stencil);
+    const auto heapFlags =
+        (cannotShare ? D3D12_HEAP_FLAG_NONE : D3D12_HEAP_FLAG_SHARED);
     if (FAILED(context.device.CreateCommittedResource(&heapProperties,
             heapFlags, &resourceDesc, D3D12_RESOURCE_STATE_COMMON, nullptr,
             IID_PPV_ARGS(&mResource)))) {
@@ -440,13 +457,20 @@ void D3DTexture::create(D3DContext &context)
         return;
     }
 
+    if (cannotShare)
+        return;
+
     auto shareHandle = HANDLE{};
     AssertIfFailed(context.device.CreateSharedHandle(resource(), nullptr,
         GENERIC_ALL, nullptr, &shareHandle));
-    mShareHandle = std::make_shared<ShareHandleData>(ShareHandleData{
-        ShareHandleType::D3D12_RESOURCE,
-        shareHandle,
-    });
+    mShareHandle = ShareHandleSource(new ShareHandleData{
+        ShareHandleType::D3D12_RESOURCE, shareHandle },
+        [](const ShareHandleData *data) {
+            if (data->handle)
+                CloseHandle(static_cast<HANDLE>(data->handle));
+            delete data;
+        });
+
 }
 
 ComPtr<ID3D12Resource> D3DTexture::createStagingBuffer(D3DContext &context,
