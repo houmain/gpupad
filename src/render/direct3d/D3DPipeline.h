@@ -3,11 +3,11 @@
 
 #  include "../PipelineBase.h"
 #  include "D3DShader.h"
+#  include "D3DStream.h"
 #  include <map>
 
 class D3DTarget;
 class D3DProgram;
-class D3DStream;
 class D3DBuffer;
 class D3DTexture;
 class D3DAccelerationStructure;
@@ -23,6 +23,7 @@ public:
     bool createCompute(D3DContext &context);
     bool bindGraphics(D3DContext &context, ScriptEngine &scriptEngine);
     bool bindCompute(D3DContext &context, ScriptEngine &scriptEngine);
+    void bindVertexBuffers(D3DContext &context);
 
 private:
     struct DescriptorHeapEntry
@@ -56,6 +57,7 @@ private:
 
     D3DProgram &mProgram;
     D3DStream *mVertexStream{};
+    std::vector<const D3DStream::D3DAttribute *> mVertexAttributes;
     D3DAccelerationStructure *mAccelerationStructure{};
     bool mCreated{};
     ComPtr<ID3D12PipelineState> mPipelineState;

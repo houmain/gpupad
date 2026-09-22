@@ -253,7 +253,7 @@ void D3DCall::executeDraw(D3DContext &context, MessagePtrSet &messages,
         bindIndexBuffer(context, scriptEngine);
 
     if (mVertexStream) {
-        mVertexStream->bind(context);
+        mPipeline->bindVertexBuffers(context);
         mUsedItems += mVertexStream->itemId();
     }
 

@@ -11,7 +11,7 @@
 
 namespace {
     D3D12_FILTER getFilter(Binding::Filter min, Binding::Filter mag,
-        bool anisotropic)
+        bool anisotropic, bool comparison)
     {
         using Filter = Binding::Filter;
         switch (min) {
@@ -187,12 +187,14 @@ bool D3DPipeline::createInputLayout(
         }
         mUsedItems += attribute->usedItems;
 
+        const auto inputSlot = static_cast<UINT>(mVertexAttributes.size());
+        mVertexAttributes.push_back(attribute);
         inputLayout->push_back(D3D12_INPUT_ELEMENT_DESC{
             .SemanticName = paramDesc.SemanticName,
             .SemanticIndex = paramDesc.SemanticIndex,
             .Format = toDXGIFormat(attribute->type, attribute->count),
-            .InputSlot = i,
-            .AlignedByteOffset = static_cast<UINT>(attribute->offset),
+            .InputSlot = inputSlot,
+            .AlignedByteOffset = 0,
             .InputSlotClass = (attribute->divisor >= 1
                     ? D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA
                     : D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA),
@@ -200,6 +202,12 @@ bool D3DPipeline::createInputLayout(
         });
     }
     return canRender;
+}
+
+void D3DPipeline::bindVertexBuffers(D3DContext &context)
+{
+    if (mVertexStream)
+        mVertexStream->bind(context, mVertexAttributes);
 }
 
 bool D3DPipeline::createRootSignature(D3DContext &context)
@@ -236,7 +244,9 @@ bool D3DPipeline::createRootSignature(D3DContext &context)
                     mUsedItems += binding->bindingItemId;
 
                     sampler.Filter = getFilter(binding->minFilter,
-                        binding->magFilter, binding->anisotropic),
+                        binding->magFilter, binding->anisotropic,
+                        binding->comparisonFunc
+                            != Binding::ComparisonFunc::NoComparisonFunc),
                     sampler.AddressU = toD3D(binding->wrapModeX);
                     sampler.AddressV = toD3D(binding->wrapModeY);
                     sampler.AddressW = toD3D(binding->wrapModeZ);

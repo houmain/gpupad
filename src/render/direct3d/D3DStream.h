@@ -17,7 +17,6 @@ public:
         int count{};
         int stride{};
         int offset{};
-        bool isUsed{};
     };
 
     explicit D3DStream(const Stream &stream);
@@ -27,7 +26,8 @@ public:
     bool usesBuffer(const D3DBuffer *buffer) const;
     const D3DAttribute *findAttribute(const QString &semanticName,
         int semanticIndex);
-    void bind(D3DContext &context);
+    void bind(D3DContext &context,
+        const std::vector<const D3DAttribute *> &attributes);
     int maxElementCount() const { return mMaxElementCount; }
 
 private:

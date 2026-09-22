@@ -67,26 +67,27 @@ auto D3DStream::findAttribute(const QString &semanticName, int semanticIndex)
     for (auto &attribute : mAttributes)
         if ((attribute.name == semanticName + QString::number(semanticIndex))
             || (semanticIndex == 0 && attribute.name == semanticName)) {
-
-            attribute.isUsed = true;
             return &attribute;
         }
     return nullptr;
 }
 
-void D3DStream::bind(D3DContext &context)
+void D3DStream::bind(D3DContext &context,
+    const std::vector<const D3DAttribute *> &attributes)
 {
     auto buffers = std::vector<D3D12_VERTEX_BUFFER_VIEW>();
-    for (const auto &attribute : mAttributes) {
-        if (!attribute.isUsed)
+    buffers.reserve(attributes.size());
+    for (const auto *attribute : attributes) {
+        attribute->buffer->prepareVertexBuffer(context);
+
+        const auto offset = static_cast<UINT64>(attribute->offset);
+        const auto bufferSize = static_cast<UINT64>(attribute->buffer->size());
+        if (offset >= bufferSize)
             continue;
-
-        attribute.buffer->prepareVertexBuffer(context);
-
         buffers.push_back(D3D12_VERTEX_BUFFER_VIEW{
-            .BufferLocation = attribute.buffer->getDeviceAddress(),
-            .SizeInBytes = static_cast<UINT>(attribute.buffer->size()),
-            .StrideInBytes = static_cast<UINT>(attribute.stride),
+            .BufferLocation = attribute->buffer->getDeviceAddress() + offset,
+            .SizeInBytes = static_cast<UINT>(bufferSize - offset),
+            .StrideInBytes = static_cast<UINT>(attribute->stride),
         });
     }
     context.graphicsCommandList->IASetVertexBuffers(0,
