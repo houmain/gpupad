@@ -17,8 +17,8 @@ Item {
   implicitHeight: content.implicitHeight
 
   function setValue(index, value) {
-    const nextValues = values.slice()
-    nextValues[index] = value
+    const nextValues = values.map((currentValue, currentIndex) =>
+      Number(currentIndex === index ? value : currentValue).toFixed(3))
     values = nextValues
 
     const binding = app.findItem(bindingId)
@@ -36,6 +36,8 @@ Item {
 
       Label {
         text: bindingControl.name
+        font.bold: true
+        font.pointSize: 10
         Layout.fillWidth: true
       }
 

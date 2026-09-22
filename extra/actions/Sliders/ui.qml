@@ -16,15 +16,8 @@ ThemedScrollView {
     width: Math.max(0, root.availableWidth - 40)
 
     Label {
-      text: `Session: '${app.session.name}'`
-    }
-
-    Label {
-      text: `Current Editor: '${app.currentEditor?.title}'`
-    }
-
-    Label {
-      text: `Viewport Size: '${app.currentEditor?.viewportSize}'`
+      text: `Add some Bindings to session to populate sliders`
+      visible: sliders.children.length === 1
     }
   }
 
