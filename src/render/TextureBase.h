@@ -14,6 +14,8 @@ public:
     TextureBase(const Buffer &buffer, Texture::Format format,
         RenderSessionBase &renderSession);
     TextureBase(TextureData data, int samples, ItemId itemId = 0);
+    TextureBase(TextureBase &&) noexcept = default;
+    TextureBase &operator=(TextureBase &&) noexcept = default;
     virtual ~TextureBase() = default;
     bool operator==(const TextureBase &rhs) const;
 

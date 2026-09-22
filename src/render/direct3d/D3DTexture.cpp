@@ -277,6 +277,7 @@ void D3DTexture::prepareRenderTargetView(D3DContext &context)
     reload(true);
     create(context);
     resourceBarrier(context, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    mSystemCopyModified = false;
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
     mData.setRowOrder(TextureData::RowOrder::TopToBottom);
@@ -287,6 +288,7 @@ void D3DTexture::prepareDepthStencilView(D3DContext &context)
     reload(true);
     create(context);
     resourceBarrier(context, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+    mSystemCopyModified = false;
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
     mData.setRowOrder(TextureData::RowOrder::TopToBottom);

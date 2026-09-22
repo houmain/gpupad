@@ -1,0 +1,103 @@
+{
+  "type": "Session",
+  "id": 94,
+  "name": "Session",
+  "renderer": "Direct3D",
+  "shaderLanguage": "HLSL",
+  "shaderCompiler": "DXC",
+  "shaderCompilerSettings": {},
+  "shaderPreamble": "",
+  "shaderIncludePaths": "",
+  "flipViewport": false,
+  "reverseCulling": false,
+  "items": [
+    {
+      "flipVertically": false,
+      "format": "RGBA8_UNorm",
+      "height": "256",
+      "id": 79,
+      "name": "Image 1",
+      "target": "Target2D",
+      "type": "Texture",
+      "width": "256"
+    },
+    {
+      "flipVertically": false,
+      "format": "RGBA8_UNorm",
+      "height": "256",
+      "id": 92,
+      "name": "Image 2",
+      "target": "Target2D",
+      "type": "Texture",
+      "width": "256"
+    },
+    {
+      "bindingType": "Image",
+      "id": 70,
+      "imageFormat": "Internal",
+      "layer": 0,
+      "level": 0,
+      "name": "uImageR",
+      "textureId": 79,
+      "type": "Binding"
+    },
+    {
+      "bindingType": "Image",
+      "id": 86,
+      "imageFormat": "Internal",
+      "layer": 0,
+      "level": 0,
+      "name": "uImageW",
+      "textureId": 92,
+      "type": "Binding"
+    },
+    {
+      "id": 90,
+      "items": [
+        {
+          "fileName": "gameoflife.hlsl",
+          "id": 91,
+          "shaderType": "Compute",
+          "type": "Shader",
+          "entryPoint": "main"
+        }
+      ],
+      "name": "Program",
+      "type": "Program"
+    },
+    {
+      "callType": "ClearTexture",
+      "checked": true,
+      "clearColor": "#ff000000",
+      "clearDepth": 1,
+      "clearStencil": 0,
+      "executeOn": "ResetEvaluation",
+      "id": 73,
+      "name": "Clear",
+      "textureId": 79,
+      "type": "Call"
+    },
+    {
+      "callType": "Compute",
+      "checked": true,
+      "executeOn": "EveryEvaluation",
+      "id": 93,
+      "name": "Compute",
+      "programId": 90,
+      "type": "Call",
+      "workGroupsX": "16",
+      "workGroupsY": "16",
+      "workGroupsZ": "1"
+    },
+    {
+      "callType": "SwapTextures",
+      "checked": true,
+      "executeOn": "EveryEvaluation",
+      "fromTextureId": 92,
+      "id": 87,
+      "name": "Swap",
+      "textureId": 79,
+      "type": "Call"
+    }
+  ]
+}

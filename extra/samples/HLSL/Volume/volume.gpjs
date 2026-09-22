@@ -1,0 +1,73 @@
+{
+  "id": 83,
+  "items": [
+    {
+      "depth": "64",
+      "flipVertically": false,
+      "format": "R8_UNorm",
+      "height": "128",
+      "id": 79,
+      "name": "Buffer",
+      "samples": 1,
+      "target": "Target3D",
+      "type": "Texture",
+      "width": "128"
+    },
+    {
+      "bindingType": "Image",
+      "id": 86,
+      "imageFormat": "Internal",
+      "layer": -1,
+      "level": 0,
+      "name": "uImage",
+      "textureId": 79,
+      "type": "Binding"
+    },
+    {
+      "bindingType": "Uniform",
+      "editor": "Expression",
+      "id": 108,
+      "name": "Animation.frame",
+      "type": "Binding",
+      "values": [
+        "app.frame"
+      ]
+    },
+    {
+      "id": 90,
+      "items": [
+        {
+          "fileName": "fill.hlsl",
+          "id": 91,
+          "shaderType": "Compute",
+          "type": "Shader",
+          "entryPoint": "main"
+        }
+      ],
+      "name": "Program",
+      "type": "Program"
+    },
+    {
+      "callType": "Compute",
+      "checked": true,
+      "executeOn": "EveryEvaluation",
+      "id": 93,
+      "name": "Fill",
+      "programId": 90,
+      "type": "Call",
+      "workGroupsX": "8",
+      "workGroupsY": "8",
+      "workGroupsZ": "64"
+    }
+  ],
+  "name": "Session",
+  "renderer": "Direct3D",
+  "shaderCompiler": "DXC",
+  "shaderIncludePaths": "",
+  "shaderPreamble": "",
+  "type": "Session",
+  "shaderLanguage": "HLSL",
+  "shaderCompilerSettings": {},
+  "flipViewport": false,
+  "reverseCulling": false
+}
