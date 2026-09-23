@@ -79,6 +79,7 @@ private:
     ComPtr<ID3D12Resource> mDownloadBuffer;
     std::vector<DownloadSubresource> mDownloadSubresources;
     D3D12_RESOURCE_STATES mCurrentState{};
+    D3D12_CLEAR_VALUE mClearValue{};
 };
 
 #endif // D3D_ENABLED

@@ -185,20 +185,20 @@ D3D12_RENDER_TARGET_VIEW_DESC D3DTexture::renderTargetViewDesc() const
     };
     // TODO: select array slice
     switch (desc.ViewDimension) {
-    case D3D12_RTV_DIMENSION_BUFFER:    desc.Buffer = {}; break;
-    case D3D12_RTV_DIMENSION_TEXTURE1D: desc.Texture1D = {}; break;
+    case D3D12_RTV_DIMENSION_BUFFER:    desc.Buffer = { }; break;
+    case D3D12_RTV_DIMENSION_TEXTURE1D: desc.Texture1D = { }; break;
     case D3D12_RTV_DIMENSION_TEXTURE1DARRAY:
         desc.Texture1DArray = {
             .ArraySize = static_cast<UINT>(-1),
         };
         break;
-    case D3D12_RTV_DIMENSION_TEXTURE2D: desc.Texture2D = {}; break;
+    case D3D12_RTV_DIMENSION_TEXTURE2D: desc.Texture2D = { }; break;
     case D3D12_RTV_DIMENSION_TEXTURE2DARRAY:
         desc.Texture2DArray = {
             .ArraySize = static_cast<UINT>(-1),
         };
         break;
-    case D3D12_RTV_DIMENSION_TEXTURE2DMS: desc.Texture2DMS = {}; break;
+    case D3D12_RTV_DIMENSION_TEXTURE2DMS: desc.Texture2DMS = { }; break;
     case D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY:
         desc.Texture2DMSArray = {
             .ArraySize = static_cast<UINT>(-1),
@@ -221,19 +221,19 @@ D3D12_DEPTH_STENCIL_VIEW_DESC D3DTexture::depthStencilViewDesc() const
     };
     // TODO: select array slice
     switch (desc.ViewDimension) {
-    case D3D12_DSV_DIMENSION_TEXTURE1D: desc.Texture1D = {}; break;
+    case D3D12_DSV_DIMENSION_TEXTURE1D: desc.Texture1D = { }; break;
     case D3D12_DSV_DIMENSION_TEXTURE1DARRAY:
         desc.Texture1DArray = {
             .ArraySize = static_cast<UINT>(-1),
         };
         break;
-    case D3D12_DSV_DIMENSION_TEXTURE2D: desc.Texture2D = {}; break;
+    case D3D12_DSV_DIMENSION_TEXTURE2D: desc.Texture2D = { }; break;
     case D3D12_DSV_DIMENSION_TEXTURE2DARRAY:
         desc.Texture2DArray = {
             .ArraySize = static_cast<UINT>(-1),
         };
         break;
-    case D3D12_DSV_DIMENSION_TEXTURE2DMS: desc.Texture2DMS = {}; break;
+    case D3D12_DSV_DIMENSION_TEXTURE2DMS: desc.Texture2DMS = { }; break;
     case D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY:
         desc.Texture2DMSArray = {
             .ArraySize = static_cast<UINT>(-1),
@@ -298,16 +298,22 @@ bool D3DTexture::clear(D3DContext &context, std::array<double, 4> color,
     double depth, int stencil)
 {
     reload(true);
-    create(context);
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
     mData.setRowOrder(TextureData::RowOrder::TopToBottom);
 
-    if (!mResource)
-        return false;
+    mClearValue.Format = toDXGIFormat(mFormat);
 
     if (mKind.depth || mKind.stencil) {
-        auto flags = D3D12_CLEAR_FLAGS{};
+        mClearValue.DepthStencil = {
+            .Depth = static_cast<float>(depth),
+            .Stencil = static_cast<uint8_t>(stencil),
+        };
+        create(context);
+        if (!mResource)
+            return false;
+
+        auto flags = D3D12_CLEAR_FLAGS{ };
         if (mKind.depth)
             flags |= D3D12_CLEAR_FLAG_DEPTH;
         if (mKind.stencil)
@@ -333,6 +339,11 @@ bool D3DTexture::clear(D3DContext &context, std::array<double, 4> color,
             static_cast<float>(color[2]),
             static_cast<float>(color[3]),
         };
+        std::copy(std::begin(clearColor), std::end(clearColor),
+            std::begin(mClearValue.Color));
+        create(context);
+        if (!mResource)
+            return false;
 
         const auto desc = renderTargetViewDesc();
         if (!desc.ViewDimension)
@@ -366,6 +377,7 @@ bool D3DTexture::swap(D3DTexture &other)
     std::swap(mResource, other.mResource);
     std::swap(mShareHandle, other.mShareHandle);
     std::swap(mCurrentState, other.mCurrentState);
+    std::swap(mClearValue, other.mClearValue);
     return true;
 }
 
@@ -426,6 +438,16 @@ void D3DTexture::create(D3DContext &context)
         return;
     }
 
+    if (mClearValue.Format == DXGI_FORMAT_UNKNOWN
+        && (mKind.depth || mKind.stencil))
+        mClearValue = {
+            .Format = toDXGIFormat(format()),
+            .DepthStencil = {
+                .Depth = 1.0f,
+                .Stencil = 0,
+            },
+        };
+
     auto flags = D3D12_RESOURCE_FLAGS{ mKind.depth || mKind.stencil
             ? D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
             : D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET };
@@ -448,12 +470,13 @@ void D3DTexture::create(D3DContext &context)
     };
     const auto heapProperties =
         CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-    const auto cannotShare =
-        samples() > 1 && (mKind.depth || mKind.stencil);
+    const auto cannotShare = samples() > 1 && (mKind.depth || mKind.stencil);
     const auto heapFlags =
         (cannotShare ? D3D12_HEAP_FLAG_NONE : D3D12_HEAP_FLAG_SHARED);
     if (FAILED(context.device.CreateCommittedResource(&heapProperties,
-            heapFlags, &resourceDesc, D3D12_RESOURCE_STATE_COMMON, nullptr,
+            heapFlags, &resourceDesc, D3D12_RESOURCE_STATE_COMMON,
+            (mClearValue.Format != DXGI_FORMAT_UNKNOWN ? &mClearValue
+                                                       : nullptr),
             IID_PPV_ARGS(&mResource)))) {
         mMessages.insert(mItemId, MessageType::CreatingTextureFailed);
         return;
@@ -462,17 +485,16 @@ void D3DTexture::create(D3DContext &context)
     if (cannotShare)
         return;
 
-    auto shareHandle = HANDLE{};
+    auto shareHandle = HANDLE{ };
     AssertIfFailed(context.device.CreateSharedHandle(resource(), nullptr,
         GENERIC_ALL, nullptr, &shareHandle));
-    mShareHandle = ShareHandleSource(new ShareHandleData{
-        ShareHandleType::D3D12_RESOURCE, shareHandle },
+    mShareHandle = ShareHandleSource(
+        new ShareHandleData{ ShareHandleType::D3D12_RESOURCE, shareHandle },
         [](const ShareHandleData *data) {
             if (data->handle)
                 CloseHandle(static_cast<HANDLE>(data->handle));
             delete data;
         });
-
 }
 
 ComPtr<ID3D12Resource> D3DTexture::createStagingBuffer(D3DContext &context,
@@ -502,11 +524,9 @@ void D3DTexture::upload(D3DContext &context)
 
     const auto texDesc = mResource->GetDesc();
     const auto faceCount = (mKind.cubeMap ? 6 : 1);
-    const auto arraySlices = (mKind.dimensions == 3
-            ? 1
-            : layers() * faceCount);
+    const auto arraySlices = (mKind.dimensions == 3 ? 1 : layers() * faceCount);
     const auto numSubresources = texDesc.MipLevels * arraySlices;
-    auto stagingBufferSize = uint64_t{};
+    auto stagingBufferSize = uint64_t{ };
     context.device.GetCopyableFootprints(&texDesc, 0, numSubresources, 0,
         nullptr, nullptr, nullptr, &stagingBufferSize);
     const auto stagingBuffer =
@@ -548,18 +568,15 @@ void D3DTexture::beginDownload(D3DContext &context)
 
     const auto texDesc = mResource->GetDesc();
     const auto faceCount = (mKind.cubeMap ? 6 : 1);
-    const auto arraySlices = (mKind.dimensions == 3
-            ? 1
-            : layers() * faceCount);
+    const auto arraySlices = (mKind.dimensions == 3 ? 1 : layers() * faceCount);
     const auto numSubresources = texDesc.MipLevels * arraySlices;
-    auto layouts = std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT>(
-        numSubresources);
+    auto layouts =
+        std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT>(numSubresources);
     auto rowCounts = std::vector<UINT>(numSubresources);
     auto rowSizes = std::vector<UINT64>(numSubresources);
-    auto stagingBufferSize = UINT64{};
+    auto stagingBufferSize = UINT64{ };
     context.device.GetCopyableFootprints(&texDesc, 0, numSubresources, 0,
-        layouts.data(), rowCounts.data(), rowSizes.data(),
-        &stagingBufferSize);
+        layouts.data(), rowCounts.data(), rowSizes.data(), &stagingBufferSize);
     const auto stagingBuffer = createStagingBuffer(context,
         D3D12_HEAP_TYPE_READBACK, stagingBufferSize);
 
@@ -571,15 +588,15 @@ void D3DTexture::beginDownload(D3DContext &context)
         const auto layer = arraySlice / faceCount;
         const auto face = arraySlice % faceCount;
         for (auto level = 0; level < texDesc.MipLevels; ++level) {
-            const auto i = static_cast<UINT>(
-                level + arraySlice * texDesc.MipLevels);
+            const auto i =
+                static_cast<UINT>(level + arraySlice * texDesc.MipLevels);
             auto source = CD3DX12_TEXTURE_COPY_LOCATION(resource(), i);
-            auto dest = CD3DX12_TEXTURE_COPY_LOCATION(
-                stagingBuffer.Get(), layouts[i]);
+            auto dest =
+                CD3DX12_TEXTURE_COPY_LOCATION(stagingBuffer.Get(), layouts[i]);
             context.graphicsCommandList->CopyTextureRegion(&dest, 0, 0, 0,
                 &source, nullptr);
-            mDownloadSubresources.push_back({ layouts[i], rowCounts[i],
-                rowSizes[i], level, layer, face });
+            mDownloadSubresources.push_back(
+                { layouts[i], rowCounts[i], rowSizes[i], level, layer, face });
         }
     }
 
@@ -594,17 +611,16 @@ bool D3DTexture::finishDownload()
         return false;
 
     auto mappedData = std::add_pointer_t<void>();
-    auto readRange = D3D12_RANGE{ 0,
-        static_cast<SIZE_T>(mDownloadBuffer->GetDesc().Width) };
+    auto readRange =
+        D3D12_RANGE{ 0, static_cast<SIZE_T>(mDownloadBuffer->GetDesc().Width) };
     AssertIfFailed(mDownloadBuffer->Map(0, &readRange, &mappedData));
     const auto *sourceBase = static_cast<const uchar *>(mappedData);
     for (const auto &subresource : mDownloadSubresources) {
         const auto &footprint = subresource.layout.Footprint;
         const auto depth = static_cast<int>(footprint.Depth);
         for (auto z = 0; z < depth; ++z) {
-            const auto faceSlice = (mKind.dimensions == 3
-                    ? z
-                    : subresource.faceSlice);
+            const auto faceSlice =
+                (mKind.dimensions == 3 ? z : subresource.faceSlice);
             auto *dest = mData.getWriteonlyData(subresource.level,
                 subresource.layer, faceSlice);
             if (!dest)
