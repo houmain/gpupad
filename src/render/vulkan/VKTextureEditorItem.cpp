@@ -334,6 +334,11 @@ void VKTextureEditorItem::releaseTextureSharing(VKContext &context)
 
 void VKTextureEditorItem::submittedGpu()
 {
+    // The imported image has no cross-API semaphore. Wait until Vulkan has
+    // copied it before allowing its producer to start the next frame.
+    if (mShare)
+        window().waitForSubmittedFrame();
+
     if (mPickerEnabled && mTextureBinding->pickerTexture) {
         auto deviceLock = window().beginCommandQueue();
         auto &context = window().context();

@@ -30,6 +30,7 @@ public:
     VKContext &context();
     VKDevice::Lock beginCommandQueue();
     void submitCommandQueueWaitIdle();
+    void waitForSubmittedFrame();
     KDGpu::RenderPassCommandRecorder &renderPass();
     KDGpu::Format swapchainFormat() const;
     KDGpu::Extent2D swapchainExtent() const;

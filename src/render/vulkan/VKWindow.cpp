@@ -268,6 +268,12 @@ void VKWindow::submitCommandQueueWaitIdle()
     submitCommandQueue(true, { });
 }
 
+void VKWindow::waitForSubmittedFrame()
+{
+    Q_ASSERT(mState);
+    mState->frameFences[mState->inFlightIndex].wait();
+}
+
 KDGpu::RenderPassCommandRecorder &VKWindow::renderPass()
 {
     Q_ASSERT(mState && mState->renderPass);
