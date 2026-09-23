@@ -522,11 +522,16 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
             case D3D_SIT_UAV_RWSTRUCTURED:
             case D3D_SIT_UAV_RWBYTEADDRESS: {
                 auto buffer = std::add_pointer_t<D3DBuffer>{ };
+                auto bufferOffset = uint32_t{ };
+                auto bufferSize = uint32_t{ };
                 if (bindingName == PrintfBase::bufferBindingName()) {
                     buffer = &mProgram.printf().getInitializedBuffer(context);
                 } else if (
                     auto bufferBinding = find(mBindings.buffers, bindingName)) {
                     buffer = static_cast<D3DBuffer *>(bufferBinding->buffer);
+                    std::tie(bufferOffset, bufferSize) =
+                        getBufferBindingOffsetSize(
+                            *bufferBinding, scriptEngine);
                     mUsedItems += bufferBinding->bindingItemId;
                     mUsedItems += bufferBinding->blockItemId;
                 }
@@ -560,10 +565,11 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
                         const auto isReadonly =
                             (bindDesc.Type == D3D_SIT_STRUCTURED);
                         buffer->prepareUnorderedAccessView(context, descriptor,
-                            structureByteStride, isReadonly);
+                            structureByteStride, isReadonly, bufferOffset,
+                            bufferSize);
                     } else {
                         buffer->prepareShaderResourceView(context, descriptor,
-                            structureByteStride);
+                            structureByteStride, bufferOffset, bufferSize);
                     }
                     descriptor.Offset(1, context.descriptorSize);
                 }

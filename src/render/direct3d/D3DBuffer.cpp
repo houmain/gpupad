@@ -248,9 +248,12 @@ void D3DBuffer::prepareConstantBufferView(D3DContext &context,
 
 void D3DBuffer::prepareUnorderedAccessView(D3DContext &context,
     D3D12_CPU_DESCRIPTOR_HANDLE descriptor, int structureByteStride,
-    bool isReadonly)
+    bool isReadonly, uint32_t offset, uint32_t size)
 {
+    if (!size)
+        size = static_cast<uint32_t>(mSize) - offset;
     Q_ASSERT(mSize >= structureByteStride);
+    Q_ASSERT(offset + size <= static_cast<size_t>(mSize));
     if (isReadonly) {
         updateReadOnlyBuffer(context);
     } else {
@@ -263,14 +266,16 @@ void D3DBuffer::prepareUnorderedAccessView(D3DContext &context,
     };
     if (structureByteStride) {
         uavDesc.Buffer = D3D12_BUFFER_UAV{
-            .NumElements = static_cast<UINT>(mSize / structureByteStride),
+            .FirstElement = offset / static_cast<UINT>(structureByteStride),
+            .NumElements = size / static_cast<UINT>(structureByteStride),
             .StructureByteStride = static_cast<UINT>(structureByteStride),
             .Flags = D3D12_BUFFER_UAV_FLAG_NONE,
         };
     } else {
         uavDesc.Format = DXGI_FORMAT_R32_TYPELESS;
         uavDesc.Buffer = D3D12_BUFFER_UAV{
-            .NumElements = static_cast<UINT>(mSize / sizeof(UINT)),
+            .FirstElement = offset / sizeof(UINT),
+            .NumElements = size / sizeof(UINT),
             .StructureByteStride = 0,
             .Flags = D3D12_BUFFER_UAV_FLAG_RAW,
         };
@@ -280,9 +285,13 @@ void D3DBuffer::prepareUnorderedAccessView(D3DContext &context,
 }
 
 void D3DBuffer::prepareShaderResourceView(D3DContext &context,
-    D3D12_CPU_DESCRIPTOR_HANDLE descriptor, int structureByteSize)
+    D3D12_CPU_DESCRIPTOR_HANDLE descriptor, int structureByteSize,
+    uint32_t offset, uint32_t size)
 {
+    if (!size)
+        size = static_cast<uint32_t>(mSize) - offset;
     Q_ASSERT(mSize >= structureByteSize);
+    Q_ASSERT(offset + size <= static_cast<size_t>(mSize));
     updateReadOnlyBuffer(context);
     resourceBarrier(context, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
@@ -292,14 +301,16 @@ void D3DBuffer::prepareShaderResourceView(D3DContext &context,
     };
     if (structureByteSize) {
         srvDesc.Buffer = D3D12_BUFFER_SRV{
-            .NumElements = static_cast<UINT>(mSize / structureByteSize),
+            .FirstElement = offset / static_cast<UINT>(structureByteSize),
+            .NumElements = size / static_cast<UINT>(structureByteSize),
             .StructureByteStride = static_cast<UINT>(structureByteSize),
             .Flags = D3D12_BUFFER_SRV_FLAG_NONE,
         };
     } else {
         srvDesc.Format = DXGI_FORMAT_R32_TYPELESS;
         srvDesc.Buffer = D3D12_BUFFER_SRV{
-            .NumElements = static_cast<UINT>(mSize / sizeof(UINT)),
+            .FirstElement = offset / sizeof(UINT),
+            .NumElements = size / sizeof(UINT),
             .StructureByteStride = 0,
             .Flags = D3D12_BUFFER_SRV_FLAG_RAW,
         };
