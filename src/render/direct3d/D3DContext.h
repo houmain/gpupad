@@ -23,6 +23,7 @@ struct D3DContext
     std::vector<ComPtr<ID3D12Resource>> stagingBuffers;
     const UINT descriptorSize;
     uint32_t soundWorkGroupCount{ };
+    uint64_t frameIndex{};
 };
 
 #endif // D3D_ENABLED

@@ -47,7 +47,10 @@ private:
     ComPtr<ID3D12Resource> mDownloadBuffer;
     ComPtr<ID3D12DescriptorHeap> mShaderVisibleDescHeap;
     ComPtr<ID3D12DescriptorHeap> mNonShaderVisibleDescHeap;
+    std::vector<ComPtr<ID3D12Resource>> mUploadBuffers;
     D3D12_RESOURCE_STATES mCurrentState{};
+    uint64_t mUploadFrameIndex{};
+    size_t mNextUploadBuffer{};
     bool mCheckModification{};
 };
 

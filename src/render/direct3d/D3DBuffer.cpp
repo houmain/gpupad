@@ -139,7 +139,14 @@ void D3DBuffer::upload(D3DContext &context)
     if (!mSystemCopyModified)
         return;
 
-    auto stagingBuffer = createStagingBuffer(context, D3D12_HEAP_TYPE_UPLOAD);
+    if (mUploadFrameIndex != context.frameIndex) {
+        mUploadFrameIndex = context.frameIndex;
+        mNextUploadBuffer = 0;
+    }
+    if (mNextUploadBuffer == mUploadBuffers.size())
+        mUploadBuffers.emplace_back(createStagingBuffer(context, D3D12_HEAP_TYPE_UPLOAD));
+    auto &stagingBuffer = mUploadBuffers[mNextUploadBuffer++];
+
     auto mappedData = std::add_pointer_t<void>{};
     AssertIfFailed(stagingBuffer->Map(0, nullptr, &mappedData));
     std::memcpy(mappedData, mData.constData(), mSize);

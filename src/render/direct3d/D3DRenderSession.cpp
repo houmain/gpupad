@@ -142,6 +142,7 @@ void D3DRenderSession::render()
 
     AssertIfFailed(
         context.graphicsCommandList->Reset(mCommandAllocator.Get(), nullptr));
+    ++context.frameIndex;
 
     executeCommandQueue(*mCommandQueue);
 
