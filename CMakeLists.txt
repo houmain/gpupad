@@ -356,6 +356,31 @@ set(CMAKE_AUTORCC OFF)
 set(BUILD_TESTING OFF)
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
+# Prevent unconditional installation of development files
+install(CODE [[
+function(file)
+    if(ARGV0 STREQUAL "INSTALL")
+        set(args ${ARGV})
+        list(FIND args "DESTINATION" destination_index)
+        if(NOT destination_index EQUAL -1)
+            math(EXPR destination_index "${destination_index} + 1")
+            list(GET args ${destination_index} destination)
+            cmake_path(NORMAL_PATH destination)
+            cmake_path(RELATIVE_PATH destination
+                BASE_DIRECTORY "${CMAKE_INSTALL_PREFIX}"
+                OUTPUT_VARIABLE relative_destination)
+            string(TOLOWER "${relative_destination}" relative_destination)
+
+            if(relative_destination MATCHES "^(include|lib|share/cmake)(/|$)|^share/directx")
+                return()
+            endif()
+        endif()
+    endif()
+
+    _file(${ARGV})
+endfunction()
+]] COMPONENT Application)
+
 # Actions -------------------------
 set(CMAKE_FOLDER Actions)
 file(GLOB ACTION_PATHS LIST_DIRECTORIES true "${CMAKE_CURRENT_SOURCE_DIR}/extra/actions/*")
