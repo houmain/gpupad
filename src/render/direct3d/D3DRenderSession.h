@@ -32,6 +32,7 @@ private:
     std::unique_ptr<CommandQueue> mPrevCommandQueue;
     ComPtr<ID3D12CommandAllocator> mCommandAllocator;
     ComPtr<ID3D12Fence> mFence;
+    HANDLE mFenceEvent{};
     uint64_t mFenceValue{};
     ComPtr<ID3D12QueryHeap> mTimeQueryHeap;
     ComPtr<ID3D12Resource> mTimeQueryResolveBuffer;

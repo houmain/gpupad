@@ -97,6 +97,9 @@ void D3DRenderSession::createCommandQueue()
 std::vector<Duration> D3DRenderSession::resetTimeQueries(size_t count)
 {
     Q_ASSERT(count <= maxTimeQueries);
+    if (!count)
+        return {};
+
     auto mappedData = std::add_pointer_t<void>{ };
     AssertIfFailed(mTimeQueryResolveBuffer->Map(0, nullptr, &mappedData));
     const auto *timestamps = static_cast<const uint64_t *>(mappedData);
@@ -151,9 +154,11 @@ void D3DRenderSession::render()
     for (auto &[itemId, texture] : mCommandQueue->textures)
         texture.prepareExternalRead(context);
 
-    context.graphicsCommandList->ResolveQueryData(mTimeQueryHeap.Get(),
-        D3D12_QUERY_TYPE_TIMESTAMP, 0, static_cast<UINT>(timeQueryCount() * 2),
-        mTimeQueryResolveBuffer.Get(), 0);
+    if (const auto queryCount = timeQueryCount())
+        context.graphicsCommandList->ResolveQueryData(mTimeQueryHeap.Get(),
+            D3D12_QUERY_TYPE_TIMESTAMP, 0,
+            static_cast<UINT>(queryCount * 2), mTimeQueryResolveBuffer.Get(),
+            0);
 
     AssertIfFailed(context.graphicsCommandList->Close());
     auto commandLists =
@@ -161,18 +166,20 @@ void D3DRenderSession::render()
     context.queue.ExecuteCommandLists(static_cast<UINT>(commandLists.size()),
         commandLists.data());
 
-    if (!mFence)
+    if (!mFence) {
         AssertIfFailed(d3dDevice().device().CreateFence(0,
             D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mFence)));
+        mFenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+        AssertIfFailed(mFenceEvent ? S_OK : HRESULT_FROM_WIN32(GetLastError()));
+    }
 
     mFenceValue++;
     AssertIfFailed(context.queue.Signal(mFence.Get(), mFenceValue));
-    if (mFence->GetCompletedValue() < mFenceValue)
-        if (auto event = CreateEventExA(nullptr, 0, 0, EVENT_ALL_ACCESS)) {
-            AssertIfFailed(mFence->SetEventOnCompletion(mFenceValue, event));
-            WaitForSingleObject(event, INFINITE);
-            CloseHandle(event);
-        }
+    if (mFence->GetCompletedValue() < mFenceValue) {
+        AssertIfFailed(
+            mFence->SetEventOnCompletion(mFenceValue, mFenceEvent));
+        WaitForSingleObject(mFenceEvent, INFINITE);
+    }
 
     context.stagingBuffers.clear();
     obtainTimeQueryResults();
@@ -188,6 +195,10 @@ void D3DRenderSession::release()
 {
     mCommandAllocator.Reset();
     mFence.Reset();
+    if (mFenceEvent) {
+        CloseHandle(mFenceEvent);
+        mFenceEvent = nullptr;
+    }
     mCommandQueue.reset();
     mPrevCommandQueue.reset();
 

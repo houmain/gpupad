@@ -482,7 +482,7 @@ void RenderSessionBase::updateCachedProperties(ItemId itemId, QList<int> values)
 
 std::optional<size_t> RenderSessionBase::addTimeQuery(ItemId callId)
 {
-    if (mTimeQueryCallIds.size() >= maxTimeQueries)
+    if (!updatingTimerQueries() || mTimeQueryCallIds.size() >= maxTimeQueries)
         return std::nullopt;
     mTimeQueryCallIds.push_back(callId);
     return mTimeQueryCallIds.size() - 1;
