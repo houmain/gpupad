@@ -241,6 +241,7 @@ if (GPUPAD_ENABLE_D3D)
   src/render/direct3d/D3DCall.cpp
   src/render/direct3d/D3DEnums.cpp
   src/render/direct3d/D3DPipeline.cpp
+  src/render/direct3d/D3DPipeline_Raytrace.cpp
   src/render/direct3d/D3DProgram.cpp
   src/render/direct3d/D3DPrintf.cpp
   src/render/direct3d/D3DShader.cpp

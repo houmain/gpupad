@@ -91,6 +91,18 @@ SpvReflectShaderStageFlagBits getShaderStage(Shader::ShaderType shaderType)
     return {};
 }
 
+QString getBufferBlockTypeName(const SpvReflectBlockVariable &block)
+{
+    const auto typeDescription = block.type_description;
+    auto name = QString::fromUtf8(
+        typeDescription && typeDescription->type_name
+            ? typeDescription->type_name
+            : "");
+    if (name.startsWith("type."))
+        name.remove(0, 5);
+    return name;
+}
+
 bool isBuiltIn(const SpvReflectInterfaceVariable &variable)
 {
     return (variable.decoration_flags & SPV_REFLECT_DECORATION_BUILT_IN) != 0;

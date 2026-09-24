@@ -10,6 +10,78 @@
 #include <QRegularExpression>
 
 namespace {
+    D3D_SHADER_INPUT_TYPE getD3DShaderInputType(
+        const SpvReflectDescriptorBinding &binding)
+    {
+        const auto typeName = QString::fromUtf8(binding.type_description
+                ? binding.type_description->type_name
+                : "");
+        switch (binding.descriptor_type) {
+        case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER: return D3D_SIT_SAMPLER;
+        case SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+        case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+        case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
+            return D3D_SIT_TEXTURE;
+        case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE:
+        case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
+            return D3D_SIT_UAV_RWTYPED;
+        case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+        case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
+            return D3D_SIT_CBUFFER;
+        case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER:
+        case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC:
+            switch (binding.user_type) {
+            case SPV_REFLECT_USER_TYPE_BYTE_ADDRESS_BUFFER:
+                return D3D_SIT_BYTEADDRESS;
+            case SPV_REFLECT_USER_TYPE_RW_BYTE_ADDRESS_BUFFER:
+                return D3D_SIT_UAV_RWBYTEADDRESS;
+            case SPV_REFLECT_USER_TYPE_APPEND_STRUCTURED_BUFFER:
+                return D3D_SIT_UAV_APPEND_STRUCTURED;
+            case SPV_REFLECT_USER_TYPE_CONSUME_STRUCTURED_BUFFER:
+                return D3D_SIT_UAV_CONSUME_STRUCTURED;
+            case SPV_REFLECT_USER_TYPE_RW_STRUCTURED_BUFFER:
+                return D3D_SIT_UAV_RWSTRUCTURED;
+            case SPV_REFLECT_USER_TYPE_STRUCTURED_BUFFER:
+                return D3D_SIT_STRUCTURED;
+            default: break;
+            }
+            if (typeName.contains("ByteAddressBuffer"))
+                return (binding.decoration_flags
+                            & SPV_REFLECT_DECORATION_NON_WRITABLE
+                        ? D3D_SIT_BYTEADDRESS
+                        : D3D_SIT_UAV_RWBYTEADDRESS);
+            return (binding.decoration_flags
+                        & SPV_REFLECT_DECORATION_NON_WRITABLE
+                    ? D3D_SIT_STRUCTURED
+                    : D3D_SIT_UAV_RWSTRUCTURED);
+        case SPV_REFLECT_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
+            return D3D_SIT_RTACCELERATIONSTRUCTURE;
+        default: return D3D_SIT_TEXTURE;
+        }
+    }
+
+    UINT getStructuredBufferStride(const SpvReflectDescriptorBinding &binding)
+    {
+        if (binding.block.padded_size)
+            return binding.block.padded_size;
+        if (!binding.block.member_count)
+            return 0;
+
+        const auto &member = binding.block.members[0];
+        if (member.array.stride)
+            return member.array.stride;
+        if (member.padded_size)
+            return member.padded_size;
+        if (member.size)
+            return member.size;
+
+        auto componentCount =
+            std::max(member.numeric.vector.component_count, 1u);
+        if (member.numeric.matrix.column_count)
+            componentCount *= member.numeric.matrix.column_count;
+        return member.numeric.scalar.width / 8 * componentCount;
+    }
+
     D3D12_FILTER getFilter(Binding::Filter min, Binding::Filter mag,
         bool anisotropic, bool comparison)
     {
@@ -71,18 +143,37 @@ namespace {
         return D3D12_SHADER_VISIBILITY_ALL;
     }
 
-    D3D12_DESCRIPTOR_RANGE_TYPE getRangeType(D3D_SHADER_INPUT_TYPE inputType)
-    {
-        switch (inputType) {
-        case D3D_SIT_CBUFFER:     return D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-        case D3D_SIT_TEXTURE:
-        case D3D_SIT_STRUCTURED:
-        case D3D_SIT_BYTEADDRESS: return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        default:                  return D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-        }
-    }
-
 } // namespace
+
+D3D12_SHADER_INPUT_BIND_DESC D3DPipeline::getD3DBindingDesc(
+    const SpvReflectDescriptorBinding &binding)
+{
+    auto desc = D3D12_SHADER_INPUT_BIND_DESC{
+        .Name = binding.name,
+        .Type = getD3DShaderInputType(binding),
+        .BindPoint = binding.binding,
+        .BindCount = std::max(binding.count, 1u),
+        .Space = binding.set,
+    };
+    if (desc.Type == D3D_SIT_STRUCTURED
+        || desc.Type == D3D_SIT_UAV_RWSTRUCTURED)
+        desc.NumSamples = getStructuredBufferStride(binding);
+    return desc;
+}
+
+D3D12_DESCRIPTOR_RANGE_TYPE D3DPipeline::getRangeType(
+    D3D_SHADER_INPUT_TYPE inputType)
+{
+    switch (inputType) {
+    case D3D_SIT_CBUFFER: return D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+    case D3D_SIT_TEXTURE:
+    case D3D_SIT_STRUCTURED:
+    case D3D_SIT_BYTEADDRESS:
+    case D3D_SIT_RTACCELERATIONSTRUCTURE:
+        return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    default: return D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+    }
+}
 
 D3DPipeline::D3DPipeline(ItemId itemId, D3DProgram *program)
     : PipelineBase(itemId)
@@ -291,57 +382,54 @@ void D3DPipeline::bindVertexBuffers(D3DContext &context)
         mVertexStream->bind(context, mVertexAttributes);
 }
 
+void D3DPipeline::addStaticSampler(const D3D12_SHADER_INPUT_BIND_DESC &bindDesc,
+    std::vector<CD3DX12_STATIC_SAMPLER_DESC> *staticSamplers)
+{
+    auto &sampler = staticSamplers->emplace_back(bindDesc.BindPoint);
+    sampler.ShaderRegister = bindDesc.BindPoint;
+    sampler.RegisterSpace = bindDesc.Space;
+
+    // TODO: find better solution - demangle _uTexture_sampler
+    auto name = QString(bindDesc.Name);
+    name = name.remove(QRegularExpression("^_"));
+    name = name.remove(QRegularExpression("_sampler$"));
+
+    if (auto binding = find(mBindings.samplers, name)) {
+        mUsedItems += binding->bindingItemId;
+
+        sampler.Filter = getFilter(binding->minFilter, binding->magFilter,
+            binding->anisotropic,
+            binding->comparisonFunc
+                != Binding::ComparisonFunc::NoComparisonFunc),
+        sampler.AddressU = toD3D(binding->wrapModeX);
+        sampler.AddressV = toD3D(binding->wrapModeY);
+        sampler.AddressW = toD3D(binding->wrapModeZ);
+        sampler.MipLODBias = 0;
+        sampler.MaxAnisotropy = (binding->anisotropic ? 8 : 0);
+        sampler.ComparisonFunc = toD3D(binding->comparisonFunc);
+        sampler.BorderColor = getStaticBorderColor(binding->borderColor);
+        // TODO: fix mip mapping
+        sampler.MaxLOD = 0;
+    } else {
+        mMessages.insert(mItemId, MessageType::SamplerNotSet, bindDesc.Name);
+    }
+}
+
 bool D3DPipeline::createRootSignature(D3DContext &context)
 {
-    struct DescriptorTableDesc
-    {
-        D3D12_SHADER_VISIBILITY visibility;
-        std::vector<CD3DX12_DESCRIPTOR_RANGE> ranges;
-    };
     auto descriptorTableDescs = std::vector<DescriptorTableDesc>();
     auto staticSamplers = std::vector<CD3DX12_STATIC_SAMPLER_DESC>();
     auto descriptorHeapOffset = UINT{ };
-    for (const auto [stage, reflection] : mProgram.d3dReflection()) {
-        const auto visibility = stageToVisibility(stage);
+    for (const auto &shader : mProgram.shaders()) {
+        const auto visibility = stageToVisibility(shader.type());
         auto rangesPerType =
             std::vector<std::vector<CD3DX12_DESCRIPTOR_RANGE>>();
-        auto shaderDesc = D3D12_SHADER_DESC{ };
-        reflection->GetDesc(&shaderDesc);
-        for (auto i = 0u; i < shaderDesc.BoundResources; ++i) {
-            auto bindDesc = D3D12_SHADER_INPUT_BIND_DESC{ };
-            reflection->GetResourceBindingDesc(i, &bindDesc);
-
+        if (!shader.reflection())
+            continue;
+        for (const auto &binding : shader.reflection().descriptorBindings()) {
+            const auto bindDesc = getD3DBindingDesc(binding);
             if (bindDesc.Type == D3D_SIT_SAMPLER) {
-                auto &sampler = staticSamplers.emplace_back(bindDesc.BindPoint);
-                sampler.ShaderRegister = bindDesc.BindPoint;
-                sampler.RegisterSpace = bindDesc.Space;
-
-                // TODO: find better solution - demangle _uTexture_sampler
-                auto name = QString(bindDesc.Name);
-                name = name.remove(QRegularExpression("^_"));
-                name = name.remove(QRegularExpression("_sampler$"));
-
-                if (auto binding = find(mBindings.samplers, name)) {
-                    mUsedItems += binding->bindingItemId;
-
-                    sampler.Filter = getFilter(binding->minFilter,
-                        binding->magFilter, binding->anisotropic,
-                        binding->comparisonFunc
-                            != Binding::ComparisonFunc::NoComparisonFunc),
-                    sampler.AddressU = toD3D(binding->wrapModeX);
-                    sampler.AddressV = toD3D(binding->wrapModeY);
-                    sampler.AddressW = toD3D(binding->wrapModeZ);
-                    sampler.MipLODBias = 0;
-                    sampler.MaxAnisotropy = (binding->anisotropic ? 8 : 0);
-                    sampler.ComparisonFunc = toD3D(binding->comparisonFunc);
-                    sampler.BorderColor =
-                        getStaticBorderColor(binding->borderColor);
-                    // TODO: fix mip mapping
-                    sampler.MaxLOD = 0;
-                } else {
-                    mMessages.insert(mItemId, MessageType::SamplerNotSet,
-                        bindDesc.Name);
-                }
+                addStaticSampler(bindDesc, &staticSamplers);
                 continue;
             }
 
@@ -381,7 +469,14 @@ bool D3DPipeline::createRootSignature(D3DContext &context)
             });
         }
     }
+    return createRootSignatureFromTables(context,
+        std::move(descriptorTableDescs), std::move(staticSamplers));
+}
 
+bool D3DPipeline::createRootSignatureFromTables(D3DContext &context,
+    std::vector<DescriptorTableDesc> descriptorTableDescs,
+    std::vector<CD3DX12_STATIC_SAMPLER_DESC> staticSamplers)
+{
     auto rootParameters = std::vector<CD3DX12_ROOT_PARAMETER>();
     for (auto &desc : descriptorTableDescs)
         rootParameters.emplace_back().InitAsDescriptorTable(
@@ -444,23 +539,23 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
     };
 
     auto canRender = true;
-    for (const auto [stage, reflection] : mProgram.d3dReflection()) {
+    for (const auto &shader : mProgram.shaders()) {
+        const auto stage = shader.type();
         const auto visibility = stageToVisibility(stage);
-        auto shaderDesc = D3D12_SHADER_DESC{ };
-        reflection->GetDesc(&shaderDesc);
-        for (auto i = 0u; i < shaderDesc.BoundResources; ++i) {
-            auto bindDesc = D3D12_SHADER_INPUT_BIND_DESC{ };
-            reflection->GetResourceBindingDesc(i, &bindDesc);
+        if (!shader.reflection())
+            continue;
+        for (const auto &binding : shader.reflection().descriptorBindings()) {
+            const auto bindDesc = getD3DBindingDesc(binding);
 
             if (bindDesc.Type == D3D_SIT_SAMPLER)
                 continue;
 
             const auto name = QString(bindDesc.Name);
-            auto spirvDescriptorBinding =
-                mProgram.getSpirvDescriptorBinding(stage, name);
-            const auto bindingName = (spirvDescriptorBinding
-                    ? spirvDescriptorBinding->type_description->type_name
-                    : name);
+            const auto spirvDescriptorBinding = &binding;
+            const auto bindingName =
+                (spirvDescriptorBinding && !isRayTracingShaderType(stage)
+                        ? spirvDescriptorBinding->type_description->type_name
+                        : name);
 
             auto descriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE(heapStart,
                 getDescriptorHeapOffset(visibility, bindDesc.Type,
@@ -480,14 +575,12 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
                     auto &dynamic = getDynamicConstantBuffer(visibility,
                         bindDesc.Space, bindDesc.BindPoint, arrayElement);
 
-                    if (auto cbuffer = reflection->GetConstantBufferByName(
-                            bindDesc.Name)) {
-                        auto cbufferDesc = D3D12_SHADER_BUFFER_DESC{ };
-                        cbuffer->GetDesc(&cbufferDesc);
+                    const auto cbufferSize = binding.block.padded_size;
+                    if (cbufferSize) {
                         if (!dynamic.buffer)
-                            dynamic.buffer.emplace(cbufferDesc.Size);
-                        Q_ASSERT(dynamic.buffer->size() == cbufferDesc.Size);
-                        if (dynamic.buffer->size() == cbufferDesc.Size) {
+                            dynamic.buffer.emplace(cbufferSize);
+                        Q_ASSERT(dynamic.buffer->size() == cbufferSize);
+                        if (dynamic.buffer->size() == cbufferSize) {
                             // TODO: check if data changed before upload
                             auto &data = dynamic.buffer->writableData();
                             auto bufferData = std::span<std::byte>(
@@ -530,8 +623,8 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
                     auto bufferBinding = find(mBindings.buffers, bindingName)) {
                     buffer = static_cast<D3DBuffer *>(bufferBinding->buffer);
                     std::tie(bufferOffset, bufferSize) =
-                        getBufferBindingOffsetSize(
-                            *bufferBinding, scriptEngine);
+                        getBufferBindingOffsetSize(*bufferBinding,
+                            scriptEngine);
                     mUsedItems += bufferBinding->bindingItemId;
                     mUsedItems += bufferBinding->blockItemId;
                 }
@@ -613,6 +706,30 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
                     texture->prepareUnorderedAccessView(context, descriptor);
                     descriptor.Offset(1, context.descriptorSize);
                 }
+                break;
+            }
+
+            case D3D_SIT_RTACCELERATIONSTRUCTURE: {
+                if (!mAccelerationStructure
+                    || !mAccelerationStructure->build(context, scriptEngine)) {
+                    mMessages.insert(mItemId,
+                        MessageType::AccelerationStructureNotAssigned);
+                    canRender = false;
+                    continue;
+                }
+                mUsedItems += mAccelerationStructure->usedItems();
+                const auto srvDesc = D3D12_SHADER_RESOURCE_VIEW_DESC{
+                    .Format = DXGI_FORMAT_UNKNOWN,
+                    .ViewDimension =
+                        D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE,
+                    .Shader4ComponentMapping =
+                        D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+                    .RaytracingAccelerationStructure = {
+                        .Location = mAccelerationStructure->gpuAddress(),
+                    },
+                };
+                context.device.CreateShaderResourceView(nullptr, &srvDesc,
+                    descriptor);
                 break;
             }
 

@@ -19,8 +19,6 @@ public:
         return mD3DReflection.Get();
     }
     const Reflection &reflection() const { return mReflection; }
-    const SpvReflectDescriptorBinding *getSpirvDescriptorBinding(
-        const QString &name) const;
 
 private:
     QStringList preprocessorDefinitions() const override;

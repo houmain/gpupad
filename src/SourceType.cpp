@@ -175,7 +175,7 @@ Shader::ShaderType getShaderType(SourceType sourceType)
     case SourceType::GLSL_RayCallableShader:
     case SourceType::HLSL_RayCallableShader:     return ST::RayCallable;
     }
-    return {};
+    return { };
 }
 
 Session::ShaderLanguage getShaderLanguage(SourceType sourceType)
@@ -228,5 +228,20 @@ Session::ShaderLanguage getShaderLanguage(const Shader &shader)
         if (auto session = castItem<Session>(parent))
             return session->shaderLanguage;
 
-    return {};
+    return { };
+}
+
+bool isRayTracingShaderType(Shader::ShaderType shaderType)
+{
+    using ST = Shader::ShaderType;
+    switch (shaderType) {
+    case ST::RayGeneration:
+    case ST::RayIntersection:
+    case ST::RayAnyHit:
+    case ST::RayClosestHit:
+    case ST::RayMiss:
+    case ST::RayCallable:     return true;
+    default:                  break;
+    }
+    return false;
 }

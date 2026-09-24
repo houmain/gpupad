@@ -27,7 +27,7 @@ protected:
         const SpvReflectBlockVariable &block, uint32_t arrayElement,
         ScriptEngine &scriptEngine);
 
-    ItemId mItemId{};
+    ItemId mItemId{ };
     Bindings mBindings;
     MessagePtrSet mMessages;
     QSet<ItemId> mUsedItems;

@@ -74,7 +74,6 @@ bool D3DProgram::link(D3DContext &context)
 
     for (auto &shader : mShaders) {
         mFailed |= !shader.compile(mPrintf);
-        mD3DReflection[shader.type()] = shader.d3dReflection();
     }
     return !mFailed;
 }
@@ -95,15 +94,6 @@ const D3DShader *D3DProgram::getShader(Shader::ShaderType type) const
 bool D3DProgram::hasShader(Shader::ShaderType type) const
 {
     return getShader(type) != nullptr;
-}
-
-const SpvReflectDescriptorBinding *D3DProgram::getSpirvDescriptorBinding(
-    Shader::ShaderType stage, const QString &name) const
-{
-    for (const auto &shader : mShaders)
-        if (shader.type() == stage)
-            return shader.getSpirvDescriptorBinding(name);
-    return nullptr;
 }
 
 bool D3DProgram::setupPipelineState(D3D12_GRAPHICS_PIPELINE_STATE_DESC &state)

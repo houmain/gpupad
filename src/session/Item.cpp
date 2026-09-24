@@ -161,17 +161,8 @@ bool callTypeSupportsShaderType(Call::CallType callType,
     case Call::CallType::ComputeSound:
         return (shaderType == Shader::ShaderType::Compute);
 
-    case Call::CallType::TraceRays:
-        switch (shaderType) {
-        case Shader::ShaderType::RayGeneration:
-        case Shader::ShaderType::RayIntersection:
-        case Shader::ShaderType::RayAnyHit:
-        case Shader::ShaderType::RayClosestHit:
-        case Shader::ShaderType::RayMiss:
-        case Shader::ShaderType::RayCallable:     return true;
-        default:                                  return false;
-        }
-    default: return false;
+    case Call::CallType::TraceRays: return isRayTracingShaderType(shaderType);
+    default:                        return false;
     }
 }
 

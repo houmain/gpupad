@@ -2,6 +2,7 @@
 #include "ShaderCompiler_Microsoft.h"
 #include <d3d12shader.h>
 #include <d3dcompiler.h>
+#include <QFileInfo>
 #include <QRegularExpression>
 #include <mutex>
 #if defined(DXC_ENABLED)
@@ -14,15 +15,21 @@ namespace ShaderCompiler {
         QString getTarget(Shader::ShaderType type)
         {
             switch (type) {
-            case Shader::ShaderType::Vertex:         return "vs";
-            case Shader::ShaderType::Fragment:       return "ps";
-            case Shader::ShaderType::Geometry:       return "gs";
-            case Shader::ShaderType::TessControl:    return "hs";
-            case Shader::ShaderType::TessEvaluation: return "ds";
-            case Shader::ShaderType::Compute:        return "cs";
-            case Shader::ShaderType::Task:           return "as";
-            case Shader::ShaderType::Mesh:           return "ms";
-            default:                                 return "";
+            case Shader::ShaderType::Vertex:          return "vs";
+            case Shader::ShaderType::Fragment:        return "ps";
+            case Shader::ShaderType::Geometry:        return "gs";
+            case Shader::ShaderType::TessControl:     return "hs";
+            case Shader::ShaderType::TessEvaluation:  return "ds";
+            case Shader::ShaderType::Compute:         return "cs";
+            case Shader::ShaderType::Task:            return "as";
+            case Shader::ShaderType::Mesh:            return "ms";
+            case Shader::ShaderType::RayGeneration:
+            case Shader::ShaderType::RayIntersection:
+            case Shader::ShaderType::RayAnyHit:
+            case Shader::ShaderType::RayClosestHit:
+            case Shader::ShaderType::RayMiss:
+            case Shader::ShaderType::RayCallable:     return "lib";
+            default:                                  return "";
             }
         }
 
@@ -154,7 +161,7 @@ namespace ShaderCompiler {
                     IID_PPV_ARGS(&mCompiler)));
             }
 
-            bool compile(ArgumentList &&arguments, const Input &input,
+            bool compile(ArgumentList &arguments, const Input &input,
                 MessagePtrSet &messages, ComPtr<ID3DBlob> &binary,
                 ComPtr<ID3D12ShaderReflection> *d3dReflection = nullptr)
             {
@@ -162,7 +169,7 @@ namespace ShaderCompiler {
                     return false;
 
                 Q_ASSERT(input.sources.size() == 1);
-                auto sourceBuffer = DxcBuffer{};
+                auto sourceBuffer = DxcBuffer{ };
                 const auto sourceString = input.sources.front().toStdString();
                 sourceBuffer.Ptr = sourceString.c_str();
                 sourceBuffer.Size = sourceString.size();
@@ -192,7 +199,7 @@ namespace ShaderCompiler {
                     auto reflectionData = ComPtr<ID3DBlob>();
                     AssertIfFailed(compileResult->GetOutput(DXC_OUT_REFLECTION,
                         IID_PPV_ARGS(reflectionData.GetAddressOf()), nullptr));
-                    auto reflectionBuffer = DxcBuffer{};
+                    auto reflectionBuffer = DxcBuffer{ };
                     reflectionBuffer.Ptr = reflectionData->GetBufferPointer();
                     reflectionBuffer.Size = reflectionData->GetBufferSize();
                     reflectionBuffer.Encoding = DXC_CP_ACP;
@@ -203,38 +210,60 @@ namespace ShaderCompiler {
             }
         };
 
-        bool compile_DXC(const Session &session, const Input &input,
-            DXCCompiler::ArgumentList &&arguments, MessagePtrSet &messages,
+        bool compile_DXC(const Input &input,
+            DXCCompiler::ArgumentList &arguments, MessagePtrSet &messages,
             ComPtr<ID3DBlob> &binary,
             ComPtr<ID3D12ShaderReflection> *d3dReflection = nullptr)
         {
-            const auto shaderModelMinor =
-                (input.shaderType == Shader::ShaderType::Task
-                        || input.shaderType == Shader::ShaderType::Mesh)
-                ? 5
-                : 0;
-            const auto target =
-                getTarget(input.shaderType, 6, shaderModelMinor);
+            const auto rayTracing = isRayTracingShaderType(input.shaderType);
+            auto shaderModel = 0;
+            if (rayTracing)
+                shaderModel = 3;
+            else if (input.shaderType == Shader::ShaderType::Task
+                || input.shaderType == Shader::ShaderType::Mesh)
+                shaderModel = 5;
+            const auto target = getTarget(input.shaderType, 6, shaderModel);
             if (target.isEmpty()) {
                 messages.insert(input.itemId,
                     MessageType::UnsupportedShaderType);
                 return false;
             }
 
-            arguments.add(L"-E");
-            arguments.add(input.entryPoint);
+            if (!rayTracing) {
+                arguments.add(L"-E");
+                arguments.add(input.entryPoint);
+            }
 
             arguments.add(L"-T");
             arguments.add(target);
 
+            if (!input.fileNames.isEmpty()) {
+                const auto sourceDirectory =
+                    QFileInfo(input.fileNames.front()).absolutePath();
+                arguments.add(L"-I");
+                arguments.add(sourceDirectory);
+                for (auto path : input.includePaths.split('\n'))
+                    if (path = path.trimmed(); !path.isEmpty()) {
+                        arguments.add(L"-I");
+                        arguments.add(QFileInfo(sourceDirectory + '/' + path)
+                                .absoluteFilePath());
+                    }
+            }
+
             //arguments.add(DXC_ARG_WARNINGS_ARE_ERRORS);
             arguments.add(DXC_ARG_DEBUG);
+
+            if (rayTracing) {
+                auto compiler = DXCCompiler{};
+                return compiler.compile(
+                    arguments, input, messages, binary, nullptr);
+            }
 
             static std::mutex sMutex;
             static DXCCompiler sCompiler;
             const auto guard = std::lock_guard(sMutex);
-            return sCompiler.compile(std::move(arguments), input, messages,
-                binary, d3dReflection);
+            return sCompiler.compile(arguments, input, messages, binary,
+                d3dReflection);
         }
 #endif // DXC_ENABLED
     } // namespace
@@ -243,14 +272,18 @@ namespace ShaderCompiler {
         MessagePtrSet &messages, ComPtr<ID3DBlob> &binary,
         ComPtr<ID3D12ShaderReflection> &d3dReflection)
     {
+        if (isRayTracingShaderType(input.shaderType)) {
+            messages.insert(input.itemId, MessageType::UnsupportedShaderType);
+            return false;
+        }
         const auto target = getTarget(input.shaderType, 5, 1);
         if (target.isEmpty()) {
             messages.insert(input.itemId, MessageType::UnsupportedShaderType);
-            return {};
+            return { };
         }
 
         auto flags1 = UINT{ D3DCOMPILE_DEBUG };
-        auto flags2 = UINT{};
+        auto flags2 = UINT{ };
         auto error = ComPtr<ID3DBlob>();
         Q_ASSERT(input.sources.size() == 1);
         Q_ASSERT(input.fileNames.size() == 1);
@@ -280,9 +313,11 @@ namespace ShaderCompiler {
         ComPtr<ID3D12ShaderReflection> &d3dReflection)
     {
 #if defined(DXC_ENABLED)
-        if (session.shaderCompiler == Session::ShaderCompiler::DXC)
-            return compile_DXC(session, input, {}, messages, binary,
+        if (session.shaderCompiler == Session::ShaderCompiler::DXC) {
+            auto arguments = DXCCompiler::ArgumentList{ };
+            return compile_DXC(input, arguments, messages, binary,
                 &d3dReflection);
+        }
 #endif // DXC_ENABLED
 
         if (session.shaderCompiler == Session::ShaderCompiler::D3DCompiler)
@@ -306,10 +341,21 @@ namespace ShaderCompiler {
 
         //arguments.add(L"-ignore-line-directives");
 
+        auto compileInput = input;
+        if (isRayTracingShaderType(input.shaderType)) {
+            if (session.renderer != Session::Renderer::Vulkan)
+                arguments.add(L"-fspv-target-env=vulkan1.2");
+            arguments.add(L"-ignore-line-directives");
+            static const auto lineDirective = QRegularExpression(
+                "(^\\s*#line[^\\n]*\\n?)", QRegularExpression::MultilineOption);
+            for (auto &source : compileInput.sources)
+                source.remove(lineDirective);
+        }
+
         auto binary = ComPtr<ID3DBlob>();
-        if (!compile_DXC(session, input, std::move(arguments), messages,
-                binary))
-            return {};
+        if (!compile_DXC(compileInput, arguments, messages, binary)) {
+            return { };
+        }
 
         const auto begin =
             reinterpret_cast<const uint32_t *>(binary->GetBufferPointer());

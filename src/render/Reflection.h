@@ -34,9 +34,11 @@ public:
             SpvReflectNumericTraits numeric;
             SpvReflectImageTraits image;
             SpvReflectArrayTraits array;
+            SpvReflectUserType userType;
             BlockVariable block;
             uint32_t binding;
             uint32_t set;
+            uint32_t count{ 1 };
         };
 
         struct InterfaceVariable
@@ -94,6 +96,7 @@ bool isBufferBinding(SpvReflectDescriptorType type);
 bool isBuiltIn(const SpvReflectInterfaceVariable &variable);
 uint32_t getBindingArraySize(const SpvReflectBindingArrayTraits &array);
 SpvReflectShaderStageFlagBits getShaderStage(Shader::ShaderType shaderType);
+QString getBufferBlockTypeName(const SpvReflectBlockVariable &block);
 Field::DataType getBufferMemberDataType(
     const SpvReflectBlockVariable &variable);
 int getBufferMemberColumnCount(const SpvReflectBlockVariable &variable);

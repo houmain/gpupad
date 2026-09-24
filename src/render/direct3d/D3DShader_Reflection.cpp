@@ -27,7 +27,7 @@ namespace {
 
     SpvReflectTypeFlags getTypeFlags(const D3D12_SHADER_TYPE_DESC &typeDesc)
     {
-        auto typeFlags = SpvReflectTypeFlags{};
+        auto typeFlags = SpvReflectTypeFlags{ };
         switch (typeDesc.Class) {
         case D3D_SVC_VECTOR: typeFlags |= SPV_REFLECT_TYPE_FLAG_VECTOR; break;
         case D3D_SVC_MATRIX_ROWS:
@@ -59,7 +59,7 @@ namespace {
     SpvReflectNumericTraits getNumericTraits(
         const D3D12_SHADER_TYPE_DESC &typeDesc)
     {
-        auto numeric = SpvReflectNumericTraits{};
+        auto numeric = SpvReflectNumericTraits{ };
         switch (typeDesc.Type) {
         case D3D_SVT_VOID:    break;
         case D3D_SVT_INT16:
@@ -182,6 +182,125 @@ namespace {
         Q_ASSERT(bindDesc.Dimension == D3D_SRV_DIMENSION_TEXTURE2D);
         return make(SpvDim2D, Sampled);
     }
+
+    SpvReflectArrayTraits getArrayTraits(
+        const D3D12_SHADER_INPUT_BIND_DESC &bindDesc)
+    {
+        auto array = SpvReflectArrayTraits{ };
+        if (bindDesc.BindCount != 1) {
+            array.dims_count = 1;
+            array.dims[0] = bindDesc.BindCount;
+        }
+        return array;
+    }
+
+    SpvReflectDecorationFlags getDecorationFlags(
+        const D3D12_SHADER_INPUT_BIND_DESC &bindDesc)
+    {
+        switch (bindDesc.Type) {
+        case D3D_SIT_STRUCTURED:
+        case D3D_SIT_BYTEADDRESS: return SPV_REFLECT_DECORATION_NON_WRITABLE;
+        default:                  return { };
+        }
+    }
+
+    SpvReflectDescriptorType getDescriptorType(
+        const D3D12_SHADER_INPUT_BIND_DESC &bindDesc)
+    {
+        switch (bindDesc.Type) {
+        case D3D_SIT_CBUFFER: return SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        case D3D_SIT_TBUFFER:
+            return SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
+        case D3D_SIT_SAMPLER: return SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER;
+        case D3D_SIT_TEXTURE: return SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        case D3D_SIT_UAV_RWTYPED:
+            return SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+        case D3D_SIT_STRUCTURED:
+        case D3D_SIT_UAV_RWSTRUCTURED:
+        case D3D_SIT_BYTEADDRESS:
+        case D3D_SIT_UAV_RWBYTEADDRESS:
+        case D3D_SIT_UAV_APPEND_STRUCTURED:
+        case D3D_SIT_UAV_CONSUME_STRUCTURED:
+        case D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
+            return SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        case D3D_SIT_RTACCELERATIONSTRUCTURE:
+            return SPV_REFLECT_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+        default: return SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        }
+    }
+
+    SpvReflectUserType getUserType(const D3D12_SHADER_INPUT_BIND_DESC &bindDesc)
+    {
+        switch (bindDesc.Type) {
+        case D3D_SIT_CBUFFER:    return SPV_REFLECT_USER_TYPE_CBUFFER;
+        case D3D_SIT_TBUFFER:    return SPV_REFLECT_USER_TYPE_TBUFFER;
+        case D3D_SIT_STRUCTURED: return SPV_REFLECT_USER_TYPE_STRUCTURED_BUFFER;
+        case D3D_SIT_UAV_RWSTRUCTURED:
+        case D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
+            return SPV_REFLECT_USER_TYPE_RW_STRUCTURED_BUFFER;
+        case D3D_SIT_BYTEADDRESS:
+            return SPV_REFLECT_USER_TYPE_BYTE_ADDRESS_BUFFER;
+        case D3D_SIT_UAV_RWBYTEADDRESS:
+            return SPV_REFLECT_USER_TYPE_RW_BYTE_ADDRESS_BUFFER;
+        case D3D_SIT_UAV_APPEND_STRUCTURED:
+            return SPV_REFLECT_USER_TYPE_APPEND_STRUCTURED_BUFFER;
+        case D3D_SIT_UAV_CONSUME_STRUCTURED:
+            return SPV_REFLECT_USER_TYPE_CONSUME_STRUCTURED_BUFFER;
+        case D3D_SIT_RTACCELERATIONSTRUCTURE:
+            return SPV_REFLECT_USER_TYPE_RAYTRACING_ACCELERATION_STRUCTURE;
+        default: return SPV_REFLECT_USER_TYPE_INVALID;
+        }
+    }
+
+    SpvReflectTypeFlags getDescriptorTypeFlags(
+        SpvReflectDescriptorType descriptorType)
+    {
+        switch (descriptorType) {
+        case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+        case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER:
+            return SPV_REFLECT_TYPE_FLAG_EXTERNAL_BLOCK;
+        case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
+            return SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLER;
+        case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+            return SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLED_IMAGE;
+        case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE:
+            return SPV_REFLECT_TYPE_FLAG_EXTERNAL_IMAGE;
+        default: return { };
+        }
+    }
+
+    const SpvReflectDescriptorBinding *findSpirvDescriptorBinding(
+        const Reflection &reflection, const char *name)
+    {
+        if (!reflection)
+            return nullptr;
+
+        if (isGlobalUniformBlockName(name))
+            for (const auto &binding : reflection.descriptorBindings())
+                if (binding.type_description
+                    && isGlobalUniformBlockName(
+                        binding.type_description->type_name))
+                    return &binding;
+
+        for (const auto &binding : reflection.descriptorBindings())
+            if (binding.name && !std::strcmp(binding.name, name))
+                return &binding;
+
+        for (const auto &binding : reflection.descriptorBindings())
+            if (binding.type_description && binding.type_description->type_name
+                && !std::strcmp(binding.type_description->type_name, name))
+                return &binding;
+
+        if (name && name[0] == '_') {
+            auto end = std::add_pointer_t<char>{ };
+            const auto spirvId = std::strtoul(name + 1, &end, 10);
+            if (end != name + 1 && *end == '\0')
+                for (const auto &binding : reflection.descriptorBindings())
+                    if (binding.spirv_id == spirvId)
+                        return &binding;
+        }
+        return nullptr;
+    }
 } // namespace
 
 Reflection generateSpirvReflection(Shader::ShaderType shaderType,
@@ -194,7 +313,7 @@ Reflection generateSpirvReflection(Shader::ShaderType shaderType,
     auto builder = std::make_unique<Reflection::Builder>();
     builder->shaderStage = getShaderStage(shaderType);
 
-    auto shaderDesc = D3D12_SHADER_DESC{};
+    auto shaderDesc = D3D12_SHADER_DESC{ };
     reflection->GetDesc(&shaderDesc);
 
     const auto createInterfaceVariable =
@@ -212,47 +331,50 @@ Reflection generateSpirvReflection(Shader::ShaderType shaderType,
         };
 
     for (auto i = 0u; i < shaderDesc.InputParameters; ++i) {
-        auto paramDesc = D3D12_SIGNATURE_PARAMETER_DESC{};
+        auto paramDesc = D3D12_SIGNATURE_PARAMETER_DESC{ };
         reflection->GetInputParameterDesc(i, &paramDesc);
         builder->inputs.push_back(createInterfaceVariable(paramDesc));
     }
 
     for (auto i = 0u; i < shaderDesc.OutputParameters; ++i) {
-        auto paramDesc = D3D12_SIGNATURE_PARAMETER_DESC{};
+        auto paramDesc = D3D12_SIGNATURE_PARAMETER_DESC{ };
         reflection->GetOutputParameterDesc(i, &paramDesc);
         builder->outputs.push_back(createInterfaceVariable(paramDesc));
     }
 
     for (auto i = 0u; i < shaderDesc.BoundResources; ++i) {
-        auto bindDesc = D3D12_SHADER_INPUT_BIND_DESC{};
+        auto bindDesc = D3D12_SHADER_INPUT_BIND_DESC{ };
         reflection->GetResourceBindingDesc(i, &bindDesc);
+        const auto array = getArrayTraits(bindDesc);
         switch (bindDesc.Type) {
         case D3D_SIT_CBUFFER: {
+            const auto spirvBinding =
+                findSpirvDescriptorBinding(spirvReflection, bindDesc.Name);
             auto cbuffer = reflection->GetConstantBufferByName(bindDesc.Name);
-            auto cbufferDesc = D3D12_SHADER_BUFFER_DESC{};
+            auto cbufferDesc = D3D12_SHADER_BUFFER_DESC{ };
             cbuffer->GetDesc(&cbufferDesc);
 
             auto variables = std::vector<BlockVariable>();
             for (auto j = 0u; j < cbufferDesc.Variables; ++j) {
                 auto var = cbuffer->GetVariableByIndex(j);
-                auto varDesc = D3D12_SHADER_VARIABLE_DESC{};
+                auto varDesc = D3D12_SHADER_VARIABLE_DESC{ };
                 var->GetDesc(&varDesc);
 
                 auto varType = var->GetType();
-                auto varTypeDesc = D3D12_SHADER_TYPE_DESC{};
+                auto varTypeDesc = D3D12_SHADER_TYPE_DESC{ };
                 varType->GetDesc(&varTypeDesc);
 
                 const auto createTypeMembers =
                     [](const auto &createTypeMembers,
                         ID3D12ShaderReflectionType *type)
                     -> std::vector<BlockVariable> {
-                    auto typeDesc = D3D12_SHADER_TYPE_DESC{};
+                    auto typeDesc = D3D12_SHADER_TYPE_DESC{ };
                     type->GetDesc(&typeDesc);
 
                     auto members = std::vector<BlockVariable>();
                     for (auto i = 0u; i < typeDesc.Members; ++i) {
                         auto memberType = type->GetMemberTypeByIndex(i);
-                        auto memberTypeDesc = D3D12_SHADER_TYPE_DESC{};
+                        auto memberTypeDesc = D3D12_SHADER_TYPE_DESC{ };
                         memberType->GetDesc(&memberTypeDesc);
 
                         // https://maraneshi.github.io/HLSL-ConstantBufferLayoutVisualizer/
@@ -311,10 +433,10 @@ Reflection generateSpirvReflection(Shader::ShaderType shaderType,
             }
 
             // ConstantBuffer
-            auto array = SpvReflectArrayTraits{};
+            auto blockArray = SpvReflectArrayTraits{ };
             if (variables.size() == 1 && !variables.front().members.empty()) {
                 auto first = std::move(variables.front());
-                array = first.array;
+                blockArray = first.array;
                 variables = std::move(first.members);
             }
 
@@ -328,58 +450,86 @@ Reflection generateSpirvReflection(Shader::ShaderType shaderType,
                         fixupMemberNames(fixupMemberNames, variable.members[i],
                             spirvType.members[i]);
             };
-            for (const auto &binding : spirvReflection.descriptorBindings())
-                if (!std::strcmp(binding.name, bindDesc.Name))
-                    for (auto i = 0u; i < variables.size(); ++i)
-                        if (i < binding.block.member_count)
-                            fixupMemberNames(fixupMemberNames, variables[i],
-                                *binding.block.members[i].type_description);
+            if (spirvBinding)
+                for (auto i = 0u; i < variables.size(); ++i)
+                    if (i < spirvBinding->block.member_count)
+                        fixupMemberNames(fixupMemberNames, variables[i],
+                            *spirvBinding->block.members[i].type_description);
 
             builder->descriptorsBindings.push_back(DescriptorBinding{
                 .descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                 .typeFlags = SPV_REFLECT_TYPE_FLAG_EXTERNAL_BLOCK |
-                    (array.dims_count > 0 ? SPV_REFLECT_TYPE_FLAG_ARRAY : 0u),
+                    (blockArray.dims_count > 0 || array.dims_count > 0
+                            ? SPV_REFLECT_TYPE_FLAG_ARRAY
+                            : 0u),
                 .name = cbufferDesc.Name,
                 .typeName = cbufferDesc.Name,
                 .array = array,
+                .userType = getUserType(bindDesc),
                 .block = {
                     .size = cbufferDesc.Size,
+                    .array = blockArray,
                     .members = std::move(variables),
                 },
                 .binding = bindDesc.BindPoint,
                 .set = bindDesc.Space,
+                .count = bindDesc.BindCount,
             });
         } break;
 
-        default:
+        default: {
+            const auto descriptorType = getDescriptorType(bindDesc);
+            const auto spirvBinding =
+                findSpirvDescriptorBinding(spirvReflection, bindDesc.Name);
+            const auto mappedTypeName = (spirvBinding && spirvBinding->name
+                        && std::strcmp(spirvBinding->name, bindDesc.Name)
+                        && spirvBinding->type_description
+                        && spirvBinding->type_description->type_name
+                    ? spirvBinding->type_description->type_name
+                    : bindDesc.Name);
             builder->descriptorsBindings.push_back(DescriptorBinding{
-                .descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-                .typeFlags = SPV_REFLECT_TYPE_FLAG_EXTERNAL_BLOCK,
+                .descriptorType = descriptorType,
+                .typeFlags = getDescriptorTypeFlags(descriptorType)
+                    | (array.dims_count > 0 ? SPV_REFLECT_TYPE_FLAG_ARRAY : 0u),
                 .name = bindDesc.Name,
-                .typeName = bindDesc.Name,
+                .typeName = mappedTypeName,
+                .decorationFlags = getDecorationFlags(bindDesc),
+                .array = array,
+                .userType = getUserType(bindDesc),
+                .block = { .size = bindDesc.NumSamples },
                 .binding = bindDesc.BindPoint,
                 .set = bindDesc.Space,
+                .count = bindDesc.BindCount,
             });
             break;
+        }
 
         case D3D_SIT_SAMPLER:
             builder->descriptorsBindings.push_back(DescriptorBinding{
                 .descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER,
-                .typeFlags = SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLER,
+                .typeFlags = SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLER
+                    | (array.dims_count > 0 ? SPV_REFLECT_TYPE_FLAG_ARRAY : 0u),
                 .name = bindDesc.Name,
+                .array = array,
+                .userType = getUserType(bindDesc),
                 .binding = bindDesc.BindPoint,
                 .set = bindDesc.Space,
+                .count = bindDesc.BindCount,
             });
             break;
 
         case D3D_SIT_TEXTURE:
             builder->descriptorsBindings.push_back(DescriptorBinding{
                 .descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                .typeFlags = SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLED_IMAGE,
+                .typeFlags = SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLED_IMAGE
+                    | (array.dims_count > 0 ? SPV_REFLECT_TYPE_FLAG_ARRAY : 0u),
                 .name = bindDesc.Name,
                 .image = getImageTraits(bindDesc),
+                .array = array,
+                .userType = getUserType(bindDesc),
                 .binding = bindDesc.BindPoint,
                 .set = bindDesc.Space,
+                .count = bindDesc.BindCount,
             });
             break;
         }

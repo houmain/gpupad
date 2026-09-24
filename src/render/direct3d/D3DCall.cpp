@@ -111,11 +111,6 @@ bool D3DCall::validateShaderTypes()
 void D3DCall::execute(D3DContext &context, Bindings &&bindings,
     MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
-    if (mKind.trace) {
-        mMessages.insert(mCall.id, MessageType::NotImplemented, "Ray Tracing");
-        return;
-    }
-
     if (mKind.draw || mKind.compute || mKind.trace) {
         if (!mProgram) {
             messages.insert(mCall.id, MessageType::ProgramNotAssigned);
@@ -400,6 +395,16 @@ void D3DCall::executeCompute(D3DContext &context, MessagePtrSet &messages,
 void D3DCall::executeTraceRays(D3DContext &context, MessagePtrSet &messages,
     ScriptEngine &scriptEngine)
 {
+    if (!mPipeline
+        || !mPipeline->createRayTracing(context, mAccelerationStructure)
+        || !mPipeline->bindRayTracing(context, scriptEngine))
+        return;
+
+    mPipeline->dispatchRays(context,
+        scriptEngine.evaluateUInt(mCall.workGroupsX, mCall.id),
+        scriptEngine.evaluateUInt(mCall.workGroupsY, mCall.id),
+        scriptEngine.evaluateUInt(mCall.workGroupsZ, mCall.id));
+    mUsedItems += mPipeline->usedItems();
 }
 
 void D3DCall::executeClearTexture(D3DContext &context, MessagePtrSet &messages)

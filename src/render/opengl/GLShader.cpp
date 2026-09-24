@@ -63,7 +63,7 @@ bool GLShader::compile(GLContext &gl, PrintfBase &printf)
         return true;
     if (mSession.shaderLanguage != Session::ShaderLanguage::GLSL) {
         mMessages.insert(mItemId, MessageType::OpenGLRendererRequiresGLSL);
-        return {};
+        return { };
     }
     auto shader = createShader(gl);
     if (!shader)
@@ -129,7 +129,7 @@ bool GLShader::specialize(GLContext &gl, const Spirv &spirv)
     // clear error state
     glGetError();
 
-    return setShaderObject(gl, std::move(shader), {});
+    return setShaderObject(gl, std::move(shader), { });
 }
 
 GLObject GLShader::createShader(GLContext &gl)
@@ -143,24 +143,21 @@ GLObject GLShader::createShader(GLContext &gl)
     case Shader::ShaderType::Mesh:
         if (!gl.hasExtension("GL_NV_mesh_shader")) {
             mMessages.insert(mItemId, MessageType::MeshShadersNotAvailable);
-            return {};
+            return { };
         }
         break;
-    case Shader::ShaderType::RayGeneration:
-    case Shader::ShaderType::RayIntersection:
-    case Shader::ShaderType::RayAnyHit:
-    case Shader::ShaderType::RayClosestHit:
-    case Shader::ShaderType::RayMiss:
-    case Shader::ShaderType::RayCallable:
-        mMessages.insert(mItemId, MessageType::RayTracingNotAvailable);
-        return {};
-    default: break;
+    default:
+        if (isRayTracingShaderType(mType)) {
+            mMessages.insert(mItemId, MessageType::RayTracingNotAvailable);
+            return { };
+        }
+        break;
     }
 
     auto shader = GLObject(&gl, gl.glCreateShader(mType), freeShader);
     if (!shader) {
         mMessages.insert(mItemId, MessageType::UnsupportedShaderType);
-        return {};
+        return { };
     }
     return shader;
 }
@@ -168,7 +165,7 @@ GLObject GLShader::createShader(GLContext &gl)
 bool GLShader::setShaderObject(GLContext &gl, GLObject shader,
     const QStringList &usedFileNames)
 {
-    auto length = GLint{};
+    auto length = GLint{ };
     gl.glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
     if (length > 0) {
         auto log = std::vector<char>(static_cast<size_t>(length));
@@ -176,7 +173,7 @@ bool GLShader::setShaderObject(GLContext &gl, GLObject shader,
         parseLog(log.data(), mMessages, mItemId, usedFileNames);
     }
 
-    auto status = GLint{};
+    auto status = GLint{ };
     gl.glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
     if (status != GL_TRUE) {
         if (auto errorMessage = gl.getLastGLError(); !errorMessage.isEmpty())

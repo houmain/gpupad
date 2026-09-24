@@ -166,13 +166,23 @@ namespace {
             auto &desc = module->descriptorBindings.emplace_back();
             desc.name = descriptor.name.c_str();
             desc.descriptor_type = descriptor.descriptorType;
+            desc.user_type = descriptor.userType;
             desc.binding = descriptor.binding;
+            desc.set = descriptor.set;
+            desc.count = descriptor.count;
+            desc.decoration_flags = descriptor.decorationFlags;
             desc.image = descriptor.image;
             desc.accessed = 1;
             desc.type_description = &typeDesc;
 
+            desc.array.dims_count = descriptor.array.dims_count;
+            std::copy_n(descriptor.array.dims, descriptor.array.dims_count,
+                desc.array.dims);
+
+            desc.block.size = descriptor.block.size;
+            desc.block.padded_size = descriptor.block.size;
+
             if (!descriptor.block.members.empty()) {
-                desc.block.size = descriptor.block.size;
                 desc.block.type_description = desc.type_description;
 
                 const auto addBlockMembers =
@@ -197,6 +207,7 @@ namespace {
                         variable.type_description = &typeDesc;
                         variable.offset = member.offset;
                         variable.size = member.size;
+                        variable.padded_size = member.size;
                         variable.decoration_flags = member.decorationFlags;
                         variable.numeric = member.numeric;
                         variable.array = member.array;

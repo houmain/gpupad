@@ -330,6 +330,7 @@ SourceType getSourceType(Session::ShaderLanguage language,
     Shader::ShaderType type);
 SourceType getSourceType(const Shader &shader);
 Shader::ShaderType getShaderType(SourceType sourceType);
+bool isRayTracingShaderType(Shader::ShaderType shaderType);
 Session::ShaderLanguage getShaderLanguage(SourceType sourceType);
 Session::ShaderLanguage getShaderLanguage(const Shader &shader);
 bool shaderCompilerHasSetting(const Session &session,

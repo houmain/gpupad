@@ -6,17 +6,18 @@ namespace {
     QString getBufferMemberFullName(const SpvReflectBlockVariable &block,
         uint32_t arrayElement, const SpvReflectBlockVariable &member)
     {
-        const auto &type_desc = *block.type_description;
-        if (isGlobalUniformBlockName(type_desc.type_name))
+        const auto typeName = getBufferBlockTypeName(block);
+        if (isGlobalUniformBlockName(typeName))
             return member.name;
 
+        const auto &type_desc = *block.type_description;
         if (type_desc.type_flags & SPV_REFLECT_TYPE_FLAG_ARRAY)
             return QStringLiteral("%1[%2].%3")
-                .arg(type_desc.type_name)
+                .arg(typeName)
                 .arg(arrayElement)
                 .arg(member.name);
 
-        return QStringLiteral("%1.%2").arg(type_desc.type_name, member.name);
+        return QStringLiteral("%1.%2").arg(typeName, member.name);
     }
 
     QStringView getBaseName(QStringView name)
@@ -25,7 +26,7 @@ namespace {
             return name;
         if (auto bracket = name.lastIndexOf('['))
             return getBaseName(name.left(bracket));
-        return {};
+        return { };
     }
 
     std::vector<int> getArrayIndices(QStringView name)
@@ -48,7 +49,7 @@ namespace {
         const auto &type_desc = *variable.type_description;
         if (type_desc.type_flags & SPV_REFLECT_TYPE_FLAG_ARRAY)
             return { variable.array.dims, variable.array.dims_count };
-        return {};
+        return { };
     }
 
     template <typename T>
