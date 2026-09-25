@@ -320,7 +320,7 @@ bool D3DTexture::clear(D3DContext &context, std::array<double, 4> color,
             flags |= D3D12_CLEAR_FLAG_STENCIL;
 
         const auto desc = depthStencilViewDesc();
-        if (!desc.ViewDimension)
+        if (!desc.Format || !desc.ViewDimension)
             return false;
 
         prepareDepthStencilView(context);

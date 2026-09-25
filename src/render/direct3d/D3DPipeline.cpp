@@ -328,7 +328,7 @@ bool D3DPipeline::createCompute(D3DContext &context)
 bool D3DPipeline::createInputLayout(
     std::vector<D3D12_INPUT_ELEMENT_DESC> *inputLayout)
 {
-    const auto vertexShader = mProgram.getVertexShader();
+    const auto vertexShader = mProgram.getShader(Shader::ShaderType::Vertex);
     if (!vertexShader)
         return true;
 

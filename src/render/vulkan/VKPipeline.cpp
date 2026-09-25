@@ -682,12 +682,15 @@ MessageType VKPipeline::updateBindings(VKContext &context,
         auto buffer = std::add_pointer_t<VKBuffer>();
         auto offset = uint32_t{ };
         auto size = static_cast<uint32_t>(KDGpu::WholeSize);
+        auto bufferBinding = find(
+            mBindings.buffers, desc.type_description->type_name);
+        if (!bufferBinding)
+            bufferBinding = find(mBindings.buffers, desc.name);
         if (desc.type_description->type_name
             == PrintfBase::bufferBindingName()) {
             buffer = &mProgram.printf().getInitializedBuffer(context);
 
-        } else if (const auto bufferBinding = find(mBindings.buffers,
-                       desc.type_description->type_name)) {
+        } else if (bufferBinding) {
             buffer = static_cast<VKBuffer *>(bufferBinding->buffer);
             std::tie(offset, size) =
                 getBufferBindingOffsetSize(*bufferBinding, scriptEngine);

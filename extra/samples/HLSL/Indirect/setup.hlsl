@@ -1,7 +1,7 @@
 
 RWStructuredBuffer<uint> uIndirectBuffer : register(u0);
 
-cbuffer Dimensions : register(b0) {
+cbuffer Dimensions : register(b1) {
     int uCountX;
     int uCountY;
 };

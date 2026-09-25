@@ -363,6 +363,13 @@ void VKCall::executeCompute(VKContext &context, MessagePtrSet &messages,
         return;
     }
 
+    const auto indirectOffset =
+        (mCall.callType == Call::CallType::ComputeIndirect
+                ? scriptEngine.evaluateUInt(mIndirectOffset, mCall.id)
+                : 0);
+    if (mIndirectBuffer)
+        mIndirectBuffer->prepareIndirectBuffer(context);
+
     auto computePass = mPipeline->beginComputePass(context);
     if (!computePass.isValid())
         return;
@@ -370,13 +377,25 @@ void VKCall::executeCompute(VKContext &context, MessagePtrSet &messages,
     if (!mPipeline->updatePushConstants(computePass, scriptEngine))
         return;
 
-    const auto computeCommand = (mCall.callType == Call::CallType::ComputeSound
-            ? KDGpu::ComputeCommand{ context.soundWorkGroupCount, 1u, 1u }
-            : KDGpu::ComputeCommand{
-                  scriptEngine.evaluateUInt(mCall.workGroupsX, mCall.id),
-                  scriptEngine.evaluateUInt(mCall.workGroupsY, mCall.id),
-                  scriptEngine.evaluateUInt(mCall.workGroupsZ, mCall.id) });
-    computePass.dispatchCompute(computeCommand);
+    if (mCall.callType == Call::CallType::ComputeIndirect) {
+        computePass.dispatchComputeIndirect({
+            .buffer = mIndirectBuffer->buffer(),
+            .offset = indirectOffset,
+        });
+    } else {
+        const auto computeCommand =
+            (mCall.callType == Call::CallType::ComputeSound
+                    ? KDGpu::ComputeCommand{
+                          context.soundWorkGroupCount, 1u, 1u }
+                    : KDGpu::ComputeCommand{
+                          scriptEngine.evaluateUInt(
+                              mCall.workGroupsX, mCall.id),
+                          scriptEngine.evaluateUInt(
+                              mCall.workGroupsY, mCall.id),
+                          scriptEngine.evaluateUInt(
+                              mCall.workGroupsZ, mCall.id) });
+        computePass.dispatchCompute(computeCommand);
+    }
     computePass.end();
     mUsedItems += mPipeline->usedItems();
 }

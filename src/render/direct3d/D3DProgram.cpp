@@ -78,11 +78,6 @@ bool D3DProgram::link(D3DContext &context)
     return !mFailed;
 }
 
-const D3DShader *D3DProgram::getVertexShader() const
-{
-    return getShader(Shader::ShaderType::Vertex);
-}
-
 const D3DShader *D3DProgram::getShader(Shader::ShaderType type) const
 {
     for (const auto &shader : mShaders)

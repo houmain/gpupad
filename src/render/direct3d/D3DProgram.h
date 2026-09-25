@@ -14,7 +14,6 @@ public:
     const Session &session() const { return mSession; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
     const std::vector<D3DShader> &shaders() const { return mShaders; }
-    const D3DShader *getVertexShader() const;
     const D3DShader *getShader(Shader::ShaderType type) const;
     bool hasShader(Shader::ShaderType type) const;
     D3DPrintf &printf() { return mPrintf; }
