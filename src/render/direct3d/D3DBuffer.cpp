@@ -325,6 +325,51 @@ void D3DBuffer::prepareShaderResourceView(D3DContext &context,
         descriptor);
 }
 
+void D3DBuffer::prepareTextureBufferShaderResourceView(D3DContext &context,
+    D3D12_CPU_DESCRIPTOR_HANDLE descriptor, DXGI_FORMAT format,
+    uint32_t texelSize)
+{
+    Q_ASSERT(texelSize && mSize % texelSize == 0);
+    if (!texelSize || mSize % texelSize != 0)
+        return;
+    updateReadOnlyBuffer(context);
+    resourceBarrier(context, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+
+    const auto srvDesc = D3D12_SHADER_RESOURCE_VIEW_DESC{
+        .Format = format,
+        .ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
+        .Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+        .Buffer = {
+            .FirstElement = 0,
+            .NumElements = static_cast<UINT>(mSize / texelSize),
+        },
+    };
+    context.device.CreateShaderResourceView(mResource.Get(), &srvDesc,
+        descriptor);
+}
+
+void D3DBuffer::prepareTextureBufferUnorderedAccessView(D3DContext &context,
+    D3D12_CPU_DESCRIPTOR_HANDLE descriptor, DXGI_FORMAT format,
+    uint32_t texelSize)
+{
+    Q_ASSERT(texelSize && mSize % texelSize == 0);
+    if (!texelSize || mSize % texelSize != 0)
+        return;
+    updateReadWriteBuffer(context);
+    resourceBarrier(context, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+    const auto uavDesc = D3D12_UNORDERED_ACCESS_VIEW_DESC{
+        .Format = format,
+        .ViewDimension = D3D12_UAV_DIMENSION_BUFFER,
+        .Buffer = {
+            .FirstElement = 0,
+            .NumElements = static_cast<UINT>(mSize / texelSize),
+        },
+    };
+    context.device.CreateUnorderedAccessView(mResource.Get(), nullptr,
+        &uavDesc, descriptor);
+}
+
 D3D12_GPU_VIRTUAL_ADDRESS D3DBuffer::getDeviceAddress()
 {
     return mResource->GetGPUVirtualAddress();

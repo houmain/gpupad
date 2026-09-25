@@ -35,6 +35,12 @@ public:
     void prepareShaderResourceView(D3DContext &context,
         D3D12_CPU_DESCRIPTOR_HANDLE descriptor, int structureByteStride,
         uint32_t offset = 0, uint32_t size = 0);
+    void prepareTextureBufferShaderResourceView(D3DContext &context,
+        D3D12_CPU_DESCRIPTOR_HANDLE descriptor, DXGI_FORMAT format,
+        uint32_t texelSize);
+    void prepareTextureBufferUnorderedAccessView(D3DContext &context,
+        D3D12_CPU_DESCRIPTOR_HANDLE descriptor, DXGI_FORMAT format,
+        uint32_t texelSize);
     D3D12_GPU_VIRTUAL_ADDRESS getDeviceAddress();
 
 private:

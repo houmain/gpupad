@@ -246,6 +246,14 @@ D3D12_DEPTH_STENCIL_VIEW_DESC D3DTexture::depthStencilViewDesc() const
 void D3DTexture::prepareShaderResourceView(D3DContext &context,
     D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
 {
+    if (mTextureBuffer) {
+        const auto texelSize = getTextureDataSize(mFormat)
+            * getTextureComponentCount(mFormat);
+        mTextureBuffer->prepareTextureBufferShaderResourceView(context,
+            descriptor, toDXGIFormat(mFormat), texelSize);
+        return;
+    }
+
     reload(false);
     create(context);
     upload(context);
@@ -258,6 +266,14 @@ void D3DTexture::prepareShaderResourceView(D3DContext &context,
 void D3DTexture::prepareUnorderedAccessView(D3DContext &context,
     D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
 {
+    if (mTextureBuffer) {
+        const auto texelSize = getTextureDataSize(mFormat)
+            * getTextureComponentCount(mFormat);
+        mTextureBuffer->prepareTextureBufferUnorderedAccessView(context,
+            descriptor, toDXGIFormat(mFormat), texelSize);
+        return;
+    }
+
     reload(true);
     create(context);
     upload(context);
