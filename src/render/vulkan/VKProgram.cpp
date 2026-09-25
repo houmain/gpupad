@@ -18,7 +18,9 @@ VKProgram::VKProgram(const Program &program, const Session &session)
 {
     mUsedItems += program.id;
     mUsedItems += session.id;
-    mCompileShadersSeparately = isRaytracingProgram(program);
+    mCompileShadersSeparately = isRaytracingProgram(program)
+        || (session.shaderLanguage == Session::ShaderLanguage::HLSL
+            && session.shaderCompiler == Session::ShaderCompiler::glslang);
 
     if (mCompileShadersSeparately) {
         for (const auto &item : program.items)
