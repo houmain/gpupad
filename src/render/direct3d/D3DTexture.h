@@ -13,6 +13,7 @@ public:
     D3DTexture(const Texture &texture, D3DRenderSession &renderSession);
     D3DTexture(const Buffer &buffer, D3DBuffer *textureBuffer,
         Texture::Format format, D3DRenderSession &renderSession);
+    void setTextureBuffer(D3DBuffer *buffer) { mTextureBuffer = buffer; }
     D3DTexture(TextureData data, int samples, ItemId itemId = 0);
     D3DTexture(D3DTexture &&) noexcept = default;
     D3DTexture &operator=(D3DTexture &&) noexcept = default;

@@ -29,6 +29,8 @@ public:
         KDGpu::Format format = KDGpu::Format::UNDEFINED);
     bool prepareSampledImage(VKContext &context);
     bool prepareStorageImage(VKContext &context);
+    VKBuffer *textureBuffer() const { return mTextureBuffer; }
+    void setTextureBuffer(VKBuffer *buffer) { mTextureBuffer = buffer; }
     bool prepareAttachment(VKContext &context);
     bool prepareTransferSource(VKContext &context);
     bool prepareExternalWrite(VKContext &context, TextureData::RowOrder rowOrder);

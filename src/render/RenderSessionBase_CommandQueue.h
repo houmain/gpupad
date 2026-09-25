@@ -33,6 +33,10 @@ void RenderSessionBase::reuseUnmodifiedItems(CommandQueue &commandQueue,
 {
     replaceEqual(commandQueue.textures, prevCommandQueue.textures);
     replaceEqual(commandQueue.buffers, prevCommandQueue.buffers);
+    for (auto &[itemId, texture] : commandQueue.textures)
+        if (auto it = commandQueue.buffers.find(itemId);
+            it != commandQueue.buffers.end())
+            texture.setTextureBuffer(&it->second);
     replaceEqual(commandQueue.programs, prevCommandQueue.programs);
     replaceEqual(commandQueue.accelerationStructures,
         prevCommandQueue.accelerationStructures);

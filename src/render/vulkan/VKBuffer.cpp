@@ -284,6 +284,13 @@ void VKBuffer::prepareShaderStorageBuffer(VKContext &context, bool readable,
         KDGpu::PipelineStageFlagBit::AllCommandsBit);
 }
 
+void VKBuffer::prepareStorageTexelBuffer(VKContext &context, bool readable,
+    bool writeable)
+{
+    addUsage(KDGpu::BufferUsageFlagBits::StorageTexelBufferBit);
+    prepareShaderStorageBuffer(context, readable, writeable);
+}
+
 void VKBuffer::prepareAccelerationStructureGeometry(VKContext &context)
 {
     addUsage(

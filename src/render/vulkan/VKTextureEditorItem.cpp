@@ -8,10 +8,10 @@
 namespace {
     struct PipelineDesc
     {
-        Texture::Target target{};
-        Texture::Format textureFormat{};
-        KDGpu::Format swapchainFormat{};
-        bool picker{};
+        Texture::Target target{ };
+        Texture::Format textureFormat{ };
+        KDGpu::Format swapchainFormat{ };
+        bool picker{ };
 
         friend bool operator<(const PipelineDesc &a, const PipelineDesc &b)
         {
@@ -166,9 +166,9 @@ struct VKTextureEditorItem::TextureBinding
     {
         if (bindGroup.isValid() || sampler.isValid())
             context.queue.waitUntilIdle();
-        bindGroup = {};
-        sampler = {};
-        bindGroupLayout = {};
+        bindGroup = { };
+        sampler = { };
+        bindGroupLayout = { };
         if (pickerTexture)
             pickerTexture->release(context.device);
         pickerTexture.reset();
@@ -177,7 +177,7 @@ struct VKTextureEditorItem::TextureBinding
     bool ensurePickerTexture()
     {
         if (!pickerTexture) {
-            auto data = TextureData{};
+            auto data = TextureData{ };
             data.create(Texture::Target::Target1D, Texture::Format::RGBA32F, 1,
                 1, 1, 1);
             pickerTexture = std::make_unique<VKTexture>(data, 1);
@@ -196,7 +196,7 @@ struct VKTextureEditorItem::TextureBinding
 
         if (bindGroup.isValid() || sampler.isValid())
             context.queue.waitUntilIdle();
-        bindGroup = {};
+        bindGroup = { };
         const auto addressMode = toKDGpuAddressMode(wrapMode);
         sampler = context.device.createSampler({
             .magFilter = linear ? KDGpu::FilterMode::Linear
@@ -261,8 +261,8 @@ struct VKTextureEditorItem::TextureBinding
     KDGpu::BindGroup bindGroup;
     KDGpu::Handle<KDGpu::BindGroupLayout_t> bindGroupLayout;
     std::unique_ptr<VKTexture> pickerTexture;
-    bool samplerLinear{};
-    WrapMode mWrapMode{};
+    bool samplerLinear{ };
+    WrapMode mWrapMode{ };
 };
 
 VKTextureEditorItem::VKTextureEditorItem(VKWindow *parent)
@@ -378,12 +378,13 @@ bool VKTextureEditorItem::downloadImage(TextureData *image)
 bool VKTextureEditorItem::copySharedTexture(ShareHandle shareHandle,
     int samples, const TextureData &image)
 {
-    if (!window().initialized())
+    Q_ASSERT(!image.isNull());
+    if (!window().initialized() || image.isNull())
         return false;
 
     const auto shareHandleData = shareHandle.lock();
-    const auto shareHandleChanged =
-        shareHandleData != mCurrentShareHandle.lock();
+    const auto shareHandleChanged = shareHandleData
+        != mCurrentShareHandle.lock();
     if (shareHandleChanged) {
         auto deviceLock = window().beginCommandQueue();
         window().submitCommandQueueWaitIdle();

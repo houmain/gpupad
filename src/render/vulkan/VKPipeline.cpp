@@ -799,8 +799,35 @@ MessageType VKPipeline::updateBindings(VKContext &context,
         break;
     }
 
-    case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
-        return MessageType::NotImplemented;
+    case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER: {
+        const auto imageBinding = find(mBindings.images, desc.name);
+        if (!imageBinding)
+            return MessageType::ImageNotSet;
+
+        const auto texture = static_cast<VKTexture *>(imageBinding->texture);
+        auto buffer = texture ? texture->textureBuffer() : nullptr;
+        if (!buffer)
+            return MessageType::ImageNotSet;
+
+        const auto readable =
+            !(desc.decoration_flags & SPV_REFLECT_DECORATION_NON_READABLE);
+        const auto writeable =
+            !(desc.decoration_flags & SPV_REFLECT_DECORATION_NON_WRITABLE);
+        buffer->prepareStorageTexelBuffer(context, readable, writeable);
+
+        mUsedItems += imageBinding->bindingItemId;
+        mUsedItems += texture->itemId();
+        setBindGroupResource(desc.set, isVariableLengthArray,
+            {
+                .binding = desc.binding,
+                .resource = KDGpu::StorageTexelBufferBinding{
+                    .buffer = buffer->buffer(),
+                    .format = toKDGpu(imageBinding->format),
+                },
+                .arrayElement = arrayElement,
+            });
+        break;
+    }
 
     case SPV_REFLECT_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR: {
         if (!mAccelerationStructure)

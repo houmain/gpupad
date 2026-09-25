@@ -25,6 +25,8 @@ public:
     void prepareUniformBuffer(VKContext &context);
     void prepareShaderStorageBuffer(VKContext &context, bool readable,
         bool writeable);
+    void prepareStorageTexelBuffer(VKContext &context, bool readable,
+        bool writeable);
     void prepareAccelerationStructureGeometry(VKContext &context);
     uint64_t getDeviceAddress(VKContext &context);
 

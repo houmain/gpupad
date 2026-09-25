@@ -2,8 +2,10 @@
 
 layout (local_size_x = 1) in;
 
+#if defined(GPUPAD_OPENGL)
 layout(binding = 0, offset = 0) uniform atomic_uint uCounter0;
 layout(binding = 0, offset = 4) uniform atomic_uint uCounter1;
+#endif
 
 layout(std430) buffer uCounters2 {
   uint uCounter2;
@@ -13,15 +15,17 @@ layout(std430) buffer uCounters2 {
 layout(rgba8ui) uniform uimageBuffer uData;
 
 void main() {
+#if defined(GPUPAD_OPENGL)  
   // increment counter0 in ACB once
-  uint pos = atomicCounterIncrement(uCounter0);
+  atomicCounterIncrement(uCounter0);
   
   // increment counter1 in ACB twice
   atomicCounterIncrement(uCounter1);
   atomicCounterIncrement(uCounter1);
+#endif
   
   // increment counter2 and counter3 in SSBO
-  atomicAdd(uCounter2, 1);
+  uint pos = atomicAdd(uCounter2, 1);
   atomicAdd(uCounter3, 2);
   
   // use atomic values to update a texture buffer

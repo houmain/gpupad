@@ -419,7 +419,8 @@ void TextureEditor::copy()
 
 void TextureEditor::copySharedTexture(ShareHandle shareHandle, int samples)
 {
-    if (mTextureItem->copySharedTexture(shareHandle, samples, mTexture))
+    if (!mTexture.isNull()
+        && mTextureItem->copySharedTexture(shareHandle, samples, mTexture))
         mRenderWidget->redraw();
 }
 
