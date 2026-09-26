@@ -5,6 +5,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 Not resetting RenderTask when updating binding values
 
+## [Version 4.5.0] - 2026-09-26
+
+### Added
+
+- Added Direct3D ray tracing support.
+- Added Direct3D indirect rendering support.
+- Added Direct3D mesh shader support.
+- Added Vulkan storage texel buffer support.
+- Added HLSL Raytracing sample.
+- Added HLSL samples corresponding GLSL samples.
+
+### Fixed
+
+- Fixed Vulkan indirect compute.
+- Fixed Direct3D buffer binding offset/size.
+- Fixed Direct3D stream attribute offset.
+- Fixed Direct3D texture sharing race.
+- Prevent installation of development files.
+- Improved Sliders action.
+
 ## [Version 4.4.0] - 2026-09-18
 
 ### Added
@@ -1190,6 +1210,7 @@ Not resetting RenderTask when updating binding values
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 4.5.0]: https://github.com/houmain/gpupad/compare/4.4.0...4.5.0
 [version 4.4.0]: https://github.com/houmain/gpupad/compare/4.3.1...4.4.0
 [version 4.3.1]: https://github.com/houmain/gpupad/compare/4.3.0...4.3.1
 [version 4.3.0]: https://github.com/houmain/gpupad/compare/4.2.0...4.3.0
