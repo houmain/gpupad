@@ -178,9 +178,23 @@ namespace {
                 .image_format = SpvImageFormatUnknown,
             };
         };
-        // TODO:
-        Q_ASSERT(bindDesc.Dimension == D3D_SRV_DIMENSION_TEXTURE2D);
-        return make(SpvDim2D, Sampled);
+        switch (bindDesc.Dimension) {
+        case D3D_SRV_DIMENSION_TEXTURE1D: return make(SpvDim1D, Sampled);
+        case D3D_SRV_DIMENSION_TEXTURE1DARRAY:
+            return make(SpvDim1D, Sampled | Arrayed);
+        case D3D_SRV_DIMENSION_TEXTURE2D: return make(SpvDim2D, Sampled);
+        case D3D_SRV_DIMENSION_TEXTURE2DARRAY:
+            return make(SpvDim2D, Sampled | Arrayed);
+        case D3D_SRV_DIMENSION_TEXTURE2DMS: return make(SpvDim2D, Sampled | MS);
+        case D3D_SRV_DIMENSION_TEXTURE2DMSARRAY:
+            return make(SpvDim2D, Sampled | MS | Arrayed);
+        case D3D_SRV_DIMENSION_TEXTURE3D:   return make(SpvDim3D, Sampled);
+        case D3D_SRV_DIMENSION_TEXTURECUBE: return make(SpvDimCube, Sampled);
+        case D3D_SRV_DIMENSION_TEXTURECUBEARRAY:
+            return make(SpvDim1D, Sampled | Arrayed);
+        }
+        Q_ASSERT(!"not handled");
+        return { };
     }
 
     SpvReflectArrayTraits getArrayTraits(
