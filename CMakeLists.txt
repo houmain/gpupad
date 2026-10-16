@@ -359,27 +359,30 @@ set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
 # Prevent unconditional installation of development files
 install(CODE [[
-function(file)
+macro(file)
+    set(_install_blocked FALSE)
     if(ARGV0 STREQUAL "INSTALL")
-        set(args ${ARGV})
-        list(FIND args "DESTINATION" destination_index)
-        if(NOT destination_index EQUAL -1)
-            math(EXPR destination_index "${destination_index} + 1")
-            list(GET args ${destination_index} destination)
-            cmake_path(NORMAL_PATH destination)
-            cmake_path(RELATIVE_PATH destination
+        set(_install_args ${ARGV})
+        list(FIND _install_args "DESTINATION" _destination_index)
+        if(NOT _destination_index EQUAL -1)
+            math(EXPR _destination_index "${_destination_index} + 1")
+            list(GET _install_args ${_destination_index} _destination)
+            cmake_path(NORMAL_PATH _destination)
+            cmake_path(RELATIVE_PATH _destination
                 BASE_DIRECTORY "${CMAKE_INSTALL_PREFIX}"
-                OUTPUT_VARIABLE relative_destination)
-            string(TOLOWER "${relative_destination}" relative_destination)
+                OUTPUT_VARIABLE _relative_destination)
+            string(TOLOWER "${_relative_destination}" _relative_destination)
 
-            if(relative_destination MATCHES "^(include|lib|share/cmake)(/|$)|^share/directx")
-                return()
+            if(_relative_destination MATCHES "^(include|lib|share/cmake)(/|$)|^share/directx")
+                set(_install_blocked TRUE)
             endif()
         endif()
     endif()
 
-    _file(${ARGV})
-endfunction()
+    if(NOT _install_blocked)
+        _file(${ARGV})
+    endif()
+endmacro()
 ]] COMPONENT Application)
 
 # Actions -------------------------
