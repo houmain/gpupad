@@ -359,9 +359,14 @@ set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
 # Prevent unconditional installation of development files
 install(CODE [[
+if(POLICY CMP0219)
+    cmake_policy(SET CMP0219 NEW)
+endif()
+cmake_path(CONVERT "${CMAKE_INSTALL_PREFIX}" TO_CMAKE_PATH_LIST CMAKE_INSTALL_PREFIX NORMALIZE)
+
 macro(file)
     set(_install_blocked FALSE)
-    if(ARGV0 STREQUAL "INSTALL")
+    if("${ARGV0}" STREQUAL "INSTALL")
         set(_install_args ${ARGV})
         list(FIND _install_args "DESTINATION" _destination_index)
         if(NOT _destination_index EQUAL -1)
