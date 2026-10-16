@@ -339,6 +339,24 @@ namespace ShaderCompiler {
             arguments.add(QStringLiteral("-fspv-target-env=vulkan%1")
                     .arg(session.apiVersion));
 
+        if (session.renderer == Session::Renderer::Vulkan) {
+            // D3D register classes occupy separate namespaces while Vulkan
+            // bindings do not. Keep their ranges disjoint when compiling HLSL
+            // that uses the customary b/t/s/u register numbering.
+            arguments.add(L"-fvk-b-shift");
+            arguments.add(L"0");
+            arguments.add(L"0");
+            arguments.add(L"-fvk-t-shift");
+            arguments.add(L"100");
+            arguments.add(L"0");
+            arguments.add(L"-fvk-s-shift");
+            arguments.add(L"200");
+            arguments.add(L"0");
+            arguments.add(L"-fvk-u-shift");
+            arguments.add(L"300");
+            arguments.add(L"0");
+        }
+
         //arguments.add(L"-ignore-line-directives");
 
         auto compileInput = input;
