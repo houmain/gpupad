@@ -242,12 +242,12 @@
     <widget class="QComboBox" name="wrap">
      <item>
       <property name="text">
-       <string>Clamp to Border</string>
+       <string>Clamp to Edge</string>
       </property>
      </item>
      <item>
       <property name="text">
-       <string>Clamp to Edge</string>
+       <string>Clamp to Border</string>
       </property>
      </item>
      <item>

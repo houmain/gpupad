@@ -223,8 +223,8 @@ void main() {
 }
 )";
 
-TextureEditorItem::TextureEditorItem(
-    QWindow *window, TextureData::RowOrder windowRowOrder)
+TextureEditorItem::TextureEditorItem(QWindow *window,
+    TextureData::RowOrder windowRowOrder)
     : QObject(window)
     , mWindowRowOrder(windowRowOrder)
 {
@@ -341,7 +341,8 @@ void TextureEditorItem::update()
 
 bool TextureEditorItem::transformTextureCoordinates() const
 {
-    return (wrapMode() != WrapMode::ClampToBorder);
+    return (wrapMode() != WrapMode::ClampToBorder
+        && wrapMode() != WrapMode::ClampToEdge);
 }
 
 QMatrix4x4 TextureEditorItem::getTransform(const QSizeF &bounds,
@@ -371,11 +372,10 @@ auto TextureEditorItem::getParams(const QMatrix4x4 &transform,
     int textureSamples, int textureDepth,
     TextureData::RowOrder textureRowOrder) const -> Params
 {
-    auto params = Params{};
+    auto params = Params{ };
     std::copy_n(transform.constData(), 16, params.transform.begin());
     params.transformTexCoords = (transformTextureCoordinates() ? 1 : 0);
-    params.flipVertically =
-        (effectiveFlipVertically(textureRowOrder) ? 1 : 0);
+    params.flipVertically = (effectiveFlipVertically(textureRowOrder) ? 1 : 0);
     params.width = static_cast<float>(mBoundingRect.width());
     params.height = static_cast<float>(mBoundingRect.height());
     params.level = mLevel;

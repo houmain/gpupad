@@ -19,14 +19,14 @@ class TextureEditorItem : public QObject
     Q_OBJECT
 public:
     enum class WrapMode {
-        ClampToBorder,
         ClampToEdge,
+        ClampToBorder,
         Repeat,
         MirroredRepeat,
     };
 
-    explicit TextureEditorItem(
-        QWindow *parent, TextureData::RowOrder windowRowOrder);
+    explicit TextureEditorItem(QWindow *parent,
+        TextureData::RowOrder windowRowOrder);
     ~TextureEditorItem() override;
 
     virtual void releaseGpu() = 0;
@@ -36,8 +36,8 @@ public:
     virtual void submittedGpu() { }
     virtual bool uploadImage(const TextureData &image) = 0;
     virtual bool downloadImage(TextureData *image) = 0;
-    virtual bool copySharedTexture(ShareHandle shareHandle,
-        int samples, const TextureData &image) = 0;
+    virtual bool copySharedTexture(ShareHandle shareHandle, int samples,
+        const TextureData &image) = 0;
 
     void setBoundingRect(const QRectF &rect);
     QRectF boundingRect() const { return mBoundingRect; }
@@ -87,8 +87,7 @@ public:
     bool flipVertically() const { return mFlipVertically; }
     bool effectiveFlipVertically(TextureData::RowOrder textureRowOrder) const
     {
-        return mFlipVertically
-            != (textureRowOrder != mWindowRowOrder);
+        return mFlipVertically != (textureRowOrder != mWindowRowOrder);
     }
     void setPickerEnabled(bool enabled) { mPickerEnabled = enabled; }
     bool pickerEnabled() const { return mPickerEnabled; }
@@ -106,9 +105,9 @@ Q_SIGNALS:
 protected:
     struct ShaderDesc
     {
-        Texture::Target target{};
-        Texture::Format format{};
-        bool picker{};
+        Texture::Target target{ };
+        Texture::Format format{ };
+        bool picker{ };
 
         friend bool operator<(const ShaderDesc &a, const ShaderDesc &b)
         {
@@ -119,21 +118,21 @@ protected:
 
     struct Params
     {
-        std::array<float, 16> transform{};
-        int32_t transformTexCoords{};
-        int32_t flipVertically{};
+        std::array<float, 16> transform{ };
+        int32_t transformTexCoords{ };
+        int32_t flipVertically{ };
 
-        float width{};
-        float height{};
-        std::array<float, 2> pickerFragCoord{};
-        float level{};
-        float layer{};
-        int32_t face{};
-        int32_t sample{};
-        int32_t samples{};
-        float mappingOffset{};
-        float mappingFactor{};
-        uint32_t colorMask{};
+        float width{ };
+        float height{ };
+        std::array<float, 2> pickerFragCoord{ };
+        float level{ };
+        float layer{ };
+        int32_t face{ };
+        int32_t sample{ };
+        int32_t samples{ };
+        float mappingOffset{ };
+        float mappingFactor{ };
+        uint32_t colorMask{ };
     };
     static_assert(sizeof(Params) == 120);
 
@@ -149,17 +148,17 @@ protected:
 
     QRectF mBoundingRect;
     int mTextureSamples{ 1 };
-    bool mMagnifyLinear{};
-    WrapMode mWrapMode{};
-    float mLevel{};
-    int mFace{};
-    float mLayer{};
+    bool mMagnifyLinear{ };
+    WrapMode mWrapMode{ };
+    float mLevel{ };
+    int mFace{ };
+    float mLayer{ };
     int mSample{ -1 };
-    bool mFlipVertically{};
-    TextureData::RowOrder mWindowRowOrder{};
-    bool mPickerEnabled{};
+    bool mFlipVertically{ };
+    TextureData::RowOrder mWindowRowOrder{ };
+    bool mPickerEnabled{ };
     Range mMappingRange{ 0, 1 };
     Range mMappingSelection{ 0, 1 };
-    QPointF mMousePosition{};
-    unsigned int mColorMask{};
+    QPointF mMousePosition{ };
+    unsigned int mColorMask{ };
 };
