@@ -20,7 +20,11 @@ public:
     ~D3DTexture();
 
     void boundAsSampler() { }
-    void boundAsImage() { }
+    void boundAsImage(int level)
+    {
+        if (level > 0)
+            mMipmapsInvalidated = false;
+    }
 
     ID3D12Resource *resource() { return mResource.Get(); }
     void prepareShaderResourceView(D3DContext &context,

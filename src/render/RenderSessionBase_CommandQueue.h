@@ -66,7 +66,7 @@ void RenderSessionBase::applyAudioTextures(CommandQueue &commandQueue,
         return;
     const auto &frames = mAudioTextureFrames[static_cast<size_t>(chunkIndex)];
     const auto setAudioTexture = [&](TextureBase *texture,
-                                     bool sampled) -> TextureBase * {
+                                     int level) -> TextureBase * {
         if (!texture)
             return texture;
         const auto itemId = texture->itemId();
@@ -74,20 +74,21 @@ void RenderSessionBase::applyAudioTextures(CommandQueue &commandQueue,
         if (frame == frames.cend())
             return texture;
 
-        const auto key = AudioTextureKey{ itemId, chunkIndex };
-        auto it = commandQueue.audioTextures.try_emplace(key, *frame, 1, itemId)
-                      .first;
-        it->second.setDataOverride(*frame);
-        if (sampled)
-            it->second.boundAsSampler();
+        auto &queueTexture =
+            commandQueue.audioTextures
+                .try_emplace({ itemId, chunkIndex }, *frame, 1, itemId)
+                .first->second;
+        queueTexture.setDataOverride(*frame);
+        if (level >= 0)
+            queueTexture.boundAsImage(level);
         else
-            it->second.boundAsImage();
-        return &it->second;
+            queueTexture.boundAsSampler();
+        return &queueTexture;
     };
     for (auto &[name, binding] : bindings.samplers)
-        binding.texture = setAudioTexture(binding.texture, true);
+        binding.texture = setAudioTexture(binding.texture, -1);
     for (auto &[name, binding] : bindings.images)
-        binding.texture = setAudioTexture(binding.texture, false);
+        binding.texture = setAudioTexture(binding.texture, binding.level);
 }
 
 template <typename CommandQueue>
@@ -259,7 +260,7 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
             case Binding::BindingType::Image: {
                 auto texture = addTextureOnce(b.textureId);
                 if (texture)
-                    texture->boundAsImage();
+                    texture->boundAsImage(b.level);
                 addCommand([binding = ImageBinding{ b.id, b.name,
                                 std::move(texture), b.level, b.layer,
                                 b.imageFormat }](BindingState &state) {

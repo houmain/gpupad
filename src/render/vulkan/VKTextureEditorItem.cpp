@@ -181,7 +181,7 @@ struct VKTextureEditorItem::TextureBinding
             data.create(Texture::Target::Target1D, Texture::Format::RGBA32F, 1,
                 1, 1, 1);
             pickerTexture = std::make_unique<VKTexture>(data, 1);
-            pickerTexture->boundAsImage();
+            pickerTexture->boundAsImage(0);
         }
         return (pickerTexture != nullptr);
     }

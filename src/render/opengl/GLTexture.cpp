@@ -463,6 +463,12 @@ bool GLTexture::finishDownload()
     return std::exchange(mDownloaded, false);
 }
 
+void GLTexture::boundAsImage(int level)
+{
+    if (level > 0)
+        mMipmapsInvalidated = false;
+}
+
 GLuint64 GLTexture::obtainBindlessHandle(GLContext &gl)
 {
     if (mBindlessHandle)

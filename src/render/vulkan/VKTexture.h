@@ -17,7 +17,12 @@ public:
 
     void release(KDGpu::Device &device);
     void boundAsSampler() { addUsage(KDGpu::TextureUsageFlagBits::SampledBit); }
-    void boundAsImage() { addUsage(KDGpu::TextureUsageFlagBits::StorageBit); }
+    void boundAsImage(int level)
+    {
+        addUsage(KDGpu::TextureUsageFlagBits::StorageBit);
+        if (level > 0)
+            mMipmapsInvalidated = false;
+    }
     void addUsage(KDGpu::TextureUsageFlags usage);
     void prepareForSwap(VKTexture &texture);
 

@@ -782,6 +782,7 @@ MessageType VKPipeline::updateBindings(VKContext &context,
         const auto texture = static_cast<VKTexture *>(imageBinding->texture);
         if (!texture || !texture->prepareStorageImage(context))
             return MessageType::ImageNotSet;
+        texture->boundAsImage(imageBinding->level);
 
         mUsedItems += imageBinding->bindingItemId;
         mUsedItems += texture->itemId();

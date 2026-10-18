@@ -22,7 +22,7 @@ public:
     bool operator==(const GLTexture &rhs) const;
 
     void boundAsSampler() { }
-    void boundAsImage() { }
+    void boundAsImage(int level);
 
     GLuint64 obtainBindlessHandle(GLContext &gl);
     bool clear(GLContext &gl, std::array<double, 4> color, double depth,

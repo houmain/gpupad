@@ -840,6 +840,7 @@ bool GLCall::applyImageBinding(const SpvReflectDescriptorBinding &desc,
     auto &texture = static_cast<GLTexture &>(*binding.texture);
     const auto target = texture.target();
     const auto textureId = texture.getReadWriteTextureId(gl);
+    texture.boundAsImage(binding.level);
     const auto format = (binding.format
             ? static_cast<GLenum>(binding.format)
             : static_cast<GLenum>(texture.format()));
