@@ -30,7 +30,7 @@ public:
     void prepareShaderResourceView(D3DContext &context,
         D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
     void prepareUnorderedAccessView(D3DContext &context,
-        D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
+        D3D12_CPU_DESCRIPTOR_HANDLE descriptor, int level = 0);
     void prepareRenderTargetView(D3DContext &context);
     void prepareDepthStencilView(D3DContext &context);
     D3D12_RENDER_TARGET_VIEW_DESC renderTargetViewDesc() const;
@@ -75,7 +75,7 @@ private:
     void create(D3DContext &context);
     void upload(D3DContext &context);
     D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc() const;
-    D3D12_UNORDERED_ACCESS_VIEW_DESC unorderedAccessViewDesc() const;
+    D3D12_UNORDERED_ACCESS_VIEW_DESC unorderedAccessViewDesc(int level) const;
     void resourceBarrier(D3DContext &context, D3D12_RESOURCE_STATES state);
 
     D3DBuffer *mTextureBuffer{};

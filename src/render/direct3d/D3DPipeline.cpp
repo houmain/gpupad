@@ -408,8 +408,11 @@ void D3DPipeline::addStaticSampler(const D3D12_SHADER_INPUT_BIND_DESC &bindDesc,
         sampler.MaxAnisotropy = (binding->anisotropic ? 8 : 0);
         sampler.ComparisonFunc = toD3D(binding->comparisonFunc);
         sampler.BorderColor = getStaticBorderColor(binding->borderColor);
-        // TODO: fix mip mapping
-        sampler.MaxLOD = 0;
+        using Filter = Binding::Filter;
+        sampler.MaxLOD = (binding->minFilter == Filter::Nearest
+                    || binding->minFilter == Filter::Linear
+                ? 0.0f
+                : D3D12_FLOAT32_MAX);
     } else {
         mMessages.insert(mItemId, MessageType::SamplerNotSet, bindDesc.Name);
     }
@@ -691,19 +694,27 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
             }
 
             case D3D_SIT_UAV_RWTYPED: {
-                const auto imageBinding = find(mBindings.images, name);
-                if (!imageBinding || !imageBinding->texture) {
-                    mMessages.insert(mItemId, MessageType::ImageNotSet, name);
-                    canRender = false;
-                    continue;
-                }
-                mUsedItems += imageBinding->bindingItemId;
-                mUsedItems += imageBinding->texture->itemId();
-                auto texture = static_cast<D3DTexture *>(imageBinding->texture);
-
-                // TODO:
                 for (auto i = 0u; i < bindDesc.BindCount; ++i) {
-                    texture->prepareUnorderedAccessView(context, descriptor);
+                    const auto elementName = (bindDesc.BindCount > 1
+                            ? QString("%1[%2]").arg(name).arg(i)
+                            : name);
+                    const auto imageBinding =
+                        find(mBindings.images, elementName);
+                    if (!imageBinding || !imageBinding->texture) {
+                        mMessages.insert(mItemId, MessageType::ImageNotSet,
+                            elementName);
+                        canRender = false;
+                        descriptor.Offset(1, context.descriptorSize);
+                        continue;
+                    }
+
+                    mUsedItems += imageBinding->bindingItemId;
+                    mUsedItems += imageBinding->texture->itemId();
+                    auto texture =
+                        static_cast<D3DTexture *>(imageBinding->texture);
+                    texture->prepareUnorderedAccessView(context, descriptor,
+                        imageBinding->level);
+                    texture->boundAsImage(imageBinding->level);
                     descriptor.Offset(1, context.descriptorSize);
                 }
                 break;

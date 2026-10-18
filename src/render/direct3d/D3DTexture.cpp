@@ -156,7 +156,8 @@ D3D12_SHADER_RESOURCE_VIEW_DESC D3DTexture::shaderResourceViewDesc() const
     return desc;
 }
 
-D3D12_UNORDERED_ACCESS_VIEW_DESC D3DTexture::unorderedAccessViewDesc() const
+D3D12_UNORDERED_ACCESS_VIEW_DESC D3DTexture::unorderedAccessViewDesc(
+    int level) const
 {
     auto desc = D3D12_UNORDERED_ACCESS_VIEW_DESC{
         .Format = toDXGIFormat(mFormat),
@@ -164,13 +165,24 @@ D3D12_UNORDERED_ACCESS_VIEW_DESC D3DTexture::unorderedAccessViewDesc() const
     };
     switch (desc.ViewDimension) {
     case D3D12_UAV_DIMENSION_TEXTURE1D:
+        desc.Texture1D.MipSlice = level;
+        break;
     case D3D12_UAV_DIMENSION_TEXTURE1DARRAY:
+        desc.Texture1DArray.MipSlice = level;
+        break;
     case D3D12_UAV_DIMENSION_TEXTURE2D:
+        desc.Texture2D.MipSlice = level;
+        break;
     case D3D12_UAV_DIMENSION_TEXTURE2DARRAY:
+        desc.Texture2DArray.MipSlice = level;
+        break;
     case D3D12_UAV_DIMENSION_TEXTURE2DMS:
     case D3D12_UAV_DIMENSION_TEXTURE2DMSARRAY: break;
     case D3D12_UAV_DIMENSION_TEXTURE3D:
-        desc.Texture3D = { .WSize = ~UINT{ 0 } };
+        desc.Texture3D = {
+            .MipSlice = static_cast<UINT>(level),
+            .WSize = ~UINT{ 0 },
+        };
         break;
     default: Q_ASSERT(!"not handled");
     }
@@ -264,7 +276,7 @@ void D3DTexture::prepareShaderResourceView(D3DContext &context,
 }
 
 void D3DTexture::prepareUnorderedAccessView(D3DContext &context,
-    D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
+    D3D12_CPU_DESCRIPTOR_HANDLE descriptor, int level)
 {
     if (mTextureBuffer) {
         const auto texelSize = getTextureDataSize(mFormat)
@@ -279,7 +291,7 @@ void D3DTexture::prepareUnorderedAccessView(D3DContext &context,
     upload(context);
     resourceBarrier(context, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
-    const auto uavDesc = unorderedAccessViewDesc();
+    const auto uavDesc = unorderedAccessViewDesc(level);
     context.device.CreateUnorderedAccessView(resource(), nullptr, &uavDesc,
         descriptor);
 
