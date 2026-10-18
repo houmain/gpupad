@@ -76,6 +76,7 @@ private:
     void upload(D3DContext &context);
     D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc() const;
     D3D12_UNORDERED_ACCESS_VIEW_DESC unorderedAccessViewDesc(int level) const;
+    bool createMipmapPipeline(D3DContext &context);
     void resourceBarrier(D3DContext &context, D3D12_RESOURCE_STATES state);
 
     D3DBuffer *mTextureBuffer{};
@@ -83,6 +84,9 @@ private:
     ComPtr<ID3D12Resource> mResource;
     ComPtr<ID3D12Resource> mDownloadBuffer;
     std::vector<DownloadSubresource> mDownloadSubresources;
+    ComPtr<ID3D12DescriptorHeap> mMipmapDescriptorHeap;
+    ComPtr<ID3D12RootSignature> mMipmapRootSignature;
+    ComPtr<ID3D12PipelineState> mMipmapPipelineState;
     D3D12_RESOURCE_STATES mCurrentState{};
     D3D12_CLEAR_VALUE mClearValue{};
 };

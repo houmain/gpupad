@@ -68,6 +68,7 @@ public:
     int getImageSize(int level) const;
     int getSlicesSize(int level) const;
     int getLevelSize(int level) const;
+    bool mipmapsNeedGeneration() const;
 
 #if defined(OPENGL_ENABLED)
     bool uploadGL(GLuint *textureId) const;

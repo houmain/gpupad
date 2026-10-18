@@ -1767,6 +1767,11 @@ int TextureData::getLevelSize(int level) const
         static_cast<ktx_uint32_t>(level)));
 }
 
+bool TextureData::mipmapsNeedGeneration() const
+{
+    return mKtxTexture && mKtxTexture->generateMipmaps;
+}
+
 void TextureData::clear()
 {
     if (isNull())

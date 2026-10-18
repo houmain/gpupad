@@ -753,11 +753,11 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
 
 bool D3DPipeline::bindGraphics(D3DContext &context, ScriptEngine &scriptEngine)
 {
-    context.graphicsCommandList->SetPipelineState(mPipelineState.Get());
-    context.graphicsCommandList->SetGraphicsRootSignature(mRootSignature.Get());
-
     if (!setDescriptors(context, scriptEngine))
         return false;
+
+    context.graphicsCommandList->SetPipelineState(mPipelineState.Get());
+    context.graphicsCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
     if (mDescriptorHeap) {
         auto descriptorHeaps = mDescriptorHeap.Get();
@@ -778,11 +778,11 @@ bool D3DPipeline::bindGraphics(D3DContext &context, ScriptEngine &scriptEngine)
 
 bool D3DPipeline::bindCompute(D3DContext &context, ScriptEngine &scriptEngine)
 {
-    context.graphicsCommandList->SetPipelineState(mPipelineState.Get());
-    context.graphicsCommandList->SetComputeRootSignature(mRootSignature.Get());
-
     if (!setDescriptors(context, scriptEngine))
         return false;
+
+    context.graphicsCommandList->SetPipelineState(mPipelineState.Get());
+    context.graphicsCommandList->SetComputeRootSignature(mRootSignature.Get());
 
     if (mDescriptorHeap) {
         auto descriptorHeaps = mDescriptorHeap.Get();

@@ -269,6 +269,7 @@ void D3DTexture::prepareShaderResourceView(D3DContext &context,
     reload(false);
     create(context);
     upload(context);
+    updateMipmaps(context);
     resourceBarrier(context, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
     const auto srvDesc = shaderResourceViewDesc();
@@ -409,44 +410,6 @@ bool D3DTexture::swap(D3DTexture &other)
     return true;
 }
 
-bool D3DTexture::updateMipmaps(D3DContext &context)
-{
-    if (!resource())
-        return false;
-
-    if (std::exchange(mMipmapsInvalidated, false) && levels() > 1) {
-
-        resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_DEST);
-
-        const auto transition = CD3DX12_RESOURCE_BARRIER::Transition(resource(),
-            mCurrentState, D3D12_RESOURCE_STATE_COPY_SOURCE, 0);
-        context.graphicsCommandList->ResourceBarrier(1, &transition);
-
-        // TODO: dummy implementation without stretching
-        for (auto i = 1; i < levels(); ++i) {
-            const auto source =
-                CD3DX12_TEXTURE_COPY_LOCATION(resource(), i - 1);
-            const auto dest = CD3DX12_TEXTURE_COPY_LOCATION(resource(), i);
-            const auto sourceRegion = D3D12_BOX{
-                .left = 0,
-                .top = 0,
-                .front = 0,
-                .right = static_cast<UINT>(mData.getLevelWidth(i)),
-                .bottom = static_cast<UINT>(mData.getLevelHeight(i)),
-                .back = 1,
-            };
-            context.graphicsCommandList->CopyTextureRegion(&dest, 0, 0, 0,
-                &source, &sourceRegion);
-
-            const auto transition = CD3DX12_RESOURCE_BARRIER::Transition(
-                resource(), mCurrentState, D3D12_RESOURCE_STATE_COPY_SOURCE, i);
-            context.graphicsCommandList->ResourceBarrier(1, &transition);
-        }
-        mCurrentState = D3D12_RESOURCE_STATE_COPY_SOURCE;
-    }
-    return true;
-}
-
 void D3DTexture::prepareExternalRead(D3DContext &context)
 {
     if (mDeviceCopyModified)
@@ -458,9 +421,10 @@ void D3DTexture::create(D3DContext &context)
     if (std::exchange(mCreated, true))
         return;
 
-    auto dxgiFormat = (mKind.depth || mKind.stencil
-            ? toDXGITypelessFormat(format())
-            : toDXGIFormat(format()));
+    const auto useTypelessFormat = (mKind.depth || mKind.stencil
+        || mFormat == Texture::Format::SRGB8_Alpha8);
+    auto dxgiFormat = (useTypelessFormat ? toDXGITypelessFormat(format())
+                                         : toDXGIFormat(format()));
     if (!dxgiFormat) {
         mMessages.insert(mItemId, MessageType::UnsupportedTextureFormat);
         return;
@@ -580,6 +544,7 @@ void D3DTexture::upload(D3DContext &context)
         stagingBuffer.Get(), 0, 0, static_cast<UINT>(subresourceData.size()),
         subresourceData.data());
 
+    mMipmapsInvalidated = mData.mipmapsNeedGeneration();
     mSystemCopyModified = mDeviceCopyModified = false;
 }
 

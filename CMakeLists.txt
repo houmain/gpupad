@@ -249,6 +249,7 @@ if (GPUPAD_ENABLE_D3D)
   src/render/direct3d/D3DStream.cpp
   src/render/direct3d/D3DTarget.cpp
   src/render/direct3d/D3DTexture.cpp
+  src/render/direct3d/D3DTexture_updateMipmaps.cpp
   src/render/direct3d/D3DDevice.cpp
   src/render/direct3d/D3DRenderSession.cpp
   libs/d3d12/RenderTargetHelper.cpp)

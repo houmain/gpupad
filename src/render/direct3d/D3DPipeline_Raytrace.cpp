@@ -224,11 +224,11 @@ bool D3DPipeline::bindRayTracing(D3DContext &context,
         return false;
     }
 
-    commandList->SetPipelineState1(mRayTracingStateObject.Get());
-    commandList->SetComputeRootSignature(mRootSignature.Get());
-
     if (!setDescriptors(context, scriptEngine))
         return false;
+
+    commandList->SetPipelineState1(mRayTracingStateObject.Get());
+    commandList->SetComputeRootSignature(mRootSignature.Get());
 
     if (mDescriptorHeap) {
         auto descriptorHeap = mDescriptorHeap.Get();
