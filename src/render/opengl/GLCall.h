@@ -56,9 +56,9 @@ private:
         const UniformBinding &bindings, int offset, int count, GLContext &gl,
         ScriptEngine &scriptEngine);
     bool applySamplerBinding(const SpvReflectDescriptorBinding &desc,
-        GLContext &gl, const SamplerBinding &binding);
+        uint32_t arrayElement, GLContext &gl, const SamplerBinding &binding);
     bool applyImageBinding(const SpvReflectDescriptorBinding &desc,
-        GLContext &gl, const ImageBinding &binding);
+        uint32_t arrayElement, GLContext &gl, const ImageBinding &binding);
     void selectSubroutines(GLContext &gl);
     bool bindVertexStream(GLContext &gl);
     void unbindVertexStream(GLContext &gl);

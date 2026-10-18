@@ -891,8 +891,14 @@ auto GLProgram::getDescriptorBindingPoint(
 {
     Q_ASSERT(desc.name && desc.type_description
         && desc.type_description->type_name);
-    const auto it = mDescriptorBindingPoints.find(
+    auto name = QString::fromUtf8(
         *desc.name ? desc.name : desc.type_description->type_name);
+    auto it = mDescriptorBindingPoints.find(name);
+    if (it == mDescriptorBindingPoints.end())
+        if (const auto bracket = name.indexOf('['); bracket >= 0) {
+            name.truncate(bracket);
+            it = mDescriptorBindingPoints.find(name);
+        }
     if (it != mDescriptorBindingPoints.end()) {
         auto [target, bindingPoint] = it->second;
         return { target, bindingPoint + arrayIndex };

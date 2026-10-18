@@ -642,7 +642,7 @@ MessageType GLCall::applyBinding(const SpvReflectDescriptorBinding &desc,
             return MessageType::TextureNotAssigned;
         mUsedItems += samplerBinding->texture->itemId();
 
-        if (!applySamplerBinding(desc, gl, *samplerBinding))
+        if (!applySamplerBinding(desc, arrayElement, gl, *samplerBinding))
             return MessageType::TextureNotAssigned;
         break;
     }
@@ -657,7 +657,7 @@ MessageType GLCall::applyBinding(const SpvReflectDescriptorBinding &desc,
             return MessageType::TextureNotAssigned;
         mUsedItems += imageBinding->texture->itemId();
 
-        if (!applyImageBinding(desc, gl, *imageBinding))
+        if (!applyImageBinding(desc, arrayElement, gl, *imageBinding))
             return MessageType::TextureNotAssigned;
         break;
     }
@@ -769,7 +769,7 @@ void GLCall::applyUniformBinding(const GLProgram::Uniform &uniform,
 }
 
 bool GLCall::applySamplerBinding(const SpvReflectDescriptorBinding &desc,
-    GLContext &gl, const SamplerBinding &binding)
+    uint32_t arrayElement, GLContext &gl, const SamplerBinding &binding)
 {
     Q_ASSERT(static_cast<GLint>(desc.binding) >= 0);
     Q_ASSERT(binding.texture);
@@ -781,11 +781,13 @@ bool GLCall::applySamplerBinding(const SpvReflectDescriptorBinding &desc,
 
     auto &texture = static_cast<GLTexture &>(*binding.texture);
     const auto target = texture.target();
-    gl.glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + desc.binding));
+    const auto textureUnit = desc.binding + arrayElement;
+    gl.glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + textureUnit));
     texture.updateMipmaps(gl);
     gl.glBindTexture(target, texture.getReadOnlyTextureId(gl));
-    const auto location = mProgram->getDescriptorBindingPoint(desc).index;
-    gl.glUniform1i(location, desc.binding);
+    const auto location =
+        mProgram->getDescriptorBindingPoint(desc, arrayElement).index;
+    gl.glUniform1i(location, static_cast<GLint>(textureUnit));
 
     switch (target) {
     case Texture::Target::Target1D:
@@ -830,7 +832,7 @@ bool GLCall::applySamplerBinding(const SpvReflectDescriptorBinding &desc,
 }
 
 bool GLCall::applyImageBinding(const SpvReflectDescriptorBinding &desc,
-    GLContext &gl, const ImageBinding &binding)
+    uint32_t arrayElement, GLContext &gl, const ImageBinding &binding)
 {
     Q_ASSERT(static_cast<GLint>(desc.binding) >= 0);
     Q_ASSERT(binding.texture);
@@ -841,6 +843,7 @@ bool GLCall::applyImageBinding(const SpvReflectDescriptorBinding &desc,
     const auto format = (binding.format
             ? static_cast<GLenum>(binding.format)
             : static_cast<GLenum>(texture.format()));
+    const auto imageUnit = desc.binding + arrayElement;
 
     auto formatSupported = GLint();
     gl.glGetInternalformativ(target, format, GL_SHADER_IMAGE_LOAD, 1,
@@ -850,11 +853,12 @@ bool GLCall::applyImageBinding(const SpvReflectDescriptorBinding &desc,
             MessageType::ImageFormatNotBindable);
         return false;
     }
-    gl.glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + desc.binding));
+    gl.glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + imageUnit));
     gl.glBindTexture(target, textureId);
-    const auto location = mProgram->getDescriptorBindingPoint(desc).index;
-    gl.glUniform1i(location, desc.binding);
-    gl.glBindImageTexture(static_cast<GLuint>(desc.binding), textureId,
+    const auto location =
+        mProgram->getDescriptorBindingPoint(desc, arrayElement).index;
+    gl.glUniform1i(location, static_cast<GLint>(imageUnit));
+    gl.glBindImageTexture(imageUnit, textureId,
         binding.level, (binding.layer < 0), std::max(binding.layer, 0),
         GL_READ_WRITE, format);
 
