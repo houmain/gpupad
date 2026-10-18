@@ -1,0 +1,25 @@
+#version 450
+
+// One descriptor-array binding containing a storage-image view for each mip.
+// Every array element refers to the same texture at a different mip level.
+layout(rgba8) uniform writeonly image2D uMips[8];
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+#define FILL_MIP(mip, color)                         \
+    if (all(lessThan(position, imageSize(mip))))     \
+        imageStore(mip, position, color)
+
+void main()
+{
+    ivec2 position = ivec2(gl_GlobalInvocationID.xy);
+
+    FILL_MIP(uMips[0], vec4(1.00, 0.02, 0.02, 1.0));
+    FILL_MIP(uMips[1], vec4(1.00, 0.28, 0.00, 1.0));
+    FILL_MIP(uMips[2], vec4(1.00, 0.92, 0.00, 1.0));
+    FILL_MIP(uMips[3], vec4(0.45, 1.00, 0.00, 1.0));
+    FILL_MIP(uMips[4], vec4(0.00, 1.00, 0.18, 1.0));
+    FILL_MIP(uMips[5], vec4(0.00, 1.00, 1.00, 1.0));
+    FILL_MIP(uMips[6], vec4(0.00, 0.35, 1.00, 1.0));
+    FILL_MIP(uMips[7], vec4(0.18, 0.00, 1.00, 1.0));
+}
