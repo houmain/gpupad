@@ -1,0 +1,92 @@
+{
+    "type": "Session",
+    "id": 1,
+    "name": "GLSL/RGTC1 Encoder",
+    "renderer": "Vulkan",
+    "shaderLanguage": "GLSL",
+    "shaderCompiler": "glslang",
+    "shaderCompilerSettings": {
+        "autoMapBindings": "false",
+        "autoMapLocations": "true",
+        "autoSampledTextures": "false",
+        "vulkanRulesRelaxed": "false",
+        "spirvVersion": ""
+    },
+    "shaderPreamble": "",
+    "shaderIncludePaths": "",
+    "items": [
+        {
+            "type": "Texture",
+            "id": 2,
+            "name": "Cube sample source",
+            "fileName": "../Cube/planks.jpg",
+            "target": "Target2D",
+            "format": "SRGB8_Alpha8",
+            "width": "512",
+            "height": "512",
+            "samples": 1,
+            "flipVertically": false
+        },
+        {
+            "type": "Texture",
+            "id": 3,
+            "name": "RGTC1 grayscale",
+            "target": "Target2D",
+            "format": "R_ATI1N_UNorm",
+            "width": "512",
+            "height": "512",
+            "samples": 1,
+            "flipVertically": false
+        },
+        {
+            "type": "Binding",
+            "id": 4,
+            "name": "uSource",
+            "bindingType": "Sampler",
+            "textureId": 2,
+            "minFilter": "Nearest",
+            "magFilter": "Nearest",
+            "wrapModeX": "ClampToEdge",
+            "wrapModeY": "ClampToEdge",
+            "wrapModeZ": "ClampToEdge",
+            "anisotropic": false,
+            "borderColor": "#ff000000",
+            "comparisonFunc": "NoComparisonFunc"
+        },
+        {
+            "type": "Binding",
+            "id": 5,
+            "name": "uDestination",
+            "bindingType": "Image",
+            "textureId": 3,
+            "level": 0,
+            "layer": 0,
+            "imageFormat": "rg32ui"
+        },
+        {
+            "type": "Program",
+            "id": 6,
+            "name": "RGTC1 encoder",
+            "items": [
+                {
+                    "type": "Shader",
+                    "id": 7,
+                    "fileName": "rgtc1-encoder.comp",
+                    "shaderType": "Compute"
+                }
+            ]
+        },
+        {
+            "type": "Call",
+            "id": 8,
+            "name": "Encode RGTC1",
+            "callType": "Compute",
+            "programId": 6,
+            "workGroupsX": "16",
+            "workGroupsY": "16",
+            "workGroupsZ": "1",
+            "executeOn": "ResetEvaluation",
+            "checked": true
+        }
+    ]
+}

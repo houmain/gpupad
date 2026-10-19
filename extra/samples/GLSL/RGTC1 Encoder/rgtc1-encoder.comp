@@ -1,0 +1,93 @@
+#version 450
+
+layout(binding = 0) uniform sampler2D uSource;
+layout(binding = 1, rg32ui) uniform writeonly uimage2D uDestination;
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+uint quantizeUNorm8(float value)
+{
+    return uint(round(clamp(value, 0.0, 1.0) * 255.0));
+}
+
+void buildPalette(uint endpoint0, uint endpoint1, out uint palette[8])
+{
+    palette[0] = endpoint0;
+    palette[1] = endpoint1;
+
+    if (endpoint0 > endpoint1) {
+        for (uint index = 1; index < 7; ++index)
+            palette[index + 1] = ((7u - index) * endpoint0
+                                    + index * endpoint1) / 7u;
+    } else {
+        for (uint index = 1; index < 5; ++index)
+            palette[index + 1] = ((5u - index) * endpoint0
+                                    + index * endpoint1) / 5u;
+        palette[6] = 0u;
+        palette[7] = 255u;
+    }
+}
+
+uint findNearestPaletteIndex(uint value, uint palette[8])
+{
+    uint bestIndex = 0u;
+    uint bestError = 0xffffffffu;
+
+    for (uint index = 0u; index < 8u; ++index) {
+        uint error = uint(abs(int(value) - int(palette[index])));
+        if (error < bestError) {
+            bestError = error;
+            bestIndex = index;
+        }
+    }
+    return bestIndex;
+}
+
+void main()
+{
+    ivec2 blockPosition = ivec2(gl_GlobalInvocationID.xy);
+    if (any(greaterThanEqual(blockPosition, imageSize(uDestination))))
+        return;
+
+    ivec2 sourceSize = textureSize(uSource, 0);
+    uint luminance[16];
+    uint minimum = 255u;
+    uint maximum = 0u;
+
+    for (int texel = 0; texel < 16; ++texel) {
+        ivec2 offset = ivec2(texel & 3, texel >> 2);
+        ivec2 sourcePosition = min(blockPosition * 4 + offset,
+                                   sourceSize - ivec2(1));
+        vec3 color = texelFetch(uSource, sourcePosition, 0).rgb;
+        uint value = quantizeUNorm8(dot(color,
+            vec3(0.2126, 0.7152, 0.0722)));
+        luminance[texel] = value;
+        minimum = min(minimum, value);
+        maximum = max(maximum, value);
+    }
+
+    // endpoint0 > endpoint1 selects BC4's eight-value interpolation mode.
+    uint endpoint0 = maximum;
+    uint endpoint1 = minimum;
+    uint palette[8];
+    buildPalette(endpoint0, endpoint1, palette);
+
+    // A BC4 block is two endpoint bytes followed by sixteen little-endian
+    // 3-bit palette indices. The rg32ui view exposes its 64 bits as two words.
+    uvec2 encoded = uvec2(endpoint0 | (endpoint1 << 8u), 0u);
+    for (uint texel = 0u; texel < 16u; ++texel) {
+        uint paletteIndex = findNearestPaletteIndex(luminance[texel], palette);
+        uint bitOffset = 16u + texel * 3u;
+
+        if (bitOffset < 32u) {
+            encoded.x |= paletteIndex << bitOffset;
+            if (bitOffset > 29u)
+                encoded.y |= paletteIndex >> (32u - bitOffset);
+        } else {
+            encoded.y |= paletteIndex << (bitOffset - 32u);
+        }
+    }
+
+    imageStore(uDestination, blockPosition,
+               uvec4(encoded.x, encoded.y, 0u, 0u));
+}
