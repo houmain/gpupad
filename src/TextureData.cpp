@@ -551,6 +551,9 @@ namespace {
         if (isDepthStencilFormat(format))
             return false;
 
+        if (getTextureDataType(format) == TextureDataType::Compressed)
+            return false;
+
         const auto sampleType = getTextureSampleType(format);
         return (sampleType == TextureSampleType::Normalized
             || sampleType == TextureSampleType::Normalized_sRGB

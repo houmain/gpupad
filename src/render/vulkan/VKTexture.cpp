@@ -226,9 +226,10 @@ bool VKTexture::copy(VKContext &context, VKTexture &source)
         KDGpu::PipelineStageFlagBit::TransferBit);
 
     const auto layerCount = vkArrayLayerCount(mKind, mLayers);
+    const auto levelCount = std::min(levels(), source.levels());
     auto regions = std::vector<KDGpu::TextureCopyRegion>();
-    regions.reserve(static_cast<size_t>(levels()));
-    for (auto level = 0; level < levels(); ++level) {
+    regions.reserve(static_cast<size_t>(levelCount));
+    for (auto level = 0; level < levelCount; ++level) {
         const auto mipLevel = static_cast<uint32_t>(level);
         regions.push_back(KDGpu::TextureCopyRegion{
             .srcSubresource{
@@ -242,10 +243,12 @@ bool VKTexture::copy(VKContext &context, VKTexture &source)
                 .layerCount = layerCount,
             },
             .extent = {
-                static_cast<uint32_t>(mData.getLevelWidth(level)),
-                static_cast<uint32_t>(mData.getLevelHeight(level)),
-                static_cast<uint32_t>(mKind.dimensions == 3
-                        ? mData.getLevelDepth(level)
+                // Vulkan defines the copy extent in source-image texels and
+                // size-adjusts the destination when block extents differ.
+                static_cast<uint32_t>(source.mData.getLevelWidth(level)),
+                static_cast<uint32_t>(source.mData.getLevelHeight(level)),
+                static_cast<uint32_t>(source.mKind.dimensions == 3
+                        ? source.mData.getLevelDepth(level)
                         : 1),
             },
         });
