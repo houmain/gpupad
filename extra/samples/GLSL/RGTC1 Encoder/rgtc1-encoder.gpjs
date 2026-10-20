@@ -2,16 +2,10 @@
     "type": "Session",
     "id": 1,
     "name": "GLSL/RGTC1 Encoder",
-    "renderer": "Vulkan",
+    "renderer": "OpenGL",
     "shaderLanguage": "GLSL",
-    "shaderCompiler": "glslang",
-    "shaderCompilerSettings": {
-        "autoMapBindings": "false",
-        "autoMapLocations": "true",
-        "autoSampledTextures": "false",
-        "vulkanRulesRelaxed": "false",
-        "spirvVersion": ""
-    },
+    "shaderCompiler": "Driver",
+    "shaderCompilerSettings": {},
     "shaderPreamble": "",
     "shaderIncludePaths": "",
     "items": [
@@ -39,6 +33,17 @@
             "flipVertically": false
         },
         {
+            "type": "Texture",
+            "id": 9,
+            "name": "Encoded RGTC1 blocks",
+            "target": "Target2D",
+            "format": "RG32U",
+            "width": "128",
+            "height": "128",
+            "samples": 1,
+            "flipVertically": false
+        },
+        {
             "type": "Binding",
             "id": 4,
             "name": "uSource",
@@ -58,7 +63,7 @@
             "id": 5,
             "name": "uDestination",
             "bindingType": "Image",
-            "textureId": 3,
+            "textureId": 9,
             "level": 0,
             "layer": 0,
             "imageFormat": "rg32ui"
@@ -85,6 +90,16 @@
             "workGroupsX": "16",
             "workGroupsY": "16",
             "workGroupsZ": "1",
+            "executeOn": "ResetEvaluation",
+            "checked": true
+        },
+        {
+            "type": "Call",
+            "id": 10,
+            "name": "Copy blocks to RGTC1",
+            "callType": "CopyTexture",
+            "textureId": 3,
+            "fromTextureId": 9,
             "executeOn": "ResetEvaluation",
             "checked": true
         }

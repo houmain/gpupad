@@ -932,6 +932,86 @@ int getTextureComponentCount(Texture::Format format)
     }
 }
 
+int getTextureStride(Texture::Format format)
+{
+    switch (format) {
+    case TF::RG3B2: return 1;
+
+    case TF::R5G6B5:
+    case TF::RGB5A1:
+    case TF::RGBA4: return 2;
+
+    case TF::RGB9E5:
+    case TF::RG11B10F:
+    case TF::RGB10A2:
+    case TF::D24:
+    case TF::D24S8: return 4;
+
+    case TF::D32FS8X24: return 8;
+
+    case TF::RGB_DXT1:
+    case TF::RGBA_DXT1:
+    case TF::R_ATI1N_UNorm:
+    case TF::R_ATI1N_SNorm:
+    case TF::R11_EAC_UNorm:
+    case TF::R11_EAC_SNorm:
+    case TF::RGB8_ETC1:
+    case TF::RGB8_ETC2:
+    case TF::SRGB8_ETC2:
+    case TF::RGB8_PunchThrough_Alpha1_ETC2:
+    case TF::SRGB8_PunchThrough_Alpha1_ETC2:
+    case TF::SRGB_DXT1:
+    case TF::SRGB_Alpha_DXT1: return 8;
+
+    case TF::RGBA_DXT3:
+    case TF::RGBA_DXT5:
+    case TF::RG_ATI2N_UNorm:
+    case TF::RG_ATI2N_SNorm:
+    case TF::RGB_BP_UNSIGNED_FLOAT:
+    case TF::RGB_BP_SIGNED_FLOAT:
+    case TF::RGB_BP_UNorm:
+    case TF::RG11_EAC_UNorm:
+    case TF::RG11_EAC_SNorm:
+    case TF::RGBA8_ETC2_EAC:
+    case TF::SRGB8_Alpha8_ETC2_EAC:
+    case TF::RGBA_ASTC_4x4:
+    case TF::RGBA_ASTC_5x4:
+    case TF::RGBA_ASTC_5x5:
+    case TF::RGBA_ASTC_6x5:
+    case TF::RGBA_ASTC_6x6:
+    case TF::RGBA_ASTC_8x5:
+    case TF::RGBA_ASTC_8x6:
+    case TF::RGBA_ASTC_8x8:
+    case TF::RGBA_ASTC_10x5:
+    case TF::RGBA_ASTC_10x6:
+    case TF::RGBA_ASTC_10x8:
+    case TF::RGBA_ASTC_10x10:
+    case TF::RGBA_ASTC_12x10:
+    case TF::RGBA_ASTC_12x12:
+    case TF::SRGB8_Alpha8_ASTC_4x4:
+    case TF::SRGB8_Alpha8_ASTC_5x4:
+    case TF::SRGB8_Alpha8_ASTC_5x5:
+    case TF::SRGB8_Alpha8_ASTC_6x5:
+    case TF::SRGB8_Alpha8_ASTC_6x6:
+    case TF::SRGB8_Alpha8_ASTC_8x5:
+    case TF::SRGB8_Alpha8_ASTC_8x6:
+    case TF::SRGB8_Alpha8_ASTC_8x8:
+    case TF::SRGB8_Alpha8_ASTC_10x5:
+    case TF::SRGB8_Alpha8_ASTC_10x6:
+    case TF::SRGB8_Alpha8_ASTC_10x8:
+    case TF::SRGB8_Alpha8_ASTC_10x10:
+    case TF::SRGB8_Alpha8_ASTC_12x10:
+    case TF::SRGB8_Alpha8_ASTC_12x12:
+    case TF::SRGB_Alpha_DXT3:
+    case TF::SRGB_Alpha_DXT5:
+    case TF::SRGB_BP_UNorm: return 16;
+
+    default:
+        return getTextureDataSize(format)
+            * getTextureComponentCount(format);
+    }
+}
+
 bool operator==(const TextureData &a, const TextureData &b)
 {
     if (a.format() != b.format() || a.width() != b.width()

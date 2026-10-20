@@ -214,8 +214,7 @@ int BindingProperties::getTextureStride(QVariant textureId) const
 {
     const auto itemId = textureId.toInt();
     if (auto texture = mPropertiesEditor.model().findItem<Texture>(itemId))
-        return getTextureDataSize(texture->format)
-            * getTextureComponentCount(texture->format);
+        return ::getTextureStride(texture->format);
     return 0;
 }
 

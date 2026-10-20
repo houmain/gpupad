@@ -100,6 +100,7 @@ TextureBase::TextureBase(const Buffer &buffer, Texture::Format format,
 
 TextureBase::TextureBase(TextureData data, int samples, ItemId itemId)
     : mItemId(itemId)
+    , mRowOrder(data.rowOrder())
     , mTarget(data.getTarget(samples))
     , mFormat(toPowerOfTwoByteFormat(data.format()))
     , mWidth(std::max(data.width(), 1))

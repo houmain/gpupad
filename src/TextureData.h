@@ -131,5 +131,6 @@ TextureSampleType getTextureSampleType(Texture::Format format);
 TextureDataType getTextureDataType(Texture::Format format);
 int getTextureDataSize(Texture::Format dataType);
 int getTextureComponentCount(Texture::Format format);
+int getTextureStride(Texture::Format format);
 
 Q_DECLARE_METATYPE(TextureData)

@@ -259,8 +259,7 @@ void D3DTexture::prepareShaderResourceView(D3DContext &context,
     D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
 {
     if (mTextureBuffer) {
-        const auto texelSize = getTextureDataSize(mFormat)
-            * getTextureComponentCount(mFormat);
+        const auto texelSize = getTextureStride(mFormat);
         mTextureBuffer->prepareTextureBufferShaderResourceView(context,
             descriptor, toDXGIFormat(mFormat), texelSize);
         return;
@@ -280,8 +279,7 @@ void D3DTexture::prepareUnorderedAccessView(D3DContext &context,
     D3D12_CPU_DESCRIPTOR_HANDLE descriptor, int level)
 {
     if (mTextureBuffer) {
-        const auto texelSize = getTextureDataSize(mFormat)
-            * getTextureComponentCount(mFormat);
+        const auto texelSize = getTextureStride(mFormat);
         mTextureBuffer->prepareTextureBufferUnorderedAccessView(context,
             descriptor, toDXGIFormat(mFormat), texelSize);
         return;
@@ -388,10 +386,29 @@ bool D3DTexture::clear(D3DContext &context, std::array<double, 4> color,
 
 bool D3DTexture::copy(D3DContext &context, D3DTexture &source)
 {
+    reload(true);
+    create(context);
+    source.reload(false);
+    source.create(context);
+    source.upload(context);
+    if (!mResource || !source.mResource)
+        return false;
+
     resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_DEST);
     source.resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    context.graphicsCommandList->CopyResource(resource(), source.resource());
+    if (mData.isCompressed() != source.mData.isCompressed()) {
+        const auto dest = CD3DX12_TEXTURE_COPY_LOCATION(resource(), 0);
+        const auto sourceLocation =
+            CD3DX12_TEXTURE_COPY_LOCATION(source.resource(), 0);
+        context.graphicsCommandList->CopyTextureRegion(&dest, 0, 0, 0,
+            &sourceLocation, nullptr);
+    } else {
+        context.graphicsCommandList->CopyResource(resource(),
+            source.resource());
+    }
+    mSystemCopyModified = false;
     mDeviceCopyModified = true;
+    mMipmapsInvalidated = true;
     mData.setRowOrder(source.mData.rowOrder());
     return true;
 }
@@ -440,10 +457,13 @@ void D3DTexture::create(D3DContext &context)
             },
         };
 
-    auto flags = D3D12_RESOURCE_FLAGS{ mKind.depth || mKind.stencil
+    auto flags = D3D12_RESOURCE_FLAGS{ mData.isCompressed()
+            ? D3D12_RESOURCE_FLAG_NONE
+            : mKind.depth || mKind.stencil
             ? D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
             : D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET };
-    if (!mKind.depth && !mKind.stencil && samples() == 1)
+    if (!mData.isCompressed() && !mKind.depth && !mKind.stencil
+        && samples() == 1)
         flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
             | D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS;
 
