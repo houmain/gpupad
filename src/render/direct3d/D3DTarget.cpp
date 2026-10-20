@@ -84,7 +84,6 @@ void D3DTarget::setTexture(int index, D3DTexture *texture)
 
 bool D3DTarget::setupPipelineState(D3D12_GRAPHICS_PIPELINE_STATE_DESC &state)
 {
-    // TODO:
     state.RasterizerState.FillMode = toD3D(mPolygonMode);
     state.RasterizerState.CullMode = toD3D(mCullMode);
     state.RasterizerState.FrontCounterClockwise =
@@ -197,6 +196,11 @@ bool D3DTarget::bind(D3DContext &context)
             min(width, texture->width());
             min(height, texture->height());
         }
+
+    if (!width)
+        width = mDefaultWidth;
+    if (!height)
+        height = mDefaultHeight;
 
     context.renderTargetHelper.OMSetRenderTargets(
         context.graphicsCommandList.Get(),
