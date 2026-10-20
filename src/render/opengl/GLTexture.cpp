@@ -8,13 +8,27 @@ namespace {
     using TF = Texture::Format;
     using TT = Texture::Target;
 
-    GLuint createFramebuffer(GLContext &gl, GLenum target, GLuint textureId,
+    GLObject createFramebuffer(GLContext &gl, GLuint textureId,
         GLenum attachment)
     {
-        auto fbo = GLuint{ };
-        gl.glGenFramebuffers(1, &fbo);
-        gl.glBindFramebuffer(target, fbo);
-        gl.glFramebufferTexture(target, attachment, textureId, 0);
+        const auto createFBO = [&]() {
+            auto fbo = GLuint{ };
+            gl.glCreateFramebuffers(1, &fbo);
+            return fbo;
+        };
+        const auto freeFBO = [](GLContext &gl, GLuint fbo) {
+            gl.glDeleteFramebuffers(1, &fbo);
+        };
+
+        auto fbo = GLObject(&gl, createFBO(), freeFBO);
+        gl.glNamedFramebufferTexture(fbo, attachment, textureId, 0);
+        if (attachment != GL_COLOR_ATTACHMENT0) {
+            gl.glNamedFramebufferDrawBuffer(fbo, GL_NONE);
+            gl.glNamedFramebufferReadBuffer(fbo, GL_NONE);
+        }
+        if (gl.glCheckNamedFramebufferStatus(fbo, GL_FRAMEBUFFER)
+            != GL_FRAMEBUFFER_COMPLETE)
+            fbo.reset();
         return fbo;
     }
 
@@ -48,18 +62,14 @@ namespace {
             attachment = GL_DEPTH_STENCIL_ATTACHMENT;
             break;
         }
+        const auto sourceFbo =
+            createFramebuffer(gl, sourceTextureId, attachment);
+        const auto destFbo = createFramebuffer(gl, destTextureId, attachment);
+        if (!sourceFbo || !destFbo)
+            return false;
 
-        auto previousTarget = GLint{ };
-        gl.glGetIntegerv(GL_FRAMEBUFFER_BINDING, &previousTarget);
-        const auto sourceFbo = createFramebuffer(gl, GL_READ_FRAMEBUFFER,
-            sourceTextureId, attachment);
-        const auto destFbo = createFramebuffer(gl, GL_DRAW_FRAMEBUFFER,
-            destTextureId, attachment);
-        gl.glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, blitMask,
-            GL_NEAREST);
-        gl.glDeleteFramebuffers(1, &sourceFbo);
-        gl.glDeleteFramebuffers(1, &destFbo);
-        gl.glBindFramebuffer(GL_FRAMEBUFFER, previousTarget);
+        gl.glBlitNamedFramebuffer(sourceFbo, destFbo, 0, 0, width, height, 0, 0,
+            width, height, blitMask, GL_NEAREST);
         return (glGetError() == GL_NO_ERROR);
     }
 
@@ -140,60 +150,6 @@ namespace {
         }
         Q_ASSERT(!"not implemented");
         return false;
-    }
-
-    GLObject createFramebuffer(GLContext &gl, const TextureKind &kind,
-        GLuint textureId, int level)
-    {
-        const auto createFBO = [&]() {
-            auto fbo = GLuint{ };
-            gl.glGenFramebuffers(1, &fbo);
-            return fbo;
-        };
-        const auto freeFBO = [](GLContext &gl, GLuint fbo) {
-            gl.glDeleteFramebuffers(1, &fbo);
-        };
-
-        auto attachment = GLenum{ GL_COLOR_ATTACHMENT0 };
-        if (kind.depth && kind.stencil)
-            attachment = GL_DEPTH_STENCIL_ATTACHMENT;
-        else if (kind.depth)
-            attachment = GL_DEPTH_ATTACHMENT;
-        else if (kind.stencil)
-            attachment = GL_STENCIL_ATTACHMENT;
-
-        auto fbo = GLObject(&gl, createFBO(), freeFBO);
-        gl.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-        gl.glFramebufferTexture(GL_FRAMEBUFFER, attachment, textureId, level);
-        auto status = gl.glCheckFramebufferStatus(GL_FRAMEBUFFER);
-        if (status != GL_FRAMEBUFFER_COMPLETE)
-            fbo.reset();
-        return fbo;
-    }
-
-    bool copyTexture(GLContext &gl, const TextureKind &kind,
-        GLuint sourceTextureId, GLuint destTextureId, int width, int height,
-        int level)
-    {
-        const auto sourceFbo =
-            createFramebuffer(gl, kind, sourceTextureId, level);
-        const auto destFbo = createFramebuffer(gl, kind, destTextureId, level);
-        if (!sourceFbo || !destFbo)
-            return false;
-
-        auto blitMask = GLbitfield{ GL_COLOR_BUFFER_BIT };
-        if (kind.depth && kind.stencil)
-            blitMask = GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
-        else if (kind.depth)
-            blitMask = GL_DEPTH_BUFFER_BIT;
-        else if (kind.stencil)
-            blitMask = GL_STENCIL_BUFFER_BIT;
-
-        gl.glBindFramebuffer(GL_READ_FRAMEBUFFER, sourceFbo);
-        gl.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destFbo);
-        gl.glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, blitMask,
-            GL_NEAREST);
-        return (glGetError() == GL_NO_ERROR);
     }
 
 } // namespace
@@ -286,27 +242,46 @@ GLuint GLTexture::getReadWriteTextureId(GLContext &gl)
 bool GLTexture::clear(GLContext &gl, std::array<double, 4> color, double depth,
     int stencil)
 {
-    auto fbo = createFramebuffer(gl, mKind, getReadWriteTextureId(gl), 0);
-    if (!fbo)
+    if (target() == TT::TargetBuffer || mData.isCompressed())
         return false;
 
-    gl.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    gl.glColorMask(true, true, true, true);
-    gl.glDepthMask(true);
-    gl.glStencilMask(0xFF);
+    const auto textureId = getReadWriteTextureId(gl);
+    if (!textureId)
+        return false;
 
-    auto succeeded = true;
     if (mKind.depth && mKind.stencil) {
-        gl.glClearBufferfi(GL_DEPTH_STENCIL, 0, static_cast<float>(depth),
-            stencil);
+        struct DepthStencilValue
+        {
+            GLfloat depth;
+            GLuint stencil;
+        };
+        const auto value = DepthStencilValue{ static_cast<GLfloat>(depth),
+            static_cast<GLuint>(stencil) };
+        gl.glClearTexImage(textureId, 0, GL_DEPTH_STENCIL,
+            GL_FLOAT_32_UNSIGNED_INT_24_8_REV, &value);
     } else if (mKind.depth) {
-        const auto d = static_cast<float>(depth);
-        gl.glClearBufferfv(GL_DEPTH, 0, &d);
+        const auto value = static_cast<GLfloat>(depth);
+        gl.glClearTexImage(textureId, 0, GL_DEPTH_COMPONENT, GL_FLOAT, &value);
     } else if (mKind.stencil) {
-        gl.glClearBufferiv(GL_STENCIL, 0, &stencil);
+        const auto value = static_cast<GLuint>(stencil);
+        gl.glClearTexImage(textureId, 0, GL_STENCIL_INDEX, GL_UNSIGNED_INT,
+            &value);
     } else {
         const auto sampleType = getTextureSampleType(mFormat);
         transformClearColor(color, sampleType);
+
+        const auto clearFormat = [](int components, bool integer) {
+            switch (components) {
+            case 1:
+                return static_cast<GLenum>(integer ? GL_RED_INTEGER : GL_RED);
+            case 2: return static_cast<GLenum>(integer ? GL_RG_INTEGER : GL_RG);
+            case 3:
+                return static_cast<GLenum>(integer ? GL_RGB_INTEGER : GL_RGB);
+            default:
+                return static_cast<GLenum>(integer ? GL_RGBA_INTEGER : GL_RGBA);
+            }
+        };
+        const auto componentCount = getTextureComponentCount(mFormat);
 
         switch (sampleType) {
         case TextureSampleType::Normalized:
@@ -316,7 +291,8 @@ bool GLTexture::clear(GLContext &gl, std::array<double, 4> color, double depth,
                 static_cast<float>(color[0]), static_cast<float>(color[1]),
                 static_cast<float>(color[2]), static_cast<float>(color[3])
             };
-            gl.glClearBufferfv(GL_COLOR, 0, values.data());
+            gl.glClearTexImage(textureId, 0, clearFormat(componentCount, false),
+                GL_FLOAT, values.data());
             break;
         }
 
@@ -328,7 +304,8 @@ bool GLTexture::clear(GLContext &gl, std::array<double, 4> color, double depth,
                 static_cast<GLuint>(color[0]), static_cast<GLuint>(color[1]),
                 static_cast<GLuint>(color[2]), static_cast<GLuint>(color[3])
             };
-            gl.glClearBufferuiv(GL_COLOR, 0, values.data());
+            gl.glClearTexImage(textureId, 0, clearFormat(componentCount, true),
+                GL_UNSIGNED_INT, values.data());
             break;
         }
 
@@ -339,23 +316,28 @@ bool GLTexture::clear(GLContext &gl, std::array<double, 4> color, double depth,
                 static_cast<GLint>(color[0]), static_cast<GLint>(color[1]),
                 static_cast<GLint>(color[2]), static_cast<GLint>(color[3])
             };
-            gl.glClearBufferiv(GL_COLOR, 0, values.data());
+            gl.glClearTexImage(textureId, 0, clearFormat(componentCount, true),
+                GL_INT, values.data());
             break;
         }
 
-        default: succeeded = false; break;
+        default: return false;
         }
     }
-    gl.glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
-    return succeeded;
+    return (glGetError() == GL_NO_ERROR);
 }
 
 bool GLTexture::copy(GLContext &gl, GLTexture &source)
 {
     const auto level = 0;
-    return copyTexture(gl, mKind, source.getReadOnlyTextureId(gl),
-        getReadWriteTextureId(gl), mData.getLevelWidth(level),
-        mData.getLevelHeight(level), level);
+    const auto sourceTextureId = source.getReadOnlyTextureId(gl);
+    const auto destTextureId = getReadWriteTextureId(gl);
+
+    gl.glCopyImageSubData(sourceTextureId, source.target(), level, 0, 0, 0,
+        destTextureId, target(), level, 0, 0, 0,
+        source.mData.getLevelWidth(level), source.mData.getLevelHeight(level),
+        1);
+    return (glGetError() == GL_NO_ERROR);
 }
 
 bool GLTexture::swap(GLTexture &other)
