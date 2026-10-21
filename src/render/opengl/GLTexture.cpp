@@ -269,7 +269,10 @@ bool GLTexture::clear(GLContext &gl, std::array<double, 4> color, double depth,
             &value);
     } else {
         const auto sampleType = getTextureSampleType(mFormat);
-        transformClearColor(color, sampleType);
+
+        // input is converted like texture data, so sRGB color values must remain encoded here
+        if (sampleType != TextureSampleType::Normalized_sRGB)
+            transformClearColor(color, sampleType);
 
         const auto clearFormat = [](int components, bool integer) {
             switch (components) {

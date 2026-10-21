@@ -14,16 +14,9 @@ mat4 perspective(float fieldOfView, float aspect, float nearPlane,
     float f = 1.0 / tan(fieldOfView * 0.5);
     mat4 projection = mat4(0.0);
     projection[0][0] = f / aspect;
-#if defined(VULKAN)
-    projection[1][1] = -f;
-    projection[2][2] = farPlane / (nearPlane - farPlane);
-    projection[3][2] = nearPlane * farPlane / (nearPlane - farPlane);
-#else
     projection[1][1] = f;
     projection[2][2] = (farPlane + nearPlane) / (nearPlane - farPlane);
-    projection[3][2] = 2.0 * nearPlane * farPlane
-                     / (nearPlane - farPlane);
-#endif
+    projection[3][2] = 2.0 * nearPlane * farPlane / (nearPlane - farPlane);
     projection[2][3] = -1.0;
     return projection;
 }
