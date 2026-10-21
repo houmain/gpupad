@@ -242,7 +242,8 @@ GLuint GLTexture::getReadWriteTextureId(GLContext &gl)
 bool GLTexture::clear(GLContext &gl, std::array<double, 4> color, double depth,
     int stencil)
 {
-    if (target() == TT::TargetBuffer || mData.isCompressed())
+    const auto dataType = getTextureDataType(mFormat);
+    if (target() == TT::TargetBuffer || dataType == TextureDataType::Compressed)
         return false;
 
     const auto textureId = getReadWriteTextureId(gl);

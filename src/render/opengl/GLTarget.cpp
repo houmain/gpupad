@@ -1,5 +1,23 @@
 #include "GLTarget.h"
 
+namespace {
+    QString getFramebufferIncompleteMessage(GLenum status)
+    {
+        switch (status) {
+        case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+            return "incomplete attachment";
+        case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+            return "missing attachment";
+        case GL_FRAMEBUFFER_UNSUPPORTED:            return "unsupported";
+        case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE: return "sample mismatch";
+        case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
+            return "incomplete layer targets";
+        default: assert(!"not handled"); break;
+        }
+        return "invalid attachments";
+    }
+} // namespace
+
 GLTarget::GLTarget(const Target &target, GLRenderSession &renderSession)
     : mItemId(target.id)
     , mFrontFace(target.frontFace)
@@ -72,7 +90,7 @@ bool GLTarget::create(GLContext &gl)
         return true;
 
     auto createFBO = [&]() {
-        auto fbo = GLuint{};
+        auto fbo = GLuint{ };
         gl.glGenFramebuffers(1, &fbo);
         return fbo;
     };
@@ -110,15 +128,25 @@ bool GLTarget::create(GLContext &gl)
             GL_FRAMEBUFFER_DEFAULT_SAMPLES, mDefaultSamples);
     }
 
-    if (!updateAttachments(gl, true))
+    auto status = GLenum{ };
+    const auto checkFramebufferStatus = [&]() {
+        status = gl.glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        return (status == GL_FRAMEBUFFER_COMPLETE);
+    };
+    if (!updateAttachments(gl) || !checkFramebufferStatus()) {
+        mMessages.insert(mItemId, MessageType::CreatingFramebufferFailed,
+            "(" + getFramebufferIncompleteMessage(status) + ")");
         mFramebufferObject.reset();
+    }
     gl.glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
     return mFramebufferObject;
 }
 
-bool GLTarget::updateAttachments(GLContext &gl, bool validate)
+bool GLTarget::updateAttachments(GLContext &gl)
 {
-    auto changed = false;
+    auto maxDrawBuffers = GLint{ };
+    auto hasDepth = false;
+    auto hasStencil = false;
     for (auto &attachment : mAttachments)
         if (auto texture = attachment.texture) {
             const auto textureId = texture->getReadWriteTextureId(gl);
@@ -126,39 +154,29 @@ bool GLTarget::updateAttachments(GLContext &gl, bool validate)
                 continue;
 
             const auto kind = texture->kind();
-            const auto level =
-                (kind.depth || kind.stencil ? 0 : attachment.level);
+            if (kind.color) {
+                if (!maxDrawBuffers)
+                    gl.glGetIntegerv(GL_MAX_DRAW_BUFFERS, &maxDrawBuffers);
+                if (attachment.attachmentPoint
+                    >= GLenum(GL_COLOR_ATTACHMENT0 + maxDrawBuffers))
+                    return false;
+            }
+            if (kind.depth && std::exchange(hasDepth, true))
+                return false;
+            if (kind.stencil && std::exchange(hasStencil, true))
+                return false;
+
             if (kind.array && attachment.layer >= 0) {
                 gl.glFramebufferTextureLayer(GL_FRAMEBUFFER,
-                    attachment.attachmentPoint, textureId, level,
+                    attachment.attachmentPoint, textureId, attachment.level,
                     attachment.layer);
             } else {
                 gl.glFramebufferTexture(GL_FRAMEBUFFER,
-                    attachment.attachmentPoint, textureId, level);
+                    attachment.attachmentPoint, textureId, attachment.level);
             }
             attachment.attachedTextureId = textureId;
-            changed = true;
         }
-
-    return (!changed && !validate) || checkFramebufferStatus(gl);
-}
-
-bool GLTarget::checkFramebufferStatus(GLContext &gl)
-{
-    const auto status = gl.glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if (status == GL_FRAMEBUFFER_COMPLETE)
-        return true;
-
-    mMessages.insert(mItemId, MessageType::CreatingFramebufferFailed,
-        (status == GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT
-                ? "(incomplete attachment)"
-                : status == GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT
-                ? "(missing attachment)"
-                : status == GL_FRAMEBUFFER_UNSUPPORTED ? "(unsupported)"
-                : status == GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE
-                ? "(sample mismatch)"
-                : ""));
-    return false;
+    return true;
 }
 
 void GLTarget::applyStates(GLContext &gl)
