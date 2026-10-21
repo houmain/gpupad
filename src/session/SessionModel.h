@@ -29,6 +29,7 @@ public:
 
     QList<QMetaObject::Connection> connectUndoActions(QAction *undo,
         QAction *redo);
+    bool isLoading();
     bool isUndoStackClean();
     void clearUndoStack();
 

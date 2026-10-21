@@ -218,8 +218,6 @@ private:
     void undoableRemoveItem(QList<Item *> *list, Item *item,
         const QModelIndex &index);
     template <typename T, typename S>
-    void assignment(const QModelIndex &index, T *to, S &&value);
-    template <typename T, typename S>
     void undoableAssignment(const QModelIndex &index, T *to, S &&value,
         int mergeId = -1);
     void undoableFileNameAssignment(const QModelIndex &index, FileItem &item,

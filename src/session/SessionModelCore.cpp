@@ -275,14 +275,14 @@ QModelIndex SessionModelCore::index(int row, int column,
         return getIndex(parentItem.items.at(row),
             static_cast<ColumnType>(column));
 
-    return {};
+    return { };
 }
 
 QModelIndex SessionModelCore::parent(const QModelIndex &child) const
 {
     if (child.isValid())
         return getIndex(getItem(child).parent);
-    return {};
+    return { };
 }
 
 int SessionModelCore::rowCount(const QModelIndex &parent) const
@@ -302,20 +302,20 @@ QVariant SessionModelCore::data(const QModelIndex &index, int role) const
 {
     if (role != Qt::DisplayRole && role != Qt::EditRole
         && role != Qt::CheckStateRole)
-        return {};
+        return { };
 
     const auto &item = getItem(index);
 
     if (role == Qt::CheckStateRole) {
         if (auto call = castItem<Call>(item))
             return (call->checked ? Qt::Checked : Qt::Unchecked);
-        return {};
+        return { };
     }
 
     const auto column = static_cast<ColumnType>(index.column());
 
     switch (column) {
-    case ColumnType::Name: return item.name;
+    case ColumnType::Name:   return item.name;
     case ColumnType::Custom: return item.custom;
 
     case ColumnType::FileName:
@@ -332,7 +332,7 @@ QVariant SessionModelCore::data(const QModelIndex &index, int role) const
         ADD_EACH_COLUMN_TYPE()
 #undef ADD
     }
-    return {};
+    return { };
 }
 
 bool SessionModelCore::setData(const QModelIndex &index, const QVariant &value,
@@ -431,7 +431,7 @@ const Session &SessionModelCore::sessionItem() const
     Q_ASSERT(session);
     if (session)
         return *session;
-    static const Session sEmpty{};
+    static const Session sEmpty{ };
     return sEmpty;
 }
 
@@ -443,7 +443,7 @@ QModelIndex SessionModelCore::findChildByName(const QModelIndex &parent,
         if (getItem(child).name == name)
             return child;
     }
-    return {};
+    return { };
 }
 
 QModelIndex SessionModelCore::insertItem(Item::Type type, QModelIndex parent,
@@ -452,7 +452,7 @@ QModelIndex SessionModelCore::insertItem(Item::Type type, QModelIndex parent,
     // insert as sibling, when parent cannot contain an item of type
     while (!canContainType(parent, type)) {
         if (!parent.isValid())
-            return {};
+            return { };
 
         // insert new item before sinks and after sources
         const auto insertBefore = [&]() {
@@ -507,7 +507,7 @@ QModelIndex SessionModelCore::getIndex(const Item *item,
     ColumnType column) const
 {
     if (!item || item == &mRoot)
-        return {};
+        return { };
 
     auto itemPtr = const_cast<Item *>(item);
     return createIndex(item->parent->items.indexOf(itemPtr), column, itemPtr);
@@ -632,16 +632,6 @@ void SessionModelCore::undoableRemoveItem(QList<Item *> *list, Item *item,
 }
 
 template <typename T, typename S>
-void SessionModelCore::assignment(const QModelIndex &index, T *to, S &&value)
-{
-    Q_ASSERT(index.isValid());
-    if (*to != value) {
-        *to = value;
-        Q_EMIT dataChanged(index, index);
-    }
-}
-
-template <typename T, typename S>
 void SessionModelCore::undoableAssignment(const QModelIndex &index, T *to,
     S &&value, int mergeId)
 {
@@ -671,7 +661,7 @@ void SessionModelCore::undoableAssignment(const QModelIndex &index, T *to,
                     *to = orig;
                     Q_EMIT dataChanged(index, index);
                 },
-                []() {})));
+                []() { })));
     }
 }
 

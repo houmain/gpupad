@@ -113,6 +113,11 @@ QList<QMetaObject::Connection> SessionModel::connectUndoActions(QAction *undo,
     return c;
 }
 
+bool SessionModel::isLoading()
+{
+    return (undoStack().undoLimit() == 1);
+}
+
 bool SessionModel::isUndoStackClean()
 {
     return undoStack().isClean();

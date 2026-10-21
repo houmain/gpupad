@@ -284,7 +284,7 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
             handleFileItemFileChanged(*fileItem);
 
     if (auto call = castItem<Call>(item))
-        if (index.column() == SessionModel::CallType
+        if (index.column() == SessionModel::CallType && !mModel.isLoading()
             && hasDefaultName<Call::CallType>(*call))
             mModel.setField(index, SessionModel::Name,
                 getValueName(call->callType));
