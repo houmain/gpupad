@@ -91,14 +91,16 @@ VKPipeline::VKPipeline(ItemId itemId, VKProgram *program)
 
 VKPipeline::~VKPipeline() = default;
 
-KDGpu::RenderPassCommandRecorder VKPipeline::beginRenderPass(VKContext &context,
-    bool flipViewport)
+std::optional<KDGpu::RenderPassCommandRecorder> VKPipeline::beginRenderPass(
+    VKContext &context, bool flipViewport)
 {
     if (mVertexStream)
         for (auto &buffer : mVertexStream->getBuffers())
             buffer->prepareVertexBuffer(context);
 
-    auto passOptions = mTarget->prepare(context);
+    auto passOptions = KDGpu::RenderPassCommandRecorderOptions{ };
+    if (!mTarget->prepare(context, &passOptions))
+        return std::nullopt;
     auto renderPass = context.commandRecorder->beginRenderPass(passOptions);
     renderPass.setPipeline(mGraphicsPipeline);
 
@@ -340,6 +342,9 @@ bool VKPipeline::createGraphics(VKContext &context,
 
     mTarget = target;
     mVertexStream = vertexStream;
+
+    if (!mTarget->validateAttachments(context))
+        return false;
 
     if (!createLayout(context))
         return false;

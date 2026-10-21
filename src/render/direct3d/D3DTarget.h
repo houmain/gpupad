@@ -10,7 +10,8 @@ public:
     void setTexture(int index, D3DTexture *texture);
     bool hasAttachment(const D3DTexture *texture) const;
     const QSet<ItemId> &usedItems() const { return mUsedItems; };
-    bool setupPipelineState(D3D12_GRAPHICS_PIPELINE_STATE_DESC &state);
+    bool setupPipelineState(D3DContext &context,
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC &state);
     bool bind(D3DContext &context);
 
 private:

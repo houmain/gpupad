@@ -156,8 +156,9 @@ QString getMessageText(const Message &message)
     case UnsupportedShaderType:    return tr("Unsupported shader type");
     case ProgramHasNoShader:       return tr("Program has no shader");
     case UnsupportedTextureFormat: return tr("Unsupported texture format");
-    case CreatingFramebufferFailed:
-        return tr("Creating framebuffer failed %1").arg(message.text);
+    case CreatingTargetFailed:
+        return tr("Creating target failed")
+            + (!message.text.isEmpty() ? " (" + message.text + ")" : QString());
     case CreatingTextureFailed:  return tr("Creating texture failed");
     case UploadingImageFailed:   return tr("Uploading image failed");
     case DownloadingImageFailed: return tr("Downloading image failed");

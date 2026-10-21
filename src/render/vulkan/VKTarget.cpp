@@ -1,7 +1,22 @@
 #include "VKTarget.h"
 
+namespace {
+    bool isBlendingEnabled(const Attachment &attachment)
+    {
+        using BE = Attachment::BlendEquation;
+        using BF = Attachment::BlendFactor;
+        return attachment.blendColorEq != BE::Add
+            || attachment.blendColorSource != BF::One
+            || attachment.blendColorDest != BF::Zero
+            || attachment.blendAlphaEq != BE::Add
+            || attachment.blendAlphaSource != BF::One
+            || attachment.blendAlphaDest != BF::Zero;
+    }
+} // namespace
+
 VKTarget::VKTarget(const Target &target, VKRenderSession &renderSession)
-    : mItemId(target.id)
+    : mDevice(renderSession.device())
+    , mItemId(target.id)
     , mFrontFace(target.frontFace)
     , mCullMode(target.cullMode)
     , mPolygonMode(target.polygonMode)
@@ -42,6 +57,16 @@ void VKTarget::setTexture(int index, VKTexture *texture)
         return;
     }
 
+    mUsedItems += texture->usedItems();
+
+    const auto &attachment = mAttachments[index];
+    if (!texture->supportsAttachment(mDevice, isBlendingEnabled(attachment))) {
+        mMessages.insert(attachment.id, MessageType::CreatingTargetFailed,
+            QStringLiteral("unsupported texture format or target"));
+        mInvalidAttachments = true;
+        return;
+    }
+
     const auto kind = texture->kind();
     texture->addUsage(kind.depth || kind.stencil
             ? KDGpu::TextureUsageFlagBits::DepthStencilAttachmentBit
@@ -49,22 +74,111 @@ void VKTarget::setTexture(int index, VKTexture *texture)
 
     mAttachments[index].texture = texture;
     mSamples = texture->samples();
-    mUsedItems += texture->usedItems();
 }
 
-KDGpu::RenderPassCommandRecorderOptions VKTarget::prepare(VKContext &context)
+bool VKTarget::validateAttachments(VKContext &context)
 {
-    auto renderPassOptions = KDGpu::RenderPassCommandRecorderOptions{};
-    auto maxSamples = 64;
+    if (mInvalidAttachments)
+        return false;
+
+    auto colorAttachmentCount = 0u;
+    auto hasDepthStencil = false;
+    auto samples = 0;
+
+    for (const auto &attachment : std::as_const(mAttachments)) {
+        const auto texture = attachment.texture;
+        if (!texture)
+            continue;
+
+        if (!texture->supportsAttachment(context.device,
+                isBlendingEnabled(attachment))) {
+            mMessages.insert(attachment.id, MessageType::CreatingTargetFailed,
+                QStringLiteral("unsupported texture format or target"));
+            return false;
+        }
+
+        if (attachment.level < 0 || attachment.layer < -1
+            || attachment.layer >= texture->layers()) {
+            mMessages.insert(attachment.id, MessageType::CreatingTargetFailed,
+                QStringLiteral("invalid mipmap level or layer"));
+            return false;
+        }
+
+        if (samples && samples != texture->samples()) {
+            mMessages.insert(mItemId, MessageType::SampleCountMismatch);
+            return false;
+        }
+        samples = texture->samples();
+
+        const auto kind = texture->kind();
+        if (kind.color) {
+            if (++colorAttachmentCount
+                > context.adapterLimits().maxColorAttachments) {
+                mMessages.insert(mItemId, MessageType::TooManyColorAttachments);
+                return false;
+            }
+        }
+        if ((kind.depth || kind.stencil)
+            && std::exchange(hasDepthStencil, true)) {
+            mMessages.insert(mItemId,
+                MessageType::MoreThanOneDepthStencilAttachment);
+            return false;
+        }
+
+        const auto supportedSamples = (kind.color
+                ? context.adapterLimits().framebufferColorSampleCounts
+                : kind.depth
+                ? context.adapterLimits().framebufferDepthSampleCounts
+                : context.adapterLimits().framebufferStencilSampleCounts);
+        if (!supportedSamples.testFlag(getKDSampleCount(texture->samples()))) {
+            mMessages.insert(mItemId, MessageType::MaxSampleCountExceeded,
+                QString::number(getKDSamples(supportedSamples)));
+            return false;
+        }
+    }
+
+    if (!samples
+        && !context.adapterLimits()
+            .framebufferNoAttachmentsSampleCounts.testFlag(
+                getKDSampleCount(mSamples))) {
+        const auto maxSamples = getKDSamples(
+            context.adapterLimits().framebufferNoAttachmentsSampleCounts);
+        mMessages.insert(mItemId, MessageType::MaxSampleCountExceeded,
+            QString::number(maxSamples));
+        return false;
+    }
+    return true;
+}
+
+bool VKTarget::prepare(VKContext &context,
+    KDGpu::RenderPassCommandRecorderOptions *options)
+{
+    *options = KDGpu::RenderPassCommandRecorderOptions{ };
 
     for (auto &attachment : mAttachments)
         if (auto texture = attachment.texture) {
             const auto kind = texture->kind();
-            if (!texture->prepareAttachment(context))
-                throw std::runtime_error("invalid attachment");
+            if (!texture->prepareAttachment(context)) {
+                mMessages.insert(attachment.id,
+                    MessageType::CreatingTargetFailed,
+                    QStringLiteral("texture creation failed"));
+                return false;
+            }
+            if (attachment.level >= texture->levels()) {
+                mMessages.insert(attachment.id,
+                    MessageType::CreatingTargetFailed,
+                    QStringLiteral("invalid mipmap level"));
+                return false;
+            }
             auto &view = texture->getView(attachment.level, attachment.layer);
+            if (!view.isValid()) {
+                mMessages.insert(attachment.id,
+                    MessageType::CreatingTargetFailed,
+                    QStringLiteral("texture view creation failed"));
+                return false;
+            }
             if (kind.depth || kind.stencil) {
-                auto &depthStencil = renderPassOptions.depthStencilAttachment;
+                auto &depthStencil = options->depthStencilAttachment;
 
                 if (depthStencil.view.isValid()) {
                     mMessages.insert(mItemId,
@@ -80,54 +194,40 @@ KDGpu::RenderPassCommandRecorderOptions VKTarget::prepare(VKContext &context)
                     .initialLayout = texture->currentLayout(),
                 };
             } else {
-                renderPassOptions.colorAttachments.push_back(
-                    KDGpu::ColorAttachment{
-                        .view = view,
-                        .loadOperation = KDGpu::AttachmentLoadOperation::Load,
-                        .initialLayout = texture->currentLayout(),
-                    });
+                options->colorAttachments.push_back(KDGpu::ColorAttachment{
+                    .view = view,
+                    .loadOperation = KDGpu::AttachmentLoadOperation::Load,
+                    .initialLayout = texture->currentLayout(),
+                });
             }
 
             const auto min = [](uint32_t &var, const uint32_t value) {
                 var = (var == 0 || value < var ? value : var);
             };
-            min(renderPassOptions.framebufferWidth,
-                static_cast<uint32_t>(texture->width()));
-            min(renderPassOptions.framebufferHeight,
-                static_cast<uint32_t>(texture->height()));
-            min(renderPassOptions.framebufferArrayLayers,
-                static_cast<uint32_t>(texture->layers()));
-
-            const auto &limits = context.adapterLimits();
-            maxSamples = std::min(maxSamples,
-                getKDSamples(kind.color ? limits.framebufferColorSampleCounts
-                        : kind.depth    ? limits.framebufferDepthSampleCounts
-                                     : limits.framebufferStencilSampleCounts));
+            min(options->framebufferWidth,
+                static_cast<uint32_t>(
+                    std::max(texture->width() >> attachment.level, 1)));
+            min(options->framebufferHeight,
+                static_cast<uint32_t>(
+                    std::max(texture->height() >> attachment.level, 1)));
+            min(options->framebufferArrayLayers,
+                static_cast<uint32_t>(
+                    attachment.layer >= 0 ? 1 : texture->layers()));
         }
 
-    if (!renderPassOptions.framebufferWidth
-        || !renderPassOptions.framebufferHeight) {
-        renderPassOptions.framebufferWidth = mDefaultWidth;
-        renderPassOptions.framebufferHeight = mDefaultHeight;
-        renderPassOptions.framebufferArrayLayers = mDefaultLayers;
-
-        maxSamples = getKDSamples(
-            context.adapterLimits().framebufferNoAttachmentsSampleCounts);
+    if (!options->framebufferWidth || !options->framebufferHeight) {
+        options->framebufferWidth = mDefaultWidth;
+        options->framebufferHeight = mDefaultHeight;
+        options->framebufferArrayLayers = mDefaultLayers;
     }
 
-    if (mSamples > maxSamples) {
-        mMessages.insert(mItemId, MessageType::MaxSampleCountExceeded,
-            QString::number(maxSamples));
-        mSamples = maxSamples;
-    }
-
-    renderPassOptions.samples = getKDSampleCount(mSamples);
-    return renderPassOptions;
+    options->samples = getKDSampleCount(mSamples);
+    return true;
 }
 
 std::vector<KDGpu::RenderTargetOptions> VKTarget::getRenderTargetOptions()
 {
-    auto options = std::vector<KDGpu::RenderTargetOptions>{};
+    auto options = std::vector<KDGpu::RenderTargetOptions>{ };
     for (const auto &attachment : std::as_const(mAttachments)) {
         if (!attachment.texture)
             continue;
@@ -137,7 +237,7 @@ std::vector<KDGpu::RenderTargetOptions> VKTarget::getRenderTargetOptions()
                 .format = toKDGpu(attachment.texture->format()),
                 .writeMask = static_cast<KDGpu::ColorComponentFlagBits>(attachment.colorWriteMask),
                 .blending = {
-                    .blendingEnabled = true,
+                    .blendingEnabled = isBlendingEnabled(attachment),
                     .color = { toKDGpu(attachment.blendColorEq),
                         toKDGpu(attachment.blendColorSource), toKDGpu(attachment.blendColorDest) },
                     .alpha = { toKDGpu(attachment.blendAlphaEq),
@@ -151,7 +251,7 @@ std::vector<KDGpu::RenderTargetOptions> VKTarget::getRenderTargetOptions()
 
 KDGpu::DepthStencilOptions VKTarget::getDepthStencilOptions()
 {
-    auto options = KDGpu::DepthStencilOptions{};
+    auto options = KDGpu::DepthStencilOptions{ };
     for (const auto &attachment : std::as_const(mAttachments)) {
         if (!attachment.texture)
             continue;
@@ -202,7 +302,7 @@ KDGpu::MultisampleOptions VKTarget::getMultisampleOptions()
 
 KDGpu::PrimitiveOptions VKTarget::getPrimitiveOptions()
 {
-    auto depthBias = KDGpu::DepthBiasOptions{};
+    auto depthBias = KDGpu::DepthBiasOptions{ };
     for (const auto &attachment : std::as_const(mAttachments))
         if (attachment.texture && attachment.texture->kind().depth) {
             depthBias.enabled = (attachment.depthClamp

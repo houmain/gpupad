@@ -1,6 +1,18 @@
 #include "D3DTarget.h"
 
 namespace {
+    bool isBlendingEnabled(const Attachment &attachment)
+    {
+        using BE = Attachment::BlendEquation;
+        using BF = Attachment::BlendFactor;
+        return attachment.blendColorEq != BE::Add
+            || attachment.blendColorSource != BF::One
+            || attachment.blendColorDest != BF::Zero
+            || attachment.blendAlphaEq != BE::Add
+            || attachment.blendAlphaSource != BF::One
+            || attachment.blendAlphaDest != BF::Zero;
+    }
+
     D3D12_STENCIL_OP toD3DStencilOp(Attachment::StencilOperation stencilOp)
     {
         using SO = Attachment::StencilOperation;
@@ -82,7 +94,8 @@ void D3DTarget::setTexture(int index, D3DTexture *texture)
     mUsedItems += texture->usedItems();
 }
 
-bool D3DTarget::setupPipelineState(D3D12_GRAPHICS_PIPELINE_STATE_DESC &state)
+bool D3DTarget::setupPipelineState(D3DContext &context,
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC &state)
 {
     state.RasterizerState.FillMode = toD3D(mPolygonMode);
     state.RasterizerState.CullMode = toD3D(mCullMode);
@@ -91,16 +104,97 @@ bool D3DTarget::setupPipelineState(D3D12_GRAPHICS_PIPELINE_STATE_DESC &state)
     state.SampleMask = UINT_MAX;
     state.SampleDesc = toDXGISampleDesc(mSamples);
     state.NumRenderTargets = 0;
+    auto samples = 0;
+    auto hasDepthStencil = false;
     for (auto &attachment : mAttachments)
         if (auto texture = attachment.texture) {
             const auto kind = texture->kind();
+            const auto format = toDXGIFormat(texture->format());
+            const auto blending = isBlendingEnabled(attachment);
+            const auto viewDimension = (kind.depth || kind.stencil
+                    ? texture->depthStencilViewDesc().ViewDimension
+                    : texture->renderTargetViewDesc().ViewDimension);
+
+            if (!format || !viewDimension) {
+                mMessages.insert(attachment.id,
+                    MessageType::CreatingTargetFailed,
+                    QStringLiteral("unsupported texture format or target"));
+                return false;
+            }
+
+            if (samples && samples != texture->samples()) {
+                mMessages.insert(mItemId, MessageType::SampleCountMismatch);
+                return false;
+            }
+            samples = texture->samples();
+
+            auto formatSupport = D3D12_FEATURE_DATA_FORMAT_SUPPORT{
+                .Format = format,
+            };
+            if (FAILED(context.device.CheckFeatureSupport(
+                    D3D12_FEATURE_FORMAT_SUPPORT, &formatSupport,
+                    sizeof(formatSupport)))) {
+                mMessages.insert(attachment.id,
+                    MessageType::CreatingTargetFailed,
+                    QStringLiteral("format capabilities unavailable"));
+                return false;
+            }
+
+            auto requiredSupport = D3D12_FORMAT_SUPPORT1_NONE;
+            switch (texture->target()) {
+            case Texture::Target::Target1D:
+            case Texture::Target::Target1DArray:
+                requiredSupport |= D3D12_FORMAT_SUPPORT1_TEXTURE1D;
+                break;
+            case Texture::Target::Target3D:
+                requiredSupport |= D3D12_FORMAT_SUPPORT1_TEXTURE3D;
+                break;
+            default:
+                requiredSupport |= D3D12_FORMAT_SUPPORT1_TEXTURE2D;
+                break;
+            }
+            requiredSupport |= (kind.depth || kind.stencil
+                    ? D3D12_FORMAT_SUPPORT1_DEPTH_STENCIL
+                    : D3D12_FORMAT_SUPPORT1_RENDER_TARGET);
+            if (blending)
+                requiredSupport |= D3D12_FORMAT_SUPPORT1_BLENDABLE;
+            if (texture->samples() > 1)
+                requiredSupport |=
+                    D3D12_FORMAT_SUPPORT1_MULTISAMPLE_RENDERTARGET;
+
+            if ((formatSupport.Support1 & requiredSupport)
+                != requiredSupport) {
+                mMessages.insert(attachment.id,
+                    MessageType::CreatingTargetFailed,
+                    QStringLiteral("unsupported texture format or usage"));
+                return false;
+            }
+
+            if (texture->samples() > 1) {
+                auto sampleSupport =
+                    D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS{
+                        .Format = format,
+                        .SampleCount =
+                            static_cast<UINT>(texture->samples()),
+                    };
+                if (FAILED(context.device.CheckFeatureSupport(
+                        D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS,
+                        &sampleSupport, sizeof(sampleSupport)))
+                    || !sampleSupport.NumQualityLevels) {
+                    mMessages.insert(mItemId,
+                        MessageType::MaxSampleCountExceeded,
+                        QString::number(texture->samples()));
+                    return false;
+                }
+            }
+
             if (kind.depth || kind.stencil) {
-                if (state.DSVFormat) {
+                if (std::exchange(hasDepthStencil, true)) {
                     mMessages.insert(mItemId,
                         MessageType::MoreThanOneDepthStencilAttachment);
-                    continue;
+                    return false;
                 }
-                state.DSVFormat = toDXGIFormat(texture->format());
+                state.DSVFormat = format;
                 state.DepthStencilState = {
                     .DepthEnable = (kind.depth),
                     .DepthWriteMask = (attachment.depthWrite
@@ -129,12 +223,12 @@ bool D3DTarget::setupPipelineState(D3D12_GRAPHICS_PIPELINE_STATE_DESC &state)
                 if (state.NumRenderTargets == 8) {
                     mMessages.insert(mItemId,
                         MessageType::TooManyColorAttachments);
-                    continue;
+                    return false;
                 }
 
                 const auto target = state.NumRenderTargets++;
                 state.BlendState.RenderTarget[target] = {
-                    .BlendEnable = true,
+                    .BlendEnable = blending,
                     //.LogicOpEnable = (mLogicOperation
                     //    != Target::LogicOperation::NoLogicOperation),
                     .SrcBlend = toD3D(attachment.blendColorSource),
@@ -148,7 +242,7 @@ bool D3DTarget::setupPipelineState(D3D12_GRAPHICS_PIPELINE_STATE_DESC &state)
                         static_cast<UINT8>(attachment.colorWriteMask),
                 };
 
-                state.RTVFormats[target] = toDXGIFormat(texture->format());
+                state.RTVFormats[target] = format;
             }
         }
     return true;
@@ -165,29 +259,29 @@ bool D3DTarget::bind(D3DContext &context)
 
     for (auto &attachment : mAttachments)
         if (auto texture = attachment.texture) {
-            const auto &resource = texture->resource();
             const auto kind = texture->kind();
             if (kind.depth || kind.stencil) {
+                depthStencilViewDesc = texture->depthStencilViewDesc();
+                if (!depthStencilViewDesc.Format
+                    || !depthStencilViewDesc.ViewDimension)
+                    return false;
                 texture->prepareDepthStencilView(context);
                 if (!texture->resource())
                     return false;
 
-                depthStencilViewDesc = texture->depthStencilViewDesc();
-                if (!depthStencilViewDesc.ViewDimension)
-                    return false;
-                depthStencilView = resource;
+                depthStencilView = texture->resource();
             } else if (kind.color) {
+                const auto renderTargetViewDesc =
+                    texture->renderTargetViewDesc();
+                if (!renderTargetViewDesc.Format
+                    || !renderTargetViewDesc.ViewDimension)
+                    return false;
                 texture->prepareRenderTargetView(context);
                 if (!texture->resource())
                     return false;
 
-                const auto renderTargetViewDesc =
-                    texture->renderTargetViewDesc();
-                if (!renderTargetViewDesc.ViewDimension)
-                    return false;
-
                 renderTargetViewDescs.push_back(renderTargetViewDesc);
-                renderTargets.push_back(resource);
+                renderTargets.push_back(texture->resource());
             }
 
             const auto min = [](int &var, const int value) {

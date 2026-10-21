@@ -19,7 +19,7 @@ enum class MessageType {
     UnsupportedShaderType,
     ProgramHasNoShader,
     UnsupportedTextureFormat,
-    CreatingFramebufferFailed,
+    CreatingTargetFailed,
     CreatingTextureFailed,
     UploadingImageFailed,
     DownloadingImageFailed,

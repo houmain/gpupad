@@ -19,6 +19,7 @@ public:
     void finish() override;
     void release() override;
     quint64 getBufferHandle(ItemId itemId) override;
+    KDGpu::Device &device();
     std::vector<Duration> resetTimeQueries(size_t count) override;
     std::shared_ptr<void> beginTimeQuery(size_t index) override;
 

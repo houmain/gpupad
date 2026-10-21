@@ -5,16 +5,17 @@ namespace {
     {
         switch (status) {
         case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-            return "incomplete attachment";
+            return QStringLiteral("incomplete attachment");
         case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-            return "missing attachment";
-        case GL_FRAMEBUFFER_UNSUPPORTED:            return "unsupported";
-        case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE: return "sample mismatch";
+            return QStringLiteral("missing attachment");
+        case GL_FRAMEBUFFER_UNSUPPORTED: return QStringLiteral("unsupported");
+        case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
+            return QStringLiteral("sample mismatch");
         case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
-            return "incomplete layer targets";
+            return QStringLiteral("incomplete layer targets");
         default: assert(!"not handled"); break;
         }
-        return "invalid attachments";
+        return QStringLiteral("invalid attachments");
     }
 } // namespace
 
@@ -134,8 +135,8 @@ bool GLTarget::create(GLContext &gl)
         return (status == GL_FRAMEBUFFER_COMPLETE);
     };
     if (!updateAttachments(gl) || !checkFramebufferStatus()) {
-        mMessages.insert(mItemId, MessageType::CreatingFramebufferFailed,
-            "(" + getFramebufferIncompleteMessage(status) + ")");
+        mMessages.insert(mItemId, MessageType::CreatingTargetFailed,
+            getFramebufferIncompleteMessage(status));
         mFramebufferObject.reset();
     }
     gl.glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);

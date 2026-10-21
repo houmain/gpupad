@@ -57,8 +57,9 @@ private:
         std::optional<D3DBuffer> buffer;
     };
 
-    bool setupGraphicsPipelineState(Call::PrimitiveType primitiveType,
-        D3DTarget *target, D3D12_GRAPHICS_PIPELINE_STATE_DESC *state);
+    bool setupGraphicsPipelineState(D3DContext &context,
+        Call::PrimitiveType primitiveType, D3DTarget *target,
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC *state);
     static D3D12_SHADER_INPUT_BIND_DESC getD3DBindingDesc(
         const SpvReflectDescriptorBinding &binding);
     static D3D12_DESCRIPTOR_RANGE_TYPE getRangeType(

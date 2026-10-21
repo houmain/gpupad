@@ -3,6 +3,7 @@
 #include "../PipelineBase.h"
 #include "VKShader.h"
 #include <map>
+#include <optional>
 
 class VKTarget;
 class VKProgram;
@@ -22,8 +23,8 @@ public:
     bool createRayTracing(VKContext &context,
         VKAccelerationStructure *accelStruct);
     bool updateBindings(VKContext &context, ScriptEngine &scriptEngine);
-    KDGpu::RenderPassCommandRecorder beginRenderPass(VKContext &context,
-        bool flipViewport);
+    std::optional<KDGpu::RenderPassCommandRecorder> beginRenderPass(
+        VKContext &context, bool flipViewport);
     KDGpu::ComputePassCommandRecorder beginComputePass(VKContext &context);
     KDGpu::RayTracingPassCommandRecorder beginRayTracingPass(
         VKContext &context);

@@ -164,15 +164,11 @@ D3D12_UNORDERED_ACCESS_VIEW_DESC D3DTexture::unorderedAccessViewDesc(
         .ViewDimension = toUAVDimension(mTarget, mSamples),
     };
     switch (desc.ViewDimension) {
-    case D3D12_UAV_DIMENSION_TEXTURE1D:
-        desc.Texture1D.MipSlice = level;
-        break;
+    case D3D12_UAV_DIMENSION_TEXTURE1D: desc.Texture1D.MipSlice = level; break;
     case D3D12_UAV_DIMENSION_TEXTURE1DARRAY:
         desc.Texture1DArray.MipSlice = level;
         break;
-    case D3D12_UAV_DIMENSION_TEXTURE2D:
-        desc.Texture2D.MipSlice = level;
-        break;
+    case D3D12_UAV_DIMENSION_TEXTURE2D: desc.Texture2D.MipSlice = level; break;
     case D3D12_UAV_DIMENSION_TEXTURE2DARRAY:
         desc.Texture2DArray.MipSlice = level;
         break;
@@ -325,6 +321,36 @@ bool D3DTexture::clear(D3DContext &context, std::array<double, 4> color,
     double depth, int stencil)
 {
     reload(true);
+    if (mKind.color
+        && getTextureDataType(mFormat) == TextureDataType::Compressed)
+        return false;
+
+    const auto format = toDXGIFormat(mFormat);
+    auto formatSupport = D3D12_FEATURE_DATA_FORMAT_SUPPORT{
+        .Format = format,
+    };
+    const auto requiredSupport = (mKind.depth || mKind.stencil
+            ? D3D12_FORMAT_SUPPORT1_DEPTH_STENCIL
+            : D3D12_FORMAT_SUPPORT1_RENDER_TARGET);
+    if (!format
+        || FAILED(
+            context.device.CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT,
+                &formatSupport, sizeof(formatSupport)))
+        || !(formatSupport.Support1 & requiredSupport))
+        return false;
+
+    if (mSamples > 1) {
+        auto sampleSupport = D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS{
+            .Format = format,
+            .SampleCount = static_cast<UINT>(mSamples),
+        };
+        if (FAILED(context.device.CheckFeatureSupport(
+                D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &sampleSupport,
+                sizeof(sampleSupport)))
+            || !sampleSupport.NumQualityLevels)
+            return false;
+    }
+
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
     mData.setRowOrder(TextureData::RowOrder::TopToBottom);

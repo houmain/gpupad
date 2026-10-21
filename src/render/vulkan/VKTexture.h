@@ -25,6 +25,7 @@ public:
     }
     void addUsage(KDGpu::TextureUsageFlags usage);
     void prepareForSwap(VKTexture &texture);
+    bool supportsAttachment(KDGpu::Device &device, bool blending) const;
 
     KDGpu::Texture &texture() { return mTexture; }
     KDGpu::TextureLayout currentLayout() const { return mCurrentLayout; }

@@ -275,10 +275,11 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
     if (mIndexBuffer)
         mIndexBuffer->prepareIndexBuffer(context);
 
-    auto renderPass =
+    auto optionalRenderPass =
         mPipeline->beginRenderPass(context, mSession.flipViewport);
-    if (!renderPass.isValid())
+    if (!optionalRenderPass || !optionalRenderPass->isValid())
         return;
+    auto &renderPass = *optionalRenderPass;
 
     if (!mPipeline->updatePushConstants(renderPass, scriptEngine))
         return;
@@ -383,17 +384,13 @@ void VKCall::executeCompute(VKContext &context, MessagePtrSet &messages,
             .offset = indirectOffset,
         });
     } else {
-        const auto computeCommand =
-            (mCall.callType == Call::CallType::ComputeSound
-                    ? KDGpu::ComputeCommand{
-                          context.soundWorkGroupCount, 1u, 1u }
-                    : KDGpu::ComputeCommand{
-                          scriptEngine.evaluateUInt(
-                              mCall.workGroupsX, mCall.id),
-                          scriptEngine.evaluateUInt(
-                              mCall.workGroupsY, mCall.id),
-                          scriptEngine.evaluateUInt(
-                              mCall.workGroupsZ, mCall.id) });
+        const auto computeCommand = (mCall.callType
+                    == Call::CallType::ComputeSound
+                ? KDGpu::ComputeCommand{ context.soundWorkGroupCount, 1u, 1u }
+                : KDGpu::ComputeCommand{
+                      scriptEngine.evaluateUInt(mCall.workGroupsX, mCall.id),
+                      scriptEngine.evaluateUInt(mCall.workGroupsY, mCall.id),
+                      scriptEngine.evaluateUInt(mCall.workGroupsZ, mCall.id) });
         computePass.dispatchCompute(computeCommand);
     }
     computePass.end();

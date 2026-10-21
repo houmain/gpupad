@@ -63,6 +63,39 @@ void VKTexture::prepareForSwap(VKTexture &texture)
     texture.addUsage(usage);
 }
 
+bool VKTexture::supportsAttachment(KDGpu::Device &device,
+    bool blending) const
+{
+    using T = Texture::Target;
+    switch (mTarget) {
+    case T::Target2D:
+    case T::Target2DArray:
+    case T::Target2DMultisample:
+    case T::Target2DMultisampleArray:
+    case T::TargetRectangle: break;
+    default:                 return false;
+    }
+
+    if (mTextureBuffer
+        || getTextureDataType(mFormat) == TextureDataType::Compressed)
+        return false;
+
+    const auto format = toKDGpu(mFormat);
+    if (format == KDGpu::Format::UNDEFINED)
+        return false;
+
+    const auto features =
+        device.adapter()->formatProperties(format).optimalTilingFeatures;
+    if (mKind.depth || mKind.stencil)
+        return features.testFlag(
+            KDGpu::FormatFeatureFlagBit::DepthStencilAttachmentBit);
+
+    return features.testFlag(KDGpu::FormatFeatureFlagBit::ColorAttachmentBit)
+        && (!blending
+            || features.testFlag(
+                KDGpu::FormatFeatureFlagBit::ColorAttachmentBlendBit));
+}
+
 KDGpu::TextureView &VKTexture::getView(int level, int layer,
     KDGpu::Format format)
 {
@@ -328,15 +361,27 @@ void VKTexture::release(KDGpu::Device &device)
 
 KDGpu::Format VKTexture::getVkFormat(KDGpu::Device &device)
 {
+    const auto requestedFormat = toKDGpu(mFormat);
+    if (mFormat != Texture::Format::NoFormat
+        && requestedFormat == KDGpu::Format::UNDEFINED) {
+        mMessages.insert(mItemId, MessageType::UnsupportedTextureFormat);
+        return KDGpu::Format::UNDEFINED;
+    }
+
     const auto dataFormat = static_cast<KDGpu::Format>(mData.getVkFormat());
     const auto format = (dataFormat == KDGpu::Format::UNDEFINED
-            ? toKDGpu(mFormat)
+            ? requestedFormat
             : dataFormat);
+
+    if (format == KDGpu::Format::UNDEFINED) {
+        mMessages.insert(mItemId, MessageType::UnsupportedTextureFormat);
+        return format;
+    }
 
     const auto properties = device.adapter()->formatProperties(format);
     if (!properties.optimalTilingFeatures) {
         mMessages.insert(mItemId, MessageType::UnsupportedTextureFormat);
-        return KDGpu::Format::R8_UNORM;
+        return KDGpu::Format::UNDEFINED;
     }
     return format;
 }
@@ -349,9 +394,13 @@ void VKTexture::createAndUpload(VKContext &context)
     if (std::exchange(mCreated, true))
         return;
 
+    const auto format = getVkFormat(context.device);
+    if (format == KDGpu::Format::UNDEFINED)
+        return;
+
     const auto textureOptions = KDGpu::TextureOptions{
         .type = getKDTextureType(mKind),
-        .format = getVkFormat(context.device),
+        .format = format,
         .extent = {
             static_cast<uint32_t>(mWidth),
             static_cast<uint32_t>(mHeight),
@@ -582,9 +631,13 @@ void VKTexture::memoryBarrier(KDGpu::CommandRecorder &commandRecorder,
 ShareHandleData VKTexture::getExternalMemoryShareHandle(VKContext &context)
 {
     if (!std::exchange(mCreated, true)) {
+        const auto format = getVkFormat(context.device);
+        if (format == KDGpu::Format::UNDEFINED)
+            return { };
+
         const auto textureOptions = KDGpu::TextureOptions{
             .type = getKDTextureType(mKind),
-            .format = getVkFormat(context.device),
+            .format = format,
             .extent = {
                 static_cast<uint32_t>(mWidth),
                 static_cast<uint32_t>(mHeight),

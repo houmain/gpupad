@@ -8,7 +8,9 @@ public:
     VKTarget(const Target &target, VKRenderSession &renderSession);
     void setTexture(int index, VKTexture *texture);
 
-    KDGpu::RenderPassCommandRecorderOptions prepare(VKContext &context);
+    bool validateAttachments(VKContext &context);
+    bool prepare(VKContext &context,
+        KDGpu::RenderPassCommandRecorderOptions *options);
     std::vector<KDGpu::RenderTargetOptions> getRenderTargetOptions();
     KDGpu::DepthStencilOptions getDepthStencilOptions();
     KDGpu::MultisampleOptions getMultisampleOptions();
@@ -23,6 +25,7 @@ private:
         VKTexture *texture{};
     };
 
+    KDGpu::Device &mDevice;
     ItemId mItemId{};
     MessagePtrSet mMessages;
     QSet<ItemId> mUsedItems;
@@ -36,4 +39,5 @@ private:
     int mDefaultWidth{};
     int mDefaultHeight{};
     int mDefaultLayers{};
+    bool mInvalidAttachments{};
 };

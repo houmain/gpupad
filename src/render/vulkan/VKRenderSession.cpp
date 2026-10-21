@@ -70,6 +70,12 @@ VKDevice &VKRenderSession::vkDevice()
     return RenderSessionBase::renderer().device<VKDevice>();
 }
 
+KDGpu::Device &VKRenderSession::device()
+{
+    Q_ASSERT(mCommandQueue);
+    return mCommandQueue->context.device;
+}
+
 void VKRenderSession::createCommandQueue()
 {
     Q_ASSERT(!mPrevCommandQueue);

@@ -183,8 +183,9 @@ D3DPipeline::D3DPipeline(ItemId itemId, D3DProgram *program)
 
 D3DPipeline::~D3DPipeline() = default;
 
-bool D3DPipeline::setupGraphicsPipelineState(Call::PrimitiveType primitiveType,
-    D3DTarget *target, D3D12_GRAPHICS_PIPELINE_STATE_DESC *state)
+bool D3DPipeline::setupGraphicsPipelineState(D3DContext &context,
+    Call::PrimitiveType primitiveType, D3DTarget *target,
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC *state)
 {
     *state = D3D12_GRAPHICS_PIPELINE_STATE_DESC{ };
     state->RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
@@ -195,7 +196,7 @@ bool D3DPipeline::setupGraphicsPipelineState(Call::PrimitiveType primitiveType,
     if (!mProgram.setupPipelineState(*state))
         return false;
 
-    if (target && !target->setupPipelineState(*state))
+    if (target && !target->setupPipelineState(context, *state))
         return false;
 
     state->PrimitiveTopologyType = toD3DTopologyType(primitiveType);
@@ -212,7 +213,7 @@ bool D3DPipeline::createGraphics(D3DContext &context,
     mVertexStream = vertexStream;
 
     auto state = D3D12_GRAPHICS_PIPELINE_STATE_DESC{ };
-    if (!setupGraphicsPipelineState(primitiveType, target, &state))
+    if (!setupGraphicsPipelineState(context, primitiveType, target, &state))
         return false;
 
     auto inputLayout = std::vector<D3D12_INPUT_ELEMENT_DESC>{ };
@@ -244,7 +245,7 @@ bool D3DPipeline::createMesh(D3DContext &context,
         return (mPipelineState && mRootSignature);
 
     auto state = D3D12_GRAPHICS_PIPELINE_STATE_DESC{ };
-    if (!setupGraphicsPipelineState(primitiveType, target, &state))
+    if (!setupGraphicsPipelineState(context, primitiveType, target, &state))
         return false;
 
     if (!createRootSignature(context))
