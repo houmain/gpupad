@@ -274,8 +274,13 @@ namespace {
         auto fileName = item.fileName;
         if (fileName.isEmpty() && hint)
             fileName = *hint;
-        if (fileName.isEmpty())
-            fileName = FileDialog::generateNextUntitledFileName(item.name);
+        if (fileName.isEmpty()) {
+            if (!FileDialog::getFileExtension(item.name).isEmpty()) {
+                fileName = toNativeCanonicalAbsoluteFilePath(item.name);
+            } else {
+                fileName = FileDialog::generateNextUntitledFileName(item.name);
+            }
+        }
         session.setField(&item, SessionModel::FileName, fileName);
         if (hint)
             *hint = fileName;
