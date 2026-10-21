@@ -4,6 +4,7 @@ namespace {
     QString getFramebufferIncompleteMessage(GLenum status)
     {
         switch (status) {
+        case GL_NONE: break;
         case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
             return QStringLiteral("incomplete attachment");
         case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
@@ -15,7 +16,7 @@ namespace {
             return QStringLiteral("incomplete layer targets");
         default: assert(!"not handled"); break;
         }
-        return QStringLiteral("invalid attachments");
+        return QStringLiteral("invalid attachment");
     }
 } // namespace
 

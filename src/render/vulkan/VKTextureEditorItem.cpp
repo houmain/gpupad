@@ -467,7 +467,7 @@ bool VKTextureEditorItem::renderTexture(const QMatrix4x4 &transform,
 
     const auto desc = PipelineDesc{
         .target = mTexture->target(),
-        .textureFormat = mTexture->format(),
+        .textureFormat = image.format(),
         .swapchainFormat = window().swapchainFormat(),
         .picker = mPickerEnabled,
     };
