@@ -1,10 +1,10 @@
 
-const scene = app.findItem("Scene")
+const scene = app.getItem("Scene")
 
 let mesh = app.callAction("GenerateMesh", {
   name: "Mesh",
   type: "Trefoil Knot",
-  group: app.findItem("Scene/Mesh"),
+  group: app.getItem("Scene/Mesh"),
   parent: scene,
   slices: 50,
   stacks: 180,
@@ -37,26 +37,26 @@ app.replaceItems(scene, [
   as,
 ])
 
-app.findItem("Trace Rays").accelerationStructureId = as.id
+app.getItem("Trace Rays").accelerationStructureId = as.id
 
 function Lambertian(diffuse, textureId = -1) {
-	return [diffuse[0], diffuse[1], diffuse[2], 1, textureId, 0.0, 0.0, 0];
+  return [diffuse[0], diffuse[1], diffuse[2], 1, textureId, 0.0, 0.0, 0];
 }
 
 function Metallic(diffuse, fuzziness, textureId = -1) {
-	return [diffuse[0], diffuse[1], diffuse[2], 1, textureId, fuzziness, 0.0, 1];
+  return [diffuse[0], diffuse[1], diffuse[2], 1, textureId, fuzziness, 0.0, 1];
 }
 
 function Dielectric(refractionIndex, textureId = -1) {
-	return [0.7, 0.7, 1.0, 1, textureId, 0.0, refractionIndex, 2];
+  return [0.7, 0.7, 1.0, 1, textureId, 0.0, refractionIndex, 2];
 }
 
 function Isotropic(diffuse, textureId = -1) {
-	return [diffuse[0], diffuse[1], diffuse[2], 1, textureId, 0.0, 0.0, 3];
+  return [diffuse[0], diffuse[1], diffuse[2], 1, textureId, 0.0, 0.0, 3];
 }
 
 function DiffuseLight(diffuse, textureId = -1) {
-	return [diffuse[0], diffuse[1], diffuse[2], 1, textureId, 0.0, 0.0, 4];
+  return [diffuse[0], diffuse[1], diffuse[2], 1, textureId, 0.0, 0.0, 4];
 }
 
 let materials = [
@@ -66,11 +66,11 @@ let materials = [
   Metallic([0.7, 0.6, 0.5], 0.0),
 ];
 
-Materials = app.findItem("Materials/Material")
+Materials = app.getItem("Materials/Material")
 
 materials = [].concat.apply([], materials)
 app.setBufferData("Materials", materials)
 
-app.findItem("Bindings/MaterialArray").blockId = Materials.id
-app.findItem("Bindings/VertexArray").blockId = vertices.id
-app.findItem("Bindings/IndexArray").blockId = indices.id
+app.getItem("Bindings/MaterialArray").blockId = Materials.id
+app.getItem("Bindings/VertexArray").blockId = vertices.id
+app.getItem("Bindings/IndexArray").blockId = indices.id

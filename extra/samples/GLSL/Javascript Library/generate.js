@@ -14,9 +14,9 @@ vertices = [].concat.apply([], vertices)
 
 app.setBlockData('Buffer/Vertices', vertices)
 
-let Indices = app.findItem('Buffer/Indices')
+let Indices = app.getItem('Buffer/Indices')
 Indices.offset = vertices.length * 4
 app.setBlockData(Indices, indices)
 
-let Draw = app.findItem('Draw')
+let Draw = app.getItem('Draw')
 Draw.count = indices.length

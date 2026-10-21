@@ -726,6 +726,16 @@ QJSValue AppScriptObject::findItem(QJSValue itemIdent, QJSValue originIdent,
     if (auto item = findSessionItem(itemIdent, originIndex, searchSubItems))
         return makeItemObject(item->id);
 
+    throwJsError("Callable expected");
+    return QJSValue::UndefinedValue;
+}
+
+QJSValue AppScriptObject::getItem(QJSValue itemIdent)
+{
+    if (auto item = findItem(itemIdent); !item.isUndefined())
+        return item;
+
+    throwJsError("Item does not exist");
     return QJSValue::UndefinedValue;
 }
 

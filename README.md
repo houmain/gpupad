@@ -118,6 +118,7 @@ There is one JavaScript state for the whole session and the scripts are evaluate
 
 - `loadSession(fileName)`
 - `clearSession()`
+- `getItem(ItemIdent, origin: ItemIdent?, subItems: Bool?) -> Item`
 - `findItem(ItemIdent, origin: ItemIdent?, subItems: Bool?) -> Item?`
 - `findItems(ItemIdent, origin: ItemIdent?, subItems: Bool?) -> [Item]`
 - `trackItems(ItemIdent, origin: ItemIdent?, subItems: Bool?, callback)`

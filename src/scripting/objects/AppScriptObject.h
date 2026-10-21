@@ -90,6 +90,7 @@ public:
     Q_INVOKABLE void loadSession(QString fileName);
     Q_INVOKABLE QJSValue getItemProperties(QJSValue itemIdent);
     Q_INVOKABLE void clearSession();
+    Q_INVOKABLE QJSValue getItem(QJSValue itemIdent);
     Q_INVOKABLE QJSValue getParentItem(QJSValue itemIdent);
     Q_INVOKABLE QJSValue findItem(QJSValue itemIdent);
     Q_INVOKABLE QJSValue findItem(QJSValue itemIdent, QJSValue originIdent,

@@ -11,25 +11,25 @@ if (!Dynamic)
   })
 app.clearItems(Dynamic)
 
-let Buffer1 = app.findItem('Buffer1')
-let Buffer2 = app.findItem('Buffer2')
-let Buffer1Block = app.findItem('Buffer1/Block')
-let Buffer2Block = app.findItem('Buffer2/Block')
-let BitonicSort = app.findItem('BitonicSort')
-let MatrixTranspose = app.findItem('MatrixTranspose')
+let Buffer1 = app.getItem('Buffer1')
+let Buffer2 = app.getItem('Buffer2')
+let Buffer1Block = app.getItem('Buffer1/Block')
+let Buffer2Block = app.getItem('Buffer2/Block')
+let BitonicSort = app.getItem('BitonicSort')
+let MatrixTranspose = app.getItem('MatrixTranspose')
 
 function SetConstants(level, levelMask, width, height) {
   app.insertItem(Dynamic, {
-    type: 'Binding',    
+    type: 'Binding',
     name: 'uConstants',
     editor: 'Expression4',
-    values: [ level, levelMask, width, height ]
+    values: [level, levelMask, width, height]
   })
 }
 
 function BindBuffer(name, buffer) {
   app.insertItem(Dynamic, {
-    type: 'Binding',    
+    type: 'Binding',
     name: name,
     bindingType: 'Buffer',
     bufferId: buffer.id
@@ -83,7 +83,7 @@ for (let level = BITONIC_BLOCK_SIZE * 2; level <= NUM_ELEMENTS; level = level * 
   // Transpose the data from buffer 2 back into buffer 1
   BindBuffer('bData', Buffer1);
   BindBuffer('bInput', Buffer2);
-  Dispatch(MatrixTranspose, MATRIX_HEIGHT / TRANSPOSE_BLOCK_SIZE, MATRIX_WIDTH / TRANSPOSE_BLOCK_SIZE, 1 );
+  Dispatch(MatrixTranspose, MATRIX_HEIGHT / TRANSPOSE_BLOCK_SIZE, MATRIX_WIDTH / TRANSPOSE_BLOCK_SIZE, 1);
 
   // Sort the row data
   Dispatch(BitonicSort, NUM_ELEMENTS / BITONIC_BLOCK_SIZE, 1, 1);
