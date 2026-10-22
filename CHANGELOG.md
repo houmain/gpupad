@@ -3,7 +3,38 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-Not resetting RenderTask when updating binding values
+## [Version 4.6.0] - 2026-10-22
+
+### Added
+
+- Added App script object method `getItem`.
+- Added MipMapping sample.
+- Added RGTC1 Encoder sample.
+
+### Changed
+
+- Allow copying between compressed and uncompressed textures.
+- Set the default texture editor wrap mode to clamp to edge.
+- Open the corresponding editor when `app.setScriptSource` sets the content of an item with a filename.
+
+### Fixed
+
+- Improved target attachment validation in OpenGL and Vulkan.
+- Fixed attachment-less targets in Direct3D.
+- Fixed texture array binding in Direct3D and OpenGL.
+- Fixed automatic mipmap generation in Direct3D.
+- Disable automatic mipmap generation when writing to a mip level greater than zero.
+- Fixed renaming items with a default name when loading a session.
+- Fixed clearing sRGB textures in OpenGL.
+- Fixed RGB texture previews in the Vulkan texture editor.
+
+## [Version 4.5.1] - 2026-10-16
+
+### Fixed
+
+- Fixed Direct3D cube mapping.
+- Fixed installation of dependencies on Windows [#53].
+- Fixed register clashes when compiling HLSL for Vulkan with DXC.
 
 ## [Version 4.5.0] - 2026-09-26
 
@@ -15,6 +46,10 @@ Not resetting RenderTask when updating binding values
 - Added Vulkan storage texel buffer support.
 - Added HLSL Raytracing sample.
 - Added HLSL samples corresponding GLSL samples.
+
+### Changed
+
+- Not resetting renderer when updating binding values.
 
 ### Fixed
 
@@ -1210,6 +1245,8 @@ Not resetting RenderTask when updating binding values
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 4.6.0]: https://github.com/houmain/gpupad/compare/4.5.1...4.6.0
+[version 4.5.1]: https://github.com/houmain/gpupad/compare/4.5.0...4.5.1
 [version 4.5.0]: https://github.com/houmain/gpupad/compare/4.4.0...4.5.0
 [version 4.4.0]: https://github.com/houmain/gpupad/compare/4.3.1...4.4.0
 [version 4.3.1]: https://github.com/houmain/gpupad/compare/4.3.0...4.3.1
