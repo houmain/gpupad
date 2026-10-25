@@ -567,6 +567,32 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
     QMainWindow::keyReleaseEvent(event);
 }
 
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+    QMainWindow::resizeEvent(event);
+    updateSyncWidgetGeometry();
+}
+
+void MainWindow::updateSyncWidgetGeometry()
+{
+    if (!mSyncWidget)
+        return;
+
+    auto toolBarGeometry = mUi->toolBarMain->geometry();
+    if (mUi->toolBarEditor->isVisible())
+        toolBarGeometry = toolBarGeometry.united(
+            mUi->toolBarEditor->geometry());
+
+    // Prefer the margin just to the right of the toolbar area. When there is
+    // no margin (e.g. in full-screen mode), use the rightmost pixels instead.
+    const auto x = std::min(width() - mSyncWidget->width(),
+        contentsRect().right() + 1);
+    const auto y = toolBarGeometry.center().y()
+        - mSyncWidget->height() / 2;
+    mSyncWidget->move(x, y);
+    mSyncWidget->raise();
+}
+
 void MainWindow::waitForSync()
 {
     const auto syncInterval = Singletons::settings().syncInterval();
@@ -578,9 +604,10 @@ void MainWindow::waitForSync()
         mSyncWidget->setAutoFillBackground(false);
         mSyncWidget->setMinimumSize(2, 2);
         mSyncWidget->setMaximumSize(2, 2);
-        mUi->toolBarMain->addWidget(mSyncWidget);
     }
+    updateSyncWidgetGeometry();
     mSyncWidget->setAdapter(Singletons::selectedAdapter());
+    mSyncWidget->raise();
 
     for (auto i = 0; i < syncInterval; ++i)
         mSyncWidget->redraw();

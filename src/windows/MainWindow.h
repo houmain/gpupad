@@ -59,6 +59,7 @@ protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
     QMenu *createPopupMenu() override;
 
 private:
@@ -92,6 +93,7 @@ private:
     void handleThemeChanging(const Theme &theme);
     void handleHideMenuBarChanged(bool hide);
     void setToolbarIconVisible(QAction *action, bool visible);
+    void updateSyncWidgetGeometry();
     void waitForSync();
     void replacePreviewFileEditor(QString fileName);
 
