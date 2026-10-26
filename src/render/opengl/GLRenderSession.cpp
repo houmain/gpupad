@@ -111,6 +111,8 @@ void GLRenderSession::finish()
 {
     if (mCommandQueue)
         finishCommandQueue(*mCommandQueue);
+
+    RenderSessionBase::finish();
 }
 
 void GLRenderSession::release()

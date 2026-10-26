@@ -1,7 +1,7 @@
 #include "ConsoleScriptObject.h"
 #include <QRegularExpression>
 
-ConsoleScriptObject::ConsoleScriptObject(MessagePtrSet *messages,
+ConsoleScriptObject::ConsoleScriptObject(MessageList *messages,
     QObject *parent)
     : QObject(parent)
     , mMessages(*messages)

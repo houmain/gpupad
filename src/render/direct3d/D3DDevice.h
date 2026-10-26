@@ -31,7 +31,7 @@ private:
     ComPtr<ID3D12Device> mDevice;
     ComPtr<ID3D12CommandQueue> mQueue;
     RenderTargetHelper mRenderTargetHelper;
-    MessagePtrSet mMessages;
+    MessageList mMessages;
 };
 
 #endif // defined(D3D_ENABLED)

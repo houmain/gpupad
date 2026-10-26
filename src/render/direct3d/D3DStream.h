@@ -34,7 +34,7 @@ private:
     bool validateAttribute(const D3DAttribute &attribute) const;
 
     ItemId mItemId{};
-    MessagePtrSet mMessages;
+    MessageList mMessages;
     QMap<int, D3DAttribute> mAttributes;
     std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
     int mMaxElementCount{ -1 };

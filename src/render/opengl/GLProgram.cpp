@@ -4,7 +4,7 @@
 #include <QRegularExpression>
 
 namespace {
-    void parseLinkerLog(const QString &log, MessagePtrSet &messages,
+    void parseLinkerLog(const QString &log, MessageList &messages,
         ItemId itemId)
     {
         messages.insert(itemId, MessageType::ShaderWarning, log);
@@ -161,7 +161,7 @@ GLBuffer &GLProgram::getDynamicUniformBuffer(const QString &name, int size)
     return it->second;
 }
 
-MessagePtrSet GLProgram::resetMessages()
+MessageList GLProgram::resetMessages()
 {
     for (auto &shader : mShaders)
         mMessages += shader.resetMessages();

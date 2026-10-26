@@ -41,7 +41,7 @@ protected:
     void reload(bool forWriting);
 
     ItemId mItemId{ };
-    MessagePtrSet mMessages;
+    MessageList mMessages;
     QString mFileName;
     Texture::SourceType mSourceType{ };
     TextureData::RowOrder mRowOrder{ };

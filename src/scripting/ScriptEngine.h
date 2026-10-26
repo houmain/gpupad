@@ -27,8 +27,8 @@ public:
     ~ScriptEngine();
 
     [[nodiscard]] std::shared_ptr<void> beginSettingFirstError(ItemId itemId);
-    MessagePtrSet resetMessages();
-    MessagePtrSet &messages() { return mMessages; }
+    MessageList resetMessages();
+    MessageList &messages() { return mMessages; }
     void interrupt();
     void setGlobal(const QString &name, QObject *object);
     void setGlobal(const QString &name, const ScriptValueList &values);
@@ -65,7 +65,7 @@ private:
 
     QString mActionId;
     QString mMainScriptFileName;
-    MessagePtrSet mMessages;
+    MessageList mMessages;
     QJSEngine *mJsEngine{};
     ConsoleScriptObject *mConsoleScriptObject{};
     AppScriptObject *mAppScriptObject{};
@@ -73,7 +73,7 @@ private:
 };
 
 void checkValueCount(int valueCount, int offset, int count, ItemId itemId,
-    MessagePtrSet &messages);
+    MessageList &messages);
 
 template <typename T>
 std::vector<T> getValues(ScriptEngine &scriptEngine,

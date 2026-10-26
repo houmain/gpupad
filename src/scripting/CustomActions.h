@@ -14,7 +14,7 @@ public:
     explicit CustomAction(const QString &filePath);
 
     void openInEditor();
-    MessagePtrSet apply(const QModelIndexList &selection);
+    MessageList apply(const QModelIndexList &selection);
 
     bool updateManifest(ScriptEngine &scriptEngine);
     void applyInEngine(ScriptEngine &scriptEngine) const;
@@ -46,6 +46,6 @@ private:
     static CustomActionPtr getActionById(const QString &id);
 
     std::map<QString, CustomActionPtr> mActions;
-    MessagePtrSet mMessages;
+    MessageList mMessages;
     QModelIndexList mSelection;
 };

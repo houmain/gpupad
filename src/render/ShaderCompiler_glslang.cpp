@@ -143,7 +143,7 @@ namespace ShaderCompiler {
                 getClient(session.renderer), session.apiVersion));
         }
 
-        bool parseGLSLangErrors(const QString &log, MessagePtrSet &messages,
+        bool parseGLSLangErrors(const QString &log, MessageList &messages,
             ItemId itemId, const QStringList &fileNames)
         {
             // ERROR: Filename:50: 'output' : unknown variable
@@ -346,7 +346,7 @@ namespace ShaderCompiler {
 
     std::map<Shader::ShaderType, Spirv> compileSpirv_glslang(
         const Session &session, const std::vector<Input> &inputs,
-        ItemId programItemId, MessagePtrSet &messages)
+        ItemId programItemId, MessageList &messages)
     {
         const auto language = session.shaderLanguage;
         const auto defaultVersion = 100;
@@ -419,7 +419,7 @@ namespace ShaderCompiler {
     QString preprocess(const Session &session, Shader::ShaderType shaderType,
         const QStringList &sources, const QStringList &fileNames,
         const QString &entryPoint, ItemId itemId, const QString &includePaths,
-        MessagePtrSet &messages)
+        MessageList &messages)
     {
         const auto defaultVersion = 100;
         const auto defaultProfile = ENoProfile;
@@ -451,7 +451,7 @@ namespace ShaderCompiler {
     }
 
     QString generateGLSL(const Spirv &spirv, ItemId itemId,
-        MessagePtrSet &messages)
+        MessageList &messages)
     try {
         if (spirv.empty())
             return { };
@@ -466,7 +466,7 @@ namespace ShaderCompiler {
     }
 
     QString generateHLSL(const Spirv &spirv, ItemId itemId,
-        MessagePtrSet &messages)
+        MessageList &messages)
     try {
         if (spirv.empty())
             return { };
@@ -504,7 +504,7 @@ namespace ShaderCompiler {
     QString generateAST(const Session &session, Shader::ShaderType shaderType,
         const QStringList &sources, const QStringList &fileNames,
         const QString &entryPoint, ItemId itemId, const QString &includePaths,
-        MessagePtrSet &messages)
+        MessageList &messages)
     {
         const auto defaultVersion = 100;
         const auto defaultProfile = ENoProfile;
@@ -573,7 +573,7 @@ namespace ShaderCompiler {
 namespace ShaderCompiler {
     std::map<Shader::ShaderType, Spirv> compileSpirv_glslang(
         const Session &session, const std::vector<Input> &inputs,
-        ItemId programItemId, MessagePtrSet &messages)
+        ItemId programItemId, MessageList &messages)
     {
         messages.insert(programItemId, MessageType::ShaderCompilerNotAvailable);
         return { };
@@ -582,7 +582,7 @@ namespace ShaderCompiler {
     QString preprocess(const Session &session, Shader::ShaderType shaderType,
         const QStringList &sources, const QStringList &fileNames,
         const QString &entryPoint, ItemId itemId, const QString &includePaths,
-        MessagePtrSet &messages)
+        MessageList &messages)
     {
         messages.insert(itemId, MessageType::ShaderCompilerNotAvailable);
         return { };
@@ -594,14 +594,14 @@ namespace ShaderCompiler {
     }
 
     QString generateGLSL(const Spirv &spirv, ItemId itemId,
-        MessagePtrSet &messages)
+        MessageList &messages)
     {
         messages.insert(itemId, MessageType::ShaderCompilerNotAvailable);
         return { };
     }
 
     QString generateHLSL(const Spirv &spirv, ItemId itemId,
-        MessagePtrSet &messages)
+        MessageList &messages)
     {
         messages.insert(itemId, MessageType::ShaderCompilerNotAvailable);
         return { };
@@ -610,7 +610,7 @@ namespace ShaderCompiler {
     QString generateAST(const Session &session, Shader::ShaderType shaderType,
         const QStringList &sources, const QStringList &fileNames,
         const QString &entryPoint, ItemId itemId, const QString &includePaths,
-        MessagePtrSet &messages)
+        MessageList &messages)
     {
         messages.insert(itemId, MessageType::ShaderCompilerNotAvailable);
         return { };

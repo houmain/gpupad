@@ -8,7 +8,7 @@ class VKPrintf : public PrintfBase
 public:
     VKBuffer &getInitializedBuffer(VKContext &context);
     void beginDownload(VKContext &context);
-    MessagePtrSet finishDownload(ItemId callItemId);
+    MessageList finishDownload(ItemId callItemId);
 
 private:
     std::optional<VKBuffer> mBuffer;

@@ -31,28 +31,28 @@ public:
     void setTextures(VKTexture *texture, VKTexture *fromTexture);
     void setAccelerationStructure(VKAccelerationStructure *accelStruct);
     void execute(VKContext &context, Bindings &&bindings,
-        MessagePtrSet &messages, ScriptEngine &scriptEngine);
+        MessageList &messages, ScriptEngine &scriptEngine);
 
 private:
     bool validateShaderTypes();
     int getMaxElementCount(ScriptEngine &scriptEngine);
-    void executeDraw(VKContext &context, MessagePtrSet &messages,
+    void executeDraw(VKContext &context, MessageList &messages,
         ScriptEngine &scriptEngine);
-    void executeCompute(VKContext &context, MessagePtrSet &messages,
+    void executeCompute(VKContext &context, MessageList &messages,
         ScriptEngine &scriptEngine);
-    void executeTraceRays(VKContext &context, MessagePtrSet &messages,
+    void executeTraceRays(VKContext &context, MessageList &messages,
         ScriptEngine &scriptEngine);
-    void executeClearTexture(VKContext &context, MessagePtrSet &messages);
-    void executeCopyTexture(VKContext &context, MessagePtrSet &messages);
-    void executeClearBuffer(VKContext &context, MessagePtrSet &messages);
-    void executeCopyBuffer(VKContext &context, MessagePtrSet &messages);
-    void executeSwapTextures(MessagePtrSet &messages);
-    void executeSwapBuffers(MessagePtrSet &messages);
+    void executeClearTexture(VKContext &context, MessageList &messages);
+    void executeCopyTexture(VKContext &context, MessageList &messages);
+    void executeClearBuffer(VKContext &context, MessageList &messages);
+    void executeCopyBuffer(VKContext &context, MessageList &messages);
+    void executeSwapTextures(MessageList &messages);
+    void executeSwapBuffers(MessageList &messages);
 
     const Call mCall;
     const CallKind mKind;
     const Session mSession;
-    MessagePtrSet mMessages;
+    MessageList mMessages;
     VKProgram *mProgram{ };
     VKTarget *mTarget{ };
     VKStream *mVertexStream{ };
@@ -74,5 +74,5 @@ private:
 
     QSet<ItemId> mUsedItems;
     std::unique_ptr<VKPipeline> mPipeline;
-    MessagePtrSet mPrintfMessages;
+    MessageList mPrintfMessages;
 };

@@ -26,7 +26,7 @@ private:
     void applyAttachmentStates(GLContext &gl, const GLAttachment &attachment);
 
     ItemId mItemId{};
-    MessagePtrSet mMessages;
+    MessageList mMessages;
     QSet<ItemId> mUsedItems;
     Target::FrontFace mFrontFace{};
     Target::CullMode mCullMode{};

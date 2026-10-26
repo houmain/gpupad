@@ -3,7 +3,7 @@
 #include <QRegularExpression>
 
 namespace {
-    void parseLog(const QString &log, MessagePtrSet &messages, ItemId itemId,
+    void parseLog(const QString &log, MessageList &messages, ItemId itemId,
         const QStringList &fileNames)
     {
         // Mesa:    0:13(2): error: `gl_Positin' undeclared

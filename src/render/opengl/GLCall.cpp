@@ -183,7 +183,7 @@ void GLCall::setTextures(GLTexture *texture, GLTexture *fromTexture)
 }
 
 void GLCall::execute(GLContext &context, Bindings &&bindings,
-    MessagePtrSet &messages, ScriptEngine &scriptEngine)
+    MessageList &messages, ScriptEngine &scriptEngine)
 {
     if (mProgram) {
         if (validateShaderTypes() && mProgram->bind(context)) {
@@ -197,7 +197,7 @@ void GLCall::execute(GLContext &context, Bindings &&bindings,
     }
 }
 
-void GLCall::execute(GLContext &gl, MessagePtrSet &messages,
+void GLCall::execute(GLContext &gl, MessageList &messages,
     ScriptEngine &scriptEngine)
 {
     if (mKind.draw || mKind.compute) {
@@ -256,7 +256,7 @@ void GLCall::execute(GLContext &gl, MessagePtrSet &messages,
         messages.insert(mCall.id, MessageType::CallFailed, errorMessage);
 }
 
-void GLCall::executeDraw(GLContext &gl, MessagePtrSet &messages,
+void GLCall::executeDraw(GLContext &gl, MessageList &messages,
     ScriptEngine &scriptEngine)
 {
     const auto first = scriptEngine.evaluateUInt(mCall.first, mCall.id);
@@ -389,7 +389,7 @@ void GLCall::executeDraw(GLContext &gl, MessagePtrSet &messages,
         mIndexBuffer->unbind(gl, GL_ELEMENT_ARRAY_BUFFER);
 }
 
-void GLCall::executeCompute(GLContext &gl, MessagePtrSet &messages,
+void GLCall::executeCompute(GLContext &gl, MessageList &messages,
     ScriptEngine &scriptEngine)
 {
     if (mIndirectBuffer)
@@ -412,7 +412,7 @@ void GLCall::executeCompute(GLContext &gl, MessagePtrSet &messages,
         mIndirectBuffer->unbind(gl, GL_DISPATCH_INDIRECT_BUFFER);
 }
 
-void GLCall::executeClearTexture(GLContext &gl, MessagePtrSet &messages)
+void GLCall::executeClearTexture(GLContext &gl, MessageList &messages)
 {
     if (!mTexture) {
         messages.insert(mCall.id, MessageType::TextureNotAssigned);
@@ -441,7 +441,7 @@ void GLCall::executeClearTexture(GLContext &gl, MessagePtrSet &messages)
     mUsedItems += mTexture->usedItems();
 }
 
-void GLCall::executeCopyTexture(GLContext &gl, MessagePtrSet &messages)
+void GLCall::executeCopyTexture(GLContext &gl, MessageList &messages)
 {
     if (!mTexture || !mFromTexture) {
         messages.insert(mCall.id, MessageType::TextureNotAssigned);
@@ -454,7 +454,7 @@ void GLCall::executeCopyTexture(GLContext &gl, MessagePtrSet &messages)
     mUsedItems += mFromTexture->usedItems();
 }
 
-void GLCall::executeClearBuffer(GLContext &gl, MessagePtrSet &messages)
+void GLCall::executeClearBuffer(GLContext &gl, MessageList &messages)
 {
     if (!mBuffer) {
         messages.insert(mCall.id, MessageType::BufferNotAssigned);
@@ -464,7 +464,7 @@ void GLCall::executeClearBuffer(GLContext &gl, MessagePtrSet &messages)
     mUsedItems += mBuffer->usedItems();
 }
 
-void GLCall::executeCopyBuffer(GLContext &gl, MessagePtrSet &messages)
+void GLCall::executeCopyBuffer(GLContext &gl, MessageList &messages)
 {
     if (!mBuffer || !mFromBuffer) {
         messages.insert(mCall.id, MessageType::BufferNotAssigned);
@@ -475,7 +475,7 @@ void GLCall::executeCopyBuffer(GLContext &gl, MessagePtrSet &messages)
     mUsedItems += mFromBuffer->usedItems();
 }
 
-void GLCall::executeSwapTextures(MessagePtrSet &messages)
+void GLCall::executeSwapTextures(MessageList &messages)
 {
     if (!mTexture || !mFromTexture) {
         messages.insert(mCall.id, MessageType::TextureNotAssigned);
@@ -488,7 +488,7 @@ void GLCall::executeSwapTextures(MessagePtrSet &messages)
     mUsedItems += mFromTexture->itemId();
 }
 
-void GLCall::executeSwapBuffers(MessagePtrSet &messages)
+void GLCall::executeSwapBuffers(MessageList &messages)
 {
     if (!mBuffer || !mFromBuffer) {
         messages.insert(mCall.id, MessageType::BufferNotAssigned);

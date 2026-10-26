@@ -53,7 +53,7 @@ protected:
     static ParsedFormatString parseFormatString(QStringView string);
     static QString formatMessage(const ParsedFormatString &format,
         const QList<Argument> &arguments);
-    MessagePtrSet formatMessages(ItemId callItemId, const BufferHeader &header,
+    MessageList formatMessages(ItemId callItemId, const BufferHeader &header,
         std::span<const uint32_t> data);
 
     QSet<Shader::ShaderType> mUsedInStages;

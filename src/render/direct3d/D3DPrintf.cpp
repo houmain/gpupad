@@ -17,7 +17,7 @@ void D3DPrintf::beginDownload(D3DContext &context)
         mBuffer->beginDownload(context, false);
 }
 
-MessagePtrSet D3DPrintf::finishDownload(ItemId callItemId)
+MessageList D3DPrintf::finishDownload(ItemId callItemId)
 {
     if (!mBuffer || !mBuffer->finishDownload())
         return {};

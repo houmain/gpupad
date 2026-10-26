@@ -24,7 +24,7 @@ private:
     ItemId mItemId{};
     Session mSession{};
     QSet<ItemId> mUsedItems;
-    MessagePtrSet mLinkMessages;
+    MessageList mLinkMessages;
     std::vector<D3DShader> mShaders;
     std::vector<D3DShader> mIncludableShaders;
     D3DPrintf mPrintf;

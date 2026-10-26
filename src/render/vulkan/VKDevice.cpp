@@ -89,7 +89,7 @@ struct VKDevice::SharedDevice
     KDGpu::Queue queue;
     ktxVulkanDeviceInfo ktxDeviceInfo{ };
     VkCommandPool ktxCommandPool{ };
-    MessagePtrSet messages;
+    MessageList messages;
 };
 
 VKDevice::SharedDevice::SharedDevice(const AdapterIdentity &adapterIdentity_,

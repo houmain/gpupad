@@ -33,7 +33,7 @@ private:
     void updateVertexOptions();
 
     ItemId mItemId{};
-    MessagePtrSet mMessages;
+    MessageList mMessages;
     QSet<ItemId> mUsedItems;
     QMap<int, VKAttribute> mAttributes;
     std::vector<VKBuffer *> mBuffers;

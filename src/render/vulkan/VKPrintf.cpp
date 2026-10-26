@@ -17,7 +17,7 @@ void VKPrintf::beginDownload(VKContext &context)
         mBuffer->beginDownload(context, false);
 }
 
-MessagePtrSet VKPrintf::finishDownload(ItemId callItemId)
+MessageList VKPrintf::finishDownload(ItemId callItemId)
 {
     if (!mBuffer || !mBuffer->finishDownload())
         return {};

@@ -115,7 +115,7 @@ bool VKCall::validateShaderTypes()
 }
 
 void VKCall::execute(VKContext &context, Bindings &&bindings,
-    MessagePtrSet &messages, ScriptEngine &scriptEngine)
+    MessageList &messages, ScriptEngine &scriptEngine)
 {
     if (mKind.trace && !context.features().rayTracingPipeline) {
         mMessages.insert(mCall.id, MessageType::RayTracingNotAvailable);
@@ -219,7 +219,7 @@ int VKCall::getMaxElementCount(ScriptEngine &scriptEngine)
     return -1;
 }
 
-void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
+void VKCall::executeDraw(VKContext &context, MessageList &messages,
     ScriptEngine &scriptEngine)
 {
     const auto first = scriptEngine.evaluateUInt(mCall.first, mCall.id);
@@ -352,7 +352,7 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
     mUsedItems += mPipeline->usedItems();
 }
 
-void VKCall::executeCompute(VKContext &context, MessagePtrSet &messages,
+void VKCall::executeCompute(VKContext &context, MessageList &messages,
     ScriptEngine &scriptEngine)
 {
     if (!mPipeline || !mPipeline->createCompute(context))
@@ -397,7 +397,7 @@ void VKCall::executeCompute(VKContext &context, MessagePtrSet &messages,
     mUsedItems += mPipeline->usedItems();
 }
 
-void VKCall::executeTraceRays(VKContext &context, MessagePtrSet &messages,
+void VKCall::executeTraceRays(VKContext &context, MessageList &messages,
     ScriptEngine &scriptEngine)
 {
     if (!mPipeline
@@ -434,7 +434,7 @@ void VKCall::executeTraceRays(VKContext &context, MessagePtrSet &messages,
     mUsedItems += mPipeline->usedItems();
 }
 
-void VKCall::executeClearTexture(VKContext &context, MessagePtrSet &messages)
+void VKCall::executeClearTexture(VKContext &context, MessageList &messages)
 {
     if (!mTexture) {
         messages.insert(mCall.id, MessageType::TextureNotAssigned);
@@ -463,7 +463,7 @@ void VKCall::executeClearTexture(VKContext &context, MessagePtrSet &messages)
     mUsedItems += mTexture->usedItems();
 }
 
-void VKCall::executeCopyTexture(VKContext &context, MessagePtrSet &messages)
+void VKCall::executeCopyTexture(VKContext &context, MessageList &messages)
 {
     if (!mTexture || !mFromTexture) {
         messages.insert(mCall.id, MessageType::TextureNotAssigned);
@@ -476,7 +476,7 @@ void VKCall::executeCopyTexture(VKContext &context, MessagePtrSet &messages)
     mUsedItems += mFromTexture->usedItems();
 }
 
-void VKCall::executeClearBuffer(VKContext &context, MessagePtrSet &messages)
+void VKCall::executeClearBuffer(VKContext &context, MessageList &messages)
 {
     if (!mBuffer) {
         messages.insert(mCall.id, MessageType::BufferNotAssigned);
@@ -486,7 +486,7 @@ void VKCall::executeClearBuffer(VKContext &context, MessagePtrSet &messages)
     mUsedItems += mBuffer->usedItems();
 }
 
-void VKCall::executeCopyBuffer(VKContext &context, MessagePtrSet &messages)
+void VKCall::executeCopyBuffer(VKContext &context, MessageList &messages)
 {
     if (!mBuffer || !mFromBuffer) {
         messages.insert(mCall.id, MessageType::BufferNotAssigned);
@@ -497,7 +497,7 @@ void VKCall::executeCopyBuffer(VKContext &context, MessagePtrSet &messages)
     mUsedItems += mFromBuffer->usedItems();
 }
 
-void VKCall::executeSwapTextures(MessagePtrSet &messages)
+void VKCall::executeSwapTextures(MessageList &messages)
 {
     if (!mTexture || !mFromTexture) {
         messages.insert(mCall.id, MessageType::TextureNotAssigned);
@@ -510,7 +510,7 @@ void VKCall::executeSwapTextures(MessagePtrSet &messages)
     mUsedItems += mFromTexture->itemId();
 }
 
-void VKCall::executeSwapBuffers(MessagePtrSet &messages)
+void VKCall::executeSwapBuffers(MessageList &messages)
 {
     if (!mBuffer || !mFromBuffer) {
         messages.insert(mCall.id, MessageType::BufferNotAssigned);

@@ -21,7 +21,7 @@ protected:
     BufferBase(const Buffer &buffer, int size);
     bool swap(BufferBase &other);
 
-    MessagePtrSet mMessages;
+    MessageList mMessages;
     ItemId mItemId{};
     QString mFileName;
     int mSize{};

@@ -24,7 +24,7 @@ private:
     ItemId mItemId{};
     Session mSession{};
     QSet<ItemId> mUsedItems;
-    MessagePtrSet mLinkMessages;
+    MessageList mLinkMessages;
     std::vector<VKShader> mShaders;
     std::vector<VKShader> mIncludableShaders;
     StageReflection mReflection;

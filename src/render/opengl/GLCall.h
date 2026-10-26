@@ -31,21 +31,21 @@ public:
     void setAccelerationStructure(GLAccelerationStructure *accelStruct) { }
     bool validateShaderTypes();
     void execute(GLContext &context, Bindings &&bindings,
-        MessagePtrSet &messages, ScriptEngine &scriptEngine);
+        MessageList &messages, ScriptEngine &scriptEngine);
 
 private:
-    void execute(GLContext &gl, MessagePtrSet &messages,
+    void execute(GLContext &gl, MessageList &messages,
         ScriptEngine &scriptEngine);
-    void executeDraw(GLContext &gl, MessagePtrSet &messages,
+    void executeDraw(GLContext &gl, MessageList &messages,
         ScriptEngine &scriptEngine);
-    void executeCompute(GLContext &gl, MessagePtrSet &messages,
+    void executeCompute(GLContext &gl, MessageList &messages,
         ScriptEngine &scriptEngine);
-    void executeClearTexture(GLContext &gl, MessagePtrSet &messages);
-    void executeCopyTexture(GLContext &gl, MessagePtrSet &messages);
-    void executeClearBuffer(GLContext &gl, MessagePtrSet &messages);
-    void executeCopyBuffer(GLContext &gl, MessagePtrSet &messages);
-    void executeSwapTextures(MessagePtrSet &messages);
-    void executeSwapBuffers(MessagePtrSet &messages);
+    void executeClearTexture(GLContext &gl, MessageList &messages);
+    void executeCopyTexture(GLContext &gl, MessageList &messages);
+    void executeClearBuffer(GLContext &gl, MessageList &messages);
+    void executeCopyBuffer(GLContext &gl, MessageList &messages);
+    void executeSwapTextures(MessageList &messages);
+    void executeSwapBuffers(MessageList &messages);
     bool updateBindings(GLContext &gl, ScriptEngine &scriptEngine);
     MessageType applyBinding(const SpvReflectDescriptorBinding &desc,
         uint32_t arrayElement, bool isVariableLengthArray, GLContext &gl,

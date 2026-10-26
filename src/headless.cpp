@@ -12,7 +12,7 @@
 
 void outputMessagesToStdout(const SessionModel &sessionModel, bool verbose)
 {
-    for (const auto &message : MessagePtrSet::getAllMessages()) {
+    for (const auto &message : MessageList::getAllMessages()) {
         const auto severity = getMessageSeverity(*message);
         if (severity == MessageSeverity::Info && !verbose)
             continue;
@@ -20,16 +20,16 @@ void outputMessagesToStdout(const SessionModel &sessionModel, bool verbose)
                 : severity == MessageSeverity::Warning ? "WARNING"
                                                        : "INFO");
         auto text = QString::fromLatin1(severityText);
-        if (!message->fileName.isEmpty()) {
-            text += " in '" + FileDialog::getFileTitle(message->fileName) + "'";
-            if (message->line > 0)
-                text += ":" + QString::number(message->line);
+        if (!message.fileName.isEmpty()) {
+            text += " in '" + FileDialog::getFileTitle(message.fileName) + "'";
+            if (message.line > 0)
+                text += ":" + QString::number(message.line);
         }
-        if (message->itemId)
-            if (const auto item = sessionModel.findItem(message->itemId))
+        if (message.itemId)
+            if (const auto item = sessionModel.findItem(message.itemId))
                 text += " " + item->name;
         text += ": ";
-        text += getMessageText(*message);
+        text += getMessageText(message);
         text += "\n";
         std::fputs(qUtf8Printable(text), stdout);
     }
@@ -43,7 +43,7 @@ int runHeadless(QApplication &app)
     auto &sessionModel = singletons.sessionModel();
     auto &synchronizeLogic = singletons.synchronizeLogic();
     auto editorsToSave = std::map<QString, IEditor *>();
-    auto messages = MessagePtrSet{ };
+    auto messages = MessageList{ };
     auto verbose = false;
 
     const auto workingDirectory = QDir::current();
@@ -64,8 +64,8 @@ int runHeadless(QApplication &app)
     const auto evaluateSession = [&]() {
         synchronizeLogic.resetEvaluation();
         synchronizeLogic.finishEvaluation();
-        for (const auto &message : MessagePtrSet::getAllMessages())
-            if (getMessageSeverity(*message) == MessageSeverity::Error)
+        for (const auto &message : MessageList::getAllMessages())
+            if (getMessageSeverity(message) == MessageSeverity::Error)
                 return false;
         for (auto [itemIdent, editor] : std::exchange(editorsToSave, { }))
             if (!editor->save()) {
@@ -160,8 +160,8 @@ int runHeadless(QApplication &app)
                 singletons.defaultScriptEngine().evaluateScript(source,
                     fileName);
                 messages += singletons.defaultScriptEngine().resetMessages();
-                for (const auto &message : MessagePtrSet::getAllMessages())
-                    if (getMessageSeverity(*message) == MessageSeverity::Error)
+                for (const auto &message : MessageList::getAllMessages())
+                    if (getMessageSeverity(message) == MessageSeverity::Error)
                         return 1;
             } else {
                 if (!editorManager.openEditor(fileName))

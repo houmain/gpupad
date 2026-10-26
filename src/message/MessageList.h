@@ -3,25 +3,25 @@
 #include "Message.h"
 #include <QList>
 
-class MessagePtrSet : QList<MessagePtr>
+class MessageList : QList<MessagePtr>
 {
 public:
     static MessagePtr makeMessage(ItemId itemId, MessageType type, QString text,
         QString fileName, int line);
-    static QList<MessagePtr> getAllMessages();
+    static QList<Message> getAllMessages();
 
     using QList::clear;
     using QList::size;
 
     void insert(MessagePtr message);
 
-    MessagePtrSet &operator+=(const MessagePtr &message)
+    MessageList &operator+=(const MessagePtr &message)
     {
         insert(message);
         return *this;
     }
 
-    MessagePtrSet &operator+=(const MessagePtrSet &other)
+    MessageList &operator+=(const MessageList &other)
     {
         if (this == &other)
             return *this;

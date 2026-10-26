@@ -189,6 +189,8 @@ void D3DRenderSession::finish()
 {
     if (mCommandQueue)
         finishCommandQueue(*mCommandQueue);
+
+    RenderSessionBase::finish();
 }
 
 void D3DRenderSession::release()

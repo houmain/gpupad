@@ -45,7 +45,7 @@ namespace ShaderCompiler {
                 .arg(minorVersion);
         }
 
-        void parseLog_D3DCompiler(const QString &log, MessagePtrSet &messages,
+        void parseLog_D3DCompiler(const QString &log, MessageList &messages,
             ItemId itemId)
         {
             // FILENAME(100,30-32): SEVERITY X100: TEXT
@@ -79,7 +79,7 @@ namespace ShaderCompiler {
         }
 
 #if defined(DXC_ENABLED)
-        void parseLog_DXC(const QString &log, MessagePtrSet &messages,
+        void parseLog_DXC(const QString &log, MessageList &messages,
             const QStringList &fileNames, ItemId itemId)
         {
             static const auto splitLines = QRegularExpression("\n(?!\\s)",
@@ -164,7 +164,7 @@ namespace ShaderCompiler {
             }
 
             bool compile(ArgumentList &arguments, const Input &input,
-                MessagePtrSet &messages, ComPtr<ID3DBlob> &binary,
+                MessageList &messages, ComPtr<ID3DBlob> &binary,
                 ComPtr<ID3D12ShaderReflection> *d3dReflection = nullptr)
             {
                 if (!mCompiler)
@@ -213,7 +213,7 @@ namespace ShaderCompiler {
         };
 
         bool compile_DXC(const Input &input,
-            DXCCompiler::ArgumentList &arguments, MessagePtrSet &messages,
+            DXCCompiler::ArgumentList &arguments, MessageList &messages,
             ComPtr<ID3DBlob> &binary,
             ComPtr<ID3D12ShaderReflection> *d3dReflection = nullptr)
         {
@@ -271,7 +271,7 @@ namespace ShaderCompiler {
     } // namespace
 
     bool compileDXIL_D3DCompiler(const Session &session, const Input &input,
-        MessagePtrSet &messages, ComPtr<ID3DBlob> &binary,
+        MessageList &messages, ComPtr<ID3DBlob> &binary,
         ComPtr<ID3D12ShaderReflection> &d3dReflection)
     {
         if (isRayTracingShaderType(input.shaderType)) {
@@ -311,7 +311,7 @@ namespace ShaderCompiler {
     }
 
     bool compileDXIL(const Session &session, const Input &input,
-        MessagePtrSet &messages, ComPtr<ID3DBlob> &binary,
+        MessageList &messages, ComPtr<ID3DBlob> &binary,
         ComPtr<ID3D12ShaderReflection> &d3dReflection)
     {
 #if defined(DXC_ENABLED)
@@ -332,7 +332,7 @@ namespace ShaderCompiler {
 
 #if defined(DXC_ENABLED)
     Spirv compileSpirv_DXC(const Session &session, const Input &input,
-        MessagePtrSet &messages)
+        MessageList &messages)
     {
         auto arguments = DXCCompiler::ArgumentList();
         arguments.add(L"-spirv");

@@ -64,7 +64,7 @@ void ScriptSession::update()
     mScriptEngine->appScriptObject().update();
 }
 
-MessagePtrSet ScriptSession::resetMessages()
+MessageList ScriptSession::resetMessages()
 {
     return mScriptEngine->resetMessages();
 }

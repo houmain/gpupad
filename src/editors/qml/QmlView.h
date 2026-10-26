@@ -42,7 +42,7 @@ private:
 
     const QString mFileName;
     QScriptEnginePtr mEnginePtr;
-    MessagePtrSet mMessages;
+    MessageList mMessages;
     QSet<QString> mDependencies;
     bool mResetOnFocus{};
     QSize mMinimumSizeHint{ 150, 150 };

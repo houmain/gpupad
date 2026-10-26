@@ -21,7 +21,7 @@ private:
     QOpenGLContext mContext;
     QOffscreenSurface *mSurface;
     GLContext mGL;
-    MessagePtrSet mMessages;
+    MessageList mMessages;
 };
 
 #endif // defined(OPENGL_ENABLED)

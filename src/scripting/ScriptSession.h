@@ -21,7 +21,7 @@ public:
     bool usesKeyboardState() const;
     bool usesViewportSize(const QString &fileName) const;
     void update();
-    MessagePtrSet resetMessages();
+    MessageList resetMessages();
 
     // 2. called in render thread
     void beginSessionUpdate();

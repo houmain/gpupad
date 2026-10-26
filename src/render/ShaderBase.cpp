@@ -68,7 +68,7 @@ namespace {
     }
 
     QString substituteIncludes(QString source, const QString &fileName,
-        QStringList *usedFileNames, ItemId itemId, MessagePtrSet &messages,
+        QStringList *usedFileNames, ItemId itemId, MessageList &messages,
         const QString &includePaths, QString *maxVersion = nullptr,
         QString *extensions = nullptr, int recursionDepth = 0)
     {

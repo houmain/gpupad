@@ -66,7 +66,7 @@ private:
     Renderer &mRenderer;
     std::unique_ptr<Device> mDevice;
     bool mInitialized{ };
-    MessagePtrSet mMessages;
+    MessageList mMessages;
 };
 
 Renderer::Renderer(Type type, MessageType failureMessage, QObject *parent)

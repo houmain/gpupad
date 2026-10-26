@@ -641,7 +641,7 @@ QString PrintfBase::formatMessage(const ParsedFormatString &format,
     return string;
 }
 
-MessagePtrSet PrintfBase::formatMessages(ItemId callItemId,
+MessageList PrintfBase::formatMessages(ItemId callItemId,
     const BufferHeader &header, std::span<const uint32_t> data)
 {
     const auto count = data.size();
@@ -656,7 +656,7 @@ MessagePtrSet PrintfBase::formatMessages(ItemId callItemId,
         return {};
     };
 
-    auto messages = MessagePtrSet{};
+    auto messages = MessageList{};
     const auto lastBegin = header.prevBegin;
     for (auto offset = data[0];;) {
         const auto lastMessage = (offset == lastBegin);
@@ -684,7 +684,7 @@ MessagePtrSet PrintfBase::formatMessages(ItemId callItemId,
 
         messages.insert(callItemId, MessageType::ShaderInfo,
             formatMessage(formatString, arguments), formatString.fileName,
-            formatString.line, false);
+            formatString.line);
 
         if (lastMessage)
             break;

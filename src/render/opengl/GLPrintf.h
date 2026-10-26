@@ -9,7 +9,7 @@ class GLPrintf : public PrintfBase
 public:
     GLBuffer &getInitializedBuffer(GLContext &context);
     void beginDownload(GLContext &context);
-    MessagePtrSet finishDownload(ItemId callItemId);
+    MessageList finishDownload(ItemId callItemId);
 
 private:
     std::optional<GLBuffer> mBuffer;

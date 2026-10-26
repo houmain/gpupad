@@ -32,23 +32,23 @@ public:
     void setTextures(D3DTexture *texture, D3DTexture *fromTexture);
     void setAccelerationStructure(D3DAccelerationStructure *accelStruct);
     void execute(D3DContext &context, Bindings &&bindings,
-        MessagePtrSet &messages, ScriptEngine &scriptEngine);
+        MessageList &messages, ScriptEngine &scriptEngine);
 
 private:
     bool validateShaderTypes();
     int getMaxElementCount(ScriptEngine &scriptEngine);
-    void executeDraw(D3DContext &context, MessagePtrSet &messages,
+    void executeDraw(D3DContext &context, MessageList &messages,
         ScriptEngine &scriptEngine);
-    void executeCompute(D3DContext &context, MessagePtrSet &messages,
+    void executeCompute(D3DContext &context, MessageList &messages,
         ScriptEngine &scriptEngine);
-    void executeTraceRays(D3DContext &context, MessagePtrSet &messages,
+    void executeTraceRays(D3DContext &context, MessageList &messages,
         ScriptEngine &scriptEngine);
-    void executeClearTexture(D3DContext &context, MessagePtrSet &messages);
-    void executeCopyTexture(D3DContext &context, MessagePtrSet &messages);
-    void executeClearBuffer(D3DContext &context, MessagePtrSet &messages);
-    void executeCopyBuffer(D3DContext &context, MessagePtrSet &messages);
-    void executeSwapTextures(MessagePtrSet &messages);
-    void executeSwapBuffers(MessagePtrSet &messages);
+    void executeClearTexture(D3DContext &context, MessageList &messages);
+    void executeCopyTexture(D3DContext &context, MessageList &messages);
+    void executeClearBuffer(D3DContext &context, MessageList &messages);
+    void executeCopyBuffer(D3DContext &context, MessageList &messages);
+    void executeSwapTextures(MessageList &messages);
+    void executeSwapBuffers(MessageList &messages);
     void bindIndexBuffer(D3DContext &context, ScriptEngine &scriptEngine);
     UINT64 copyToTempBuffer(D3DContext &context, D3DBuffer &buffer, UINT offset,
         UINT size);
@@ -56,7 +56,7 @@ private:
     const Call mCall;
     const CallKind mKind;
     const Session mSession;
-    MessagePtrSet mMessages;
+    MessageList mMessages;
     D3DProgram *mProgram{ };
     D3DTarget *mTarget{ };
     D3DStream *mVertexStream{ };
@@ -81,7 +81,7 @@ private:
 
     QSet<ItemId> mUsedItems;
     std::unique_ptr<D3DPipeline> mPipeline;
-    MessagePtrSet mPrintfMessages;
+    MessageList mPrintfMessages;
 };
 
 #endif // D3D_ENABLED

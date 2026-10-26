@@ -88,7 +88,7 @@ bool CustomAction::updateManifest(ScriptEngine &scriptEngine)
     return true;
 }
 
-MessagePtrSet CustomAction::apply(const QModelIndexList &selection)
+MessageList CustomAction::apply(const QModelIndexList &selection)
 {
     mScriptEngine.reset();
 

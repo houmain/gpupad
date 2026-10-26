@@ -27,7 +27,7 @@ private:
 
     KDGpu::Device &mDevice;
     ItemId mItemId{};
-    MessagePtrSet mMessages;
+    MessageList mMessages;
     QSet<ItemId> mUsedItems;
     Target::FrontFace mFrontFace{};
     Target::CullMode mCullMode{};

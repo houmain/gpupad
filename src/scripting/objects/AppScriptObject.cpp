@@ -299,16 +299,16 @@ QJsonObject AppScriptObject::palette() const
 QJsonArray AppScriptObject::messages() const
 {
     auto result = QJsonArray();
-    for (const auto &message : MessagePtrSet::getAllMessages()) {
+    for (const auto &message : MessageList::getAllMessages()) {
         auto object = QJsonObject{ };
-        object["severity"] = getMessageSeverityText(*message);
-        object["text"] = getMessageText(*message);
-        if (!message->fileName.isEmpty())
-            object["fileName"] = message->fileName;
-        if (message->line)
-            object["line"] = message->line;
-        if (message->itemId)
-            object["itemId"] = message->itemId;
+        object["severity"] = getMessageSeverityText(message);
+        object["text"] = getMessageText(message);
+        if (!message.fileName.isEmpty())
+            object["fileName"] = message.fileName;
+        if (message.line)
+            object["line"] = message.line;
+        if (message.itemId)
+            object["itemId"] = message.itemId;
         result.append(object);
     }
     return result;

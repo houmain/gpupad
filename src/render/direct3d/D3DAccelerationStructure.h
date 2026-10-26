@@ -58,7 +58,7 @@ private:
     D3DGeometry &getGeometry(int instanceIndex, int geometryIndex);
 
     ItemId mItemId{ };
-    MessagePtrSet mMessages;
+    MessageList mMessages;
     QSet<ItemId> mUsedItems;
     std::vector<D3DInstance> mInstances;
     std::vector<ComPtr<ID3D12Resource>> mBottomLevels;

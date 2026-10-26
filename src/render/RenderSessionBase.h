@@ -200,10 +200,10 @@ private:
     EvaluationType mEvaluationType{ };
     SessionModel mSessionModelCopy;
     std::unique_ptr<ScriptSession> mScriptSession;
-    MessagePtrSet mMessages;
-    MessagePtrSet mPrevMessages;
-    MessagePtrSet mLastResetMessages;
-    MessagePtrSet mTimeQueryMessages;
+    MessageList mMessages;
+    MessageList mPrevMessages;
+    MessageList mLastResetMessages;
+    MessageList mTimeQueryMessages;
     std::vector<ItemId> mTimeQueryCallIds;
     mutable QMutex mUsedItemsCopyMutex;
     QSet<ItemId> mUsedItemsCopy;

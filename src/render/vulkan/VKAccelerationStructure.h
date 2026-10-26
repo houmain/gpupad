@@ -57,7 +57,7 @@ private:
     void memoryBarrier(KDGpu::CommandRecorder &commandRecorder);
 
     ItemId mItemId{};
-    MessagePtrSet mMessages;
+    MessageList mMessages;
     QSet<ItemId> mUsedItems;
     std::vector<VKInstance> mInstances;
     std::vector<KDGpu::AccelerationStructure> mBottomLevelAs;

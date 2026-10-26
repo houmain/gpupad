@@ -42,7 +42,7 @@ private:
 #endif
     QString mFileName;
     SourceType mSourceType{};
-    MessagePtrSet mMessages;
+    MessageList mMessages;
     bool mValidateSource{};
     QString mProcessType{};
     QVariant mOutput;

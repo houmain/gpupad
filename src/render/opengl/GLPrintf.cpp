@@ -19,7 +19,7 @@ void GLPrintf::beginDownload(GLContext &gl)
     mBuffer->beginDownload(gl, false);
 }
 
-MessagePtrSet GLPrintf::finishDownload(ItemId callItemId)
+MessageList GLPrintf::finishDownload(ItemId callItemId)
 {
     if (!mBuffer || !mBuffer->finishDownload())
         return {};

@@ -51,7 +51,7 @@ public:
         return mStageSubroutines;
     }
     GLPrintf &printf() { return mPrintf; }
-    MessagePtrSet resetMessages();
+    MessageList resetMessages();
     QString tryGetProgramBinary(GLContext &gl);
 
 private:
@@ -64,7 +64,7 @@ private:
     ItemId mItemId{};
     Session mSession{};
     QSet<ItemId> mUsedItems;
-    MessagePtrSet mMessages;
+    MessageList mMessages;
     std::vector<GLShader> mShaders;
     std::vector<GLShader> mIncludableShaders;
     GLObject mProgramObject;

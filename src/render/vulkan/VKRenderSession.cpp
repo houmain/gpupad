@@ -160,6 +160,8 @@ void VKRenderSession::finish()
         return;
     auto deviceLock = vkDevice().lock();
     finishCommandQueue(*mCommandQueue);
+
+    RenderSessionBase::finish();
 }
 
 void VKRenderSession::release()

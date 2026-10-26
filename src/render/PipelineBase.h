@@ -29,7 +29,7 @@ protected:
 
     ItemId mItemId{ };
     Bindings mBindings;
-    MessagePtrSet mMessages;
+    MessageList mMessages;
     QSet<ItemId> mUsedItems;
 };
 

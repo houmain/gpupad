@@ -7,7 +7,7 @@ class ConsoleScriptObject : public QObject
 {
     Q_OBJECT
 public:
-    explicit ConsoleScriptObject(MessagePtrSet *messages, QObject *parent = 0);
+    explicit ConsoleScriptObject(MessageList *messages, QObject *parent = 0);
 
     [[nodiscard]] std::shared_ptr<void> setFileName(const QString &fileName);
     [[nodiscard]] std::shared_ptr<void> setItemId(ItemId itemId);
@@ -17,7 +17,7 @@ public:
 private:
     std::shared_ptr<void> pushState();
 
-    MessagePtrSet &mMessages;
+    MessageList &mMessages;
     QString mFileName;
     ItemId mItemId{};
 };

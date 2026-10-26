@@ -9,7 +9,7 @@ namespace {
     MessageId gNextMessageId{ 1 };
 } // namespace
 
-MessagePtr MessagePtrSet::makeMessage(ItemId itemId, MessageType type,
+MessagePtr MessageList::makeMessage(ItemId itemId, MessageType type,
     QString text, QString fileName, int line)
 {
     QMutexLocker lock(&gMessagesMutex);
@@ -20,21 +20,21 @@ MessagePtr MessagePtrSet::makeMessage(ItemId itemId, MessageType type,
     return message;
 }
 
-QList<MessagePtr> MessagePtrSet::getAllMessages()
+QList<Message> MessageList::getAllMessages()
 {
     QMutexLocker lock(&gMessagesMutex);
-    auto result = QList<MessagePtr>{};
+    auto result = QList<Message>{};
     QMutableListIterator<std::weak_ptr<const Message>> it(gMessages);
     while (it.hasNext()) {
         if (auto message = it.next().lock())
-            result.append(std::move(message));
+            result.append(*message);
         else
             it.remove();
     }
     return result;
 }
 
-void MessagePtrSet::insert(MessagePtr message)
+void MessageList::insert(MessagePtr message)
 {
     if (message)
         QList::append(std::move(message));

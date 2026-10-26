@@ -75,5 +75,5 @@ private:
     std::unique_ptr<Worker> mWorker;
     QList<RenderTask *> mPendingTasks;
     RenderTask *mCurrentTask{};
-    MessagePtrSet mMessages;
+    MessageList mMessages;
 };

@@ -5,14 +5,14 @@ namespace ShaderCompiler {
 
     extern std::map<Shader::ShaderType, Spirv> compileSpirv_glslang(
         const Session &session, const std::vector<Input> &inputs,
-        ItemId programItemId, MessagePtrSet &messages);
+        ItemId programItemId, MessageList &messages);
 
     extern Spirv compileSpirv_DXC(const Session &session, const Input &input,
-        MessagePtrSet &messages);
+        MessageList &messages);
 
     std::map<Shader::ShaderType, Spirv> compileSpirv(const Session &session,
         const std::vector<Input> &inputs, ItemId programItemId,
-        MessagePtrSet &messages)
+        MessageList &messages)
     {
         if (inputs.empty()) {
             messages.insert(programItemId, MessageType::ProgramHasNoShader);
@@ -51,7 +51,7 @@ namespace ShaderCompiler {
             .fileNames = { "shader" },
             .entryPoint = "main",
         };
-        auto messages = MessagePtrSet{};
+        auto messages = MessageList{};
         const auto shaders =
             compileSpirv_glslang(session, { input }, 0, messages);
         Q_ASSERT(shaders.size() == 1);

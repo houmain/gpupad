@@ -17,7 +17,7 @@ public:
     const QStringList &sources() const { return mSources; }
     const QStringList &fileNames() const { return mFileNames; }
     const QString &entryPoint() const { return mEntryPoint; }
-    MessagePtrSet resetMessages() { return std::exchange(mMessages, {}); }
+    MessageList resetMessages() { return std::exchange(mMessages, {}); }
     ShaderCompiler::Input getShaderCompilerInput(PrintfBase &printf);
     virtual bool validate();
     virtual Reflection getReflection();
@@ -39,7 +39,7 @@ protected:
         QStringList *usedFileNames = nullptr);
 
     ItemId mItemId{};
-    MessagePtrSet mMessages;
+    MessageList mMessages;
     QStringList mFileNames;
     QStringList mSources;
     QString mPreamble;

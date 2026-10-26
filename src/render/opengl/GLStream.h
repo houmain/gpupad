@@ -31,7 +31,7 @@ private:
     bool validateAttribute(const GLAttribute &attribute) const;
 
     ItemId mItemId{};
-    MessagePtrSet mMessages;
+    MessageList mMessages;
     QMap<int, GLAttribute> mAttributes;
     int mMaxElementCount{ -1 };
 };

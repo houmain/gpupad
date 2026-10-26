@@ -109,7 +109,7 @@ bool D3DCall::validateShaderTypes()
 }
 
 void D3DCall::execute(D3DContext &context, Bindings &&bindings,
-    MessagePtrSet &messages, ScriptEngine &scriptEngine)
+    MessageList &messages, ScriptEngine &scriptEngine)
 {
     if (mKind.draw || mKind.compute || mKind.trace) {
         if (!mProgram) {
@@ -200,7 +200,7 @@ int D3DCall::getMaxElementCount(ScriptEngine &scriptEngine)
     return -1;
 }
 
-void D3DCall::executeDraw(D3DContext &context, MessagePtrSet &messages,
+void D3DCall::executeDraw(D3DContext &context, MessageList &messages,
     ScriptEngine &scriptEngine)
 {
     const auto first = scriptEngine.evaluateUInt(mCall.first, mCall.id);
@@ -353,7 +353,7 @@ UINT64 D3DCall::copyToTempBuffer(D3DContext &context, D3DBuffer &buffer,
     return mTempBuffer->GetGPUVirtualAddress();
 }
 
-void D3DCall::executeCompute(D3DContext &context, MessagePtrSet &messages,
+void D3DCall::executeCompute(D3DContext &context, MessageList &messages,
     ScriptEngine &scriptEngine)
 {
     if (!mPipeline || !mPipeline->createCompute(context)
@@ -392,7 +392,7 @@ void D3DCall::executeCompute(D3DContext &context, MessagePtrSet &messages,
     mUsedItems += mPipeline->usedItems();
 }
 
-void D3DCall::executeTraceRays(D3DContext &context, MessagePtrSet &messages,
+void D3DCall::executeTraceRays(D3DContext &context, MessageList &messages,
     ScriptEngine &scriptEngine)
 {
     if (!mPipeline
@@ -407,7 +407,7 @@ void D3DCall::executeTraceRays(D3DContext &context, MessagePtrSet &messages,
     mUsedItems += mPipeline->usedItems();
 }
 
-void D3DCall::executeClearTexture(D3DContext &context, MessagePtrSet &messages)
+void D3DCall::executeClearTexture(D3DContext &context, MessageList &messages)
 {
     if (!mTexture) {
         messages.insert(mCall.id, MessageType::TextureNotAssigned);
@@ -436,7 +436,7 @@ void D3DCall::executeClearTexture(D3DContext &context, MessagePtrSet &messages)
     mUsedItems += mTexture->usedItems();
 }
 
-void D3DCall::executeCopyTexture(D3DContext &context, MessagePtrSet &messages)
+void D3DCall::executeCopyTexture(D3DContext &context, MessageList &messages)
 {
     if (!mTexture || !mFromTexture) {
         messages.insert(mCall.id, MessageType::TextureNotAssigned);
@@ -449,7 +449,7 @@ void D3DCall::executeCopyTexture(D3DContext &context, MessagePtrSet &messages)
     mUsedItems += mFromTexture->usedItems();
 }
 
-void D3DCall::executeClearBuffer(D3DContext &context, MessagePtrSet &messages)
+void D3DCall::executeClearBuffer(D3DContext &context, MessageList &messages)
 {
     if (!mBuffer) {
         messages.insert(mCall.id, MessageType::BufferNotAssigned);
@@ -459,7 +459,7 @@ void D3DCall::executeClearBuffer(D3DContext &context, MessagePtrSet &messages)
     mUsedItems += mBuffer->usedItems();
 }
 
-void D3DCall::executeCopyBuffer(D3DContext &context, MessagePtrSet &messages)
+void D3DCall::executeCopyBuffer(D3DContext &context, MessageList &messages)
 {
     if (!mBuffer || !mFromBuffer) {
         messages.insert(mCall.id, MessageType::BufferNotAssigned);
@@ -470,7 +470,7 @@ void D3DCall::executeCopyBuffer(D3DContext &context, MessagePtrSet &messages)
     mUsedItems += mFromBuffer->usedItems();
 }
 
-void D3DCall::executeSwapTextures(MessagePtrSet &messages)
+void D3DCall::executeSwapTextures(MessageList &messages)
 {
     if (!mTexture || !mFromTexture) {
         messages.insert(mCall.id, MessageType::TextureNotAssigned);
@@ -483,7 +483,7 @@ void D3DCall::executeSwapTextures(MessagePtrSet &messages)
     mUsedItems += mFromTexture->itemId();
 }
 
-void D3DCall::executeSwapBuffers(MessagePtrSet &messages)
+void D3DCall::executeSwapBuffers(MessageList &messages)
 {
     if (!mBuffer || !mFromBuffer) {
         messages.insert(mCall.id, MessageType::BufferNotAssigned);

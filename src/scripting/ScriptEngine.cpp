@@ -133,7 +133,7 @@ std::shared_ptr<void> ScriptEngine::beginSettingFirstError(ItemId itemId)
         [this](void *) { mSettingFirstError = false; });
 }
 
-MessagePtrSet ScriptEngine::resetMessages()
+MessageList ScriptEngine::resetMessages()
 {
     Q_ASSERT(QThread::currentThread() == thread());
     return std::exchange(mMessages, {});
@@ -231,7 +231,7 @@ void ScriptEngine::outputError(const QJSValue &result, ItemId itemId)
 
     const auto fileName = result.property("fileName").toString();
     const auto lineNumber = result.property("lineNumber").toInt();
-    const auto messagePtr = MessagePtrSet::makeMessage(itemId,
+    const auto messagePtr = MessageList::makeMessage(itemId,
         MessageType::ScriptError, message,
         toNativeCanonicalFilePath(QUrl(fileName).toLocalFile()), lineNumber);
     if (mSettingFirstError) {
@@ -302,7 +302,7 @@ QJSEngine &ScriptEngine::jsEngine()
 }
 
 void checkValueCount(int valueCount, int offset, int count, ItemId itemId,
-    MessagePtrSet &messages)
+    MessageList &messages)
 {
     const auto allowSubset = (offset >= 0);
     if (!allowSubset) {
