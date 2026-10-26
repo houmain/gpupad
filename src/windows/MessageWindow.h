@@ -1,17 +1,22 @@
 #pragma once
 
-#include <QTableWidget>
 #include "message/MessageList.h"
+#include <QTableView>
+#include <memory>
 
 class QTimer;
 class QToolButton;
+class MessageTableModel;
+class MessageLocationIndex;
+struct MessageSnapshot;
 
-class MessageWindow final : public QTableWidget
+class MessageWindow final : public QTableView
 {
     Q_OBJECT
 
 public:
     explicit MessageWindow(QWidget *parent = nullptr);
+    ~MessageWindow() override;
     QWidget *titleBar() const { return mTitleBar; }
 
 Q_SIGNALS:
@@ -19,20 +24,25 @@ Q_SIGNALS:
     void messagesAdded();
 
 private:
-    void updateMessages();
-    void handleItemActivated(QTableWidgetItem *item);
-    QIcon getMessageIcon(const Message &message) const;
-    QString getLocationText(const Message &message) const;
-    void removeMessagesExcept(const QSet<MessageId> &messageIds);
-    bool addMessageOnce(const Message &message);
+    void checkForUpdates();
+    void startMessagesUpdate(MessagesSnapshot messages);
+    void applySnapshot(std::shared_ptr<const MessageSnapshot> snapshot,
+        qulonglong messagesRevision, qulonglong locationRevision,
+        bool messagesAdded);
+    void handleItemActivated(const QModelIndex &index);
     void exportMessages();
+    void connectSessionModel();
+    void invalidateLocations();
 
     QWidget *mTitleBar{};
-    QTimer *mUpdateItemsTimer;
-    QIcon mInfoIcon;
-    QIcon mWarningIcon;
-    QIcon mErrorIcon;
-    QList<MessageId> mMessageIds;
+    QTimer *mUpdateItemsTimer{};
+    std::unique_ptr<MessageTableModel> mModel;
     QToolButton *mExportButton{};
     QString mLastExportFileName;
+    qulonglong mAppliedMessagesRevision{};
+    qulonglong mLocationRevision{ 1 };
+    qulonglong mAppliedLocationRevision{};
+    std::shared_ptr<const MessageLocationIndex> mCachedLocations;
+    bool mUpdateInProgress{};
+    bool mSessionModelConnected{};
 };

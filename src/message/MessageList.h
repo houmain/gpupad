@@ -3,14 +3,23 @@
 #include "Message.h"
 #include <QList>
 
+struct MessagesSnapshot : QList<Message>
+{
+    qulonglong revision{ };
+};
+
 class MessageList : QList<MessagePtr>
 {
 public:
     static MessagePtr makeMessage(ItemId itemId, MessageType type, QString text,
         QString fileName, int line);
-    static QList<Message> getAllMessages();
+    static MessagesSnapshot getMessagesSnapshot();
+    static void beginUpdate();
+    static void endUpdate();
 
+    using QList::begin;
     using QList::clear;
+    using QList::end;
     using QList::size;
 
     void insert(MessagePtr message);

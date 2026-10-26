@@ -523,5 +523,4 @@ void RenderSessionBase::finishCommandQueue(CommandQueue &commandQueue) noexcept
         if (key.second < mAudioChunkCount && buffer.finishDownload())
             soundBuffers.emplace_back(key, getSoundBufferData(buffer));
     writeAudioBuffers(std::move(soundBuffers));
-
 }

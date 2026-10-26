@@ -9,7 +9,8 @@ class ConsoleScriptObject : public QObject
 public:
     explicit ConsoleScriptObject(MessageList *messages, QObject *parent = 0);
 
-    [[nodiscard]] std::shared_ptr<void> setFileName(const QString &fileName);
+    [[nodiscard]] std::shared_ptr<void> setLocation(ItemId itemId,
+        const QString &fileName);
     [[nodiscard]] std::shared_ptr<void> setItemId(ItemId itemId);
 
     Q_INVOKABLE void output(QString message, int level);
@@ -19,5 +20,5 @@ private:
 
     MessageList &mMessages;
     QString mFileName;
-    ItemId mItemId{};
+    ItemId mItemId{ };
 };

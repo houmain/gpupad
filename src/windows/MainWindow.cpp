@@ -1240,12 +1240,14 @@ void MainWindow::updateCustomActionsMenu()
 void MainWindow::handleMessageActivated(ItemId itemId, QString fileName,
     int line, int column)
 {
-    if (itemId) {
+    if (itemId)
         mSessionEditor->setCurrentItem(itemId);
-        openSessionDock();
-    } else if (!fileName.isEmpty()) {
+
+    if (!fileName.isEmpty()) {
         Singletons::editorManager().openSourceEditor(fileName, false, line,
             column);
+    } else if (itemId) {
+        openSessionDock();
     }
 }
 

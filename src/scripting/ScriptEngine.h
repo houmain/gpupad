@@ -33,7 +33,8 @@ public:
     void setGlobal(const QString &name, QObject *object);
     void setGlobal(const QString &name, const ScriptValueList &values);
     void validateScript(const QString &script, const QString &fileName);
-    void evaluateScript(const QString &script, const QString &fileName);
+    void evaluateScript(const QString &script, const QString &fileName,
+        ItemId itemId = {});
     ScriptValueList evaluateValues(const QString &valueExpression,
         ItemId itemId);
     ScriptValueList evaluateValues(const QStringList &valueExpressions,

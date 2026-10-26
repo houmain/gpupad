@@ -1,6 +1,7 @@
 
 #include "FileDialog.h"
 #include "message/MessageList.h"
+#include "message/MessageLocationIndex.h"
 #include "Singletons.h"
 #include "SynchronizeLogic.h"
 #include "FileCache.h"
@@ -12,8 +13,11 @@
 
 void outputMessagesToStdout(const SessionModel &sessionModel, bool verbose)
 {
-    for (const auto &message : MessageList::getAllMessages()) {
-        const auto severity = getMessageSeverity(*message);
+    const auto messageLocationIndex = MessageLocationIndex(sessionModel);
+    auto messages = MessageList::getMessagesSnapshot();
+    messageLocationIndex.sortMessages(messages);
+    for (const auto &message : messages) {
+        const auto severity = getMessageSeverity(message);
         if (severity == MessageSeverity::Info && !verbose)
             continue;
         const auto severityText = (severity == MessageSeverity::Error ? "ERROR"
@@ -64,7 +68,7 @@ int runHeadless(QApplication &app)
     const auto evaluateSession = [&]() {
         synchronizeLogic.resetEvaluation();
         synchronizeLogic.finishEvaluation();
-        for (const auto &message : MessageList::getAllMessages())
+        for (const auto &message : MessageList::getMessagesSnapshot())
             if (getMessageSeverity(message) == MessageSeverity::Error)
                 return false;
         for (auto [itemIdent, editor] : std::exchange(editorsToSave, { }))
@@ -160,7 +164,7 @@ int runHeadless(QApplication &app)
                 singletons.defaultScriptEngine().evaluateScript(source,
                     fileName);
                 messages += singletons.defaultScriptEngine().resetMessages();
-                for (const auto &message : MessageList::getAllMessages())
+                for (const auto &message : MessageList::getMessagesSnapshot())
                     if (getMessageSeverity(message) == MessageSeverity::Error)
                         return 1;
             } else {

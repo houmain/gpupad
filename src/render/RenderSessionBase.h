@@ -201,7 +201,6 @@ private:
     SessionModel mSessionModelCopy;
     std::unique_ptr<ScriptSession> mScriptSession;
     MessageList mMessages;
-    MessageList mPrevMessages;
     MessageList mLastResetMessages;
     MessageList mTimeQueryMessages;
     std::vector<ItemId> mTimeQueryCallIds;

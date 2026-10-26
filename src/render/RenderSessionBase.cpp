@@ -77,9 +77,10 @@ void RenderSessionBase::prepare(bool itemsChanged,
     EvaluationType evaluationType)
 {
     Q_ASSERT(onMainThread());
+    MessageList::beginUpdate();
     mItemsChanged = itemsChanged;
     mEvaluationType = evaluationType;
-    mPrevMessages = std::exchange(mMessages, { });
+    mMessages.clear();
 
     if (itemsChanged)
         invalidateCachedProperties();
@@ -372,7 +373,8 @@ void RenderSessionBase::configure()
         if (auto script = castItem<Script>(item)) {
             auto source = QString();
             if (Singletons::fileCache().getSource(script->fileName, &source))
-                scriptEngine.evaluateScript(source, script->fileName);
+                scriptEngine.evaluateScript(
+                    source, script->fileName, script->id);
         } else if (auto binding = castItem<Binding>(item)) {
             // evaluate bindings with script objects, since they are setting globals
             evaluateBindingValues(*binding, scriptEngine);
@@ -411,7 +413,7 @@ void RenderSessionBase::configured()
 void RenderSessionBase::finish()
 {
     Q_ASSERT(onMainThread());
-    mPrevMessages.clear();
+
     if (mEvaluationType == EvaluationType::Reset) {
         mLastResetMessages.clear();
         for (const auto &message : mMessages)
@@ -420,6 +422,8 @@ void RenderSessionBase::finish()
     }
     QMutexLocker lock{ &mUsedItemsCopyMutex };
     mUsedItemsCopy = mUsedItems;
+
+    MessageList::endUpdate();
 }
 
 void RenderSessionBase::release()

@@ -191,14 +191,15 @@ void ScriptEngine::validateScript(const QString &script,
 }
 
 void ScriptEngine::evaluateScript(const QString &script,
-    const QString &fileName)
+    const QString &fileName, ItemId itemId)
 {
     Q_ASSERT(QThread::currentThread() == thread());
     Q_ASSERT(isNativeCanonicalFilePath(fileName));
     const auto guardRunning = registerRunning();
-    const auto guardConsole = mConsoleScriptObject->setFileName(fileName);
+    const auto guardConsole =
+        mConsoleScriptObject->setLocation(itemId, fileName);
     const auto result = mJsEngine->evaluate(script, fileName);
-    outputError(result, 0);
+    outputError(result, itemId);
 }
 
 ScriptValueList ScriptEngine::evaluateValues(const QString &valueExpression,

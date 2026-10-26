@@ -1,5 +1,6 @@
 #include "ConsoleScriptObject.h"
 #include <QRegularExpression>
+#include <utility>
 
 ConsoleScriptObject::ConsoleScriptObject(MessageList *messages,
     QObject *parent)
@@ -17,30 +18,29 @@ std::shared_ptr<void> ConsoleScriptObject::pushState()
         });
 }
 
-std::shared_ptr<void> ConsoleScriptObject::setFileName(const QString &fileName)
+std::shared_ptr<void> ConsoleScriptObject::setLocation(ItemId itemId,
+    const QString &fileName)
 {
     auto state = pushState();
     mFileName = fileName;
-    mItemId = {};
+    mItemId = itemId;
     return state;
 }
 
 std::shared_ptr<void> ConsoleScriptObject::setItemId(ItemId itemId)
 {
-    auto state = pushState();
-    mItemId = itemId;
-    mFileName.clear();
-    return state;
+    return setLocation(itemId, {});
 }
 
 void ConsoleScriptObject::output(QString message, int level)
 {
     static const auto emptyObjectName = QRegularExpression(
         R"("objectName":\s*"",\s*)", QRegularExpression::MultilineOption);
-    message = message.replace(emptyObjectName, "");
+    if (message.contains(QStringLiteral("\"objectName\"")))
+        message.replace(emptyObjectName, "");
 
     const auto messageType = (level == 2 ? MessageType::ScriptError
             : level == 1                 ? MessageType::ScriptWarning
                                          : MessageType::ScriptMessage);
-    mMessages.insert(mItemId, messageType, message, mFileName, 0);
+    mMessages.insert(mItemId, messageType, std::move(message), mFileName, 0);
 }

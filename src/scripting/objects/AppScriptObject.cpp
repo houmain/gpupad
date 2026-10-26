@@ -299,7 +299,7 @@ QJsonObject AppScriptObject::palette() const
 QJsonArray AppScriptObject::messages() const
 {
     auto result = QJsonArray();
-    for (const auto &message : MessageList::getAllMessages()) {
+    for (const auto &message : MessageList::getMessagesSnapshot()) {
         auto object = QJsonObject{ };
         object["severity"] = getMessageSeverityText(message);
         object["text"] = getMessageText(message);

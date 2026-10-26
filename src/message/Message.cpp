@@ -1,9 +1,6 @@
 #include "Message.h"
-#include "MessageList.h"
 #include "FileDialog.h"
 #include <QApplication>
-#include <QDir>
-#include <limits>
 
 QString formatDuration(const std::chrono::duration<double> &duration)
 {

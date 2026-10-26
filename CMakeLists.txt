@@ -41,6 +41,7 @@ set(SOURCES
   src/JSON.cpp
   src/message/Message.cpp
   src/message/MessageList.cpp
+  src/message/MessageLocationIndex.cpp
   src/Settings.cpp
   src/Singletons.cpp
   src/SynchronizeLogic.cpp
