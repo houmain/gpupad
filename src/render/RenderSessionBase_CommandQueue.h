@@ -524,10 +524,4 @@ void RenderSessionBase::finishCommandQueue(CommandQueue &commandQueue) noexcept
             soundBuffers.emplace_back(key, getSoundBufferData(buffer));
     writeAudioBuffers(std::move(soundBuffers));
 
-    mPrevMessages.clear();
-    if (mEvaluationType == EvaluationType::Reset)
-        mLastResetMessages = mMessages;
-
-    QMutexLocker lock{ &mUsedItemsCopyMutex };
-    mUsedItemsCopy = mUsedItems;
 }

@@ -408,6 +408,20 @@ void RenderSessionBase::configured()
         mItemsChanged = true;
 }
 
+void RenderSessionBase::finish()
+{
+    Q_ASSERT(onMainThread());
+    mPrevMessages.clear();
+    if (mEvaluationType == EvaluationType::Reset) {
+        mLastResetMessages.clear();
+        for (const auto &message : mMessages)
+            if (getMessageSeverity(*message) != MessageSeverity::Info)
+                mLastResetMessages += message;
+    }
+    QMutexLocker lock{ &mUsedItemsCopyMutex };
+    mUsedItemsCopy = mUsedItems;
+}
+
 void RenderSessionBase::release()
 {
     if (mScriptSession)
@@ -438,11 +452,6 @@ bool RenderSessionBase::usesKeyboardState() const
 bool RenderSessionBase::usesViewportSize(const QString &fileName) const
 {
     return (mScriptSession && mScriptSession->usesViewportSize(fileName));
-}
-
-bool RenderSessionBase::updatingTimerQueries() const
-{
-    return (mItemsChanged || mEvaluationType != EvaluationType::Steady);
 }
 
 void RenderSessionBase::setNextCommandQueueIndex(size_t index)
@@ -482,7 +491,7 @@ void RenderSessionBase::updateCachedProperties(ItemId itemId, QList<int> values)
 
 std::optional<size_t> RenderSessionBase::addTimeQuery(ItemId callId)
 {
-    if (!updatingTimerQueries() || mTimeQueryCallIds.size() >= maxTimeQueries)
+    if (mTimeQueryCallIds.size() >= maxTimeQueries)
         return std::nullopt;
     mTimeQueryCallIds.push_back(callId);
     return mTimeQueryCallIds.size() - 1;
@@ -569,13 +578,6 @@ void RenderSessionBase::evaluateTargetProperties(const Target &target,
 
 void RenderSessionBase::obtainTimeQueryResults()
 {
-    // TODO: remove when message list performance issue is resolved
-    if (!updatingTimerQueries()) {
-        resetTimeQueries(0);
-        mTimeQueryCallIds.clear();
-        return;
-    }
-
     mTimeQueryMessages.clear();
     auto total = std::chrono::duration<double>::zero();
     for (const auto &duration : resetTimeQueries(timeQueryCount())) {

@@ -99,6 +99,7 @@ public:
     void prepare(bool itemsChanged, EvaluationType evaluationType) override;
     void configure() override;
     void configured() override;
+    void finish() override;
     void release() override;
     QSet<ItemId> usedItems() const override;
     SessionModel &sessionModelCopy() override { return mSessionModelCopy; }
@@ -134,7 +135,6 @@ protected:
 
     void addMessage(MessagePtr message) { mMessages += message; }
     void addUsedItems(const QSet<ItemId> &itemIds) { mUsedItems += itemIds; }
-    bool updatingTimerQueries() const;
     size_t timeQueryCount() const { return mTimeQueryCallIds.size(); }
     void obtainTimeQueryResults();
 
