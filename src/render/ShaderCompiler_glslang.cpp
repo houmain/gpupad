@@ -183,10 +183,11 @@ namespace ShaderCompiler {
                 auto isNumber = false;
                 if (auto sourceIndex = source.toInt(&isNumber);
                     isNumber && sourceIndex < fileNames.size()) {
-                    messages.insert(fileNames[sourceIndex], lineNumber,
-                        messageType, text);
+                    messages.insert(itemId, messageType, text,
+                        fileNames[sourceIndex], lineNumber);
                 } else if (!source.isEmpty()) {
-                    messages.insert(source, lineNumber, messageType, text);
+                    messages.insert(itemId, messageType, text, source,
+                        lineNumber);
                 } else {
                     messages.insert(itemId, messageType, text);
                 }

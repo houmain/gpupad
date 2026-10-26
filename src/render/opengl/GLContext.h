@@ -8,7 +8,7 @@
 #include "GLObject.h"
 #include "FileCache.h"
 #include "FileDialog.h"
-#include "MessageList.h"
+#include "message/MessageList.h"
 #include "Singletons.h"
 #include <cstdint>
 #include <memory>

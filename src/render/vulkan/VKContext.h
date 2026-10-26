@@ -33,7 +33,7 @@ struct ktxVulkanDeviceInfo;
 #include "VKRenderSession.h"
 #include "FileCache.h"
 #include "FileDialog.h"
-#include "MessageList.h"
+#include "message/MessageList.h"
 #include "Singletons.h"
 
 struct VKContext

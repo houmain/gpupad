@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Device.h"
-#include "MessageList.h"
+#include "message/MessageList.h"
 #include "session/ItemEnums.h"
 #include <QList>
 #include <QThread>

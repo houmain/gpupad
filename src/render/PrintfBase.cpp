@@ -682,9 +682,9 @@ MessagePtrSet PrintfBase::formatMessages(ItemId callItemId,
         if (readOutside)
             break;
 
-        messages.insert(formatString.fileName, formatString.line,
-            MessageType::ShaderInfo, formatMessage(formatString, arguments),
-            false);
+        messages.insert(callItemId, MessageType::ShaderInfo,
+            formatMessage(formatString, arguments), formatString.fileName,
+            formatString.line, false);
 
         if (lastMessage)
             break;

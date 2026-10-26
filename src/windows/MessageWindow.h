@@ -1,7 +1,7 @@
 #pragma once
 
-#include "MessageList.h"
 #include <QTableWidget>
+#include "message/MessageList.h"
 
 class QTimer;
 class QToolButton;

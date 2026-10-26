@@ -1,7 +1,7 @@
 #pragma once
 
 #include "JSON.h"
-#include "MessageList.h"
+#include "message/MessageList.h"
 #include "Evaluation.h"
 #include "FileDialog.h"
 #include <QJSValue>

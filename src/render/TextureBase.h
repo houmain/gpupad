@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MessageList.h"
+#include "message/MessageList.h"
 #include "TextureData.h"
 #include "session/Item.h"
 #include "render/ShareHandle.h"

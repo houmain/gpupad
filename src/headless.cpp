@@ -1,6 +1,6 @@
 
 #include "FileDialog.h"
-#include "MessageList.h"
+#include "message/MessageList.h"
 #include "Singletons.h"
 #include "SynchronizeLogic.h"
 #include "FileCache.h"

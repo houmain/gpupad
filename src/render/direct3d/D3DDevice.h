@@ -4,7 +4,7 @@
 #  include "render/AdapterIdentity.h"
 #  include "render/Device.h"
 #  include "render/ShaderCompiler_Microsoft.h"
-#  include "MessageList.h"
+#  include "message/MessageList.h"
 #  include "d3dx12.h"
 #  include "d3d12/RenderTargetHelper.hpp"
 #  include <dxgi1_4.h>

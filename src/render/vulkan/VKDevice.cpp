@@ -1,6 +1,6 @@
 #if defined(VULKAN_ENABLED)
 #  include "VKDevice.h"
-#  include "MessageList.h"
+#  include "message/MessageList.h"
 #  include <QCoreApplication>
 #  include <KDGpu/adapter.h>
 #  include <KDGpu/vulkan/vulkan_adapter.h>

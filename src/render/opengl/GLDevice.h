@@ -2,7 +2,7 @@
 #if defined(OPENGL_ENABLED)
 
 #  include "GLContext.h"
-#  include "MessageList.h"
+#  include "message/MessageList.h"
 #  include "render/Device.h"
 #  include <QOffscreenSurface>
 

@@ -75,8 +75,8 @@ namespace {
         if (usedFileNames && !usedFileNames->contains(fileName)) {
             usedFileNames->append(fileName);
         } else if (recursionDepth++ > 3) {
-            messages.insert(fileName, 0, MessageType::RecursiveInclude,
-                fileName);
+            messages.insert(itemId, MessageType::RecursiveInclude, fileName,
+                fileName, 0);
             return {};
         }
         const auto fileNo =
@@ -120,12 +120,13 @@ namespace {
                     source.insert(match.capturedStart(), includableSource);
                     linesInserted += countLines(includableSource) - 1;
                 } else {
-                    messages.insert(fileName, lineNo,
-                        MessageType::IncludableNotFound, include);
+                    messages.insert(itemId, MessageType::IncludableNotFound,
+                        include, fileName, lineNo);
                 }
             } else {
-                messages.insert(fileName, lineNo,
-                    MessageType::InvalidIncludeDirective, fileName);
+                messages.insert(itemId,
+                    MessageType::InvalidIncludeDirective, fileName, fileName,
+                    lineNo);
             }
         }
         return QString("#line %1 %2\n")

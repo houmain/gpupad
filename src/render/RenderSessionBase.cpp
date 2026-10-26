@@ -581,12 +581,12 @@ void RenderSessionBase::obtainTimeQueryResults()
     for (const auto &duration : resetTimeQueries(timeQueryCount())) {
         const auto itemId = mTimeQueryCallIds[mTimeQueryMessages.size()];
         mTimeQueryMessages.insert(itemId, MessageType::CallDuration,
-            formatDuration(duration), false);
+            formatDuration(duration));
         total += duration;
     }
     mTimeQueryCallIds.clear();
 
     if (mTimeQueryMessages.size() > 1)
         mTimeQueryMessages.insert(MessageType::TotalDuration,
-            formatDuration(total), false);
+            formatDuration(total));
 }

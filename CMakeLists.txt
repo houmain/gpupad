@@ -39,7 +39,8 @@ set(SOURCES
   src/FileDialog.cpp
   src/FileCache.cpp
   src/JSON.cpp
-  src/MessageList.cpp
+  src/message/Message.cpp
+  src/message/MessageList.cpp
   src/Settings.cpp
   src/Singletons.cpp
   src/SynchronizeLogic.cpp

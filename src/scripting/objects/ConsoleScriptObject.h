@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MessageList.h"
+#include "message/MessageList.h"
 #include <QObject>
 
 class ConsoleScriptObject : public QObject

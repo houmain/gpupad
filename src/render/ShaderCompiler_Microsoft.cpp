@@ -73,7 +73,8 @@ namespace ShaderCompiler {
                 if (severity.contains("Error", Qt::CaseInsensitive))
                     messageType = MessageType::ShaderError;
 
-                messages.insert(fileName, lineNumber, messageType, text);
+                messages.insert(itemId, messageType, text, fileName,
+                    lineNumber);
             }
         }
 
@@ -112,7 +113,8 @@ namespace ShaderCompiler {
                 if (fileName == "hlsl.hlsl")
                     fileName = fileNames[0];
 
-                messages.insert(fileName, lineNumber, messageType, text);
+                messages.insert(itemId, messageType, text, fileName,
+                    lineNumber);
             }
         }
 

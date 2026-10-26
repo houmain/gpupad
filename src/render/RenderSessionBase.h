@@ -2,7 +2,7 @@
 
 #include "BufferBase.h"
 #include "RenderTask.h"
-#include "MessageList.h"
+#include "message/MessageList.h"
 #include "TextureData.h"
 #include "ShareHandle.h"
 #include "session/SessionModel.h"

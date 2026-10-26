@@ -1,5 +1,5 @@
 #include "Renderer.h"
-#include "MessageList.h"
+#include "message/MessageList.h"
 #include "RenderTask.h"
 #include <QApplication>
 #include <QElapsedTimer>

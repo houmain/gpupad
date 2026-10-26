@@ -1,7 +1,7 @@
 #pragma once
 
 #include "RenderTask.h"
-#include "MessageList.h"
+#include "message/MessageList.h"
 #include "session/Item.h"
 
 class ShaderBase;

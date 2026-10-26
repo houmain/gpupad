@@ -1,6 +1,6 @@
 #include "MessageWindow.h"
 #include "FileDialog.h"
-#include "MessageList.h"
+#include "message/MessageList.h"
 #include "editors/EditorManager.h"
 #include "editors/source/SourceEditor.h"
 #include "Singletons.h"

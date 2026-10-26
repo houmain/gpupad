@@ -2,7 +2,7 @@
 
 #if defined(_WIN32)
 
-#  include "MessageList.h"
+#  include "message/MessageList.h"
 
 namespace {
 #  if !defined(NDEBUG)

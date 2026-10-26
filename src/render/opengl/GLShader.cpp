@@ -37,8 +37,8 @@ namespace {
                 messageType = MessageType::ShaderError;
 
             if (sourceIndex < fileNames.size())
-                messages.insert(fileNames[sourceIndex], lineNumber, messageType,
-                    text);
+                messages.insert(itemId, messageType, text,
+                    fileNames[sourceIndex], lineNumber);
             else
                 messages.insert(itemId, messageType, text);
         }
