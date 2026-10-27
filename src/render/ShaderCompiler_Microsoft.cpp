@@ -212,7 +212,7 @@ namespace ShaderCompiler {
             }
         };
 
-        bool compile_DXC(const Input &input,
+        bool compile_DXC(const Session &session, const Input &input,
             DXCCompiler::ArgumentList &arguments, MessageList &messages,
             ComPtr<ID3DBlob> &binary,
             ComPtr<ID3D12ShaderReflection> *d3dReflection = nullptr)
@@ -224,6 +224,29 @@ namespace ShaderCompiler {
             else if (input.shaderType == Shader::ShaderType::Task
                 || input.shaderType == Shader::ShaderType::Mesh)
                 shaderModel = 5;
+
+            if (shaderCompilerHasSetting(session,
+                    Session::ShaderCompilerSetting::shaderModel)) {
+                const auto setting = getShaderCompilerSetting(session,
+                    Session::ShaderCompilerSetting::shaderModel);
+                const auto requested = setting.toString().trimmed();
+                if (!requested.isEmpty()) {
+                    static const auto pattern =
+                        QRegularExpression("^6\\.([0-9])$");
+                    const auto match = pattern.match(requested);
+                    if (!match.hasMatch()
+                        || match.captured(1).toInt() < shaderModel) {
+                        messages.insert(input.itemId, MessageType::ShaderError,
+                            QStringLiteral(
+                                "Invalid DXC shader model '%1' for this stage "
+                                "(minimum 6.%2)")
+                                .arg(requested)
+                                .arg(shaderModel));
+                        return false;
+                    }
+                    shaderModel = match.captured(1).toInt();
+                }
+            }
             const auto target = getTarget(input.shaderType, 6, shaderModel);
             if (target.isEmpty()) {
                 messages.insert(input.itemId,
@@ -317,7 +340,7 @@ namespace ShaderCompiler {
 #if defined(DXC_ENABLED)
         if (session.shaderCompiler == Session::ShaderCompiler::DXC) {
             auto arguments = DXCCompiler::ArgumentList{ };
-            return compile_DXC(input, arguments, messages, binary,
+            return compile_DXC(session, input, arguments, messages, binary,
                 &d3dReflection);
         }
 #endif // DXC_ENABLED
@@ -373,7 +396,7 @@ namespace ShaderCompiler {
         }
 
         auto binary = ComPtr<ID3DBlob>();
-        if (!compile_DXC(compileInput, arguments, messages, binary)) {
+        if (!compile_DXC(session, compileInput, arguments, messages, binary)) {
             return { };
         }
 

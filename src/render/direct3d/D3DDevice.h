@@ -25,6 +25,8 @@ public:
     RenderTargetHelper &renderTargetHelper();
 
 private:
+    void reportCapabilities();
+
     AdapterIdentity mAdapterIdentity;
     ComPtr<IDXGIFactory4> mDxgiFactory;
     IDXGIAdapter *mAdapter{};
