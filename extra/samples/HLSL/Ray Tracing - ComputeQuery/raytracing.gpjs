@@ -1,0 +1,204 @@
+{
+  "type": "Session",
+  "id": 1,
+  "name": "Ray Tracing - ComputeQuery",
+  "renderer": "Direct3D",
+  "shaderLanguage": "HLSL",
+  "shaderCompiler": "DXC",
+  "shaderCompilerSettings": {
+    "shaderModel": "6.5"
+  },
+  "items": [
+    {
+      "type": "Texture",
+      "id": 2,
+      "name": "OutputImage",
+      "target": "Target2D",
+      "format": "RGBA8_UNorm",
+      "width": "1280",
+      "height": "720"
+    },
+    {
+      "type": "Buffer",
+      "id": 10,
+      "name": "Vertices",
+      "items": [
+        {
+          "type": "Block",
+          "id": 11,
+          "name": "Vertex",
+          "rowCount": "0",
+          "items": [
+            {
+              "type": "Field",
+              "name": "Position",
+              "dataType": "Float",
+              "count": 3
+            },
+            {
+              "type": "Field",
+              "name": "Normal",
+              "dataType": "Float",
+              "count": 3
+            },
+            {
+              "type": "Field",
+              "name": "TexCoord",
+              "dataType": "Float",
+              "count": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Buffer",
+      "id": 20,
+      "name": "Indices",
+      "items": [
+        {
+          "type": "Block",
+          "id": 21,
+          "name": "Triangle",
+          "rowCount": "0",
+          "items": [
+            {
+              "type": "Field",
+              "name": "Indices",
+              "dataType": "Uint32",
+              "count": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Script",
+      "id": 40,
+      "fileName": "generateScene.js",
+      "executeOn": "ResetEvaluation"
+    },
+    {
+      "type": "Script",
+      "id": 41,
+      "fileName": "camera.js",
+      "executeOn": "EveryEvaluation"
+    },
+    {
+      "type": "AccelerationStructure",
+      "id": 100,
+      "name": "Scene",
+      "items": [
+        {
+          "type": "Instance",
+          "id": 101,
+          "name": "Owner",
+          "transform": "transforms[0]",
+          "items": [
+            {
+              "type": "Geometry",
+              "id": 102,
+              "name": "Mesh",
+              "geometryType": "Triangles",
+              "vertexBufferBlockId": 11,
+              "indexBufferBlockId": 21
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Group",
+      "id": 200,
+      "name": "Bindings",
+      "inlineScope": true,
+      "items": [
+        {
+          "type": "Binding",
+          "id": 201,
+          "name": "Camera.ModelViewInverse",
+          "bindingType": "Uniform",
+          "values": [
+            "viewInverse"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 202,
+          "name": "Camera.ProjectionInverse",
+          "bindingType": "Uniform",
+          "values": [
+            "projectionInverse"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 203,
+          "name": "OutputImage",
+          "bindingType": "Image",
+          "textureId": 2,
+          "imageFormat": "Internal",
+          "layer": -1
+        },
+        {
+          "type": "Binding",
+          "id": 204,
+          "name": "Vertices",
+          "bindingType": "BufferBlock",
+          "blockId": 11
+        },
+        {
+          "type": "Binding",
+          "id": 205,
+          "name": "Indices",
+          "bindingType": "BufferBlock",
+          "blockId": 21
+        }
+      ]
+    },
+    {
+      "type": "Program",
+      "id": 300,
+      "name": "Program",
+      "items": [
+        {
+          "type": "Shader",
+          "id": 301,
+          "fileName": "Camera.hlsl",
+          "shaderType": "Includable"
+        },
+        {
+          "type": "Shader",
+          "id": 302,
+          "fileName": "Vertex.hlsl",
+          "shaderType": "Includable"
+        },
+        {
+          "type": "Shader",
+          "id": 303,
+          "fileName": "Shading.hlsl",
+          "shaderType": "Includable"
+        },
+        {
+          "type": "Shader",
+          "id": 304,
+          "fileName": "Compute.hlsl",
+          "shaderType": "Compute",
+          "entryPoint": "main"
+        }
+      ]
+    },
+    {
+      "type": "Call",
+      "id": 500,
+      "name": "Compute Rays",
+      "callType": "Compute",
+      "programId": 300,
+      "accelerationStructureId": 100,
+      "workGroupsX": "160",
+      "workGroupsY": "90",
+      "workGroupsZ": "1",
+      "executeOn": "EveryEvaluation"
+    }
+  ]
+}
