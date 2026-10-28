@@ -270,11 +270,19 @@ struct Script : FileItem
 
 struct AccelerationStructure : Item
 {
+    bool
+        allowTlasUpdate{ }; // direct3D opt-in; omission preserves TLAS rebuilds
+    bool allowBlasUpdate{ }; // keep primitive activity unchanged
 };
 
 struct Instance : Item
 {
     QString transform;
+    // zero owns geometry; otherwise share a sibling owner's BLAS in Direct3D
+    ItemId sourceInstanceId{ };
+    QString customIndex; // empty retains the ordinal instance ID
+    QString mask{ "255" };
+    QString hitGroupOffset{ "0" };
 };
 
 struct Geometry : Item

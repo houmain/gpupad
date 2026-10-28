@@ -42,6 +42,7 @@ public:
         D3D12_CPU_DESCRIPTOR_HANDLE descriptor, DXGI_FORMAT format,
         uint32_t texelSize);
     D3D12_GPU_VIRTUAL_ADDRESS getDeviceAddress();
+    uint64_t contentRevision() const { return mContentRevision; }
 
 private:
     void createBuffer(D3DContext &context);
@@ -60,6 +61,7 @@ private:
     uint64_t mUploadFrameIndex{};
     size_t mNextUploadBuffer{};
     bool mCheckModification{};
+    uint64_t mContentRevision{ };
 };
 
 #endif // D3D_ENABLED
