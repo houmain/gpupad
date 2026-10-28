@@ -80,6 +80,13 @@ permits compatible updates from an update-enabled build and defaults to false.
 Instance-count or policy changes rebuild; prior dispatch resources remain alive
 until their command context retires.
 
+Geometry buffer writes refresh the affected Direct3D BLAS owners and dependent
+TLAS data. Optional `allowBlasUpdate` permits in-place updates for compatible
+geometry and defaults to false. Update eligibility fixes locations, layout,
+counts, formats, flags and index-buffer revision; incompatible changes rebuild.
+Authors must preserve primitive active/inactive membership. A changed BLAS also
+refreshes the TLAS when its GPU address is unchanged.
+
 ### Items
 A session is built from the following items:
 

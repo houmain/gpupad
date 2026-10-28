@@ -391,9 +391,13 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
         map(mAccelerationStructureProperties->name, SessionModel::Name);
         map(mAccelerationStructureProperties->allowTlasUpdate,
             SessionModel::AccelerationStructureAllowTlasUpdate);
+        map(mAccelerationStructureProperties->allowBlasUpdate,
+            SessionModel::AccelerationStructureAllowBlasUpdate);
         const auto &session = static_cast<const Session &>(
             mModel.getItem(mModel.sessionItemIndex()));
         mAccelerationStructureProperties->allowTlasUpdate->setVisible(
+            session.renderer == Session::Renderer::Direct3D);
+        mAccelerationStructureProperties->allowBlasUpdate->setVisible(
             session.renderer == Session::Renderer::Direct3D);
         break;
     }

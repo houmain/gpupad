@@ -272,6 +272,7 @@ struct AccelerationStructure : Item
 {
     bool
         allowTlasUpdate{ }; // direct3D opt-in; omission preserves TLAS rebuilds
+    bool allowBlasUpdate{ }; // keep primitive activity unchanged
 };
 
 struct Instance : Item

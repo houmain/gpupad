@@ -132,6 +132,8 @@
     ADD(CallAccelerationStructureId, Call, accelerationStructureId)           \
     ADD(AccelerationStructureAllowTlasUpdate, AccelerationStructure,          \
         allowTlasUpdate)                                                      \
+    ADD(AccelerationStructureAllowBlasUpdate, AccelerationStructure,          \
+        allowBlasUpdate)                                                      \
     ADD(InstanceTransform, Instance, transform)                               \
     ADD(InstanceSourceInstanceId, Instance, sourceInstanceId)                 \
     ADD(InstanceCustomIndex, Instance, customIndex)                           \

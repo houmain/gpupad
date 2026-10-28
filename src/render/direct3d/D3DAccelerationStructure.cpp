@@ -23,6 +23,7 @@ D3DAccelerationStructure::D3DAccelerationStructure(
     const AccelerationStructure &accelStruct)
     : mItemId(accelStruct.id)
     , mAllowTlasUpdate(accelStruct.allowTlasUpdate)
+    , mAllowBlasUpdate(accelStruct.allowBlasUpdate)
 {
     mUsedItems += accelStruct.id;
 
@@ -55,8 +56,9 @@ D3DAccelerationStructure::D3DAccelerationStructure(
 bool D3DAccelerationStructure::operator==(
     const D3DAccelerationStructure &rhs) const
 {
-    return std::tie(mAllowTlasUpdate, mInstances, mBottomLevelInputs)
-        == std::tie(rhs.mAllowTlasUpdate, rhs.mInstances,
+    return std::tie(mAllowTlasUpdate, mAllowBlasUpdate, mInstances,
+               mBottomLevelInputs)
+        == std::tie(rhs.mAllowTlasUpdate, rhs.mAllowBlasUpdate, rhs.mInstances,
             rhs.mBottomLevelInputs);
 }
 
@@ -165,9 +167,11 @@ bool D3DAccelerationStructure::buildBottomLevels(D3DContext &context,
         || FAILED(context.graphicsCommandList.As(&commandList)))
         return false;
 
-    mBottomLevels.clear();
-    mBottomLevels.resize(mInstances.size());
-    mScratchBuffers.clear();
+    if (mBottomLevels.empty()) {
+        mBottomLevels.resize(mInstances.size());
+        mBottomLevelKeys.resize(mInstances.size());
+        mBottomLevelUpdates.resize(mInstances.size());
+    }
 
     for (auto instanceIndex = 0u; instanceIndex < mInstances.size();
         ++instanceIndex) {
@@ -185,6 +189,10 @@ bool D3DAccelerationStructure::buildBottomLevels(D3DContext &context,
         }
 
         auto geometryDescs = std::vector<D3D12_RAYTRACING_GEOMETRY_DESC>();
+        auto inputKey =
+            std::vector<UINT64>{ static_cast<UINT64>(geometries.size()) };
+        auto updateKey =
+            std::vector<UINT64>{ static_cast<UINT64>(geometries.size()) };
         for (const auto &geometry : geometries) {
             mUsedItems += geometry.itemId;
             if (!geometry.vertexBuffer) {
@@ -279,12 +287,65 @@ bool D3DAccelerationStructure::buildBottomLevels(D3DContext &context,
                 };
             }
             geometryDescs.push_back(desc);
+            // key native inputs without padding or CPU data hashes
+            inputKey.insert(inputKey.end(),
+                { static_cast<UINT64>(desc.Type),
+                    static_cast<UINT64>(desc.Flags),
+                    geometry.vertexBuffer->contentRevision() });
+            // allow value writes while retaining the fixed geometry layout
+            updateKey.insert(updateKey.end(),
+                { static_cast<UINT64>(desc.Type),
+                    static_cast<UINT64>(desc.Flags) });
+            if (desc.Type
+                == D3D12_RAYTRACING_GEOMETRY_TYPE_PROCEDURAL_PRIMITIVE_AABBS) {
+                inputKey.insert(inputKey.end(),
+                    { desc.AABBs.AABBCount, desc.AABBs.AABBs.StartAddress,
+                        desc.AABBs.AABBs.StrideInBytes });
+                updateKey.insert(updateKey.end(),
+                    { desc.AABBs.AABBCount, desc.AABBs.AABBs.StartAddress,
+                        desc.AABBs.AABBs.StrideInBytes });
+            } else {
+                const auto &triangles = desc.Triangles;
+                inputKey.insert(inputKey.end(),
+                    { triangles.Transform3x4,
+                        static_cast<UINT64>(triangles.IndexFormat),
+                        static_cast<UINT64>(triangles.VertexFormat),
+                        triangles.IndexCount, triangles.VertexCount,
+                        triangles.IndexBuffer,
+                        triangles.VertexBuffer.StartAddress,
+                        triangles.VertexBuffer.StrideInBytes,
+                        geometry.indexBuffer
+                            ? geometry.indexBuffer->contentRevision()
+                            : 0,
+                        geometry.transformBuffer
+                            ? geometry.transformBuffer->contentRevision()
+                            : 0 });
+                updateKey.insert(updateKey.end(),
+                    { triangles.Transform3x4,
+                        static_cast<UINT64>(triangles.IndexFormat),
+                        static_cast<UINT64>(triangles.VertexFormat),
+                        triangles.IndexCount, triangles.VertexCount,
+                        triangles.IndexBuffer,
+                        triangles.VertexBuffer.StartAddress,
+                        triangles.VertexBuffer.StrideInBytes,
+                        geometry.indexBuffer
+                            ? geometry.indexBuffer->contentRevision()
+                            : 0 });
+            }
         }
 
         if (geometryDescs.empty())
             continue;
 
-        const auto inputs = D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS{
+        if (mBottomLevels[instanceIndex]
+            && mBottomLevelKeys[instanceIndex] == inputKey) {
+            continue;
+        }
+
+        auto &updateState = mBottomLevelUpdates[instanceIndex];
+        const auto update = mAllowBlasUpdate && mBottomLevels[instanceIndex]
+            && updateState.key == updateKey;
+        auto inputs = D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS{
             .Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL,
             .Flags =
                 D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE,
@@ -292,23 +353,47 @@ bool D3DAccelerationStructure::buildBottomLevels(D3DContext &context,
             .DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY,
             .pGeometryDescs = geometryDescs.data(),
         };
+        if (mAllowBlasUpdate)
+            inputs.Flags |=
+                D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
         auto info = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO{ };
-        device->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &info);
-        auto bottomLevel = createBuffer(*device.Get(),
-            info.ResultDataMaxSizeInBytes, D3D12_HEAP_TYPE_DEFAULT,
-            D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
-            D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+        if (update) {
+            inputs.Flags |=
+                D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
+            info.ResultDataMaxSizeInBytes = updateState.resultSize;
+            info.ScratchDataSizeInBytes = updateState.scratchSize;
+        } else {
+            device->GetRaytracingAccelerationStructurePrebuildInfo(&inputs,
+                &info);
+        }
+        const auto sourceAddress = update
+            ? mBottomLevels[instanceIndex]->GetGPUVirtualAddress()
+            : UINT64{ };
+        auto bottomLevel = update
+            ? mBottomLevels[instanceIndex]
+            : createBuffer(*device.Get(), info.ResultDataMaxSizeInBytes,
+                  D3D12_HEAP_TYPE_DEFAULT,
+                  D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
+                  D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
         auto scratch = createBuffer(*device.Get(), info.ScratchDataSizeInBytes,
             D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
             D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
         if (!bottomLevel || !scratch)
             return false;
 
+        if (update) {
+            // order traversal reads before an in-place update
+            const auto barrier =
+                CD3DX12_RESOURCE_BARRIER::UAV(bottomLevel.Get());
+            commandList->ResourceBarrier(1, &barrier);
+        }
+
         const auto buildDesc =
             D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC{
                 .DestAccelerationStructureData =
                     bottomLevel->GetGPUVirtualAddress(),
                 .Inputs = inputs,
+                .SourceAccelerationStructureData = sourceAddress,
                 .ScratchAccelerationStructureData =
                     scratch->GetGPUVirtualAddress(),
             };
@@ -318,18 +403,27 @@ bool D3DAccelerationStructure::buildBottomLevels(D3DContext &context,
         const auto barrier = CD3DX12_RESOURCE_BARRIER::UAV(bottomLevel.Get());
         commandList->ResourceBarrier(1, &barrier);
 
+        if (!update && mBottomLevels[instanceIndex])
+            mReplacedBottomLevels.push_back(
+                std::move(mBottomLevels[instanceIndex]));
         mBottomLevels[instanceIndex] = std::move(bottomLevel);
-        mScratchBuffers.push_back(std::move(scratch));
+        context.stagingBuffers.push_back(std::move(scratch));
+        mBottomLevelKeys[instanceIndex] = std::move(inputKey);
+        if (!update) {
+            updateState.key = std::move(updateKey);
+            updateState.resultSize = info.ResultDataMaxSizeInBytes;
+            updateState.scratchSize = info.UpdateScratchDataSizeInBytes;
+        }
+        mTopLevelDirty = true;
     }
 
-    mBottomLevelsBuilt = true;
     return true;
 }
 
 bool D3DAccelerationStructure::build(D3DContext &context,
     ScriptEngine &scriptEngine)
 {
-    if (!mBottomLevelsBuilt && !buildBottomLevels(context, scriptEngine))
+    if (!buildBottomLevels(context, scriptEngine))
         return false;
 
     auto device = ComPtr<ID3D12Device5>();
@@ -422,7 +516,8 @@ bool D3DAccelerationStructure::build(D3DContext &context,
 
     const auto instanceBufferSize = instanceDescs.size()
         * sizeof(D3D12_RAYTRACING_INSTANCE_DESC);
-    if (mTopLevel && mLastInstanceDescs.size() == instanceDescs.size()
+    if (mTopLevel && !mTopLevelDirty
+        && mLastInstanceDescs.size() == instanceDescs.size()
         && std::memcmp(mLastInstanceDescs.data(), instanceDescs.data(),
                instanceBufferSize)
             == 0) {
@@ -486,6 +581,9 @@ bool D3DAccelerationStructure::build(D3DContext &context,
         context.stagingBuffers.push_back(std::move(mTopLevel));
     if (mInstanceBuffer)
         context.stagingBuffers.push_back(std::move(mInstanceBuffer));
+    for (auto &bottomLevel : mReplacedBottomLevels)
+        context.stagingBuffers.push_back(std::move(bottomLevel));
+    mReplacedBottomLevels.clear();
     context.stagingBuffers.push_back(std::move(scratch));
     mTopLevel = std::move(topLevel);
     mInstanceBuffer = std::move(instanceBuffer);
@@ -494,5 +592,6 @@ bool D3DAccelerationStructure::build(D3DContext &context,
         mTopLevelUpdateScratchSize = info.UpdateScratchDataSizeInBytes;
     }
     mLastInstanceDescs = std::move(instanceDescs);
+    mTopLevelDirty = false;
     return true;
 }

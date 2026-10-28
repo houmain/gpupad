@@ -850,6 +850,8 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
             static_cast<const AccelerationStructure &>(item);
         result &= (column != AccelerationStructureAllowTlasUpdate
             || accelStruct.allowTlasUpdate);
+        result &= (column != AccelerationStructureAllowBlasUpdate
+            || accelStruct.allowBlasUpdate);
         break;
     }
 

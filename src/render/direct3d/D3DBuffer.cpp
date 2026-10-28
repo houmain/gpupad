@@ -53,6 +53,7 @@ void D3DBuffer::copy(D3DContext &context, D3DBuffer &source)
     resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_DEST);
     source.resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_SOURCE);
     context.graphicsCommandList->CopyResource(resource(), source.resource());
+    ++mContentRevision;
 }
 
 bool D3DBuffer::swap(D3DBuffer &other)
@@ -61,6 +62,8 @@ bool D3DBuffer::swap(D3DBuffer &other)
         return false;
     std::swap(mResource, other.mResource);
     std::swap(mCurrentState, other.mCurrentState);
+    ++mContentRevision;
+    ++other.mContentRevision;
     return true;
 }
 
@@ -84,6 +87,7 @@ void D3DBuffer::updateReadWriteBuffer(D3DContext &context)
     createBuffer(context);
     upload(context);
     mDeviceCopyModified = true;
+    ++mContentRevision; // predict a write from a writable binding
 }
 
 void D3DBuffer::reload()
@@ -155,6 +159,7 @@ void D3DBuffer::upload(D3DContext &context)
     resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_DEST);
     context.graphicsCommandList->CopyBufferRegion(mResource.Get(), 0,
         stagingBuffer.Get(), 0, static_cast<UINT64>(mSize));
+    ++mContentRevision;
 
     mSystemCopyModified = mDeviceCopyModified = false;
 }

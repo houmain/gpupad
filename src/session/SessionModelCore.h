@@ -135,6 +135,7 @@ public:
         CallClearStencil,
         CallAccelerationStructureId,
         AccelerationStructureAllowTlasUpdate,
+        AccelerationStructureAllowBlasUpdate,
         InstanceTransform,
         InstanceSourceInstanceId,
         InstanceCustomIndex,
