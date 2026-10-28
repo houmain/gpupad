@@ -57,6 +57,16 @@ It is even possible to drag the items to and from a text editor (they are serial
 The session can be evaluated manually *[F6]*, automatically whenever something relevant changes *[F7]* or steadily *[F8]*, for animations.
 All items which contributed to the last evaluation are highlighted.
 
+The Direct3D *Messages* output reports the device's DXR tier and highest shader
+model, bounded by the build SDK. Failed queries report their HRESULT.
+
+For Direct3D with DXC, *Session / Shader Compiler Settings / Shader Model*
+selects an optional target for DXIL and SPIR-V reflection. *Default (per stage)*
+preserves SM 6.0, 6.3 for ray libraries and 6.5 for mesh/task shaders. Lower
+targets than a stage requires are rejected; compiler and device support are
+required independently. `shaderCompilerSettings.shaderModel`, e.g. `"6.5"`,
+stores the selection; absent or empty preserves the existing defaults.
+
 ### Items
 A session is built from the following items:
 
