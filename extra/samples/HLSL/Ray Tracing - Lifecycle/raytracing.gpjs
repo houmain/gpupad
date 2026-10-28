@@ -1,0 +1,406 @@
+{
+  "type": "Session",
+  "id": 1,
+  "name": "Ray Tracing - Lifecycle",
+  "renderer": "Direct3D",
+  "shaderLanguage": "HLSL",
+  "shaderCompiler": "DXC",
+  "shaderCompilerSettings": {
+    "shaderModel": "6.3"
+  },
+  "items": [
+    {
+      "type": "Texture",
+      "id": 2,
+      "name": "OutputImage",
+      "target": "Target2D",
+      "format": "RGBA8_UNorm",
+      "width": "1280",
+      "height": "720"
+    },
+    {
+      "type": "Buffer",
+      "id": 10,
+      "name": "Vertices",
+      "items": [
+        {
+          "type": "Block",
+          "id": 11,
+          "name": "Vertex",
+          "rowCount": "0",
+          "items": [
+            {
+              "type": "Field",
+              "name": "Position",
+              "dataType": "Float",
+              "count": 3
+            },
+            {
+              "type": "Field",
+              "name": "Normal",
+              "dataType": "Float",
+              "count": 3
+            },
+            {
+              "type": "Field",
+              "name": "TexCoord",
+              "dataType": "Float",
+              "count": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Buffer",
+      "id": 20,
+      "name": "Indices",
+      "items": [
+        {
+          "type": "Block",
+          "id": 21,
+          "name": "Triangle",
+          "rowCount": "0",
+          "items": [
+            {
+              "type": "Field",
+              "name": "Indices",
+              "dataType": "Uint32",
+              "count": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Buffer",
+      "id": 30,
+      "name": "RestVertices",
+      "items": [
+        {
+          "type": "Block",
+          "id": 31,
+          "name": "Vertex",
+          "rowCount": "0",
+          "items": [
+            {
+              "type": "Field",
+              "name": "Position",
+              "dataType": "Float",
+              "count": 3
+            },
+            {
+              "type": "Field",
+              "name": "Normal",
+              "dataType": "Float",
+              "count": 3
+            },
+            {
+              "type": "Field",
+              "name": "TexCoord",
+              "dataType": "Float",
+              "count": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Script",
+      "id": 40,
+      "fileName": "generateScene.js",
+      "executeOn": "ResetEvaluation"
+    },
+    {
+      "type": "Script",
+      "id": 41,
+      "fileName": "camera.js",
+      "executeOn": "EveryEvaluation"
+    },
+    {
+      "type": "AccelerationStructure",
+      "id": 100,
+      "name": "Scene",
+      "items": [
+        {
+          "type": "Instance",
+          "id": 101,
+          "name": "Owner",
+          "customIndex": "0",
+          "transform": "transforms[0]",
+          "items": [
+            {
+              "type": "Geometry",
+              "id": 102,
+              "name": "Mesh",
+              "geometryType": "Triangles",
+              "vertexBufferBlockId": 11,
+              "indexBufferBlockId": 21
+            }
+          ]
+        },
+        {
+          "type": "Instance",
+          "id": 111,
+          "name": "Shared1",
+          "sourceInstanceId": 101,
+          "customIndex": "0",
+          "hitGroupOffset": "1",
+          "transform": "transforms[1]"
+        },
+        {
+          "type": "Instance",
+          "id": 121,
+          "name": "Shared2",
+          "sourceInstanceId": 101,
+          "customIndex": "0",
+          "hitGroupOffset": "2",
+          "transform": "transforms[2]"
+        }
+      ]
+    },
+    {
+      "type": "Group",
+      "id": 200,
+      "name": "Bindings",
+      "inlineScope": true,
+      "items": [
+        {
+          "type": "Binding",
+          "id": 201,
+          "name": "Camera.ModelViewInverse",
+          "bindingType": "Uniform",
+          "values": [
+            "viewInverse"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 202,
+          "name": "Camera.ProjectionInverse",
+          "bindingType": "Uniform",
+          "values": [
+            "projectionInverse"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 203,
+          "name": "OutputImage",
+          "bindingType": "Image",
+          "textureId": 2,
+          "imageFormat": "Internal",
+          "layer": -1
+        },
+        {
+          "type": "Binding",
+          "id": 204,
+          "name": "Vertices",
+          "bindingType": "BufferBlock",
+          "blockId": 11
+        },
+        {
+          "type": "Binding",
+          "id": 205,
+          "name": "Indices",
+          "bindingType": "BufferBlock",
+          "blockId": 21
+        }
+      ]
+    },
+    {
+      "type": "Program",
+      "id": 400,
+      "name": "Deform Program",
+      "items": [
+        {
+          "type": "Shader",
+          "id": 401,
+          "fileName": "Deform.hlsl",
+          "shaderType": "Compute",
+          "entryPoint": "main"
+        }
+      ]
+    },
+    {
+      "type": "Group",
+      "id": 410,
+      "name": "Deform",
+      "inlineScope": false,
+      "items": [
+        {
+          "type": "Binding",
+          "id": 411,
+          "name": "RestVertices",
+          "bindingType": "BufferBlock",
+          "blockId": 31
+        },
+        {
+          "type": "Binding",
+          "id": 412,
+          "name": "Deformation.VertexCount",
+          "bindingType": "Uniform",
+          "values": [
+            "vertexCount"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 413,
+          "name": "Deformation.Time",
+          "bindingType": "Uniform",
+          "values": [
+            "app.time"
+          ]
+        },
+        {
+          "type": "Call",
+          "id": 414,
+          "name": "Deform Mesh",
+          "callType": "Compute",
+          "programId": 400,
+          "checked": false,
+          "workGroupsX": "Math.ceil(vertexCount / 64)",
+          "workGroupsY": "1",
+          "workGroupsZ": "1",
+          "executeOn": "EveryEvaluation"
+        }
+      ]
+    },
+    {
+      "type": "Program",
+      "id": 300,
+      "name": "Program",
+      "items": [
+        {
+          "type": "Shader",
+          "id": 301,
+          "fileName": "Camera.hlsl",
+          "shaderType": "Includable"
+        },
+        {
+          "type": "Shader",
+          "id": 302,
+          "fileName": "Vertex.hlsl",
+          "shaderType": "Includable"
+        },
+        {
+          "type": "Shader",
+          "id": 303,
+          "fileName": "Shading.hlsl",
+          "shaderType": "Includable"
+        },
+        {
+          "type": "Shader",
+          "id": 304,
+          "fileName": "RayPayload.hlsl",
+          "shaderType": "Includable"
+        },
+        {
+          "type": "Shader",
+          "id": 305,
+          "fileName": "RayGeneration.hlsl",
+          "shaderType": "RayGeneration",
+          "entryPoint": "RayGeneration"
+        },
+        {
+          "type": "Shader",
+          "id": 306,
+          "fileName": "RayClosestHit.hlsl",
+          "shaderType": "RayClosestHit",
+          "entryPoint": "RayClosestHit"
+        },
+        {
+          "type": "Shader",
+          "id": 307,
+          "fileName": "RayMiss.hlsl",
+          "shaderType": "RayMiss",
+          "entryPoint": "RayMiss"
+        }
+      ],
+      "rayTracing": {
+        "rayGenerationRecord": {
+          "export": "RayGeneration"
+        },
+        "hitGroups": [
+          {
+            "name": "Color0",
+            "type": "Triangles",
+            "closestHit": "RayClosestHit",
+            "localRoot": "Color"
+          },
+          {
+            "name": "Color1",
+            "type": "Triangles",
+            "closestHit": "RayClosestHit",
+            "localRoot": "Color"
+          },
+          {
+            "name": "Color2",
+            "type": "Triangles",
+            "closestHit": "RayClosestHit",
+            "localRoot": "Color"
+          }
+        ],
+        "missRecords": [
+          {
+            "export": "RayMiss"
+          }
+        ],
+        "hitRecords": [
+          {
+            "export": "Color0",
+            "arguments": {
+              "Color": [
+                0
+              ]
+            }
+          },
+          {
+            "export": "Color1",
+            "arguments": {
+              "Color": [
+                1
+              ]
+            }
+          },
+          {
+            "export": "Color2",
+            "arguments": {
+              "Color": [
+                2
+              ]
+            }
+          }
+        ],
+        "localRoots": [
+          {
+            "name": "Color",
+            "parameters": [
+              {
+                "name": "Color",
+                "type": "Constants",
+                "shaderRegister": 1,
+                "registerSpace": 0,
+                "count": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "Call",
+      "id": 500,
+      "name": "Trace Rays",
+      "checked": false,
+      "callType": "TraceRays",
+      "programId": 300,
+      "accelerationStructureId": 100,
+      "workGroupsX": "1280",
+      "workGroupsY": "720",
+      "workGroupsZ": "1",
+      "executeOn": "EveryEvaluation"
+    }
+  ]
+}
