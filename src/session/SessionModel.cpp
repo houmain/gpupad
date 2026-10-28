@@ -845,6 +845,18 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         break;
     }
 
+    case Item::Type::Instance: {
+        const auto &instance = static_cast<const Instance &>(item);
+        result &=
+            (column != InstanceSourceInstanceId || instance.sourceInstanceId);
+        result &=
+            (column != InstanceCustomIndex || !instance.customIndex.isEmpty());
+        result &= (column != InstanceMask || instance.mask != "255");
+        result &= (column != InstanceHitGroupOffset
+            || instance.hitGroupOffset != "0");
+        break;
+    }
+
     case Item::Type::Geometry: {
         const auto &geometry = static_cast<const Geometry &>(item);
         const auto hasTriangles =

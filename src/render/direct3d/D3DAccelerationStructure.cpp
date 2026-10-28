@@ -1,5 +1,7 @@
 
 #include "D3DAccelerationStructure.h"
+#include <algorithm>
+#include <cmath>
 
 namespace {
     ComPtr<ID3D12Resource> createBuffer(ID3D12Device &device, UINT64 size,
@@ -38,6 +40,12 @@ D3DAccelerationStructure::D3DAccelerationStructure(
             mInstances.push_back({
                 .itemId = item->id,
                 .transform = instance->transform,
+                .sourceInstanceId = instance->sourceInstanceId,
+                .customIndex = instance->customIndex,
+                .mask = instance->mask,
+                .hitGroupOffset = instance->hitGroupOffset,
+            });
+            mBottomLevelInputs.push_back({
                 .geometries = std::move(geometries),
             });
         }
@@ -46,7 +54,8 @@ D3DAccelerationStructure::D3DAccelerationStructure(
 bool D3DAccelerationStructure::operator==(
     const D3DAccelerationStructure &rhs) const
 {
-    return std::tie(mInstances) == std::tie(rhs.mInstances);
+    return std::tie(mInstances, mBottomLevelInputs)
+        == std::tie(rhs.mInstances, rhs.mBottomLevelInputs);
 }
 
 auto D3DAccelerationStructure::getGeometry(int instanceIndex, int geometryIndex)
@@ -54,7 +63,7 @@ auto D3DAccelerationStructure::getGeometry(int instanceIndex, int geometryIndex)
 {
     Q_ASSERT(instanceIndex >= 0
         && instanceIndex < static_cast<int>(mInstances.size()));
-    auto &instance = mInstances[instanceIndex];
+    auto &instance = mBottomLevelInputs[instanceIndex];
     Q_ASSERT(geometryIndex >= 0
         && geometryIndex < static_cast<int>(instance.geometries.size()));
     return instance.geometries[geometryIndex];
@@ -158,6 +167,7 @@ bool D3DAccelerationStructure::build(D3DContext &context,
         return false;
 
     mBottomLevels.clear();
+    mBottomLevels.resize(mInstances.size());
     mScratchBuffers.clear();
     auto instanceDescs = std::vector<D3D12_RAYTRACING_INSTANCE_DESC>();
 
@@ -166,8 +176,18 @@ bool D3DAccelerationStructure::build(D3DContext &context,
         const auto &instance = mInstances[instanceIndex];
         mUsedItems += instance.itemId;
 
+        const auto &geometries = mBottomLevelInputs[instanceIndex].geometries;
+        if (instance.sourceInstanceId) {
+            if (!geometries.empty()) {
+                mMessages.insert(instance.itemId, MessageType::ScriptError,
+                    "A shared instance must not also own geometry");
+                return false;
+            }
+            continue;
+        }
+
         auto geometryDescs = std::vector<D3D12_RAYTRACING_GEOMETRY_DESC>();
-        for (const auto &geometry : instance.geometries) {
+        for (const auto &geometry : geometries) {
             mUsedItems += geometry.itemId;
             if (!geometry.vertexBuffer) {
                 mMessages.insert(geometry.itemId, MessageType::BufferNotSet,
@@ -300,6 +320,61 @@ bool D3DAccelerationStructure::build(D3DContext &context,
         const auto barrier = CD3DX12_RESOURCE_BARRIER::UAV(bottomLevel.Get());
         commandList->ResourceBarrier(1, &barrier);
 
+        mBottomLevels[instanceIndex] = std::move(bottomLevel);
+        mScratchBuffers.push_back(std::move(scratch));
+    }
+
+    for (auto instanceIndex = 0u; instanceIndex < mInstances.size();
+        ++instanceIndex) {
+        const auto &instance = mInstances[instanceIndex];
+        auto ownerIndex = instanceIndex;
+        if (instance.sourceInstanceId) {
+            const auto owner = std::find_if(mInstances.begin(),
+                mInstances.end(), [&](const auto &value) {
+                    return value.itemId == instance.sourceInstanceId;
+                });
+            if (owner == mInstances.end() || owner->sourceInstanceId) {
+                mMessages.insert(instance.itemId, MessageType::ScriptError,
+                    "Geometry source must be a geometry-owning instance in the "
+                    "same acceleration structure (no chains)");
+                return false;
+            }
+            ownerIndex = static_cast<unsigned>(owner - mInstances.begin());
+            mUsedItems += owner->itemId;
+        }
+        const auto &bottomLevel = mBottomLevels[ownerIndex];
+        if (!bottomLevel) {
+            if (!instance.sourceInstanceId)
+                continue; // preserve existing empty-instance behavior
+            mMessages.insert(instance.itemId, MessageType::ScriptError,
+                "Geometry source has no built BLAS");
+            return false;
+        }
+
+        const auto readField = [&](const QString &expression, UINT maximum,
+                                   UINT &out) {
+            const auto value =
+                scriptEngine.evaluateValue(expression, instance.itemId);
+            if (!std::isfinite(value) || value < 0 || value > maximum
+                || std::floor(value) != value) {
+                mMessages.insert(instance.itemId, MessageType::ScriptError,
+                    QStringLiteral(
+                        "DXR instance field must be an integer in [0,%1]")
+                        .arg(maximum));
+                return false;
+            }
+            out = static_cast<UINT>(value);
+            return true;
+        };
+        auto customIndex = static_cast<UINT>(instanceIndex);
+        auto mask = UINT{ };
+        auto hitGroupOffset = UINT{ };
+        if ((!instance.customIndex.isEmpty()
+                && !readField(instance.customIndex, 0xffffff, customIndex))
+            || customIndex > 0xffffff || !readField(instance.mask, 0xff, mask)
+            || !readField(instance.hitGroupOffset, 0xffffff, hitGroupOffset))
+            return false;
+
         auto instanceDesc = D3D12_RAYTRACING_INSTANCE_DESC{ };
         instanceDesc.Transform[0][0] = 1.0f;
         instanceDesc.Transform[1][1] = 1.0f;
@@ -307,23 +382,24 @@ bool D3DAccelerationStructure::build(D3DContext &context,
         if (!instance.transform.isEmpty()) {
             auto transform = scriptEngine.evaluateValues(instance.transform,
                 instance.itemId);
-            if (transform.size() != 12 && transform.size() != 16)
+            if (transform.size() != 12 && transform.size() != 16) {
                 mMessages.insert(instance.itemId,
                     MessageType::UniformComponentMismatch,
                     QStringLiteral("(%1/12 or 16)").arg(transform.size()));
+                return false;
+            }
             transform.resize(12);
             for (auto i = 0; i < transform.size(); ++i)
                 instanceDesc.Transform[i / 4][i % 4] = transform[i];
         }
-        instanceDesc.InstanceID = instanceIndex;
-        instanceDesc.InstanceMask = 0xFF;
+        instanceDesc.InstanceID = customIndex;
+        instanceDesc.InstanceMask = mask;
+        instanceDesc.InstanceContributionToHitGroupIndex = hitGroupOffset;
         instanceDesc.Flags =
             D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE;
         instanceDesc.AccelerationStructure =
             bottomLevel->GetGPUVirtualAddress();
         instanceDescs.push_back(instanceDesc);
-        mBottomLevels.push_back(std::move(bottomLevel));
-        mScratchBuffers.push_back(std::move(scratch));
     }
 
     if (instanceDescs.empty())
