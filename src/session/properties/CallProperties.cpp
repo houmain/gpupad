@@ -196,7 +196,7 @@ void CallProperties::updateWidgets()
             || type == Call::CallType::SwapBuffers);
 
     setFormVisibility(mUi->formLayout, mUi->labelAccelerationStructure,
-        mUi->accelerationStructure, type == Call::CallType::TraceRays);
+        mUi->accelerationStructure, kind.compute || kind.trace);
 
     setFormVisibility(mUi->formLayout, mUi->labelFromBuffer, mUi->fromBuffer,
         type == Call::CallType::CopyBuffer

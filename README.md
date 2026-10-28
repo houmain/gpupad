@@ -67,6 +67,10 @@ targets than a stage requires are rejected; compiler and device support are
 required independently. `shaderCompilerSettings.shaderModel`, e.g. `"6.5"`,
 stores the selection; absent or empty preserves the existing defaults.
 
+Compute calls can select an acceleration structure for HLSL inline ray queries
+with Direct3D and DXC. The structure is bound through the existing resource
+binding path; select shader model 6.5 or later when using `RayQuery`.
+
 ### Items
 A session is built from the following items:
 

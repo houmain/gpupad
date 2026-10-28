@@ -356,7 +356,7 @@ UINT64 D3DCall::copyToTempBuffer(D3DContext &context, D3DBuffer &buffer,
 void D3DCall::executeCompute(D3DContext &context, MessageList &messages,
     ScriptEngine &scriptEngine)
 {
-    if (!mPipeline || !mPipeline->createCompute(context)
+    if (!mPipeline || !mPipeline->createCompute(context, mAccelerationStructure)
         || !mPipeline->bindCompute(context, scriptEngine))
         return;
 
