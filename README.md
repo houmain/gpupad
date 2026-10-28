@@ -57,6 +57,39 @@ It is even possible to drag the items to and from a text editor (they are serial
 The session can be evaluated manually *[F6]*, automatically whenever something relevant changes *[F7]* or steadily *[F8]*, for animations.
 All items which contributed to the last evaluation are highlighted.
 
+The Direct3D *Messages* output reports the device's DXR tier and highest shader
+model, bounded by the build SDK. Failed queries report their HRESULT.
+
+For Direct3D with DXC, *Session / Shader Compiler Settings / Shader Model*
+selects an optional target for DXIL and SPIR-V reflection. *Default (per stage)*
+preserves SM 6.0, 6.3 for ray libraries and 6.5 for mesh/task shaders. Lower
+targets than a stage requires are rejected; compiler and device support are
+required independently. `shaderCompilerSettings.shaderModel`, e.g. `"6.5"`,
+stores the selection; absent or empty preserves the existing defaults.
+
+Direct3D acceleration-structure instances can reference a geometry-owning
+instance in the same structure through `sourceInstanceId`. A reference owns no
+geometry and cannot reference another reference. `customIndex` selects the
+24-bit instance ID (empty uses its ordinal), `mask` defaults to 255, and
+`hitGroupOffset` defaults to zero. Transforms remain per instance.
+
+For Direct3D ray-tracing programs, the optional `rayTracing` object configures
+exports and shader records through *DXR Records (JSON)*:
+
+- `rayGenerationRecord.export` selects one ray-generation entry.
+- `hitGroups` entries specify `name`, `type` (`Triangles` or `Procedural`) and
+  optional `closestHit`, `anyHit`, `intersection` and `localRoot` names.
+- Ordered `missRecords` and `hitRecords` entries select an `export`; hit records
+  select hit-group names and can provide named `arguments` arrays of DWORDs.
+- `localRoots` entries specify `name` and ordered `parameters`. A parameter has
+  `name`, `type` (`Constants`), `shaderRegister`, `registerSpace` and `count`.
+  Local roots apply to hit groups; ray-generation and miss arguments are unsupported.
+
+Omitting the object retains the existing pipeline. Invalid explicit configurations
+report an error. Record arguments follow parameter order; local constants and
+global bindings must not overlap. Instance hit-group contributions select records,
+not byte offsets.
+
 ### Items
 A session is built from the following items:
 

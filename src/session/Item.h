@@ -106,6 +106,7 @@ struct Texture : FileItem
 
 struct Program : Item
 {
+    QVariantMap rayTracing; // optional DXR export and record configuration
 };
 
 struct Shader : FileItem
@@ -275,6 +276,11 @@ struct AccelerationStructure : Item
 struct Instance : Item
 {
     QString transform;
+    // zero owns geometry; otherwise share a sibling owner's BLAS in Direct3D
+    ItemId sourceInstanceId{ };
+    QString customIndex; // empty retains the ordinal instance ID
+    QString mask{ "255" };
+    QString hitGroupOffset{ "0" };
 };
 
 struct Geometry : Item

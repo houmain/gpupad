@@ -44,6 +44,29 @@
      <item row="0" column="1">
       <widget class="QLineEdit" name="name"/>
      </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="labelRayTracing">
+       <property name="text">
+        <string>DXR Records (JSON)</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QPlainTextEdit" name="rayTracing">
+       <property name="minimumSize">
+        <size>
+         <width>220</width>
+         <height>140</height>
+        </size>
+       </property>
+       <property name="placeholderText">
+        <string>empty = legacy pipeline</string>
+       </property>
+       <property name="toolTip">
+        <string>Optional Direct3D DXR export/group/record object. Only valid JSON objects are applied; invalid edits keep the previous configuration.</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
   </layout>

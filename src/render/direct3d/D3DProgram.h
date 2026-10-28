@@ -12,6 +12,7 @@ public:
     bool link(D3DContext &context);
     ItemId itemId() const { return mItemId; }
     const Session &session() const { return mSession; }
+    const QVariantMap &rayTracing() const { return mRayTracing; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
     const std::vector<D3DShader> &shaders() const { return mShaders; }
     const D3DShader *getShader(Shader::ShaderType type) const;
@@ -23,6 +24,7 @@ public:
 private:
     ItemId mItemId{};
     Session mSession{};
+    QVariantMap mRayTracing;
     QSet<ItemId> mUsedItems;
     MessageList mLinkMessages;
     std::vector<D3DShader> mShaders;
