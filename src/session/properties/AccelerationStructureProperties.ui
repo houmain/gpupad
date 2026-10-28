@@ -44,6 +44,16 @@
      <item row="0" column="1">
       <widget class="QLineEdit" name="name"/>
      </item>
+     <item row="1" column="1">
+      <widget class="QCheckBox" name="allowTlasUpdate">
+       <property name="text">
+        <string>Allow TLAS Update</string>
+       </property>
+       <property name="toolTip">
+        <string>Direct3D: allow compatible instance changes to update the TLAS. Disabled uses rebuilds.</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
   </layout>

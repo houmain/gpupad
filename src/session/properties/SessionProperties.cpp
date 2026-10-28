@@ -122,6 +122,7 @@ QVariant ShaderCompilerSettingsModel::getColumnDefaultValue(int column) const
     case autoSampledTextures:
     case vulkanRulesRelaxed:  return true;
     case spirvVersion:        return {};
+    case shaderModel:         return QString{ };
     case COUNT:               break;
     }
     return {};
@@ -160,6 +161,8 @@ SessionProperties::SessionProperties(PropertiesEditor *propertiesEditor)
 
     mShaderCompilerSettingsMapper->addMapping(mUi->spirvVersion,
         Session::ShaderCompilerSetting::spirvVersion);
+    mShaderCompilerSettingsMapper->addMapping(mUi->shaderModel,
+        Session::ShaderCompilerSetting::shaderModel);
     mShaderCompilerSettingsMapper->addMapping(mUi->autoMapBindings,
         Session::ShaderCompilerSetting::autoMapBindings);
     mShaderCompilerSettingsMapper->addMapping(mUi->autoMapLocations,
@@ -172,6 +175,12 @@ SessionProperties::SessionProperties(PropertiesEditor *propertiesEditor)
     for (auto i = 0; i <= 6; ++i) {
         auto version = QString("1.%1").arg(i);
         mUi->spirvVersion->addItem(version, version);
+    }
+
+    mUi->shaderModel->addItem(tr("Default (per stage)"), QString{ });
+    for (auto i = 0; i <= 9; ++i) {
+        const auto model = QStringLiteral("6.%1").arg(i);
+        mUi->shaderModel->addItem(model, model);
     }
 
     connect(mUi->renderer, &DataComboBox::currentDataChanged, this,
@@ -349,8 +358,10 @@ void SessionProperties::updateWidgets()
         mUi->shaderCompiler->currentData().toInt());
 
     const auto hasOpenGLRenderer = (renderer == Session::Renderer::OpenGL);
-    const auto hasShaderCompiler =
-        (shaderCompiler == Session::ShaderCompiler::glslang);
+    const auto hasShaderCompilerSettings =
+        (shaderCompiler == Session::ShaderCompiler::glslang
+            || (shaderCompiler == Session::ShaderCompiler::DXC
+                && renderer == Session::Renderer::Direct3D));
 
     setFormVisibility(mUi->formLayout, mUi->labelApiVersion, mUi->apiVersion,
         (renderer == Session::Renderer::Vulkan));
@@ -361,7 +372,7 @@ void SessionProperties::updateWidgets()
         mUi->shaderCompiler, (language != Session::ShaderLanguage::Slang));
 
     mUi->rendererOptions->setVisible(!hasOpenGLRenderer);
-    mUi->shaderCompilerSettings->setVisible(hasShaderCompiler);
+    mUi->shaderCompilerSettings->setVisible(hasShaderCompilerSettings);
 
     using SCS = Session::ShaderCompilerSetting;
     const auto hasSetting = [&](SCS setting) {
@@ -369,6 +380,8 @@ void SessionProperties::updateWidgets()
     };
     setFormVisibility(mUi->shaderCompilerSettingsLayout, mUi->labelSprivVersion,
         mUi->spirvVersion, hasSetting(SCS::spirvVersion));
+    setFormVisibility(mUi->shaderCompilerSettingsLayout, mUi->labelShaderModel,
+        mUi->shaderModel, hasSetting(SCS::shaderModel));
     mUi->autoMapBindings->setVisible(hasSetting(SCS::autoMapBindings));
     mUi->autoMapLocations->setVisible(hasSetting(SCS::autoMapLocations));
     mUi->autoSampledTextures->setVisible(hasSetting(SCS::autoSampledTextures));

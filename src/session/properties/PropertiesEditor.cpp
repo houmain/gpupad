@@ -171,6 +171,18 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
         connect(comboBox, &ReferenceComboBox::listRequired,
             [this]() { return getItemIds(Item::Type::Block, true); });
 
+    connect(mInstanceProperties->sourceInstance,
+        &ReferenceComboBox::listRequired, [this]() {
+            auto result = QVariantList{ 0 };
+            if (const auto instance =
+                    castItem<Instance>(&mModel.getItem(currentModelIndex())))
+                for (const auto item : instance->parent->items)
+                    if (const auto source = castItem<Instance>(item); source
+                        && source != instance && !source->sourceInstanceId)
+                        result.append(source->id);
+            return result;
+        });
+
     for (auto comboBox : { mShaderProperties->file, mBufferProperties->file,
              mScriptProperties->file })
         connect(comboBox, &ReferenceComboBox::textRequired, [](auto data) {
@@ -180,7 +192,8 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
     for (auto comboBox :
         { mAttributeProperties->field, mGeometryProperties->vertexBufferBlock,
             mGeometryProperties->indexBufferBlock,
-            mGeometryProperties->transformBufferBlock })
+            mGeometryProperties->transformBufferBlock,
+            mInstanceProperties->sourceInstance })
         connect(comboBox, &ReferenceComboBox::textRequired,
             [this](QVariant data) { return getItemName(data.toInt()); });
 
@@ -374,14 +387,41 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
         map(mScriptProperties->executeOn, SessionModel::ScriptExecuteOn);
         break;
 
-    case Item::Type::AccelerationStructure:
+    case Item::Type::AccelerationStructure: {
         map(mAccelerationStructureProperties->name, SessionModel::Name);
+        map(mAccelerationStructureProperties->allowTlasUpdate,
+            SessionModel::AccelerationStructureAllowTlasUpdate);
+        const auto &session = static_cast<const Session &>(
+            mModel.getItem(mModel.sessionItemIndex()));
+        mAccelerationStructureProperties->allowTlasUpdate->setVisible(
+            session.renderer == Session::Renderer::Direct3D);
         break;
+    }
 
-    case Item::Type::Instance:
+    case Item::Type::Instance: {
         map(mInstanceProperties->name, SessionModel::Name);
         map(mInstanceProperties->transform, SessionModel::InstanceTransform);
+        map(mInstanceProperties->sourceInstance,
+            SessionModel::InstanceSourceInstanceId);
+        map(mInstanceProperties->customIndex,
+            SessionModel::InstanceCustomIndex);
+        map(mInstanceProperties->mask, SessionModel::InstanceMask);
+        map(mInstanceProperties->hitGroupOffset,
+            SessionModel::InstanceHitGroupOffset);
+        const auto &session = static_cast<const Session &>(
+            mModel.getItem(mModel.sessionItemIndex()));
+        const auto direct3D = session.renderer == Session::Renderer::Direct3D;
+        for (auto widget : std::initializer_list<QWidget *>{
+                 mInstanceProperties->labelSourceInstance,
+                 mInstanceProperties->sourceInstance,
+                 mInstanceProperties->labelCustomIndex,
+                 mInstanceProperties->customIndex,
+                 mInstanceProperties->labelMask, mInstanceProperties->mask,
+                 mInstanceProperties->labelHitGroupOffset,
+                 mInstanceProperties->hitGroupOffset })
+            widget->setVisible(direct3D);
         break;
+    }
 
     case Item::Type::Geometry:
         map(mGeometryProperties->name, SessionModel::Name);
