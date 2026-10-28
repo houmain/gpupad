@@ -73,6 +73,13 @@ geometry and cannot reference another reference. `customIndex` selects the
 24-bit instance ID (empty uses its ordinal), `mask` defaults to 255, and
 `hitGroupOffset` defaults to zero. Transforms remain per instance.
 
+Direct3D acceleration structures reevaluate instance descriptors on each use.
+Unchanged descriptors reuse the TLAS; changed descriptors rebuild it while
+retaining the geometry owners' BLAS allocations. Optional `allowTlasUpdate`
+permits compatible updates from an update-enabled build and defaults to false.
+Instance-count or policy changes rebuild; prior dispatch resources remain alive
+until their command context retires.
+
 ### Items
 A session is built from the following items:
 

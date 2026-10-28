@@ -270,6 +270,8 @@ struct Script : FileItem
 
 struct AccelerationStructure : Item
 {
+    bool
+        allowTlasUpdate{ }; // direct3D opt-in; omission preserves TLAS rebuilds
 };
 
 struct Instance : Item

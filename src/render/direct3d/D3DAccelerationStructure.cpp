@@ -22,6 +22,7 @@ namespace {
 D3DAccelerationStructure::D3DAccelerationStructure(
     const AccelerationStructure &accelStruct)
     : mItemId(accelStruct.id)
+    , mAllowTlasUpdate(accelStruct.allowTlasUpdate)
 {
     mUsedItems += accelStruct.id;
 
@@ -54,8 +55,9 @@ D3DAccelerationStructure::D3DAccelerationStructure(
 bool D3DAccelerationStructure::operator==(
     const D3DAccelerationStructure &rhs) const
 {
-    return std::tie(mInstances, mBottomLevelInputs)
-        == std::tie(rhs.mInstances, rhs.mBottomLevelInputs);
+    return std::tie(mAllowTlasUpdate, mInstances, mBottomLevelInputs)
+        == std::tie(rhs.mAllowTlasUpdate, rhs.mInstances,
+            rhs.mBottomLevelInputs);
 }
 
 auto D3DAccelerationStructure::getGeometry(int instanceIndex, int geometryIndex)
@@ -154,12 +156,9 @@ void D3DAccelerationStructure::setTransformBuffer(int instanceIndex,
     geometry.transformBufferOffset = static_cast<size_t>(offset);
 }
 
-bool D3DAccelerationStructure::build(D3DContext &context,
+bool D3DAccelerationStructure::buildBottomLevels(D3DContext &context,
     ScriptEngine &scriptEngine)
 {
-    if (mTopLevel)
-        return true;
-
     auto device = ComPtr<ID3D12Device5>();
     auto commandList = ComPtr<ID3D12GraphicsCommandList4>();
     if (FAILED(context.device.QueryInterface(IID_PPV_ARGS(&device)))
@@ -169,7 +168,6 @@ bool D3DAccelerationStructure::build(D3DContext &context,
     mBottomLevels.clear();
     mBottomLevels.resize(mInstances.size());
     mScratchBuffers.clear();
-    auto instanceDescs = std::vector<D3D12_RAYTRACING_INSTANCE_DESC>();
 
     for (auto instanceIndex = 0u; instanceIndex < mInstances.size();
         ++instanceIndex) {
@@ -324,6 +322,23 @@ bool D3DAccelerationStructure::build(D3DContext &context,
         mScratchBuffers.push_back(std::move(scratch));
     }
 
+    mBottomLevelsBuilt = true;
+    return true;
+}
+
+bool D3DAccelerationStructure::build(D3DContext &context,
+    ScriptEngine &scriptEngine)
+{
+    if (!mBottomLevelsBuilt && !buildBottomLevels(context, scriptEngine))
+        return false;
+
+    auto device = ComPtr<ID3D12Device5>();
+    auto commandList = ComPtr<ID3D12GraphicsCommandList4>();
+    if (FAILED(context.device.QueryInterface(IID_PPV_ARGS(&device)))
+        || FAILED(context.graphicsCommandList.As(&commandList)))
+        return false;
+    auto instanceDescs = std::vector<D3D12_RAYTRACING_INSTANCE_DESC>();
+
     for (auto instanceIndex = 0u; instanceIndex < mInstances.size();
         ++instanceIndex) {
         const auto &instance = mInstances[instanceIndex];
@@ -407,45 +422,77 @@ bool D3DAccelerationStructure::build(D3DContext &context,
 
     const auto instanceBufferSize = instanceDescs.size()
         * sizeof(D3D12_RAYTRACING_INSTANCE_DESC);
-    mInstanceBuffer = createBuffer(context.device, instanceBufferSize,
+    if (mTopLevel && mLastInstanceDescs.size() == instanceDescs.size()
+        && std::memcmp(mLastInstanceDescs.data(), instanceDescs.data(),
+               instanceBufferSize)
+            == 0) {
+        return true;
+    }
+
+    // retain old storage for dispatches already recorded in this list
+    auto instanceBuffer = createBuffer(context.device, instanceBufferSize,
         D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
-    if (!mInstanceBuffer)
+    if (!instanceBuffer)
         return false;
     auto mappedData = std::add_pointer_t<void>{ };
-    if (FAILED(mInstanceBuffer->Map(0, nullptr, &mappedData)))
+    if (FAILED(instanceBuffer->Map(0, nullptr, &mappedData)))
         return false;
     std::memcpy(mappedData, instanceDescs.data(), instanceBufferSize);
-    mInstanceBuffer->Unmap(0, nullptr);
+    instanceBuffer->Unmap(0, nullptr);
 
-    const auto inputs = D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS{
+    const auto update = mAllowTlasUpdate && mTopLevel
+        && mLastInstanceDescs.size() == instanceDescs.size();
+    auto inputs = D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS{
         .Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL,
         .Flags =
             D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE,
         .NumDescs = static_cast<UINT>(instanceDescs.size()),
         .DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY,
-        .InstanceDescs = mInstanceBuffer->GetGPUVirtualAddress(),
+        .InstanceDescs = instanceBuffer->GetGPUVirtualAddress(),
     };
+    if (mAllowTlasUpdate)
+        inputs.Flags |=
+            D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
     auto info = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO{ };
-    device->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &info);
-    mTopLevel = createBuffer(*device.Get(), info.ResultDataMaxSizeInBytes,
+    if (update) {
+        inputs.Flags |=
+            D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
+        info.ResultDataMaxSizeInBytes = mTopLevelResultSize;
+        info.ScratchDataSizeInBytes = mTopLevelUpdateScratchSize;
+    } else {
+        device->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &info);
+    }
+    const auto sourceAddress = update ? gpuAddress()
+                                      : D3D12_GPU_VIRTUAL_ADDRESS{ };
+    auto topLevel = createBuffer(*device.Get(), info.ResultDataMaxSizeInBytes,
         D3D12_HEAP_TYPE_DEFAULT,
         D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
         D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
     auto scratch = createBuffer(*device.Get(), info.ScratchDataSizeInBytes,
         D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
         D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-    if (!mTopLevel || !scratch) {
-        mTopLevel.Reset();
+    if (!topLevel || !scratch)
         return false;
-    }
     const auto buildDesc = D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC{
-        .DestAccelerationStructureData = mTopLevel->GetGPUVirtualAddress(),
+        .DestAccelerationStructureData = topLevel->GetGPUVirtualAddress(),
         .Inputs = inputs,
+        .SourceAccelerationStructureData = sourceAddress,
         .ScratchAccelerationStructureData = scratch->GetGPUVirtualAddress(),
     };
     commandList->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
-    const auto barrier = CD3DX12_RESOURCE_BARRIER::UAV(mTopLevel.Get());
+    const auto barrier = CD3DX12_RESOURCE_BARRIER::UAV(topLevel.Get());
     commandList->ResourceBarrier(1, &barrier);
-    mScratchBuffers.push_back(std::move(scratch));
+    if (mTopLevel)
+        context.stagingBuffers.push_back(std::move(mTopLevel));
+    if (mInstanceBuffer)
+        context.stagingBuffers.push_back(std::move(mInstanceBuffer));
+    context.stagingBuffers.push_back(std::move(scratch));
+    mTopLevel = std::move(topLevel);
+    mInstanceBuffer = std::move(instanceBuffer);
+    if (!update) {
+        mTopLevelResultSize = info.ResultDataMaxSizeInBytes;
+        mTopLevelUpdateScratchSize = info.UpdateScratchDataSizeInBytes;
+    }
+    mLastInstanceDescs = std::move(instanceDescs);
     return true;
 }

@@ -67,17 +67,24 @@ private:
     };
 
     D3DGeometry &getGeometry(int instanceIndex, int geometryIndex);
+    bool buildBottomLevels(D3DContext &context, ScriptEngine &scriptEngine);
 
     ItemId mItemId{ };
+    bool mAllowTlasUpdate{ };
     MessageList mMessages;
     QSet<ItemId> mUsedItems;
     std::vector<D3DInstance> mInstances;
     std::vector<D3DBottomLevelInputs> mBottomLevelInputs;
     // referencing instances share the owner's allocation
     std::vector<ComPtr<ID3D12Resource>> mBottomLevels;
+    bool mBottomLevelsBuilt{ };
+    // own BLAS scratch here and retire TLAS scratch with the context
     std::vector<ComPtr<ID3D12Resource>> mScratchBuffers;
     ComPtr<ID3D12Resource> mInstanceBuffer;
     ComPtr<ID3D12Resource> mTopLevel;
+    std::vector<D3D12_RAYTRACING_INSTANCE_DESC> mLastInstanceDescs;
+    UINT64 mTopLevelResultSize{ };
+    UINT64 mTopLevelUpdateScratchSize{ };
 };
 
 #endif // D3D_ENABLED

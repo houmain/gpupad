@@ -845,6 +845,14 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         break;
     }
 
+    case Item::Type::AccelerationStructure: {
+        const auto &accelStruct =
+            static_cast<const AccelerationStructure &>(item);
+        result &= (column != AccelerationStructureAllowTlasUpdate
+            || accelStruct.allowTlasUpdate);
+        break;
+    }
+
     case Item::Type::Instance: {
         const auto &instance = static_cast<const Instance &>(item);
         result &=
