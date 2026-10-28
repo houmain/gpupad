@@ -54,6 +54,78 @@
      <item row="1" column="1">
       <widget class="ExpressionLineEdit" name="transform"/>
      </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="labelSourceInstance">
+       <property name="text">
+
+        <string>Geometry Source</string>
+
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="ReferenceComboBox" name="sourceInstance">
+       <property name="toolTip">
+
+        <string>Direct3D12: share a sibling geometry owner's BLAS; leave unset to use child geometry. No reference chains or own geometry on a shared instance.</string>
+
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="labelCustomIndex">
+       <property name="text">
+
+        <string>Instance ID</string>
+
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="ExpressionLineEdit" name="customIndex">
+       <property name="placeholderText">
+
+        <string>ordinal (24-bit)</string>
+
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="labelMask">
+       <property name="text">
+
+        <string>Instance Mask</string>
+
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="ExpressionLineEdit" name="mask">
+       <property name="toolTip">
+
+        <string>Direct3D12: 8-bit ray inclusion mask; zero excludes this instance.</string>
+
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="labelHitGroupOffset">
+       <property name="text">
+
+        <string>Hit Group Contribution</string>
+
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="ExpressionLineEdit" name="hitGroupOffset">
+       <property name="toolTip">
+
+        <string>Direct3D12: 24-bit SBT record contribution, not a byte offset. Inline queries do not select SBT records.</string>
+
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
   </layout>
@@ -63,6 +135,11 @@
    <class>ExpressionLineEdit</class>
    <extends>QLineEdit</extends>
    <header>widgets//ExpressionLineEdit.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ReferenceComboBox</class>
+   <extends>QComboBox</extends>
+   <header>widgets/ReferenceComboBox.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

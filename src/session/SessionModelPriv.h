@@ -131,6 +131,10 @@
     ADD(CallExecuteOn, Call, executeOn)                                       \
     ADD(CallAccelerationStructureId, Call, accelerationStructureId)           \
     ADD(InstanceTransform, Instance, transform)                               \
+    ADD(InstanceSourceInstanceId, Instance, sourceInstanceId)                 \
+    ADD(InstanceCustomIndex, Instance, customIndex)                           \
+    ADD(InstanceMask, Instance, mask)                                         \
+    ADD(InstanceHitGroupOffset, Instance, hitGroupOffset)                     \
     ADD(GeometryType, Geometry, geometryType)                                 \
     ADD(GeometryVertexBufferBlockId, Geometry, vertexBufferBlockId)           \
     ADD(GeometryIndexBufferBlockId, Geometry, indexBufferBlockId)             \

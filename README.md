@@ -67,6 +67,12 @@ targets than a stage requires are rejected; compiler and device support are
 required independently. `shaderCompilerSettings.shaderModel`, e.g. `"6.5"`,
 stores the selection; absent or empty preserves the existing defaults.
 
+Direct3D acceleration-structure instances can reference a geometry-owning
+instance in the same structure through `sourceInstanceId`. A reference owns no
+geometry and cannot reference another reference. `customIndex` selects the
+24-bit instance ID (empty uses its ordinal), `mask` defaults to 255, and
+`hitGroupOffset` defaults to zero. Transforms remain per instance.
+
 ### Items
 A session is built from the following items:
 
