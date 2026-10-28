@@ -4,6 +4,7 @@
 #include "CallProperties.h"
 #include "SessionProperties.h"
 #include "FileCache.h"
+#include "JSON.h"
 #include "../SessionModel.h"
 #include "Settings.h"
 #include "Singletons.h"
@@ -29,6 +30,7 @@
 #include <QDataWidgetMapper>
 #include <QStackedWidget>
 #include <QTimer>
+#include <QSignalBlocker>
 
 namespace {
     class StackedWidget final : public QStackedWidget
@@ -198,6 +200,26 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
             [this](QVariant data) { return getItemName(data.toInt()); });
 
     auto &settings = Singletons::settings();
+    connect(mProgramProperties->rayTracing, &QPlainTextEdit::textChanged,
+        [this]() {
+            const auto index = currentModelIndex();
+            if (mModel.getItemType(index) != Item::Type::Program)
+                return;
+            const auto text = mProgramProperties->rayTracing->toPlainText();
+            const auto json = text.trimmed().isEmpty()
+                ? JsonValue(JsonObject{ })
+                : parseJson(text);
+            if (!json.is_object()) {
+                mProgramProperties->rayTracing->setToolTip(
+                    "Invalid JSON object; previous configuration retained");
+                return;
+            }
+            mProgramProperties->rayTracing->setToolTip(
+                "Valid DXR configuration object");
+            mModel.setData(
+                mModel.getIndex(index, SessionModel::ProgramRayTracing),
+                variantFromJson(json), Qt::EditRole);
+        });
     connect(&settings, &Settings::fontChanged,
         mShaderProperties->shaderPreamble, &QPlainTextEdit::setFont);
     mShaderProperties->shaderPreamble->setFont(settings.font());
@@ -334,9 +356,22 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
 
     case Item::Type::Texture: mTextureProperties->addMappings(*mMapper); break;
 
-    case Item::Type::Program:
+    case Item::Type::Program: {
         map(mProgramProperties->name, SessionModel::Name);
+        const auto &program =
+            static_cast<const Program &>(mModel.getItem(index));
+        const auto &session = static_cast<const Session &>(
+            mModel.getItem(mModel.sessionItemIndex()));
+        const auto direct3D = session.renderer == Session::Renderer::Direct3D;
+        mProgramProperties->labelRayTracing->setVisible(direct3D);
+        mProgramProperties->rayTracing->setVisible(direct3D);
+        const auto blocker = QSignalBlocker(mProgramProperties->rayTracing);
+        mProgramProperties->rayTracing->setPlainText(
+            program.rayTracing.isEmpty()
+                ? QString{ }
+                : serializeJson(jsonFromVariant(program.rayTracing)));
         break;
+    }
 
     case Item::Type::Shader:
         map(mShaderProperties->file, SessionModel::FileName);

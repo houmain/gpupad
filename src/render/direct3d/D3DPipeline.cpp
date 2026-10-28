@@ -554,6 +554,10 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
             if (bindDesc.Type == D3D_SIT_SAMPLER)
                 continue;
 
+            // local constants come from the selected shader record, not a CBV
+            if (localConstant(shader, bindDesc))
+                continue;
+
             const auto name = QString(bindDesc.Name);
             const auto spirvDescriptorBinding = &binding;
             const auto bindingName =

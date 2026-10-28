@@ -73,6 +73,23 @@ geometry and cannot reference another reference. `customIndex` selects the
 24-bit instance ID (empty uses its ordinal), `mask` defaults to 255, and
 `hitGroupOffset` defaults to zero. Transforms remain per instance.
 
+For Direct3D ray-tracing programs, the optional `rayTracing` object configures
+exports and shader records through *DXR Records (JSON)*:
+
+- `rayGenerationRecord.export` selects one ray-generation entry.
+- `hitGroups` entries specify `name`, `type` (`Triangles` or `Procedural`) and
+  optional `closestHit`, `anyHit`, `intersection` and `localRoot` names.
+- Ordered `missRecords` and `hitRecords` entries select an `export`; hit records
+  select hit-group names and can provide named `arguments` arrays of DWORDs.
+- `localRoots` entries specify `name` and ordered `parameters`. A parameter has
+  `name`, `type` (`Constants`), `shaderRegister`, `registerSpace` and `count`.
+  Local roots apply to hit groups; ray-generation and miss arguments are unsupported.
+
+Omitting the object retains the existing pipeline. Invalid explicit configurations
+report an error. Record arguments follow parameter order; local constants and
+global bindings must not overlap. Instance hit-group contributions select records,
+not byte offsets.
+
 ### Items
 A session is built from the following items:
 

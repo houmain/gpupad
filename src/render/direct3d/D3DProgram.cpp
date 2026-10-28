@@ -44,6 +44,7 @@ namespace {
 D3DProgram::D3DProgram(const Program &program, const Session &session)
     : mItemId(program.id)
     , mSession(session)
+    , mRayTracing(program.rayTracing)
 {
     mUsedItems += program.id;
     mUsedItems += session.id;
@@ -55,15 +56,30 @@ D3DProgram::D3DProgram(const Program &program, const Session &session)
             shaders[shader->shaderType].append(shader);
         }
 
-    for (const auto &[type, list] : shaders)
-        (type == Shader::ShaderType::Includable ? mIncludableShaders : mShaders)
-            .emplace_back(type, list, session);
+    for (const auto &[type, list] : shaders) {
+        if (!mRayTracing.isEmpty() && isRayTracingShaderType(type)) {
+            for (const auto shader : list) {
+                if (shader->entryPoint.isEmpty()) {
+                    mLinkMessages.insert(shader->id, MessageType::ScriptError,
+                        "Explicit DXR configuration requires a named shader "
+                        "entry");
+                    mFailed = true;
+                }
+                mShaders.emplace_back(type, QList<const Shader *>{ shader },
+                    session);
+            }
+        } else {
+            (type == Shader::ShaderType::Includable ? mIncludableShaders
+                                                    : mShaders)
+                .emplace_back(type, list, session);
+        }
+    }
 }
 
 bool D3DProgram::operator==(const D3DProgram &rhs) const
 {
-    return (std::tie(mShaders, mIncludableShaders)
-            == std::tie(rhs.mShaders, rhs.mIncludableShaders)
+    return (std::tie(mShaders, mIncludableShaders, mRayTracing)
+            == std::tie(rhs.mShaders, rhs.mIncludableShaders, rhs.mRayTracing)
         && !shaderSessionSettingsDiffer(mSession, rhs.mSession));
 }
 

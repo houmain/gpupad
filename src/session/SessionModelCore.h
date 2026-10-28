@@ -44,6 +44,7 @@ public:
         TextureSamples,
         TextureFlipVertically,
         ScriptExecuteOn,
+        ProgramRayTracing,
         ShaderType,
         ShaderEntryPoint,
         ShaderPreamble,

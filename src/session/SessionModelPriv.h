@@ -36,6 +36,7 @@
     ADD(TextureSamples, Texture, samples)                                     \
     ADD(TextureFlipVertically, Texture, flipVertically)                       \
     ADD(ScriptExecuteOn, Script, executeOn)                                   \
+    ADD(ProgramRayTracing, Program, rayTracing)                               \
     ADD(ShaderType, Shader, shaderType)                                       \
     ADD(ShaderEntryPoint, Shader, entryPoint)                                 \
     ADD(ShaderPreamble, Shader, preamble)                                     \

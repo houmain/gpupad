@@ -106,6 +106,7 @@ struct Texture : FileItem
 
 struct Program : Item
 {
+    QVariantMap rayTracing; // optional DXR export and record configuration
 };
 
 struct Shader : FileItem

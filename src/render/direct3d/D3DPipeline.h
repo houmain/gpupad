@@ -57,6 +57,19 @@ private:
         std::optional<D3DBuffer> buffer;
     };
 
+    struct LocalConstant
+    {
+        QString name;
+        UINT shaderRegister, registerSpace, count;
+    };
+
+    struct LocalRoot
+    {
+        std::vector<LocalConstant> constants;
+        std::vector<std::wstring> exports;
+        ComPtr<ID3D12RootSignature> signature;
+    };
+
     bool setupGraphicsPipelineState(D3DContext &context,
         Call::PrimitiveType primitiveType, D3DTarget *target,
         D3D12_GRAPHICS_PIPELINE_STATE_DESC *state);
@@ -67,6 +80,10 @@ private:
     bool createInputLayout(std::vector<D3D12_INPUT_ELEMENT_DESC> *inputLayout);
     bool createRootSignature(D3DContext &context);
     bool createRootSignatureRayTracing(D3DContext &context);
+    bool createRayTracingExplicit(D3DContext &context);
+    bool prepareLocalRoots();
+    const LocalConstant *localConstant(const D3DShader &shader,
+        const D3D12_SHADER_INPUT_BIND_DESC &binding) const;
     bool createRootSignatureFromTables(D3DContext &context,
         std::vector<DescriptorTableDesc> descriptorTableDescs,
         std::vector<CD3DX12_STATIC_SAMPLER_DESC> staticSamplers);
@@ -93,6 +110,9 @@ private:
     D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE mHitGroupTable{ };
     ComPtr<ID3D12GraphicsCommandList> mGraphicsCommandList;
     ComPtr<ID3D12RootSignature> mRootSignature;
+    std::map<QString, LocalRoot> mLocalRoots;
+    std::map<std::wstring, const LocalRoot *> mShaderLocalRoots;
+    std::map<std::wstring, const LocalRoot *> mGroupLocalRoots;
     ComPtr<ID3D12DescriptorHeap> mDescriptorHeap;
     std::vector<DescriptorHeapEntry> mDescriptorHeapEntries;
     std::vector<UINT> mDescriptorTableEntries;
