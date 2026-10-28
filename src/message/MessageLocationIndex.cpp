@@ -60,6 +60,13 @@ void MessageLocationIndex::sortMessages(QList<Message> &messages) const
             return std::tie(aKey.hierarchyRank, aKey.fallbackFileName, aKey.id)
                 < std::tie(bKey.hierarchyRank, bKey.fallbackFileName, bKey.id);
         });
+
+    const auto equals = [](const Message &a, const Message &b) {
+        return std::tie(a.type, a.text, a.itemId, a.fileName, a.line)
+            == std::tie(b.type, b.text, b.itemId, b.fileName, b.line);
+    };
+    messages.erase(std::unique(messages.begin(), messages.end(), equals),
+        messages.end());
 }
 
 QString MessageLocationIndex::getFileSortKey(QString fileName)
