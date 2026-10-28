@@ -342,6 +342,9 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
                 case Call::CallType::ComputeIndirect:
                 case Call::CallType::ComputeSound:
                     queueCall.setProgram(addProgramOnce(call->programId));
+                    if (auto accelStruct = addAccelerationStructureOnce(
+                            call->accelerationStructureId))
+                        queueCall.setAccelerationStructure(accelStruct);
                     if (auto block = sessionModel.findItem<Block>(
                             call->indirectBufferBlockId))
                         queueCall.setIndirectBuffer(

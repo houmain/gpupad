@@ -22,7 +22,8 @@ public:
         D3DTarget *target, D3DStream *vertexStream);
     bool createMesh(D3DContext &context, Call::PrimitiveType primitiveType,
         D3DTarget *target);
-    bool createCompute(D3DContext &context);
+    bool createCompute(D3DContext &context,
+        D3DAccelerationStructure *accelerationStructure);
     bool createRayTracing(D3DContext &context,
         D3DAccelerationStructure *accelerationStructure);
     bool bindGraphics(D3DContext &context, ScriptEngine &scriptEngine);

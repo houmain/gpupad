@@ -301,8 +301,10 @@ bool D3DPipeline::createMesh(D3DContext &context,
     return true;
 }
 
-bool D3DPipeline::createCompute(D3DContext &context)
+bool D3DPipeline::createCompute(D3DContext &context,
+    D3DAccelerationStructure *accelerationStructure)
 {
+    mAccelerationStructure = accelerationStructure;
     if (std::exchange(mCreated, true))
         return (mPipelineState && mRootSignature);
 

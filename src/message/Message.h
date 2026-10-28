@@ -79,6 +79,7 @@ enum class MessageType {
     SpirvCrossError,
     ShaderCompilerNotAvailable,
     InvalidCommandlineArguments,
+    DeviceInfo,
 };
 
 struct Message
