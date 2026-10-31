@@ -5,6 +5,7 @@
 #include <QFileInfo>
 #include <QRegularExpression>
 #include <mutex>
+#include <tuple>
 #if defined(DXC_ENABLED)
 #  include <dxcapi.h>
 #endif
@@ -12,6 +13,14 @@
 namespace ShaderCompiler {
 
     namespace {
+        struct Version
+        {
+            int major;
+            int minor;
+
+            auto operator<=>(const Version &rhs) const = default;
+        };
+
         QString getTarget(Shader::ShaderType type)
         {
             switch (type) {
@@ -33,16 +42,54 @@ namespace ShaderCompiler {
             }
         }
 
-        QString getTarget(Shader::ShaderType type, int majorVersion,
-            int minorVersion)
+        QString getTarget(Shader::ShaderType type, const Version &shaderModel)
         {
             const auto typeString = getTarget(type);
             if (typeString.isEmpty())
                 return "";
             return QStringLiteral("%1_%2_%3")
                 .arg(typeString)
-                .arg(majorVersion)
-                .arg(minorVersion);
+                .arg(shaderModel.major)
+                .arg(shaderModel.minor);
+        }
+
+        Version parseVersion(const QString &versionString)
+        {
+            return Version{
+                .major = versionString.section('.', 0, 0).toInt(),
+                .minor = versionString.section('.', 1, 1).toInt(),
+            };
+        }
+
+        Version getShaderModel(const Session &session,
+            const Version &defaultModel)
+        {
+            const auto requested = getShaderCompilerString(session,
+                Session::ShaderCompilerSetting::shaderModel);
+            if (requested.isEmpty())
+                return defaultModel;
+            return parseVersion(requested);
+        }
+
+        void quoteLineDirectiveFileNumbers(QStringList &sources)
+        {
+            static const auto lineDirective =
+                QRegularExpression("(^[\\t ]*#line[\\t ]+\\d+[\\t ]+)(\\d+)",
+                    QRegularExpression::MultilineOption);
+
+            for (auto &source : sources) {
+                auto offset = 0;
+                for (auto match = lineDirective.match(source, offset);
+                    match.hasMatch();
+                    match = lineDirective.match(source, offset)) {
+                    const auto fileNumber = match.captured(2);
+                    const auto start = match.capturedStart(2);
+                    const auto replacement =
+                        QStringLiteral("\"%1\"").arg(fileNumber);
+                    source.replace(start, match.capturedLength(2), replacement);
+                    offset = start + replacement.length();
+                }
+            }
         }
 
         void parseLog_D3DCompiler(const QString &log, MessageList &messages,
@@ -110,7 +157,12 @@ namespace ShaderCompiler {
                 if (severity.contains("Error", Qt::CaseInsensitive))
                     messageType = MessageType::ShaderError;
 
-                if (fileName == "hlsl.hlsl")
+                auto isFileNumber = false;
+                const auto fileNumber = fileName.toInt(&isFileNumber);
+                if (isFileNumber && fileNumber >= 0
+                    && fileNumber < fileNames.size())
+                    fileName = fileNames[fileNumber];
+                else if (fileName == "hlsl.hlsl")
                     fileName = fileNames[0];
 
                 messages.insert(itemId, messageType, text, fileName,
@@ -178,10 +230,16 @@ namespace ShaderCompiler {
                 sourceBuffer.Encoding = DXC_CP_ACP;
 
                 auto compileResult = ComPtr<IDxcResult>();
-                if (FAILED(mCompiler->Compile(&sourceBuffer, arguments.data(),
-                        static_cast<uint32_t>(arguments.size()),
-                        mIncludeHandler.Get(), IID_PPV_ARGS(&compileResult))))
+                const auto result = mCompiler->Compile(&sourceBuffer,
+                    arguments.data(), static_cast<uint32_t>(arguments.size()),
+                    mIncludeHandler.Get(), IID_PPV_ARGS(&compileResult));
+                if (FAILED(result)) {
+                    messages.insert(input.itemId, MessageType::ShaderError,
+                        QStringLiteral("DXC compilation failed (0x%1)")
+                            .arg(static_cast<quint32>(result), 8, 16,
+                                QLatin1Char('0')));
                     return false;
+                }
 
                 auto errors = ComPtr<IDxcBlobUtf8>();
                 compileResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errors),
@@ -212,19 +270,20 @@ namespace ShaderCompiler {
             }
         };
 
-        bool compile_DXC(const Input &input,
+        bool compile_DXC(const Session &session, const Input &input,
             DXCCompiler::ArgumentList &arguments, MessageList &messages,
             ComPtr<ID3DBlob> &binary,
             ComPtr<ID3D12ShaderReflection> *d3dReflection = nullptr)
         {
             const auto rayTracing = isRayTracingShaderType(input.shaderType);
-            auto shaderModel = 0;
-            if (rayTracing)
-                shaderModel = 3;
-            else if (input.shaderType == Shader::ShaderType::Task
-                || input.shaderType == Shader::ShaderType::Mesh)
-                shaderModel = 5;
-            const auto target = getTarget(input.shaderType, 6, shaderModel);
+            const auto shaderModel = getShaderModel(session, { 6, 5 });
+            const auto minimumRayTracingShaderModel = Version{ 6, 3 };
+            if (rayTracing && shaderModel < minimumRayTracingShaderModel) {
+                messages.insert(input.itemId, MessageType::ShaderError,
+                    "Ray tracing requires Shader Model 6.3 or later");
+                return false;
+            }
+            const auto target = getTarget(input.shaderType, shaderModel);
             if (target.isEmpty()) {
                 messages.insert(input.itemId,
                     MessageType::UnsupportedShaderType);
@@ -256,9 +315,9 @@ namespace ShaderCompiler {
             arguments.add(DXC_ARG_DEBUG);
 
             if (rayTracing) {
-                auto compiler = DXCCompiler{};
-                return compiler.compile(
-                    arguments, input, messages, binary, nullptr);
+                auto compiler = DXCCompiler{ };
+                return compiler.compile(arguments, input, messages, binary,
+                    nullptr);
             }
 
             static std::mutex sMutex;
@@ -278,7 +337,8 @@ namespace ShaderCompiler {
             messages.insert(input.itemId, MessageType::UnsupportedShaderType);
             return false;
         }
-        const auto target = getTarget(input.shaderType, 5, 1);
+        const auto shaderModel = getShaderModel(session, { 5, 1 });
+        const auto target = getTarget(input.shaderType, shaderModel);
         if (target.isEmpty()) {
             messages.insert(input.itemId, MessageType::UnsupportedShaderType);
             return { };
@@ -317,7 +377,7 @@ namespace ShaderCompiler {
 #if defined(DXC_ENABLED)
         if (session.shaderCompiler == Session::ShaderCompiler::DXC) {
             auto arguments = DXCCompiler::ArgumentList{ };
-            return compile_DXC(input, arguments, messages, binary,
+            return compile_DXC(session, input, arguments, messages, binary,
                 &d3dReflection);
         }
 #endif // DXC_ENABLED
@@ -337,9 +397,14 @@ namespace ShaderCompiler {
         auto arguments = DXCCompiler::ArgumentList();
         arguments.add(L"-spirv");
 
-        if (session.renderer == Session::Renderer::Vulkan)
-            arguments.add(QStringLiteral("-fspv-target-env=vulkan%1")
-                    .arg(session.apiVersion));
+        auto vulkanApiVersion = Version{ 1, 2 };
+        if (session.renderer == Session::Renderer::Vulkan) {
+            vulkanApiVersion = parseVersion(session.apiVersion);
+            vulkanApiVersion = std::min(vulkanApiVersion, { 1, 3 });
+        }
+        arguments.add(QStringLiteral("-fspv-target-env=vulkan%1.%2")
+                .arg(vulkanApiVersion.major)
+                .arg(vulkanApiVersion.minor));
 
         if (session.renderer == Session::Renderer::Vulkan) {
             // D3D register classes occupy separate namespaces while Vulkan
@@ -359,23 +424,12 @@ namespace ShaderCompiler {
             arguments.add(L"0");
         }
 
-        //arguments.add(L"-ignore-line-directives");
-
         auto compileInput = input;
-        if (isRayTracingShaderType(input.shaderType)) {
-            if (session.renderer != Session::Renderer::Vulkan)
-                arguments.add(L"-fspv-target-env=vulkan1.2");
-            arguments.add(L"-ignore-line-directives");
-            static const auto lineDirective = QRegularExpression(
-                "(^\\s*#line[^\\n]*\\n?)", QRegularExpression::MultilineOption);
-            for (auto &source : compileInput.sources)
-                source.remove(lineDirective);
-        }
+        quoteLineDirectiveFileNumbers(compileInput.sources);
 
         auto binary = ComPtr<ID3DBlob>();
-        if (!compile_DXC(compileInput, arguments, messages, binary)) {
+        if (!compile_DXC(session, compileInput, arguments, messages, binary))
             return { };
-        }
 
         const auto begin =
             reinterpret_cast<const uint32_t *>(binary->GetBufferPointer());

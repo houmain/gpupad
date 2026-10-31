@@ -122,6 +122,7 @@ QVariant ShaderCompilerSettingsModel::getColumnDefaultValue(int column) const
     case autoSampledTextures:
     case vulkanRulesRelaxed:  return true;
     case spirvVersion:        return {};
+    case shaderModel:         return QString{};
     case COUNT:               break;
     }
     return {};
@@ -160,6 +161,8 @@ SessionProperties::SessionProperties(PropertiesEditor *propertiesEditor)
 
     mShaderCompilerSettingsMapper->addMapping(mUi->spirvVersion,
         Session::ShaderCompilerSetting::spirvVersion);
+    mShaderCompilerSettingsMapper->addMapping(mUi->shaderModel,
+        Session::ShaderCompilerSetting::shaderModel);
     mShaderCompilerSettingsMapper->addMapping(mUi->autoMapBindings,
         Session::ShaderCompilerSetting::autoMapBindings);
     mShaderCompilerSettingsMapper->addMapping(mUi->autoMapLocations,
@@ -182,6 +185,8 @@ SessionProperties::SessionProperties(PropertiesEditor *propertiesEditor)
         &SessionProperties::selectAdapter);
     connect(mUi->shaderLanguage, &DataComboBox::currentDataChanged, this,
         &SessionProperties::updateShaderCompiler);
+    connect(mUi->shaderCompiler, &DataComboBox::currentDataChanged, this,
+        &SessionProperties::updateShaderModels);
     connect(mUi->shaderCompiler, &DataComboBox::currentDataChanged, this,
         &SessionProperties::updateWidgets);
 
@@ -278,6 +283,7 @@ void SessionProperties::updateShaderCompiler()
         static_cast<Session::Renderer>(mUi->renderer->currentData().toInt());
     const auto language = static_cast<Session::ShaderLanguage>(
         mUi->shaderLanguage->currentData().toInt());
+    const auto selectedCompiler = mUi->shaderCompiler->currentData();
 
     const auto getShaderCompilers =
         [&]() -> std::vector<std::pair<const char *, Session::ShaderCompiler>> {
@@ -328,6 +334,9 @@ void SessionProperties::updateShaderCompiler()
 
     fillComboBox<Session::ShaderCompiler>(mUi->shaderCompiler,
         getShaderCompilers());
+    if (const auto index = mUi->shaderCompiler->findData(selectedCompiler);
+        index >= 0)
+        mUi->shaderCompiler->setCurrentIndex(index);
 
     mShaderCompilerSettingsModel->setVariantMap(mPropertiesEditor.model()
             .data(mPropertiesEditor.currentModelIndex(),
@@ -335,8 +344,54 @@ void SessionProperties::updateShaderCompiler()
             .toMap());
     mShaderCompilerSettingsMapper->revert();
 
+    updateShaderModels();
     updateAdapters();
     updateWidgets();
+}
+
+void SessionProperties::updateShaderModels()
+{
+    using SC = Session::ShaderCompiler;
+    using SCS = Session::ShaderCompilerSetting;
+
+    const auto compiler = static_cast<SC>(
+        mUi->shaderCompiler->currentData().toInt());
+    const auto modelIndex = mShaderCompilerSettingsModel->index(
+        0, SCS::shaderModel);
+    const auto selectedModel =
+        mShaderCompilerSettingsModel->data(modelIndex, Qt::EditRole).toString();
+
+    const auto signalBlocker = QSignalBlocker(mUi->shaderModel);
+    mUi->shaderModel->clear();
+    auto defaultModel = QString{};
+
+    switch (compiler) {
+    case SC::DXC:
+        defaultModel = QStringLiteral("6.5");
+        for (auto minor = 0; minor <= 9; ++minor) {
+            const auto model = QStringLiteral("6.%1").arg(minor);
+            mUi->shaderModel->addItem(model, model);
+        }
+        break;
+
+    case SC::D3DCompiler:
+        defaultModel = QStringLiteral("5.1");
+        for (const auto &model : { "4.0", "4.1", "5.0", "5.1" })
+            mUi->shaderModel->addItem(model, model);
+        break;
+
+    case SC::Driver:
+    case SC::glslang:
+    case SC::Slang: break;
+    }
+
+    auto comboIndex = mUi->shaderModel->findData(
+        selectedModel.isEmpty() ? defaultModel : selectedModel);
+    if (comboIndex < 0 && mUi->shaderModel->count())
+        comboIndex = mUi->shaderModel->findData(defaultModel);
+    mUi->shaderModel->setCurrentIndex(comboIndex);
+    mShaderCompilerSettingsModel->setData(modelIndex,
+        mUi->shaderModel->currentData(), Qt::EditRole);
 }
 
 void SessionProperties::updateWidgets()
@@ -349,9 +404,6 @@ void SessionProperties::updateWidgets()
         mUi->shaderCompiler->currentData().toInt());
 
     const auto hasOpenGLRenderer = (renderer == Session::Renderer::OpenGL);
-    const auto hasShaderCompiler =
-        (shaderCompiler == Session::ShaderCompiler::glslang);
-
     setFormVisibility(mUi->formLayout, mUi->labelApiVersion, mUi->apiVersion,
         (renderer == Session::Renderer::Vulkan));
     setFormVisibility(mUi->formLayout, mUi->labelAdapter, mUi->adapter, true);
@@ -360,15 +412,26 @@ void SessionProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelShaderCompiler,
         mUi->shaderCompiler, (language != Session::ShaderLanguage::Slang));
 
-    mUi->rendererOptions->setVisible(!hasOpenGLRenderer);
-    mUi->shaderCompilerSettings->setVisible(hasShaderCompiler);
-
     using SCS = Session::ShaderCompilerSetting;
     const auto hasSetting = [&](SCS setting) {
         return shaderCompilerHasSetting(shaderCompiler, renderer, setting);
     };
+    const auto hasShaderCompilerSettings =
+        hasSetting(SCS::spirvVersion) || hasSetting(SCS::shaderModel)
+        || hasSetting(SCS::autoMapBindings)
+        || hasSetting(SCS::autoMapLocations)
+        || hasSetting(SCS::autoSampledTextures)
+        || hasSetting(SCS::vulkanRulesRelaxed);
+
+    mUi->rendererOptions->setVisible(!hasOpenGLRenderer);
+    mUi->shaderCompilerSettings->setVisible(hasShaderCompilerSettings);
+
     setFormVisibility(mUi->shaderCompilerSettingsLayout, mUi->labelSprivVersion,
         mUi->spirvVersion, hasSetting(SCS::spirvVersion));
+    setFormVisibility(mUi->shaderCompilerSettingsLayout, mUi->labelShaderModel,
+        mUi->shaderModel,
+        language == Session::ShaderLanguage::HLSL
+            && hasSetting(SCS::shaderModel));
     mUi->autoMapBindings->setVisible(hasSetting(SCS::autoMapBindings));
     mUi->autoMapLocations->setVisible(hasSetting(SCS::autoMapLocations));
     mUi->autoSampledTextures->setVisible(hasSetting(SCS::autoSampledTextures));

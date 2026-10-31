@@ -230,6 +230,8 @@ bool shaderCompilerHasSetting(Session::ShaderCompiler compiler,
     case SCS::autoMapBindings:     return (compiler == SC::glslang);
     case SCS::autoMapLocations:    return (compiler == SC::glslang);
     case SCS::autoSampledTextures: return (compiler == SC::glslang);
+    case SCS::shaderModel:
+        return (compiler == SC::DXC || compiler == SC::D3DCompiler);
     case SCS::vulkanRulesRelaxed:
         return (compiler == SC::glslang && renderer != R::OpenGL);
     }

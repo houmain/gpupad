@@ -282,6 +282,21 @@
         },
         {
           "type": "Binding",
+          "id": 10243,
+          "name": "_DiffuseTexture_sampler",
+          "bindingType": "Sampler",
+          "textureId": 10225,
+          "minFilter": "LinearMipMapLinear",
+          "magFilter": "Linear",
+          "anisotropic": true,
+          "wrapModeX": "Repeat",
+          "wrapModeY": "Repeat",
+          "wrapModeZ": "Repeat",
+          "borderColor": "#ff000000",
+          "comparisonFunc": "NoComparisonFunc"
+        },
+        {
+          "type": "Binding",
           "id": 10242,
           "name": "Scene",
           "bindingType": "AccelerationStructure"

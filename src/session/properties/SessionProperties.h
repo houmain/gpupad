@@ -66,6 +66,7 @@ private:
     void updateAdapters();
     void selectAdapter(QVariant data);
     void updateShaderCompiler();
+    void updateShaderModels();
     void updateWidgets();
 
     PropertiesEditor &mPropertiesEditor;

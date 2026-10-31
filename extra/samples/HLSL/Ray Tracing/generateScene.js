@@ -4,7 +4,7 @@ const scene = app.getItem("Scene")
 let mesh = app.callAction("GenerateMesh", {
   name: "Mesh",
   type: "Trefoil Knot",
-  group: app.getItem("Scene/Mesh"),
+  group: app.findItem("Scene/Mesh"),
   parent: scene,
   slices: 50,
   stacks: 180,

@@ -505,6 +505,7 @@ namespace ItemEnums2 {
         autoSampledTextures,
         vulkanRulesRelaxed,
         spirvVersion,
+        shaderModel,
         COUNT,
     };
     Q_ENUM_NS(ShaderCompilerSetting)
