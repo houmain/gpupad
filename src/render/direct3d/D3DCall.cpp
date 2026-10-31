@@ -91,11 +91,6 @@ void D3DCall::setTextures(D3DTexture *texture, D3DTexture *fromTexture)
     mFromTexture = fromTexture;
 }
 
-void D3DCall::setAccelerationStructure(D3DAccelerationStructure *accelStruct)
-{
-    mAccelerationStructure = accelStruct;
-}
-
 bool D3DCall::validateShaderTypes()
 {
     if (!mProgram)
@@ -139,12 +134,6 @@ void D3DCall::execute(D3DContext &context, Bindings &&bindings,
 
     if (mKind.indexed && !mIndexBuffer) {
         messages.insert(mCall.id, MessageType::IndexBufferNotAssigned);
-        return;
-    }
-
-    if (mKind.trace && !mAccelerationStructure) {
-        messages.insert(mCall.id,
-            MessageType::AccelerationStructureNotAssigned);
         return;
     }
 
@@ -396,7 +385,7 @@ void D3DCall::executeTraceRays(D3DContext &context, MessageList &messages,
     ScriptEngine &scriptEngine)
 {
     if (!mPipeline
-        || !mPipeline->createRayTracing(context, mAccelerationStructure)
+        || !mPipeline->createRayTracing(context)
         || !mPipeline->bindRayTracing(context, scriptEngine))
         return;
 

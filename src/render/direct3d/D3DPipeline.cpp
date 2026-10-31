@@ -722,26 +722,42 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
             }
 
             case D3D_SIT_RTACCELERATIONSTRUCTURE: {
-                if (!mAccelerationStructure
-                    || !mAccelerationStructure->build(context, scriptEngine)) {
-                    mMessages.insert(mItemId,
-                        MessageType::AccelerationStructureNotAssigned);
-                    canRender = false;
-                    continue;
+                for (auto i = 0u; i < bindDesc.BindCount; ++i) {
+                    const auto elementName = (bindDesc.BindCount > 1
+                            ? QString("%1[%2]").arg(name).arg(i)
+                            : name);
+                    const auto binding = find(
+                        mBindings.accelerationStructures, elementName);
+                    auto accelerationStructure =
+                        (binding ? static_cast<D3DAccelerationStructure *>(
+                                       binding->accelerationStructure)
+                                 : nullptr);
+                    if (!accelerationStructure
+                        || !accelerationStructure->build(
+                            context, scriptEngine)) {
+                        mMessages.insert(mItemId,
+                            MessageType::AccelerationStructureNotAssigned,
+                            elementName);
+                        canRender = false;
+                        descriptor.Offset(1, context.descriptorSize);
+                        continue;
+                    }
+                    mUsedItems += binding->bindingItemId;
+                    mUsedItems += accelerationStructure->usedItems();
+                    const auto srvDesc = D3D12_SHADER_RESOURCE_VIEW_DESC{
+                        .Format = DXGI_FORMAT_UNKNOWN,
+                        .ViewDimension =
+                            D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE,
+                        .Shader4ComponentMapping =
+                            D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+                        .RaytracingAccelerationStructure = {
+                            .Location = accelerationStructure->gpuAddress(),
+                        },
+                    };
+                    context.device.CreateShaderResourceView(nullptr, &srvDesc,
+                        descriptor);
+                    descriptor.Offset(1, context.descriptorSize);
                 }
-                mUsedItems += mAccelerationStructure->usedItems();
-                const auto srvDesc = D3D12_SHADER_RESOURCE_VIEW_DESC{
-                    .Format = DXGI_FORMAT_UNKNOWN,
-                    .ViewDimension =
-                        D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE,
-                    .Shader4ComponentMapping =
-                        D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
-                    .RaytracingAccelerationStructure = {
-                        .Location = mAccelerationStructure->gpuAddress(),
-                    },
-                };
-                context.device.CreateShaderResourceView(nullptr, &srvDesc,
-                    descriptor);
                 break;
             }
 

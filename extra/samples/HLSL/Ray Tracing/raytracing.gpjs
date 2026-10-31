@@ -279,6 +279,12 @@
           "wrapModeZ": "Repeat",
           "borderColor": "#ff000000",
           "comparisonFunc": "NoComparisonFunc"
+        },
+        {
+          "type": "Binding",
+          "id": 10242,
+          "name": "Scene",
+          "bindingType": "AccelerationStructure"
         }
       ]
     },
@@ -356,8 +362,7 @@
       "workGroupsX": "1280",
       "workGroupsY": "720",
       "workGroupsZ": "1",
-      "executeOn": "EveryEvaluation",
-      "accelerationStructureId": 10241
+      "executeOn": "EveryEvaluation"
     }
   ]
 }

@@ -395,16 +395,13 @@ bool VKPipeline::createCompute(VKContext &context)
     return mComputePipeline.isValid();
 }
 
-bool VKPipeline::createRayTracing(VKContext &context,
-    VKAccelerationStructure *accelStruct)
+bool VKPipeline::createRayTracing(VKContext &context)
 {
     if (std::exchange(mCreated, true))
         return mRayTracingPipeline.isValid();
 
     if (!createLayout(context))
         return false;
-
-    mAccelerationStructure = accelStruct;
 
     // https://www.willusher.io/graphics/2019/11/20/the-sbt-three-ways/
     auto options = KDGpu::RayTracingPipelineOptions{ };
@@ -836,12 +833,19 @@ MessageType VKPipeline::updateBindings(VKContext &context,
     }
 
     case SPV_REFLECT_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR: {
-        if (!mAccelerationStructure)
+        const auto binding =
+            find(mBindings.accelerationStructures, desc.name);
+        auto accelerationStructure =
+            (binding ? static_cast<VKAccelerationStructure *>(
+                           binding->accelerationStructure)
+                     : nullptr);
+        if (!accelerationStructure)
             return MessageType::AccelerationStructureNotAssigned;
 
-        mAccelerationStructure->prepare(context, scriptEngine);
-        mUsedItems += mAccelerationStructure->usedItems();
-        const auto &topLevelAs = mAccelerationStructure->topLevelAs();
+        accelerationStructure->prepare(context, scriptEngine);
+        mUsedItems += binding->bindingItemId;
+        mUsedItems += accelerationStructure->usedItems();
+        const auto &topLevelAs = accelerationStructure->topLevelAs();
         if (!topLevelAs.isValid())
             return MessageType::AccelerationStructureNotAssigned;
 
@@ -851,6 +855,7 @@ MessageType VKPipeline::updateBindings(VKContext &context,
                 .resource =
                     KDGpu::AccelerationStructureBinding{
                         .accelerationStructure = topLevelAs },
+                .arrayElement = arrayElement,
             });
         break;
     }

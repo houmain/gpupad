@@ -133,6 +133,7 @@ struct Binding : Item
     ItemId textureId{ };
     ItemId bufferId{ };
     ItemId blockId{ };
+    ItemId accelerationStructureId{ };
     int level{ };
     int layer{ -1 };
     Filter minFilter{ Filter::Nearest };
@@ -258,7 +259,6 @@ struct Call : Item
 
     ItemId bufferId{ };
     ItemId fromBufferId{ };
-    ItemId accelerationStructureId{ };
 };
 
 struct Script : FileItem

@@ -97,11 +97,6 @@ void VKCall::setTextures(VKTexture *texture, VKTexture *fromTexture)
     mFromTexture = fromTexture;
 }
 
-void VKCall::setAccelerationStructure(VKAccelerationStructure *accelStruct)
-{
-    mAccelerationStructure = accelStruct;
-}
-
 bool VKCall::validateShaderTypes()
 {
     if (!mProgram)
@@ -158,12 +153,6 @@ void VKCall::execute(VKContext &context, Bindings &&bindings,
 
     if (mKind.indexed && !mIndexBuffer) {
         messages.insert(mCall.id, MessageType::IndexBufferNotAssigned);
-        return;
-    }
-
-    if (mKind.trace && !mAccelerationStructure) {
-        messages.insert(mCall.id,
-            MessageType::AccelerationStructureNotAssigned);
         return;
     }
 
@@ -400,8 +389,7 @@ void VKCall::executeCompute(VKContext &context, MessageList &messages,
 void VKCall::executeTraceRays(VKContext &context, MessageList &messages,
     ScriptEngine &scriptEngine)
 {
-    if (!mPipeline
-        || !mPipeline->createRayTracing(context, mAccelerationStructure))
+    if (!mPipeline || !mPipeline->createRayTracing(context))
         return;
 
     const auto canRender = mPipeline->updateBindings(context, scriptEngine);

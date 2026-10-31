@@ -28,7 +28,6 @@ public:
     void setIndirectBuffer(GLBuffer *commands, const Block &block);
     void setBuffers(GLBuffer *buffer, GLBuffer *fromBuffer);
     void setTextures(GLTexture *texture, GLTexture *fromTexture);
-    void setAccelerationStructure(GLAccelerationStructure *accelStruct) { }
     bool validateShaderTypes();
     void execute(GLContext &context, Bindings &&bindings,
         MessageList &messages, ScriptEngine &scriptEngine);

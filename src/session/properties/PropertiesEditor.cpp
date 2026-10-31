@@ -492,6 +492,9 @@ IEditor *PropertiesEditor::openItemEditor(const QModelIndex &index)
         case Binding::BindingType::BufferBlock:
             return openItemEditor(
                 mModel.getIndex(mModel.findItem(binding->blockId)));
+        case Binding::BindingType::AccelerationStructure:
+            return openItemEditor(mModel.getIndex(
+                mModel.findItem(binding->accelerationStructureId)));
         default: break;
         }
     }

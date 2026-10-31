@@ -29,7 +29,6 @@ public:
     void setIndirectBuffer(VKBuffer *commands, const Block &block);
     void setBuffers(VKBuffer *buffer, VKBuffer *fromBuffer);
     void setTextures(VKTexture *texture, VKTexture *fromTexture);
-    void setAccelerationStructure(VKAccelerationStructure *accelStruct);
     void execute(VKContext &context, Bindings &&bindings,
         MessageList &messages, ScriptEngine &scriptEngine);
 
@@ -60,8 +59,6 @@ private:
     VKBuffer *mFromBuffer{ };
     VKTexture *mTexture{ };
     VKTexture *mFromTexture{ };
-    VKAccelerationStructure *mAccelerationStructure{ };
-
     VKBuffer *mIndexBuffer{ };
     QString mIndirectOffset;
     KDGpu::IndexType mIndexType{ };

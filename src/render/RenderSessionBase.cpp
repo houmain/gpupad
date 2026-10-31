@@ -281,6 +281,9 @@ Bindings RenderSessionBase::mergeBindings(const BindingState &state)
                 merged.buffers[name] = binding;
         for (const auto &[name, binding] : scope.subroutines)
             merged.subroutines[name] = binding;
+        for (const auto &[name, binding] : scope.accelerationStructures)
+            if (binding.accelerationStructure)
+                merged.accelerationStructures[name] = binding;
     }
     return merged;
 }

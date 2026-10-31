@@ -714,6 +714,8 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
             (binding.bindingType == Binding::BindingType::BufferBlock);
         const auto subroutine =
             (binding.bindingType == Binding::BindingType::Subroutine);
+        const auto accelerationStructure = (binding.bindingType
+            == Binding::BindingType::AccelerationStructure);
         result &= (column != BindingEditor || uniform);
         result &= (column != BindingValues || uniform);
         result &= (column != BindingTextureId || image || sampler);
@@ -731,6 +733,8 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         result &= (column != BindingBufferId || buffer || textureBuffer);
         result &= (column != BindingBlockId || block);
         result &= (column != BindingSubroutine || subroutine);
+        result &= (column != BindingAccelerationStructureId
+            || accelerationStructure);
         break;
     }
 
@@ -824,8 +828,6 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         result &= (column != CallFromBufferId
             || callType == Call::CallType::CopyBuffer
             || callType == Call::CallType::SwapBuffers);
-        result &= (column != CallAccelerationStructureId
-            || callType == Call::CallType::TraceRays);
         break;
     }
 

@@ -253,6 +253,7 @@ namespace ItemEnums {
         Image,
         TextureBuffer,
         Subroutine,
+        AccelerationStructure,
     };
     Q_ENUM_NS(BindingType)
 

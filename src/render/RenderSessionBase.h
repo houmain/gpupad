@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AccelerationStructureBase.h"
 #include "BufferBase.h"
 #include "RenderTask.h"
 #include "message/MessageList.h"
@@ -72,6 +73,13 @@ struct SubroutineBinding
     QString subroutine;
 };
 
+struct AccelerationStructureBinding
+{
+    ItemId bindingItemId;
+    QString name;
+    AccelerationStructureBase *accelerationStructure;
+};
+
 struct Bindings
 {
     std::map<QString, UniformBinding> uniforms;
@@ -79,6 +87,7 @@ struct Bindings
     std::map<QString, ImageBinding> images;
     std::map<QString, BufferBinding> buffers;
     std::map<QString, SubroutineBinding> subroutines;
+    std::map<QString, AccelerationStructureBinding> accelerationStructures;
 };
 
 using Duration = std::chrono::duration<double>;

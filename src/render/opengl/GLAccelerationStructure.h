@@ -1,10 +1,11 @@
 #pragma once
 
+#include "../AccelerationStructureBase.h"
 #include "GLContext.h"
 
 class GLBuffer;
 
-class GLAccelerationStructure
+class GLAccelerationStructure : public AccelerationStructureBase
 {
 public:
     explicit GLAccelerationStructure(const AccelerationStructure &accelStruct)

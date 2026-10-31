@@ -46,6 +46,7 @@
     ADD(BindingTextureId, Binding, textureId)                                 \
     ADD(BindingBufferId, Binding, bufferId)                                   \
     ADD(BindingBlockId, Binding, blockId)                                     \
+    ADD(BindingAccelerationStructureId, Binding, accelerationStructureId)     \
     ADD(BindingLevel, Binding, level)                                         \
     ADD(BindingLayer, Binding, layer)                                         \
     ADD(BindingImageFormat, Binding, imageFormat)                             \
@@ -129,7 +130,6 @@
     ADD(CallClearDepth, Call, clearDepth)                                     \
     ADD(CallClearStencil, Call, clearStencil)                                 \
     ADD(CallExecuteOn, Call, executeOn)                                       \
-    ADD(CallAccelerationStructureId, Call, accelerationStructureId)           \
     ADD(InstanceTransform, Instance, transform)                               \
     ADD(GeometryType, Geometry, geometryType)                                 \
     ADD(GeometryVertexBufferBlockId, Geometry, vertexBufferBlockId)           \

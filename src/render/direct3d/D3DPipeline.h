@@ -10,7 +10,6 @@ class D3DTarget;
 class D3DProgram;
 class D3DBuffer;
 class D3DTexture;
-class D3DAccelerationStructure;
 
 class D3DPipeline : public PipelineBase
 {
@@ -23,8 +22,7 @@ public:
     bool createMesh(D3DContext &context, Call::PrimitiveType primitiveType,
         D3DTarget *target);
     bool createCompute(D3DContext &context);
-    bool createRayTracing(D3DContext &context,
-        D3DAccelerationStructure *accelerationStructure);
+    bool createRayTracing(D3DContext &context);
     bool bindGraphics(D3DContext &context, ScriptEngine &scriptEngine);
     bool bindCompute(D3DContext &context, ScriptEngine &scriptEngine);
     bool bindRayTracing(D3DContext &context, ScriptEngine &scriptEngine);
@@ -83,7 +81,6 @@ private:
     D3DProgram &mProgram;
     D3DStream *mVertexStream{ };
     std::vector<const D3DStream::D3DAttribute *> mVertexAttributes;
-    D3DAccelerationStructure *mAccelerationStructure{ };
     bool mCreated{ };
     ComPtr<ID3D12PipelineState> mPipelineState;
     ComPtr<ID3D12StateObject> mRayTracingStateObject;

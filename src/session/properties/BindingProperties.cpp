@@ -144,9 +144,15 @@ BindingProperties::BindingProperties(PropertiesEditor *propertiesEditor)
         [this]() { return mPropertiesEditor.getItemIds(Item::Type::Buffer); });
     connect(mUi->block, &ReferenceComboBox::listRequired,
         [this]() { return mPropertiesEditor.getItemIds(Item::Type::Block); });
+    connect(mUi->accelerationStructure, &ReferenceComboBox::listRequired,
+        [this]() {
+            return mPropertiesEditor.getItemIds(
+                Item::Type::AccelerationStructure);
+        });
     connect(mUi->buffer, &ReferenceComboBox::currentDataChanged, this,
         &BindingProperties::updateWidgets);
-    for (auto comboBox : { mUi->texture, mUi->buffer, mUi->block })
+    for (auto comboBox : { mUi->texture, mUi->buffer, mUi->block,
+             mUi->accelerationStructure })
         connect(comboBox, &ReferenceComboBox::textRequired,
             [this](QVariant id) {
                 return mPropertiesEditor.getItemName(id.toInt());
@@ -170,6 +176,8 @@ void BindingProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->texture, SessionModel::BindingTextureId);
     mapper.addMapping(mUi->buffer, SessionModel::BindingBufferId);
     mapper.addMapping(mUi->block, SessionModel::BindingBlockId);
+    mapper.addMapping(mUi->accelerationStructure,
+        SessionModel::BindingAccelerationStructureId);
     mapper.addMapping(mUi->level, SessionModel::BindingLevel);
     mapper.addMapping(mUi->layer, SessionModel::BindingLayer);
     mapper.addMapping(mUi->minFilter, SessionModel::BindingMinFilter);
@@ -260,6 +268,8 @@ void BindingProperties::updateWidgets()
     const auto color = (type == Binding::BindingType::Uniform
         && editor == Binding::Editor::Color);
     const auto subroutine = (type == Binding::BindingType::Subroutine);
+    const auto accelerationStructure =
+        (type == Binding::BindingType::AccelerationStructure);
 
     mSuspendSetValues = true;
 
@@ -277,6 +287,8 @@ void BindingProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelBuffer, mUi->buffer,
         buffer || textureBuffer);
     setFormVisibility(mUi->formLayout, mUi->labelBlock, mUi->block, block);
+    setFormVisibility(mUi->formLayout, mUi->labelAccelerationStructure,
+        mUi->accelerationStructure, accelerationStructure);
 
     const auto textureKind =
         (image || sampler ? currentTextureKind() : TextureKind{});

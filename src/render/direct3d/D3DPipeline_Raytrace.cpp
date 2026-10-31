@@ -3,13 +3,11 @@
 #include "D3DProgram.h"
 #include <set>
 
-bool D3DPipeline::createRayTracing(D3DContext &context,
-    D3DAccelerationStructure *accelerationStructure)
+bool D3DPipeline::createRayTracing(D3DContext &context)
 {
     if (std::exchange(mCreated, true))
         return (mRayTracingStateObject && mRootSignature);
 
-    mAccelerationStructure = accelerationStructure;
     if (!createRootSignatureRayTracing(context))
         return false;
     createDescriptorHeap(context);

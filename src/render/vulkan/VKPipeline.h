@@ -8,7 +8,6 @@
 class VKTarget;
 class VKProgram;
 class VKStream;
-class VKAccelerationStructure;
 
 class VKPipeline : public PipelineBase
 {
@@ -20,8 +19,7 @@ public:
         KDGpu::PrimitiveOptions &primitiveOptions, VKTarget *target,
         VKStream *vertexStream);
     bool createCompute(VKContext &context);
-    bool createRayTracing(VKContext &context,
-        VKAccelerationStructure *accelStruct);
+    bool createRayTracing(VKContext &context);
     bool updateBindings(VKContext &context, ScriptEngine &scriptEngine);
     std::optional<KDGpu::RenderPassCommandRecorder> beginRenderPass(
         VKContext &context, bool flipViewport);
@@ -79,7 +77,6 @@ private:
     VKProgram &mProgram;
     VKTarget *mTarget{};
     VKStream *mVertexStream{};
-    VKAccelerationStructure *mAccelerationStructure{};
     bool mCreated{};
     KDGpu::GraphicsPipeline mGraphicsPipeline;
     KDGpu::ComputePipeline mComputePipeline;

@@ -37,7 +37,7 @@ app.replaceItems(scene, [
   as,
 ])
 
-app.getItem("Trace Rays").accelerationStructureId = as.id
+app.getItem("Bindings/Scene").accelerationStructureId = as.id
 
 function Lambertian(diffuse, textureId = -1) {
   return [diffuse[0], diffuse[1], diffuse[2], 1, textureId, 0.0, 0.0, 0];

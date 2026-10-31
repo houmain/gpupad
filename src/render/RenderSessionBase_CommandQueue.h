@@ -307,6 +307,15 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
                     state.top().subroutines[binding.name] = binding;
                 });
                 break;
+
+            case Binding::BindingType::AccelerationStructure:
+                addCommand([binding = AccelerationStructureBinding{ b.id,
+                                b.name, addAccelerationStructureOnce(
+                                            b.accelerationStructureId) }](
+                               BindingState &state) {
+                    state.top().accelerationStructures[binding.name] = binding;
+                });
+                break;
             }
         } else if (auto call = castItem<Call>(item)) {
             if (call->checked) {
@@ -350,9 +359,6 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
 
                 case Call::CallType::TraceRays:
                     queueCall.setProgram(addProgramOnce(call->programId));
-                    if (auto accelStruct = addAccelerationStructureOnce(
-                            call->accelerationStructureId))
-                        queueCall.setAccelerationStructure(accelStruct);
                     break;
 
                 case Call::CallType::ClearTexture:

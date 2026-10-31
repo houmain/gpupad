@@ -33,7 +33,8 @@ const accelerationStructure = {
 }
 
 app.replaceItems(scene, [mesh, accelerationStructure])
-app.getItem("Trace Rays").accelerationStructureId = accelerationStructure.id
+app.getItem("Bindings/Scene").accelerationStructureId =
+  accelerationStructure.id
 
 function Lambertian(diffuse, textureId = -1) {
   return [diffuse[0], diffuse[1], diffuse[2], 1, textureId, 0.0, 0.0, 0]

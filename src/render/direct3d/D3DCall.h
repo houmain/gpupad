@@ -30,7 +30,6 @@ public:
     void setIndirectBuffer(D3DBuffer *commands, const Block &block);
     void setBuffers(D3DBuffer *buffer, D3DBuffer *fromBuffer);
     void setTextures(D3DTexture *texture, D3DTexture *fromTexture);
-    void setAccelerationStructure(D3DAccelerationStructure *accelStruct);
     void execute(D3DContext &context, Bindings &&bindings,
         MessageList &messages, ScriptEngine &scriptEngine);
 
@@ -64,8 +63,6 @@ private:
     D3DBuffer *mFromBuffer{ };
     D3DTexture *mTexture{ };
     D3DTexture *mFromTexture{ };
-    D3DAccelerationStructure *mAccelerationStructure{ };
-
     D3DBuffer *mIndexBuffer{ };
     QString mIndirectOffset;
     int mIndexSize{ };

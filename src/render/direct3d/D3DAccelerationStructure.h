@@ -1,10 +1,11 @@
 #pragma once
 #if defined(D3D_ENABLED)
 
+#  include "../AccelerationStructureBase.h"
 #  include "D3DBuffer.h"
 #  include "scripting/ScriptEngine.h"
 
-class D3DAccelerationStructure
+class D3DAccelerationStructure : public AccelerationStructureBase
 {
 public:
     explicit D3DAccelerationStructure(const AccelerationStructure &accelStruct);

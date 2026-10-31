@@ -1,9 +1,10 @@
 #pragma once
 
+#include "../AccelerationStructureBase.h"
 #include "VKBuffer.h"
 #include "scripting/ScriptEngine.h"
 
-class VKAccelerationStructure
+class VKAccelerationStructure : public AccelerationStructureBase
 {
 public:
     explicit VKAccelerationStructure(const AccelerationStructure &accelStruct);

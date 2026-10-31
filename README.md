@@ -74,7 +74,10 @@ All kind of color, depth or stencil textures can be created. They serve as sampl
 Specifies where draws calls should render to. Multiple images can be attached. Depending on the attached image's type, different render states can be configured.
 
 - **Binding** -
-Allows to bind data to a program's uniforms, samplers, images and buffers. A binding affects all subsequent calls, until it is replaced by a binding with the same name, or the scope ends (see *Groups*). The name of a binding needs to match the name of a program's binding point.
+Allows to bind data to a program's uniforms, samplers, images, buffers and
+acceleration structures. A binding affects all subsequent calls, until it is
+replaced by a binding with the same name, or the scope ends (see *Groups*). The
+name of a binding needs to match the name of a program's binding point.
 
 - **Buffer** -
 Buffer blocks define the structure of a region within a binary. They consist of rows with multiple fields of some data type. Buffers can be backed by binary files.
