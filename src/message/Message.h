@@ -75,6 +75,7 @@ enum class MessageType {
     MaxVariableBindGroupEntriesExceeded,
     OnlyLastBindingMayBeUnsizedArray,
     RayTracingNotAvailable,
+    FeatureNotSupported,
     MeshShadersNotAvailable,
     SpirvCrossError,
     ShaderCompilerNotAvailable,

@@ -143,6 +143,22 @@ namespace {
         return D3D12_SHADER_VISIBILITY_ALL;
     }
 
+    bool supportsRayQuery(ID3D12Device &device)
+    {
+        auto options = D3D12_FEATURE_DATA_D3D12_OPTIONS5{ };
+        if (FAILED(device.CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5,
+                &options, sizeof(options)))
+            || options.RaytracingTier < D3D12_RAYTRACING_TIER_1_1)
+            return false;
+
+        auto shaderModel = D3D12_FEATURE_DATA_SHADER_MODEL{
+            .HighestShaderModel = D3D_SHADER_MODEL_6_5,
+        };
+        return SUCCEEDED(device.CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL,
+                   &shaderModel, sizeof(shaderModel)))
+            && shaderModel.HighestShaderModel >= D3D_SHADER_MODEL_6_5;
+    }
+
 } // namespace
 
 D3D12_SHADER_INPUT_BIND_DESC D3DPipeline::getD3DBindingDesc(
@@ -424,6 +440,7 @@ bool D3DPipeline::createRootSignature(D3DContext &context)
     auto descriptorTableDescs = std::vector<DescriptorTableDesc>();
     auto staticSamplers = std::vector<CD3DX12_STATIC_SAMPLER_DESC>();
     auto descriptorHeapOffset = UINT{ };
+    auto usesRayQuery = false;
     for (const auto &shader : mProgram.shaders()) {
         const auto visibility = stageToVisibility(shader.type());
         auto rangesPerType =
@@ -431,6 +448,8 @@ bool D3DPipeline::createRootSignature(D3DContext &context)
         if (!shader.reflection())
             continue;
         for (const auto &binding : shader.reflection().descriptorBindings()) {
+            usesRayQuery |= binding.descriptor_type
+                == SPV_REFLECT_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
             const auto bindDesc = getD3DBindingDesc(binding);
             if (bindDesc.Type == D3D_SIT_SAMPLER) {
                 addStaticSampler(bindDesc, &staticSamplers);
@@ -472,6 +491,11 @@ bool D3DPipeline::createRootSignature(D3DContext &context)
                 .ranges = std::move(ranges),
             });
         }
+    }
+    if (usesRayQuery && !supportsRayQuery(context.device)) {
+        mMessages.insert(mItemId, MessageType::FeatureNotSupported,
+            "Ray query");
+        return false;
     }
     return createRootSignatureFromTables(context,
         std::move(descriptorTableDescs), std::move(staticSamplers));
@@ -726,15 +750,15 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
                     const auto elementName = (bindDesc.BindCount > 1
                             ? QString("%1[%2]").arg(name).arg(i)
                             : name);
-                    const auto binding = find(
-                        mBindings.accelerationStructures, elementName);
-                    auto accelerationStructure =
-                        (binding ? static_cast<D3DAccelerationStructure *>(
-                                       binding->accelerationStructure)
-                                 : nullptr);
+                    const auto binding =
+                        find(mBindings.accelerationStructures, elementName);
+                    auto accelerationStructure = (binding
+                            ? static_cast<D3DAccelerationStructure *>(
+                                  binding->accelerationStructure)
+                            : nullptr);
                     if (!accelerationStructure
-                        || !accelerationStructure->build(
-                            context, scriptEngine)) {
+                        || !accelerationStructure->build(context,
+                            scriptEngine)) {
                         mMessages.insert(mItemId,
                             MessageType::AccelerationStructureNotAssigned,
                             elementName);

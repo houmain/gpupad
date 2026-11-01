@@ -167,6 +167,8 @@ QString getMessageText(const Message &message)
         return tr("Only the last binding may be an unsized array (%1)")
             .arg(message.text);
     case RayTracingNotAvailable:     return tr("Raytracing not available");
+    case FeatureNotSupported:
+        return tr("Feature not supported: %1").arg(message.text);
     case MeshShadersNotAvailable:    return tr("Mesh Shaders not available");
     case ShaderCompilerNotAvailable: return tr("Shader compiler not available");
     case InvalidCommandlineArguments:
