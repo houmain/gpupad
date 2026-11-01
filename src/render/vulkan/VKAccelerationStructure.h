@@ -55,7 +55,8 @@ private:
     };
 
     VKGeometry &getGeometry(int instanceIndex, int geometryIndex);
-    void memoryBarrier(KDGpu::CommandRecorder &commandRecorder);
+    void memoryBarrier(KDGpu::CommandRecorder &commandRecorder,
+        KDGpu::PipelineStageFlags destinationStages);
 
     ItemId mItemId{};
     MessageList mMessages;

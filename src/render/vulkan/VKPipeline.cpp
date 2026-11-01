@@ -16,6 +16,20 @@ namespace {
         return static_cast<KDGpu::ResourceBindingType>(type);
     }
 
+    bool isRayTracingStage(KDGpu::ShaderStageFlagBits stage)
+    {
+        using Stage = KDGpu::ShaderStageFlagBits;
+        switch (stage) {
+        case Stage::RaygenBit:
+        case Stage::AnyHitBit:
+        case Stage::ClosestHitBit:
+        case Stage::MissBit:
+        case Stage::IntersectionBit:
+        case Stage::CallableBit:     return true;
+        default:                     return false;
+        }
+    }
+
     KDGpu::SamplerOptions getSamplerOptions(const SamplerBinding &binding,
         float maxAnisotropy)
     {
@@ -491,6 +505,14 @@ bool VKPipeline::createLayout(VKContext &context)
             if (!desc.accessed)
                 continue;
 
+            if (desc.descriptor_type
+                    == SPV_REFLECT_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR
+                && !isRayTracingStage(stage) && !context.features().rayQuery) {
+                mMessages.insert(mItemId, MessageType::FeatureNotSupported,
+                    "Ray query");
+                return false;
+            }
+
             auto count = getBindingArraySize(desc.array);
             auto flags = KDGpu::ResourceBindingFlagBits::None;
             if (count == 0) {
@@ -684,8 +706,8 @@ MessageType VKPipeline::updateBindings(VKContext &context,
         auto buffer = std::add_pointer_t<VKBuffer>();
         auto offset = uint32_t{ };
         auto size = static_cast<uint32_t>(KDGpu::WholeSize);
-        auto bufferBinding = find(
-            mBindings.buffers, desc.type_description->type_name);
+        auto bufferBinding =
+            find(mBindings.buffers, desc.type_description->type_name);
         if (!bufferBinding)
             bufferBinding = find(mBindings.buffers, desc.name);
         if (desc.type_description->type_name
@@ -823,22 +845,22 @@ MessageType VKPipeline::updateBindings(VKContext &context,
         setBindGroupResource(desc.set, isVariableLengthArray,
             {
                 .binding = desc.binding,
-                .resource = KDGpu::StorageTexelBufferBinding{
-                    .buffer = buffer->buffer(),
-                    .format = toKDGpu(imageBinding->format),
-                },
+                .resource =
+                    KDGpu::StorageTexelBufferBinding{
+                        .buffer = buffer->buffer(),
+                        .format = toKDGpu(imageBinding->format),
+                    },
                 .arrayElement = arrayElement,
             });
         break;
     }
 
     case SPV_REFLECT_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR: {
-        const auto binding =
-            find(mBindings.accelerationStructures, desc.name);
-        auto accelerationStructure =
-            (binding ? static_cast<VKAccelerationStructure *>(
-                           binding->accelerationStructure)
-                     : nullptr);
+        const auto binding = find(mBindings.accelerationStructures, desc.name);
+        auto accelerationStructure = (binding
+                ? static_cast<VKAccelerationStructure *>(
+                      binding->accelerationStructure)
+                : nullptr);
         if (!accelerationStructure)
             return MessageType::AccelerationStructureNotAssigned;
 

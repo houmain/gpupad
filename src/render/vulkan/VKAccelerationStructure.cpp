@@ -142,11 +142,12 @@ void VKAccelerationStructure::setTransformBuffer(int instanceIndex,
 }
 
 void VKAccelerationStructure::memoryBarrier(
-    KDGpu::CommandRecorder &commandRecorder)
+    KDGpu::CommandRecorder &commandRecorder,
+    KDGpu::PipelineStageFlags destinationStages)
 {
     commandRecorder.memoryBarrier(KDGpu::MemoryBarrierOptions{
         .srcStages = KDGpu::PipelineStageFlagBit::AccelerationStructureBuildBit,
-        .dstStages = KDGpu::PipelineStageFlagBit::AccelerationStructureBuildBit,
+        .dstStages = destinationStages,
         .memoryBarriers = {
             {
                 .srcMask = KDGpu::AccessFlagBit::AccelerationStructureWriteBit,
@@ -245,6 +246,7 @@ void VKAccelerationStructure::prepare(VKContext &context,
             if (geometry.type == GeometryType::AxisAlignedBoundingBoxes) {
                 const auto aabbsGeometry =
                     KDGpu::AccelerationStructureGeometryAabbsData{
+                        .flags = KDGpu::AccelerationStructureGeometryFlagBits::Opaque,
                         .data = vertexBuffer.buffer(),
                         .stride = geometry.vertexStride,
                         .dataOffset = geometry.vertexBufferOffset,
@@ -258,6 +260,7 @@ void VKAccelerationStructure::prepare(VKContext &context,
             } else if (geometry.type == GeometryType::Triangles) {
                 const auto triangleGeometry =
                     KDGpu::AccelerationStructureGeometryTrianglesData{
+                        .flags = KDGpu::AccelerationStructureGeometryFlagBits::Opaque,
                         .vertexFormat = KDGpu::Format::R32G32B32_SFLOAT,
                         .vertexData = vertexBuffer.buffer(),
                         .vertexStride = geometry.vertexStride,
@@ -322,7 +325,8 @@ void VKAccelerationStructure::prepare(VKContext &context,
         .buildGeometryInfos = std::move(blasBuildGeometryInfos),
     });
 
-    memoryBarrier(*context.commandRecorder);
+    memoryBarrier(*context.commandRecorder,
+        KDGpu::PipelineStageFlagBit::AccelerationStructureBuildBit);
 
     // one TLAS with an instances list
     mTopLevelAs = context.device.createAccelerationStructure({
@@ -352,4 +356,7 @@ void VKAccelerationStructure::prepare(VKContext &context,
             },
         },
     });
+
+    memoryBarrier(*context.commandRecorder,
+        KDGpu::PipelineStageFlagBit::AllCommandsBit);
 }
