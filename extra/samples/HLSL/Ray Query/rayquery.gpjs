@@ -1,0 +1,136 @@
+{
+  "type": "Session",
+  "id": 1,
+  "name": "Ray Query",
+  "renderer": "Direct3D",
+  "shaderLanguage": "HLSL",
+  "shaderCompiler": "DXC",
+  "shaderCompilerSettings": {
+    "shaderModel": "6.5"
+  },
+  "shaderPreamble": "",
+  "shaderIncludePaths": "",
+  "flipViewport": false,
+  "reverseCulling": false,
+  "items": [
+    {
+      "type": "Texture",
+      "id": 2,
+      "name": "OutputImage",
+      "target": "Target2D",
+      "format": "RGBA8_UNorm",
+      "width": "64",
+      "height": "64",
+      "samples": 1,
+      "flipVertically": false
+    },
+    {
+      "type": "Buffer",
+      "id": 3,
+      "name": "Vertices",
+      "items": [
+        {
+          "type": "Block",
+          "id": 4,
+          "name": "Position",
+          "offset": "0",
+          "rowCount": "3",
+          "items": [
+            {
+              "type": "Field",
+              "id": 5,
+              "name": "Position",
+              "dataType": "Float",
+              "count": 3,
+              "padding": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Script",
+      "id": 6,
+      "name": "Generate Scene",
+      "fileName": "generateScene.js",
+      "executeOn": "ResetEvaluation"
+    },
+    {
+      "type": "AccelerationStructure",
+      "id": 7,
+      "name": "Scene",
+      "items": [
+        {
+          "type": "Instance",
+          "id": 8,
+          "name": "Triangle",
+          "items": [
+            {
+              "type": "Geometry",
+              "id": 9,
+              "name": "Geometry",
+              "geometryType": "Triangles",
+              "vertexBufferBlockId": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Binding",
+      "id": 10,
+      "name": "OutputImage",
+      "bindingType": "Image",
+      "textureId": 2,
+      "level": 0,
+      "layer": -1,
+      "imageFormat": "Internal"
+    },
+    {
+      "type": "Binding",
+      "id": 11,
+      "name": "Scene",
+      "bindingType": "AccelerationStructure",
+      "accelerationStructureId": 7
+    },
+    {
+      "type": "Program",
+      "id": 12,
+      "name": "Program",
+      "items": [
+        {
+          "type": "Shader",
+          "id": 13,
+          "name": "Ray Query",
+          "fileName": "RayQuery.hlsl",
+          "shaderType": "Compute",
+          "entryPoint": "main"
+        }
+      ]
+    },
+    {
+      "type": "Call",
+      "id": 14,
+      "name": "Clear",
+      "checked": true,
+      "callType": "ClearTexture",
+      "textureId": 2,
+      "clearColor": "#ff000000",
+      "clearDepth": 1,
+      "clearStencil": 0,
+      "executeOn": "ResetEvaluation"
+    },
+    {
+      "type": "Call",
+      "id": 15,
+      "name": "Ray Query",
+      "checked": true,
+      "callType": "Compute",
+      "programId": 12,
+      "workGroupsX": "8",
+      "workGroupsY": "8",
+      "workGroupsZ": "1",
+      "executeOn": "EveryEvaluation"
+    }
+  ]
+}
