@@ -272,8 +272,13 @@ struct AccelerationStructure : Item
 {
 };
 
+struct GeometrySet : Item
+{
+};
+
 struct Instance : Item
 {
+    ItemId geometrySetId{ };
     QString transform;
 };
 
@@ -451,6 +456,11 @@ template <>
 inline Item::Type getItemType<Geometry>()
 {
     return Item::Type::Geometry;
+}
+template <>
+inline Item::Type getItemType<GeometrySet>()
+{
+    return Item::Type::GeometrySet;
 }
 
 template <typename T>

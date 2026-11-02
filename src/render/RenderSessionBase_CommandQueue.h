@@ -38,8 +38,12 @@ void RenderSessionBase::reuseUnmodifiedItems(CommandQueue &commandQueue,
             it != commandQueue.buffers.end())
             texture.setTextureBuffer(&it->second);
     replaceEqual(commandQueue.programs, prevCommandQueue.programs);
+    replaceEqual(commandQueue.geometrySets, prevCommandQueue.geometrySets);
     replaceEqual(commandQueue.accelerationStructures,
         prevCommandQueue.accelerationStructures);
+    for (auto &[itemId, accelerationStructure] :
+        commandQueue.accelerationStructures)
+        accelerationStructure.relinkGeometrySets(commandQueue.geometrySets);
 
     // immediately try to link programs
     // when failing restore previous version but keep error messages
@@ -180,30 +184,43 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
         return vs;
     };
 
+    const auto addGeometrySetOnce = [&](ItemId geometrySetId) {
+        const auto geometrySet =
+            sessionModel.findItem<GeometrySet>(geometrySetId);
+        auto renderGeometrySet =
+            addOnce(commandQueue.geometrySets, geometrySet);
+        if (renderGeometrySet) {
+            const auto &items = geometrySet->items;
+            for (auto i = 0; i < items.size(); ++i)
+                if (auto geometry = castItem<Geometry>(items[i])) {
+                    if (auto block = sessionModel.findItem<Block>(
+                            geometry->vertexBufferBlockId))
+                        renderGeometrySet->setVertexBuffer(i,
+                            addBufferOnce(block->parent->id), *block, self);
+                    if (auto block = sessionModel.findItem<Block>(
+                            geometry->indexBufferBlockId))
+                        renderGeometrySet->setIndexBuffer(i,
+                            addBufferOnce(block->parent->id), *block, self);
+                    if (auto block = sessionModel.findItem<Block>(
+                            geometry->transformBufferBlockId))
+                        renderGeometrySet->setTransformBuffer(i,
+                            addBufferOnce(block->parent->id), *block, self);
+                }
+        }
+        return renderGeometrySet;
+    };
+
     const auto addAccelerationStructureOnce = [&](ItemId accelStructId) {
         const auto accelerationStructure =
             sessionModel.findItem<AccelerationStructure>(accelStructId);
         auto as =
             addOnce(commandQueue.accelerationStructures, accelerationStructure);
         if (as) {
-            const auto &items = accelerationStructure->items;
-            for (auto i = 0; i < items.size(); ++i)
-                for (auto j = 0; j < items[i]->items.size(); ++j)
-                    if (auto geometry =
-                            castItem<Geometry>(items[i]->items[j])) {
-                        if (auto block = sessionModel.findItem<Block>(
-                                geometry->vertexBufferBlockId))
-                            as->setVertexBuffer(i, j,
-                                addBufferOnce(block->parent->id), *block, self);
-                        if (auto block = sessionModel.findItem<Block>(
-                                geometry->indexBufferBlockId))
-                            as->setIndexBuffer(i, j,
-                                addBufferOnce(block->parent->id), *block, self);
-                        if (auto block = sessionModel.findItem<Block>(
-                                geometry->transformBufferBlockId))
-                            as->setTransformBuffer(i, j,
-                                addBufferOnce(block->parent->id), *block, self);
-                    }
+            auto instanceIndex = 0;
+            for (auto item : accelerationStructure->items)
+                if (auto instance = castItem<Instance>(item))
+                    as->setGeometrySet(instanceIndex++,
+                        addGeometrySetOnce(instance->geometrySetId));
         }
         return as;
     };

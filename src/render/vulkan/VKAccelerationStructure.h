@@ -1,67 +1,52 @@
 #pragma once
 
 #include "../AccelerationStructureBase.h"
-#include "VKBuffer.h"
-#include "scripting/ScriptEngine.h"
+#include "VKGeometrySet.h"
 
 class VKAccelerationStructure : public AccelerationStructureBase
 {
 public:
     explicit VKAccelerationStructure(const AccelerationStructure &accelStruct);
     bool operator==(const VKAccelerationStructure &rhs) const;
-    void setVertexBuffer(int instanceIndex, int geometryIndex, VKBuffer *buffer,
-        const Block &block, VKRenderSession &renderSession);
-    void setIndexBuffer(int instanceIndex, int geometryIndex, VKBuffer *buffer,
-        const Block &block, VKRenderSession &renderSession);
-    void setTransformBuffer(int instanceIndex, int geometryIndex,
-        VKBuffer *buffer, const Block &block, VKRenderSession &renderSession);
+    void setGeometrySet(int instanceIndex, VKGeometrySet *geometrySet);
+    template <typename GeometrySets>
+    void relinkGeometrySets(GeometrySets &geometrySets)
+    {
+        for (auto &instance : mInstances) {
+            const auto it = geometrySets.find(instance.geometrySetId);
+            instance.geometrySet =
+                (it == geometrySets.end() ? nullptr : &it->second);
+        }
+    }
 
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
     const KDGpu::AccelerationStructure &topLevelAs() const
     {
         return mTopLevelAs;
     }
-
     void prepare(VKContext &context, ScriptEngine &scriptEngine);
 
 private:
-    struct VKGeometry
-    {
-        bool operator==(const VKGeometry &) const = default;
-
-        ItemId itemId{};
-        Geometry::GeometryType type{};
-        VKBuffer *vertexBuffer{};
-        size_t vertexBufferOffset{};
-        uint32_t vertexCount{};
-        uint32_t vertexStride{};
-        VKBuffer *indexBuffer{};
-        KDGpu::IndexType indexType{ KDGpu::IndexType::None };
-        size_t indexBufferOffset{};
-        uint32_t indexCount{};
-        VKBuffer *transformBuffer{};
-        size_t transformBufferOffset{};
-        QString primitiveCount;
-        QString primitiveOffset;
-    };
-
     struct VKInstance
     {
-        bool operator==(const VKInstance &) const = default;
+        bool operator==(const VKInstance &rhs) const
+        {
+            return std::tie(itemId, geometrySetId, transform)
+                == std::tie(rhs.itemId, rhs.geometrySetId, rhs.transform);
+        }
 
-        ItemId itemId{};
+        ItemId itemId{ };
+        ItemId geometrySetId{ };
         QString transform;
-        std::vector<VKGeometry> geometries;
+        VKGeometrySet *geometrySet{ };
     };
 
-    VKGeometry &getGeometry(int instanceIndex, int geometryIndex);
     void memoryBarrier(KDGpu::CommandRecorder &commandRecorder,
         KDGpu::PipelineStageFlags destinationStages);
 
-    ItemId mItemId{};
+    ItemId mItemId{ };
     MessageList mMessages;
     QSet<ItemId> mUsedItems;
     std::vector<VKInstance> mInstances;
-    std::vector<KDGpu::AccelerationStructure> mBottomLevelAs;
     KDGpu::AccelerationStructure mTopLevelAs;
 };

@@ -7,6 +7,7 @@
 #include "D3DTarget.h"
 #include "D3DTexture.h"
 #include "D3DAccelerationStructure.h"
+#include "D3DGeometrySet.h"
 #include "render/RenderSessionBase_CommandQueue.h"
 #include <QStack>
 #include <deque>
@@ -23,6 +24,7 @@ struct D3DRenderSession::CommandQueue
     std::map<ItemId, D3DProgram> programs;
     std::map<ItemId, D3DTarget> targets;
     std::map<ItemId, D3DStream> vertexStreams;
+    std::map<ItemId, D3DGeometrySet> geometrySets;
     std::map<ItemId, D3DAccelerationStructure> accelerationStructures;
     std::map<SoundBufferKey, D3DBuffer> soundBuffers;
     std::map<AudioTextureKey, D3DTexture> audioTextures;

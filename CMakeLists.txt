@@ -146,6 +146,7 @@ set(SOURCES
   src/session/properties/CallProperties.ui
   src/session/properties/FieldProperties.ui
   src/session/properties/GeometryProperties.ui
+  src/session/properties/GeometrySetProperties.ui
   src/session/properties/GroupProperties.ui
   src/session/properties/InstanceProperties.ui
   src/session/properties/ProgramProperties.ui
@@ -225,6 +226,7 @@ if (GPUPAD_ENABLE_VULKAN)
   src/render/vulkan/VKTextureEditorItem_Share.cpp
   src/render/vulkan/VKRenderSession.cpp
   src/render/vulkan/VKAccelerationStructure.cpp
+  src/render/vulkan/VKGeometrySet.cpp
   src/render/vulkan/VKWindow.cpp)
   if(APPLE)
       set(SOURCES ${SOURCES} src/render/vulkan/VKWindow_MacOS.mm)
@@ -239,6 +241,7 @@ option(GPUPAD_ENABLE_D3D "Enable D3D12" ${ENABLE_D3D_DEFAULT})
 if (GPUPAD_ENABLE_D3D)
   set(SOURCES ${SOURCES}
   src/render/direct3d/D3DAccelerationStructure.cpp
+  src/render/direct3d/D3DGeometrySet.cpp
   src/render/direct3d/D3DBuffer.cpp
   src/render/direct3d/D3DCall.cpp
   src/render/direct3d/D3DEnums.cpp

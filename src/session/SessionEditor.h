@@ -78,4 +78,5 @@ private:
     QAction *mAddAccelerationStructureAction{};
     QAction *mAddInstanceAction{};
     QAction *mAddGeometryAction{};
+    QAction *mAddGeometrySetAction{};
 };

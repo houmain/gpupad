@@ -2,8 +2,7 @@
 #if defined(D3D_ENABLED)
 
 #  include "../AccelerationStructureBase.h"
-#  include "D3DBuffer.h"
-#  include "scripting/ScriptEngine.h"
+#  include "D3DGeometrySet.h"
 
 class D3DAccelerationStructure : public AccelerationStructureBase
 {
@@ -11,61 +10,46 @@ public:
     explicit D3DAccelerationStructure(const AccelerationStructure &accelStruct);
     bool operator==(const D3DAccelerationStructure &rhs) const;
 
-    void setVertexBuffer(int instanceIndex, int geometryIndex,
-        D3DBuffer *buffer, const Block &block, D3DRenderSession &renderSession);
-    void setIndexBuffer(int instanceIndex, int geometryIndex, D3DBuffer *buffer,
-        const Block &block, D3DRenderSession &renderSession);
-    void setTransformBuffer(int instanceIndex, int geometryIndex,
-        D3DBuffer *buffer, const Block &block, D3DRenderSession &renderSession);
+    void setGeometrySet(int instanceIndex, D3DGeometrySet *geometrySet);
+    template <typename GeometrySets>
+    void relinkGeometrySets(GeometrySets &geometrySets)
+    {
+        for (auto &instance : mInstances) {
+            const auto it = geometrySets.find(instance.geometrySetId);
+            instance.geometrySet =
+                (it == geometrySets.end() ? nullptr : &it->second);
+        }
+    }
     bool build(D3DContext &context, ScriptEngine &scriptEngine);
 
     D3D12_GPU_VIRTUAL_ADDRESS gpuAddress() const
     {
         return (mTopLevel ? mTopLevel->GetGPUVirtualAddress() : 0);
     }
-
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
-    struct D3DGeometry
-    {
-        bool operator==(const D3DGeometry &) const = default;
-
-        ItemId itemId{ };
-        Geometry::GeometryType type{ };
-        D3DBuffer *vertexBuffer{ };
-        size_t vertexBufferOffset{ };
-        uint32_t vertexCount{ };
-        uint32_t vertexStride{ };
-        D3DBuffer *indexBuffer{ };
-        int indexSize{ };
-        size_t indexBufferOffset{ };
-        uint32_t indexCount{ };
-        D3DBuffer *transformBuffer{ };
-        size_t transformBufferOffset{ };
-        QString primitiveCount;
-        QString primitiveOffset;
-    };
-
     struct D3DInstance
     {
-        bool operator==(const D3DInstance &) const = default;
+        bool operator==(const D3DInstance &rhs) const
+        {
+            return std::tie(itemId, geometrySetId, transform)
+                == std::tie(rhs.itemId, rhs.geometrySetId, rhs.transform);
+        }
 
         ItemId itemId{ };
+        ItemId geometrySetId{ };
         QString transform;
-        std::vector<D3DGeometry> geometries;
+        D3DGeometrySet *geometrySet{ };
     };
-
-    D3DGeometry &getGeometry(int instanceIndex, int geometryIndex);
 
     ItemId mItemId{ };
     MessageList mMessages;
     QSet<ItemId> mUsedItems;
     std::vector<D3DInstance> mInstances;
-    std::vector<ComPtr<ID3D12Resource>> mBottomLevels;
-    std::vector<ComPtr<ID3D12Resource>> mScratchBuffers;
     ComPtr<ID3D12Resource> mInstanceBuffer;
     ComPtr<ID3D12Resource> mTopLevel;
+    ComPtr<ID3D12Resource> mScratchBuffer;
 };
 
 #endif // D3D_ENABLED

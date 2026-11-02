@@ -130,6 +130,7 @@
     ADD(CallClearDepth, Call, clearDepth)                                     \
     ADD(CallClearStencil, Call, clearStencil)                                 \
     ADD(CallExecuteOn, Call, executeOn)                                       \
+    ADD(InstanceGeometrySetId, Instance, geometrySetId)                       \
     ADD(InstanceTransform, Instance, transform)                               \
     ADD(GeometryType, Geometry, geometryType)                                 \
     ADD(GeometryVertexBufferBlockId, Geometry, vertexBufferBlockId)           \

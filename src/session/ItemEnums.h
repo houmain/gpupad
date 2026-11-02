@@ -22,9 +22,10 @@ namespace ItemEnums {
         Attachment,
         Call,
         Script,
+        GeometrySet,
+        Geometry,
         AccelerationStructure,
         Instance,
-        Geometry,
     };
     Q_ENUM_NS(ItemType)
 

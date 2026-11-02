@@ -23,6 +23,7 @@ struct GLRenderSession::CommandQueue
     std::map<ItemId, GLProgram> programs;
     std::map<ItemId, GLTarget> targets;
     std::map<ItemId, GLStream> vertexStreams;
+    std::map<ItemId, GLGeometrySet> geometrySets;
     std::map<ItemId, GLAccelerationStructure> accelerationStructures;
     std::map<SoundBufferKey, GLBuffer> soundBuffers;
     std::map<AudioTextureKey, GLTexture> audioTextures;

@@ -21,8 +21,10 @@ const accelerationStructure = {
   type: "AccelerationStructure",
   items: [
     {
+      type: "Instance",
       items: [
         {
+          type: "Geometry",
           geometryType: "Triangles",
           vertexBufferBlockId: vertices.id,
           indexBufferBlockId: indices.id,

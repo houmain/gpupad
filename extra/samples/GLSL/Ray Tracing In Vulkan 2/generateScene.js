@@ -4,7 +4,7 @@ const scene = app.getItem("Scene")
 let mesh = app.callAction("GenerateMesh", {
   name: "Mesh",
   type: "Trefoil Knot",
-  group: app.getItem("Scene/Mesh"),
+  group: app.findItem("Scene/Mesh"),
   parent: scene,
   slices: 50,
   stacks: 180,
@@ -21,8 +21,10 @@ const as = {
   type: "AccelerationStructure",
   items: [
     {
+      type: "Instance",
       items: [
         {
+          type: "Geometry",
           geometryType: "Triangles",
           vertexBufferBlockId: vertices.id,
           indexBufferBlockId: indices.id,

@@ -134,6 +134,7 @@ public:
         CallClearColor,
         CallClearDepth,
         CallClearStencil,
+        InstanceGeometrySetId,
         InstanceTransform,
         GeometryType,
         GeometryVertexBufferBlockId,

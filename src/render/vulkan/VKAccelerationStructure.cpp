@@ -1,4 +1,3 @@
-
 #include "VKAccelerationStructure.h"
 
 VKAccelerationStructure::VKAccelerationStructure(
@@ -6,139 +5,36 @@ VKAccelerationStructure::VKAccelerationStructure(
     : mItemId(accelStruct.id)
 {
     mUsedItems += accelStruct.id;
-
     for (auto item : accelStruct.items)
-        if (auto instance = castItem<Instance>(item)) {
-            auto geometries = std::vector<VKGeometry>();
-            for (auto item : instance->items)
-                if (auto geometry = castItem<Geometry>(item)) {
-                    geometries.push_back({
-                        .itemId = geometry->id,
-                        .type = geometry->geometryType,
-                        .primitiveCount = geometry->count,
-                        .primitiveOffset = geometry->offset,
-                    });
-                }
+        if (auto instance = castItem<Instance>(item))
             mInstances.push_back({
-                .itemId = item->id,
+                .itemId = instance->id,
+                .geometrySetId = instance->geometrySetId,
                 .transform = instance->transform,
-                .geometries = std::move(geometries),
             });
-        }
 }
 
 bool VKAccelerationStructure::operator==(
     const VKAccelerationStructure &rhs) const
 {
-    return std::tie(mInstances) == std::tie(rhs.mInstances);
+    if (mInstances != rhs.mInstances)
+        return false;
+    for (auto i = 0u; i < mInstances.size(); ++i) {
+        const auto lhsSet = mInstances[i].geometrySet;
+        const auto rhsSet = rhs.mInstances[i].geometrySet;
+        if (static_cast<bool>(lhsSet) != static_cast<bool>(rhsSet)
+            || (lhsSet && *lhsSet != *rhsSet))
+            return false;
+    }
+    return true;
 }
 
-auto VKAccelerationStructure::getGeometry(int instanceIndex, int geometryIndex)
-    -> VKGeometry &
+void VKAccelerationStructure::setGeometrySet(
+    int instanceIndex, VKGeometrySet *geometrySet)
 {
     Q_ASSERT(instanceIndex >= 0
         && instanceIndex < static_cast<int>(mInstances.size()));
-    auto &instance = mInstances[instanceIndex];
-    Q_ASSERT(geometryIndex >= 0
-        && geometryIndex < static_cast<int>(instance.geometries.size()));
-    return instance.geometries[geometryIndex];
-}
-
-void VKAccelerationStructure::setVertexBuffer(int instanceIndex,
-    int geometryIndex, VKBuffer *buffer, const Block &block,
-    VKRenderSession &renderSession)
-{
-    if (!buffer)
-        return;
-
-    mUsedItems += buffer->usedItems();
-
-    buffer->addUsage(
-        KDGpu::BufferUsageFlagBits::AccelerationStructureBuildInputReadOnlyBit
-        | KDGpu::BufferUsageFlagBits::ShaderDeviceAddressBit);
-
-    auto &geometry = getGeometry(instanceIndex, geometryIndex);
-    geometry.vertexStride = getBlockStride(block);
-
-    if (geometry.type == Geometry::GeometryType::AxisAlignedBoundingBoxes) {
-        const auto expectedStride = sizeof(VkAabbPositionsKHR);
-        if (geometry.vertexStride != expectedStride) {
-            mMessages.insert(geometry.itemId,
-                MessageType::InvalidGeometryStride,
-                QStringLiteral("%1/%2 bytes")
-                    .arg(geometry.vertexStride)
-                    .arg(expectedStride));
-            return;
-        }
-    }
-
-    auto offset = 0;
-    auto rowCount = 0;
-    renderSession.evaluateBlockProperties(block, &offset, &rowCount);
-
-    geometry.vertexBuffer = buffer;
-    geometry.vertexBufferOffset = static_cast<size_t>(offset);
-    geometry.vertexCount = static_cast<uint32_t>(rowCount);
-}
-
-void VKAccelerationStructure::setIndexBuffer(int instanceIndex,
-    int geometryIndex, VKBuffer *buffer, const Block &block,
-    VKRenderSession &renderSession)
-{
-    if (!buffer)
-        return;
-
-    mUsedItems += buffer->usedItems();
-
-    buffer->addUsage(
-        KDGpu::BufferUsageFlagBits::AccelerationStructureBuildInputReadOnlyBit
-        | KDGpu::BufferUsageFlagBits::ShaderDeviceAddressBit);
-
-    auto offset = 0;
-    auto rowCount = 0;
-    renderSession.evaluateBlockProperties(block, &offset, &rowCount);
-
-    auto indexSize = 0;
-    for (auto item : block.items)
-        if (auto field = castItem<Field>(item)) {
-            indexSize += getFieldSize(*field);
-            mUsedItems += field->id;
-        }
-    const auto indexType = getKDIndexType(indexSize);
-    if (!indexType || !indexSize) {
-        mMessages.insert(block.id, MessageType::InvalidIndexType,
-            QStringLiteral("%1 bytes").arg(indexSize));
-        return;
-    }
-
-    auto &geometry = getGeometry(instanceIndex, geometryIndex);
-    geometry.indexBuffer = buffer;
-    geometry.indexBufferOffset = static_cast<size_t>(offset);
-    geometry.indexType = *indexType;
-    const auto indicesPerRow = getBlockStride(block) / indexSize;
-    geometry.indexCount = static_cast<uint32_t>(rowCount) * indicesPerRow;
-}
-
-void VKAccelerationStructure::setTransformBuffer(int instanceIndex,
-    int geometryIndex, VKBuffer *buffer, const Block &block,
-    VKRenderSession &renderSession)
-{
-    if (!buffer)
-        return;
-
-    mUsedItems += buffer->usedItems();
-
-    buffer->addUsage(
-        KDGpu::BufferUsageFlagBits::AccelerationStructureBuildInputReadOnlyBit
-        | KDGpu::BufferUsageFlagBits::ShaderDeviceAddressBit);
-
-    auto offset = 0;
-    auto rowCount = 0;
-    renderSession.evaluateBlockProperties(block, &offset, &rowCount);
-
-    auto &geometry = getGeometry(instanceIndex, geometryIndex);
-    geometry.transformBuffer = buffer;
-    geometry.transformBufferOffset = static_cast<size_t>(offset);
+    mInstances[instanceIndex].geometrySet = geometrySet;
 }
 
 void VKAccelerationStructure::memoryBarrier(
@@ -166,135 +62,29 @@ void VKAccelerationStructure::prepare(VKContext &context,
     const auto getTransformValues = [&](ItemId itemId,
                                         const QString &transform) {
         if (transform.isEmpty())
-            return ScriptValueList{};
+            return ScriptValueList{ };
         auto values = scriptEngine.evaluateValues(transform, itemId);
-        if (values.size() != 12 && values.size() != 16)
+        if (values.size() != 12 && values.size() != 16) {
             mMessages.insert(itemId, MessageType::UniformComponentMismatch,
                 QString("(%1/12 or 16)").arg(values.count()));
+            return ScriptValueList{ };
+        }
         values.resize(12);
         return values;
     };
 
-    mBottomLevelAs.clear();
-
-    auto blasBuildGeometryInfos =
-        std::vector<KDGpu::BuildAccelerationStructureOptions::BuildOptions>();
     auto geometryInstances =
-        KDGpu::AccelerationStructureGeometryInstancesData{};
-
-    // create one BLAS per instance
+        KDGpu::AccelerationStructureGeometryInstancesData{ };
     auto instanceIndex = 0u;
     for (const auto &instance : mInstances) {
         mUsedItems += instance.itemId;
-
-        auto &blasBuildOptions = blasBuildGeometryInfos.emplace_back();
-        auto geometryTypesAndCount = std::vector<
-            KDGpu::AccelerationStructureOptions::GeometryTypeAndCount>();
-
-        for (const auto &geometry : instance.geometries) {
-            mUsedItems += geometry.itemId;
-
-            if (!geometry.vertexBuffer) {
-                mMessages.insert(geometry.itemId, MessageType::BufferNotSet,
-                    "Vertices");
-                return;
-            }
-            auto &vertexBuffer = *geometry.vertexBuffer;
-            vertexBuffer.prepareAccelerationStructureGeometry(context);
-            Q_ASSERT(vertexBuffer.buffer().bufferDeviceAddress());
-
-            auto indexBufferHandle = KDGpu::Handle<KDGpu::Buffer_t>();
-            auto transformBufferHandle = KDGpu::Handle<KDGpu::Buffer_t>();
-            auto maxPrimitiveCount = 0u;
-
-            using GeometryType = Geometry::GeometryType;
-            if (geometry.type == GeometryType::AxisAlignedBoundingBoxes) {
-                maxPrimitiveCount = geometry.vertexCount;
-            } else if (geometry.type == GeometryType::Triangles) {
-                maxPrimitiveCount = geometry.vertexCount / 3;
-                if (auto indexBuffer = geometry.indexBuffer) {
-                    indexBuffer->prepareAccelerationStructureGeometry(context);
-                    Q_ASSERT(indexBuffer->buffer().bufferDeviceAddress());
-                    indexBufferHandle = indexBuffer->buffer();
-                    maxPrimitiveCount = geometry.indexCount / 3;
-                }
-                if (auto transformBuffer = geometry.transformBuffer) {
-                    transformBuffer->prepareAccelerationStructureGeometry(
-                        context);
-                    Q_ASSERT(transformBuffer->buffer().bufferDeviceAddress());
-                    transformBufferHandle = transformBuffer->buffer();
-                }
-            } else {
-                Q_UNREACHABLE();
-            }
-
-            const auto primitiveCount = (geometry.primitiveCount.isEmpty()
-                    ? maxPrimitiveCount
-                    : scriptEngine.evaluateUInt(geometry.primitiveCount,
-                          geometry.itemId));
-            const auto primitiveOffset = scriptEngine.evaluateUInt(
-                geometry.primitiveOffset, geometry.itemId);
-
-            if (primitiveCount > maxPrimitiveCount) {
-                mMessages.insert(geometry.itemId, MessageType::CountExceeded,
-                    QStringLiteral("%1 > %2")
-                        .arg(primitiveCount)
-                        .arg(maxPrimitiveCount));
-                return;
-            }
-
-            if (geometry.type == GeometryType::AxisAlignedBoundingBoxes) {
-                const auto aabbsGeometry =
-                    KDGpu::AccelerationStructureGeometryAabbsData{
-                        .flags = KDGpu::AccelerationStructureGeometryFlagBits::Opaque,
-                        .data = vertexBuffer.buffer(),
-                        .stride = geometry.vertexStride,
-                        .dataOffset = geometry.vertexBufferOffset,
-                    };
-                geometryTypesAndCount.push_back({
-                    .geometry = aabbsGeometry,
-                    .maxPrimitiveCount = primitiveCount,
-                });
-                blasBuildOptions.geometries.push_back(aabbsGeometry);
-
-            } else if (geometry.type == GeometryType::Triangles) {
-                const auto triangleGeometry =
-                    KDGpu::AccelerationStructureGeometryTrianglesData{
-                        .flags = KDGpu::AccelerationStructureGeometryFlagBits::Opaque,
-                        .vertexFormat = KDGpu::Format::R32G32B32_SFLOAT,
-                        .vertexData = vertexBuffer.buffer(),
-                        .vertexStride = geometry.vertexStride,
-                        .vertexDataOffset = geometry.vertexBufferOffset,
-                        .maxVertex = std::max(geometry.vertexCount, 1u) - 1u,
-                        .indexType = geometry.indexType,
-                        .indexData = indexBufferHandle,
-                        .indexDataOffset = geometry.indexBufferOffset,
-                        .transformData = transformBufferHandle,
-                        .transformDataOffset = geometry.transformBufferOffset,
-                    };
-                geometryTypesAndCount.push_back({
-                    .geometry = triangleGeometry,
-                    .maxPrimitiveCount = primitiveCount,
-                });
-                blasBuildOptions.geometries.push_back(triangleGeometry);
-            }
-            blasBuildOptions.buildRangeInfos.push_back({
-                .primitiveCount = primitiveCount,
-                .primitiveOffset = primitiveOffset,
-                .firstVertex = 0,
-                .transformOffset = 0,
-            });
-        }
-
-        auto &bottomLevelAs = mBottomLevelAs.emplace_back();
-        bottomLevelAs = context.device.createAccelerationStructure(
-            KDGpu::AccelerationStructureOptions{
-                .type = KDGpu::AccelerationStructureType::BottomLevel,
-                .flags = KDGpu::AccelerationStructureFlagBits::PreferFastTrace,
-                .geometryTypesAndCount = std::move(geometryTypesAndCount),
-            });
-
-        blasBuildOptions.destinationStructure = bottomLevelAs;
+        if (!instance.geometrySet)
+            return;
+        instance.geometrySet->prepare(context, scriptEngine);
+        const auto &bottomLevelAs = instance.geometrySet->bottomLevelAs();
+        if (!bottomLevelAs.isValid())
+            return;
+        mUsedItems += instance.geometrySet->usedItems();
 
         auto &geometryInstance = geometryInstances.data.emplace_back(
             KDGpu::AccelerationStructureGeometryInstance{
@@ -310,7 +100,6 @@ void VKAccelerationStructure::prepare(VKContext &context,
                     KDGpu::GeometryInstanceFlagBits::TriangleFacingCullDisable,
                 .accelerationStructure = bottomLevelAs,
             });
-
         const auto transform =
             getTransformValues(instance.itemId, instance.transform);
         for (auto i = 0; i < transform.size(); ++i)
@@ -319,27 +108,17 @@ void VKAccelerationStructure::prepare(VKContext &context,
 
     if (geometryInstances.data.empty())
         return;
-
-    // build all BLASs
-    context.commandRecorder->buildAccelerationStructures({
-        .buildGeometryInfos = std::move(blasBuildGeometryInfos),
-    });
-
-    memoryBarrier(*context.commandRecorder,
-        KDGpu::PipelineStageFlagBit::AccelerationStructureBuildBit);
-
-    // one TLAS with an instances list
     mTopLevelAs = context.device.createAccelerationStructure({
         .type = KDGpu::AccelerationStructureType::TopLevel,
         .flags = KDGpu::AccelerationStructureFlagBits::PreferFastTrace,
         .geometryTypesAndCount = {
             {
                 .geometry = geometryInstances,
-                .maxPrimitiveCount = static_cast<uint32_t>(geometryInstances.data.size()),
+                .maxPrimitiveCount =
+                    static_cast<uint32_t>(geometryInstances.data.size()),
             },
         },
     });
-
     context.commandRecorder->buildAccelerationStructures({
         .buildGeometryInfos = {
             {
@@ -347,7 +126,8 @@ void VKAccelerationStructure::prepare(VKContext &context,
                 .destinationStructure = mTopLevelAs,
                 .buildRangeInfos = {
                     {
-                        .primitiveCount = static_cast<uint32_t>(geometryInstances.data.size()),
+                        .primitiveCount = static_cast<uint32_t>(
+                            geometryInstances.data.size()),
                         .primitiveOffset = 0,
                         .firstVertex = 0,
                         .transformOffset = 0,
@@ -356,7 +136,6 @@ void VKAccelerationStructure::prepare(VKContext &context,
             },
         },
     });
-
     memoryBarrier(*context.commandRecorder,
         KDGpu::PipelineStageFlagBit::AllCommandsBit);
 }

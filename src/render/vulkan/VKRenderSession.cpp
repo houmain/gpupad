@@ -7,6 +7,7 @@
 #include "VKTarget.h"
 #include "VKTexture.h"
 #include "VKAccelerationStructure.h"
+#include "VKGeometrySet.h"
 #include "render/RenderSessionBase_CommandQueue.h"
 #include <algorithm>
 #include <QStack>
@@ -33,6 +34,7 @@ struct VKRenderSession::CommandQueue
     std::map<ItemId, VKProgram> programs;
     std::map<ItemId, VKTarget> targets;
     std::map<ItemId, VKStream> vertexStreams;
+    std::map<ItemId, VKGeometrySet> geometrySets;
     std::map<ItemId, VKAccelerationStructure> accelerationStructures;
     std::map<SoundBufferKey, VKBuffer> soundBuffers;
     std::map<AudioTextureKey, VKTexture> audioTextures;

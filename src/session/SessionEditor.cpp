@@ -68,10 +68,11 @@ SessionEditor::SessionEditor(QWidget *parent)
     addAction(mAddTargetAction, Item::Type::Target);
     addAction(mAddAttributeAction, Item::Type::Attribute);
     addAction(mAddStreamAction, Item::Type::Stream);
+    addAction(mAddGeometrySetAction, Item::Type::GeometrySet);
+    addAction(mAddGeometryAction, Item::Type::Geometry);
     addAction(mAddAccelerationStructureAction,
         Item::Type::AccelerationStructure);
     addAction(mAddInstanceAction, Item::Type::Instance);
-    addAction(mAddGeometryAction, Item::Type::Geometry);
 
     addItemActions(mContextMenu);
 
@@ -102,6 +103,7 @@ void SessionEditor::addItemActions(QMenu *menu)
     menu->addAction(mAddProgramAction);
     menu->addAction(mAddCallAction);
     menu->addAction(mAddScriptAction);
+    menu->addAction(mAddGeometrySetAction);
     menu->addAction(mAddAccelerationStructureAction);
 }
 
@@ -121,6 +123,7 @@ void SessionEditor::updateItemActions()
              TypeAction{ Item::Type::Attachment, mAddAttachmentAction },
              TypeAction{ Item::Type::Instance, mAddInstanceAction },
              TypeAction{ Item::Type::Geometry, mAddGeometryAction },
+             TypeAction{ Item::Type::GeometrySet, mAddGeometrySetAction },
          })
         action->setVisible(mModel.canContainType(index, type)
             || mModel.canContainType(index.parent(), type));
@@ -389,10 +392,9 @@ void SessionEditor::addItem(Item::Type type)
     else if (type == Item::Type::Program)
         mModel.insertItem(Item::Type::Shader, index);
     else if (type == Item::Type::AccelerationStructure) {
-        const auto instance = mModel.insertItem(Item::Type::Instance, index);
-        mModel.insertItem(Item::Type::Geometry, instance);
-        setExpanded(instance, true);
-    }
+        mModel.insertItem(Item::Type::Instance, index);
+    } else if (type == Item::Type::GeometrySet)
+        mModel.insertItem(Item::Type::Geometry, index);
 
     mModel.endUndoMacro();
 

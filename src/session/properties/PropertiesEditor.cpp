@@ -26,6 +26,7 @@
 #include "ui_AccelerationStructureProperties.h"
 #include "ui_InstanceProperties.h"
 #include "ui_GeometryProperties.h"
+#include "ui_GeometrySetProperties.h"
 #include <QDataWidgetMapper>
 #include <QStackedWidget>
 #include <QTimer>
@@ -112,9 +113,10 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
     mCallProperties = new CallProperties(this);
     mStack->addWidget(mCallProperties);
     add(mScriptProperties);
+    add(mGeometrySetProperties);
+    add(mGeometryProperties);
     add(mAccelerationStructureProperties);
     add(mInstanceProperties);
-    add(mGeometryProperties);
 
     mMapper->setModel(&mModel);
     connect(mSubmitTimer, &QTimer::timeout, mSessionProperties,
@@ -160,6 +162,10 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
     connect(mAttributeProperties->field, &ReferenceComboBox::listRequired,
         [this]() { return getItemIds(Item::Type::Field); });
 
+    connect(mInstanceProperties->geometrySet,
+        &ReferenceComboBox::listRequired,
+        [this]() { return getItemIds(Item::Type::GeometrySet, true); });
+
     connect(mGeometryProperties->type, &DataComboBox::currentDataChanged, this,
         &PropertiesEditor::updateGeometryWidgets);
     connect(mGeometryProperties->vertexBufferBlock,
@@ -178,7 +184,8 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
         });
 
     for (auto comboBox :
-        { mAttributeProperties->field, mGeometryProperties->vertexBufferBlock,
+        { mAttributeProperties->field, mInstanceProperties->geometrySet,
+            mGeometryProperties->vertexBufferBlock,
             mGeometryProperties->indexBufferBlock,
             mGeometryProperties->transformBufferBlock })
         connect(comboBox, &ReferenceComboBox::textRequired,
@@ -380,7 +387,13 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
 
     case Item::Type::Instance:
         map(mInstanceProperties->name, SessionModel::Name);
+        map(mInstanceProperties->geometrySet,
+            SessionModel::InstanceGeometrySetId);
         map(mInstanceProperties->transform, SessionModel::InstanceTransform);
+        break;
+
+    case Item::Type::GeometrySet:
+        map(mGeometrySetProperties->name, SessionModel::Name);
         break;
 
     case Item::Type::Geometry:
@@ -402,9 +415,9 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
 
     // values of Item::Type must match order of Stack Widgets
     static_assert(static_cast<int>(Item::Type::Root) == 0);
-    static_assert(static_cast<int>(Item::Type::Geometry) == 18);
+    static_assert(static_cast<int>(Item::Type::Instance) == 19);
     const auto lastStackWidget = static_cast<Item::Type>(mStack->count() - 1);
-    Q_ASSERT(lastStackWidget == Item::Type::Geometry);
+    Q_ASSERT(lastStackWidget == Item::Type::Instance);
 
     const auto stackIndex = static_cast<int>(mModel.getItemType(index));
     mStack->setCurrentIndex(stackIndex);

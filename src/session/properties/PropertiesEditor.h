@@ -22,6 +22,7 @@ namespace Ui {
     class AccelerationStructureProperties;
     class InstanceProperties;
     class GeometryProperties;
+    class GeometrySetProperties;
 } // namespace Ui
 
 class QStackedWidget;
@@ -92,6 +93,7 @@ private:
         mAccelerationStructureProperties;
     std::unique_ptr<Ui::InstanceProperties> mInstanceProperties;
     std::unique_ptr<Ui::GeometryProperties> mGeometryProperties;
+    std::unique_ptr<Ui::GeometrySetProperties> mGeometrySetProperties;
 };
 
 QString splitPascalCase(QString str);

@@ -5,6 +5,18 @@
 
 class GLBuffer;
 
+class GLGeometrySet
+{
+public:
+    explicit GLGeometrySet(const GeometrySet &) { }
+    bool operator==(const GLGeometrySet &) const { return true; }
+    void setVertexBuffer(int, GLBuffer *, const Block &, GLRenderSession &) { }
+    void setIndexBuffer(int, GLBuffer *, const Block &, GLRenderSession &) { }
+    void setTransformBuffer(int, GLBuffer *, const Block &, GLRenderSession &)
+    {
+    }
+};
+
 class GLAccelerationStructure : public AccelerationStructureBase
 {
 public:
@@ -13,6 +25,12 @@ public:
     }
 
     bool operator==(const GLAccelerationStructure &rhs) const { return true; }
+
+    void setGeometrySet(int, GLGeometrySet *) { }
+    template <typename GeometrySets>
+    void relinkGeometrySets(GeometrySets &)
+    {
+    }
 
     void setVertexBuffer(int instanceIndex, int geometryIndex, GLBuffer *buffer,
         const Block &block, GLRenderSession &renderSession)

@@ -83,11 +83,12 @@ SessionModel::SessionModel(QObject *parent) : SessionModelCore(parent)
     mTypeIcons[Item::Type::Call] = QIcon::fromTheme("dialog-information");
     mTypeIcons[Item::Type::Script] =
         QIcon::fromTheme("accessories-text-editor");
+    mTypeIcons[Item::Type::GeometrySet] = QIcon::fromTheme("zoom-fit-best");
+    mTypeIcons[Item::Type::Geometry] =
+        QIcon::fromTheme("media-playback-start-rtl");
     mTypeIcons[Item::Type::AccelerationStructure] =
         QIcon::fromTheme("zoom-fit-best");
     mTypeIcons[Item::Type::Instance] = QIcon::fromTheme("mail-attachment");
-    mTypeIcons[Item::Type::Geometry] =
-        QIcon::fromTheme("media-playback-start-rtl");
 
     connect(&undoStack(), &QUndoStack::cleanChanged, this,
         &SessionModel::undoStackCleanChanged);
@@ -176,7 +177,7 @@ Qt::ItemFlags SessionModel::flags(const QModelIndex &index) const
     case Item::Type::Stream:
     case Item::Type::Target:
     case Item::Type::AccelerationStructure:
-    case Item::Type::Instance:              flags |= Qt::ItemIsDropEnabled; break;
+    case Item::Type::GeometrySet:           flags |= Qt::ItemIsDropEnabled; break;
     default:                                break;
     }
     // workaround to optimize D&D (do not snap to not droppable targets)
@@ -733,8 +734,8 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         result &= (column != BindingBufferId || buffer || textureBuffer);
         result &= (column != BindingBlockId || block);
         result &= (column != BindingSubroutine || subroutine);
-        result &= (column != BindingAccelerationStructureId
-            || accelerationStructure);
+        result &=
+            (column != BindingAccelerationStructureId || accelerationStructure);
         break;
     }
 

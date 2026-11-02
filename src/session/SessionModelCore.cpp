@@ -105,6 +105,7 @@ namespace {
             return new AccelerationStructure();
         case Item::Type::Instance: return new Instance();
         case Item::Type::Geometry: return new Geometry();
+        case Item::Type::GeometrySet: return new GeometrySet();
         }
         Q_UNREACHABLE();
         return nullptr;
@@ -152,6 +153,8 @@ namespace {
                 return new Instance(static_cast<const Instance &>(item));
             case Item::Type::Geometry:
                 return new Geometry(static_cast<const Geometry &>(item));
+            case Item::Type::GeometrySet:
+                return new GeometrySet(static_cast<const GeometrySet &>(item));
             }
             Q_UNREACHABLE();
             return nullptr;
@@ -238,7 +241,8 @@ bool SessionModelCore::canContainType(const QModelIndex &index,
         case Item::Type::Target:
         case Item::Type::Call:
         case Item::Type::Script:
-        case Item::Type::AccelerationStructure: return true;
+        case Item::Type::AccelerationStructure:
+        case Item::Type::GeometrySet: return true;
         default:                                return false;
         }
     case Item::Type::Buffer:  return (type == Item::Type::Block);
@@ -248,7 +252,7 @@ bool SessionModelCore::canContainType(const QModelIndex &index,
     case Item::Type::Target:  return (type == Item::Type::Attachment);
     case Item::Type::AccelerationStructure:
         return (type == Item::Type::Instance);
-    case Item::Type::Instance: return (type == Item::Type::Geometry);
+    case Item::Type::GeometrySet: return (type == Item::Type::Geometry);
     default:                   return false;
     }
 }
@@ -262,7 +266,7 @@ Item::Type SessionModelCore::getDefaultChildType(const QModelIndex &index) const
     case Item::Type::Stream:                return Item::Type::Attribute;
     case Item::Type::Target:                return Item::Type::Attachment;
     case Item::Type::AccelerationStructure: return Item::Type::Instance;
-    case Item::Type::Instance:              return Item::Type::Geometry;
+    case Item::Type::GeometrySet:           return Item::Type::Geometry;
     default:                                return Item::Type::Group;
     }
 }
