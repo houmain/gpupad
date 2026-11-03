@@ -9,6 +9,9 @@ VKGeometrySet::VKGeometrySet(const Item &geometrySource)
             mGeometries.push_back({
                 .itemId = geometry->id,
                 .type = geometry->geometryType,
+                .opaque = geometry->opaque,
+                .noDuplicateAnyHitInvocation =
+                    geometry->noDuplicateAnyHitInvocation,
                 .primitiveCount = geometry->count,
                 .primitiveOffset = geometry->offset,
             });
@@ -185,10 +188,18 @@ void VKGeometrySet::prepare(VKContext &context, ScriptEngine &scriptEngine)
             return;
         }
 
+        auto geometryFlags = KDGpu::AccelerationStructureGeometryFlags{ };
+        if (geometry.opaque)
+            geometryFlags |=
+                KDGpu::AccelerationStructureGeometryFlagBits::Opaque;
+        if (geometry.noDuplicateAnyHitInvocation)
+            geometryFlags |= KDGpu::AccelerationStructureGeometryFlagBits::
+                NoDuplicateAnyHitInvocation;
+
         if (geometry.type == GeometryType::AxisAlignedBoundingBoxes) {
             const auto aabbsGeometry =
                 KDGpu::AccelerationStructureGeometryAabbsData{
-                    .flags = KDGpu::AccelerationStructureGeometryFlagBits::Opaque,
+                    .flags = geometryFlags,
                     .data = vertexBuffer.buffer(),
                     .stride = geometry.vertexStride,
                     .dataOffset = geometry.vertexBufferOffset,
@@ -201,7 +212,7 @@ void VKGeometrySet::prepare(VKContext &context, ScriptEngine &scriptEngine)
         } else {
             const auto triangleGeometry =
                 KDGpu::AccelerationStructureGeometryTrianglesData{
-                    .flags = KDGpu::AccelerationStructureGeometryFlagBits::Opaque,
+                    .flags = geometryFlags,
                     .vertexFormat = KDGpu::Format::R32G32B32_SFLOAT,
                     .vertexData = vertexBuffer.buffer(),
                     .vertexStride = geometry.vertexStride,

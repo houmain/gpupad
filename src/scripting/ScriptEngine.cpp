@@ -296,6 +296,24 @@ uint32_t ScriptEngine::evaluateUInt(const QString &valueExpression,
         std::max(evaluateInt(valueExpression, itemId), 0));
 }
 
+std::optional<uint32_t> ScriptEngine::evaluateUInt(
+    const QString &valueExpression, ItemId itemId, uint32_t minimum,
+    uint32_t maximum, const QString &name)
+{
+    Q_ASSERT(minimum <= maximum);
+    const auto value = evaluateValue(valueExpression, itemId);
+    if (!std::isfinite(value) || value < minimum || value > maximum
+        || std::floor(value) != value) {
+        mMessages.insert(itemId, MessageType::ScriptError,
+            QStringLiteral("%1 must be an integer in [%2, %3]")
+                .arg(name)
+                .arg(minimum)
+                .arg(maximum));
+        return std::nullopt;
+    }
+    return static_cast<uint32_t>(value);
+}
+
 QJSEngine &ScriptEngine::jsEngine()
 {
     Q_ASSERT(QThread::currentThread() == thread());

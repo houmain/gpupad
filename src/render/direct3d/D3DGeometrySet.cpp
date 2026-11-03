@@ -25,6 +25,9 @@ D3DGeometrySet::D3DGeometrySet(const Item &geometrySource)
             mGeometries.push_back({
                 .itemId = geometry->id,
                 .type = geometry->geometryType,
+                .opaque = geometry->opaque,
+                .noDuplicateAnyHitInvocation =
+                    geometry->noDuplicateAnyHitInvocation,
                 .primitiveCount = geometry->count,
                 .primitiveOffset = geometry->offset,
             });
@@ -142,8 +145,14 @@ bool D3DGeometrySet::build(D3DContext &context, ScriptEngine &scriptEngine)
         geometry.vertexBuffer->prepareAccelerationStructureGeometry(context);
         const auto primitiveOffset = scriptEngine.evaluateUInt(
             geometry.primitiveOffset, geometry.itemId);
+        auto geometryFlags = D3D12_RAYTRACING_GEOMETRY_FLAG_NONE;
+        if (geometry.opaque)
+            geometryFlags |= D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+        if (geometry.noDuplicateAnyHitInvocation)
+            geometryFlags |=
+                D3D12_RAYTRACING_GEOMETRY_FLAG_NO_DUPLICATE_ANYHIT_INVOCATION;
         auto desc = D3D12_RAYTRACING_GEOMETRY_DESC{
-            .Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE,
+            .Flags = geometryFlags,
         };
 
         if (geometry.type

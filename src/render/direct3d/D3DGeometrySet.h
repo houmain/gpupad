@@ -31,6 +31,8 @@ private:
 
         ItemId itemId{ };
         Geometry::GeometryType type{ };
+        bool opaque{ };
+        bool noDuplicateAnyHitInvocation{ };
         D3DBuffer *vertexBuffer{ };
         size_t vertexBufferOffset{ };
         uint32_t vertexCount{ };

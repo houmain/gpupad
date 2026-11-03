@@ -64,6 +64,93 @@
      <item row="2" column="1">
       <widget class="ExpressionLineEdit" name="transform"/>
      </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="labelShaderInstanceId">
+       <property name="text">
+        <string>Shader Instance ID</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="ExpressionLineEdit" name="shaderInstanceId">
+       <property name="placeholderText">
+        <string>ordinal (24-bit)</string>
+       </property>
+       <property name="toolTip">
+        <string>24-bit value exposed to shaders as the instance ID. Leave empty to use the ordinal instance index.</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="labelVisibilityMask">
+       <property name="text">
+        <string>Visibility Mask</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="ExpressionLineEdit" name="visibilityMask">
+       <property name="toolTip">
+        <string>8-bit visibility mask tested against the ray mask. Zero excludes the instance.</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="labelHitGroupRecordOffset">
+       <property name="text">
+        <string>Hit Group Record Offset</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="ExpressionLineEdit" name="hitGroupRecordOffset">
+       <property name="toolTip">
+        <string>24-bit contribution to shader binding table hit-record selection. This is a record offset, not a byte offset.</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="0">
+      <widget class="QLabel" name="labelTriangleCulling">
+       <property name="text">
+        <string>Triangle Culling</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="QCheckBox" name="triangleCulling">
+       <property name="toolTip">
+        <string>Allow per-ray front/back triangle culling flags to affect this instance. Rays without a culling flag are unchanged.</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0">
+      <widget class="QLabel" name="labelFrontFace">
+       <property name="text">
+        <string>Front Face</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="1">
+      <widget class="DataComboBox" name="frontFace">
+       <property name="toolTip">
+        <string>Triangle winding considered front-facing in object space.</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="0">
+      <widget class="QLabel" name="labelOpacityMode">
+       <property name="text">
+        <string>Opacity</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="1">
+      <widget class="DataComboBox" name="opacityMode">
+       <property name="toolTip">
+        <string>Use each Geometry setting or override every Geometry in this instance.</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
   </layout>
@@ -78,6 +165,11 @@
    <class>ExpressionLineEdit</class>
    <extends>QLineEdit</extends>
    <header>widgets//ExpressionLineEdit.h</header>
+  </customwidget>
+  <customwidget>
+   <class>DataComboBox</class>
+   <extends>QComboBox</extends>
+   <header>widgets//DataComboBox.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

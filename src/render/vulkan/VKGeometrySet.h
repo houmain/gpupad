@@ -30,6 +30,8 @@ private:
 
         ItemId itemId{ };
         Geometry::GeometryType type{ };
+        bool opaque{ };
+        bool noDuplicateAnyHitInvocation{ };
         VKBuffer *vertexBuffer{ };
         size_t vertexBufferOffset{ };
         uint32_t vertexCount{ };

@@ -108,6 +108,34 @@
      <item row="4" column="1">
       <widget class="ReferenceComboBox" name="transformBufferBlock"/>
      </item>
+     <item row="7" column="0">
+      <widget class="QLabel" name="labelOpaque">
+       <property name="text">
+        <string>Opaque</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="1">
+      <widget class="QCheckBox" name="opaque">
+       <property name="toolTip">
+        <string>Skip any-hit shaders for this Geometry unless overridden by instance or ray flags.</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="0">
+      <widget class="QLabel" name="labelNoDuplicateAnyHitInvocation">
+       <property name="text">
+        <string>No Duplicate Any-Hit</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="1">
+      <widget class="QCheckBox" name="noDuplicateAnyHitInvocation">
+       <property name="toolTip">
+        <string>Invoke an any-hit shader at most once for each ray/primitive intersection.</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
   </layout>

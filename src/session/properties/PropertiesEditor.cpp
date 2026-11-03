@@ -216,6 +216,8 @@ void PropertiesEditor::fillComboBoxes()
         "Tessellation Evaluation");
     fillComboBox<Script::ExecuteOn>(mScriptProperties->executeOn);
     fillComboBox<Geometry::GeometryType>(mGeometryProperties->type);
+    fillComboBox<Instance::FrontFace>(mInstanceProperties->frontFace);
+    fillComboBox<Instance::OpacityMode>(mInstanceProperties->opacityMode);
 }
 
 QVariantList PropertiesEditor::getFileNames(Item::Type type, bool addNull) const
@@ -390,6 +392,18 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
         map(mInstanceProperties->geometrySet,
             SessionModel::InstanceGeometrySetId);
         map(mInstanceProperties->transform, SessionModel::InstanceTransform);
+        map(mInstanceProperties->shaderInstanceId,
+            SessionModel::InstanceShaderInstanceId);
+        map(mInstanceProperties->visibilityMask,
+            SessionModel::InstanceVisibilityMask);
+        map(mInstanceProperties->hitGroupRecordOffset,
+            SessionModel::InstanceHitGroupRecordOffset);
+        map(mInstanceProperties->triangleCulling,
+            SessionModel::InstanceTriangleCulling);
+        map(mInstanceProperties->frontFace,
+            SessionModel::InstanceFrontFace);
+        map(mInstanceProperties->opacityMode,
+            SessionModel::InstanceOpacityMode);
         setFormEnabled(mInstanceProperties->labelGeometrySet,
             mInstanceProperties->geometrySet, !mModel.rowCount(index));
         break;
@@ -409,6 +423,9 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
             SessionModel::GeometryTransformBufferBlockId);
         map(mGeometryProperties->count, SessionModel::GeometryCount);
         map(mGeometryProperties->offset, SessionModel::GeometryOffset);
+        map(mGeometryProperties->opaque, SessionModel::GeometryOpaque);
+        map(mGeometryProperties->noDuplicateAnyHitInvocation,
+            SessionModel::GeometryNoDuplicateAnyHitInvocation);
         break;
     }
 

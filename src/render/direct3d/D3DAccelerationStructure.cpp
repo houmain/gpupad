@@ -29,6 +29,12 @@ D3DAccelerationStructure::D3DAccelerationStructure(
                         ? instance->geometrySetId
                         : instance->id),
                 .transform = instance->transform,
+                .shaderInstanceId = instance->shaderInstanceId,
+                .visibilityMask = instance->visibilityMask,
+                .hitGroupRecordOffset = instance->hitGroupRecordOffset,
+                .triangleCulling = instance->triangleCulling,
+                .frontFace = instance->frontFace,
+                .opacityMode = instance->opacityMode,
             });
 }
 
@@ -77,6 +83,26 @@ bool D3DAccelerationStructure::build(D3DContext &context,
             return false;
         mUsedItems += instance.geometrySet->usedItems();
 
+        auto shaderInstanceId = static_cast<uint32_t>(instanceIndex);
+        if (!instance.shaderInstanceId.isEmpty()) {
+            const auto value = scriptEngine.evaluateUInt(
+                instance.shaderInstanceId, instance.itemId, 0, 0xFFFFFF,
+                QStringLiteral("Shader instance ID"));
+            if (!value)
+                return false;
+            shaderInstanceId = *value;
+        }
+        const auto visibilityMask = scriptEngine.evaluateUInt(
+            instance.visibilityMask, instance.itemId, 0, 0xFF,
+            QStringLiteral("Visibility mask"));
+        if (!visibilityMask)
+            return false;
+        const auto hitGroupRecordOffset = scriptEngine.evaluateUInt(
+            instance.hitGroupRecordOffset, instance.itemId, 0, 0xFFFFFF,
+            QStringLiteral("Hit group record offset"));
+        if (!hitGroupRecordOffset)
+            return false;
+
         auto instanceDesc = D3D12_RAYTRACING_INSTANCE_DESC{ };
         instanceDesc.Transform[0][0] = 1.0f;
         instanceDesc.Transform[1][1] = 1.0f;
@@ -94,10 +120,24 @@ bool D3DAccelerationStructure::build(D3DContext &context,
             for (auto i = 0; i < transform.size(); ++i)
                 instanceDesc.Transform[i / 4][i % 4] = transform[i];
         }
-        instanceDesc.InstanceID = instanceIndex;
-        instanceDesc.InstanceMask = 0xFF;
-        instanceDesc.Flags =
-            D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE;
+        instanceDesc.InstanceID = shaderInstanceId;
+        instanceDesc.InstanceMask = *visibilityMask;
+        instanceDesc.InstanceContributionToHitGroupIndex =
+            *hitGroupRecordOffset;
+        instanceDesc.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+        if (!instance.triangleCulling)
+            instanceDesc.Flags |=
+                D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE;
+        if (instance.frontFace == Instance::FrontFace::CCW)
+            instanceDesc.Flags |=
+                D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE;
+        if (instance.opacityMode == Instance::OpacityMode::ForceOpaque)
+            instanceDesc.Flags |=
+                D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE;
+        else if (instance.opacityMode
+            == Instance::OpacityMode::ForceNonOpaque)
+            instanceDesc.Flags |=
+                D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_NON_OPAQUE;
         instanceDesc.AccelerationStructure =
             instance.geometrySet->gpuAddress();
         instanceDescs.push_back(instanceDesc);

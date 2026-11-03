@@ -278,8 +278,17 @@ struct GeometrySet : Item
 
 struct Instance : Item
 {
+    using FrontFace = ItemEnums::FrontFace;
+    using OpacityMode = ItemEnums2::OpacityMode;
+
     ItemId geometrySetId{ };
     QString transform;
+    QString shaderInstanceId;
+    QString visibilityMask{ "255" };
+    QString hitGroupRecordOffset{ "0" };
+    bool triangleCulling{ };
+    FrontFace frontFace{ FrontFace::CW };
+    OpacityMode opacityMode{ OpacityMode::GeometryDefault };
 };
 
 struct Geometry : Item
@@ -292,6 +301,8 @@ struct Geometry : Item
     ItemId transformBufferBlockId{ };
     QString count;
     QString offset{ "0" };
+    bool opaque{ true };
+    bool noDuplicateAnyHitInvocation{ };
 };
 
 struct TextureKind

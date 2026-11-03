@@ -491,6 +491,13 @@ namespace ItemEnums2 {
     };
     Q_ENUM_NS(GeometryType)
 
+    enum OpacityMode {
+        GeometryDefault,
+        ForceOpaque,
+        ForceNonOpaque,
+    };
+    Q_ENUM_NS(OpacityMode)
+
     enum ShaderCompiler {
         Driver,
         glslang,

@@ -136,12 +136,20 @@ public:
         CallClearStencil,
         InstanceGeometrySetId,
         InstanceTransform,
+        InstanceShaderInstanceId,
+        InstanceVisibilityMask,
+        InstanceHitGroupRecordOffset,
+        InstanceTriangleCulling,
+        InstanceFrontFace,
+        InstanceOpacityMode,
         GeometryType,
         GeometryVertexBufferBlockId,
         GeometryIndexBufferBlockId,
         GeometryTransformBufferBlockId,
         GeometryCount,
         GeometryOffset,
+        GeometryOpaque,
+        GeometryNoDuplicateAnyHitInvocation,
     };
 
     explicit SessionModelCore(QObject *parent = nullptr);

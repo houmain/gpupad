@@ -132,12 +132,21 @@
     ADD(CallExecuteOn, Call, executeOn)                                       \
     ADD(InstanceGeometrySetId, Instance, geometrySetId)                       \
     ADD(InstanceTransform, Instance, transform)                               \
+    ADD(InstanceShaderInstanceId, Instance, shaderInstanceId)                 \
+    ADD(InstanceVisibilityMask, Instance, visibilityMask)                     \
+    ADD(InstanceHitGroupRecordOffset, Instance, hitGroupRecordOffset)         \
+    ADD(InstanceTriangleCulling, Instance, triangleCulling)                   \
+    ADD(InstanceFrontFace, Instance, frontFace)                               \
+    ADD(InstanceOpacityMode, Instance, opacityMode)                           \
     ADD(GeometryType, Geometry, geometryType)                                 \
     ADD(GeometryVertexBufferBlockId, Geometry, vertexBufferBlockId)           \
     ADD(GeometryIndexBufferBlockId, Geometry, indexBufferBlockId)             \
     ADD(GeometryTransformBufferBlockId, Geometry, transformBufferBlockId)     \
     ADD(GeometryCount, Geometry, count)                                       \
-    ADD(GeometryOffset, Geometry, offset)
+    ADD(GeometryOffset, Geometry, offset)                                     \
+    ADD(GeometryOpaque, Geometry, opaque)                                     \
+    ADD(GeometryNoDuplicateAnyHitInvocation, Geometry,                        \
+        noDuplicateAnyHitInvocation)
 
 template <typename T>
 auto fromVariant(const QVariant &v)

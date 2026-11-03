@@ -5,6 +5,7 @@
 #include <QJSEngine>
 #include <QDir>
 #include <QJSValue>
+#include <optional>
 #include <vector>
 
 using ScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
@@ -42,6 +43,9 @@ public:
     ScriptValue evaluateValue(const QString &valueExpression, ItemId itemId);
     int32_t evaluateInt(const QString &valueExpression, ItemId itemId);
     uint32_t evaluateUInt(const QString &valueExpression, ItemId itemId);
+    std::optional<uint32_t> evaluateUInt(const QString &valueExpression,
+        ItemId itemId, uint32_t minimum, uint32_t maximum,
+        const QString &name);
     QJSEngine &jsEngine();
 
     const QString &actionId() const { return mActionId; }

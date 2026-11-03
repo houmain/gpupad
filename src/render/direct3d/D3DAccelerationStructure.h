@@ -33,13 +33,24 @@ private:
     {
         bool operator==(const D3DInstance &rhs) const
         {
-            return std::tie(itemId, geometrySetId, transform)
-                == std::tie(rhs.itemId, rhs.geometrySetId, rhs.transform);
+            return std::tie(itemId, geometrySetId, transform, shaderInstanceId,
+                       visibilityMask, hitGroupRecordOffset, triangleCulling,
+                       frontFace, opacityMode)
+                == std::tie(rhs.itemId, rhs.geometrySetId, rhs.transform,
+                    rhs.shaderInstanceId, rhs.visibilityMask,
+                    rhs.hitGroupRecordOffset, rhs.triangleCulling,
+                    rhs.frontFace, rhs.opacityMode);
         }
 
         ItemId itemId{ };
         ItemId geometrySetId{ };
         QString transform;
+        QString shaderInstanceId;
+        QString visibilityMask;
+        QString hitGroupRecordOffset;
+        bool triangleCulling{ };
+        Instance::FrontFace frontFace{ };
+        Instance::OpacityMode opacityMode{ };
         D3DGeometrySet *geometrySet{ };
     };
 

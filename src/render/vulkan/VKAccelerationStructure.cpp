@@ -13,6 +13,12 @@ VKAccelerationStructure::VKAccelerationStructure(
                         ? instance->geometrySetId
                         : instance->id),
                 .transform = instance->transform,
+                .shaderInstanceId = instance->shaderInstanceId,
+                .visibilityMask = instance->visibilityMask,
+                .hitGroupRecordOffset = instance->hitGroupRecordOffset,
+                .triangleCulling = instance->triangleCulling,
+                .frontFace = instance->frontFace,
+                .opacityMode = instance->opacityMode,
             });
 }
 
@@ -77,8 +83,9 @@ void VKAccelerationStructure::prepare(VKContext &context,
 
     auto geometryInstances =
         KDGpu::AccelerationStructureGeometryInstancesData{ };
-    auto instanceIndex = 0u;
-    for (const auto &instance : mInstances) {
+    for (auto instanceIndex = 0u; instanceIndex < mInstances.size();
+         ++instanceIndex) {
+        const auto &instance = mInstances[instanceIndex];
         mUsedItems += instance.itemId;
         if (!instance.geometrySet)
             return;
@@ -88,6 +95,38 @@ void VKAccelerationStructure::prepare(VKContext &context,
             return;
         mUsedItems += instance.geometrySet->usedItems();
 
+        auto shaderInstanceId = static_cast<uint32_t>(instanceIndex);
+        if (!instance.shaderInstanceId.isEmpty()) {
+            const auto value = scriptEngine.evaluateUInt(
+                instance.shaderInstanceId, instance.itemId, 0, 0xFFFFFF,
+                QStringLiteral("Shader instance ID"));
+            if (!value)
+                return;
+            shaderInstanceId = *value;
+        }
+        const auto visibilityMask = scriptEngine.evaluateUInt(
+            instance.visibilityMask, instance.itemId, 0, 0xFF,
+            QStringLiteral("Visibility mask"));
+        if (!visibilityMask)
+            return;
+        const auto hitGroupRecordOffset = scriptEngine.evaluateUInt(
+            instance.hitGroupRecordOffset, instance.itemId, 0, 0xFFFFFF,
+            QStringLiteral("Hit group record offset"));
+        if (!hitGroupRecordOffset)
+            return;
+
+        auto flags = KDGpu::GeometryInstanceFlags{ };
+        if (!instance.triangleCulling)
+            flags |=
+                KDGpu::GeometryInstanceFlagBits::TriangleFacingCullDisable;
+        if (instance.frontFace == Instance::FrontFace::CCW)
+            flags |= KDGpu::GeometryInstanceFlagBits::TriangleFlipFacing;
+        if (instance.opacityMode == Instance::OpacityMode::ForceOpaque)
+            flags |= KDGpu::GeometryInstanceFlagBits::ForceOpaque;
+        else if (instance.opacityMode
+            == Instance::OpacityMode::ForceNonOpaque)
+            flags |= KDGpu::GeometryInstanceFlagBits::ForceNoOpaque;
+
         auto &geometryInstance = geometryInstances.data.emplace_back(
             KDGpu::AccelerationStructureGeometryInstance{
                 .transform = { {
@@ -95,11 +134,11 @@ void VKAccelerationStructure::prepare(VKContext &context,
                     { { 0.0f, 1.0f, 0.0f, 0.0f } },
                     { { 0.0f, 0.0f, 1.0f, 0.0f } },
                 } },
-                .instanceCustomIndex = instanceIndex++,
-                .mask = 0xFF,
-                .instanceShaderBindingTableRecordOffset = 0,
-                .flags =
-                    KDGpu::GeometryInstanceFlagBits::TriangleFacingCullDisable,
+                .instanceCustomIndex = shaderInstanceId,
+                .mask = *visibilityMask,
+                .instanceShaderBindingTableRecordOffset =
+                    *hitGroupRecordOffset,
+                .flags = flags,
                 .accelerationStructure = bottomLevelAs,
             });
         const auto transform =
