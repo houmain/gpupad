@@ -7,7 +7,7 @@
 class D3DGeometrySet
 {
 public:
-    explicit D3DGeometrySet(const GeometrySet &geometrySet);
+    explicit D3DGeometrySet(const Item &geometrySource);
     bool operator==(const D3DGeometrySet &rhs) const;
 
     void setVertexBuffer(int geometryIndex, D3DBuffer *buffer,

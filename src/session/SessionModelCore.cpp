@@ -252,6 +252,8 @@ bool SessionModelCore::canContainType(const QModelIndex &index,
     case Item::Type::Target:  return (type == Item::Type::Attachment);
     case Item::Type::AccelerationStructure:
         return (type == Item::Type::Instance);
+    case Item::Type::Instance:
+        return (type == Item::Type::Geometry);
     case Item::Type::GeometrySet: return (type == Item::Type::Geometry);
     default:                   return false;
     }
@@ -266,6 +268,7 @@ Item::Type SessionModelCore::getDefaultChildType(const QModelIndex &index) const
     case Item::Type::Stream:                return Item::Type::Attribute;
     case Item::Type::Target:                return Item::Type::Attachment;
     case Item::Type::AccelerationStructure: return Item::Type::Instance;
+    case Item::Type::Instance:              return Item::Type::Geometry;
     case Item::Type::GeometrySet:           return Item::Type::Geometry;
     default:                                return Item::Type::Group;
     }
@@ -405,6 +408,11 @@ void SessionModelCore::insertItem(Item *item, const QModelIndex &parent,
 {
     Q_ASSERT(item && !item->parent);
     auto &parentItem = getItemRef(parent);
+
+    if (item->type == Item::Type::Geometry
+        && parentItem.type == Item::Type::Instance)
+        setData(getIndex(parent, InstanceGeometrySetId), 0);
+
     if (row < 0 || row > parentItem.items.size())
         row = parentItem.items.size();
 

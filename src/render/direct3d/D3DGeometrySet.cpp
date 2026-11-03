@@ -16,11 +16,11 @@ namespace {
     }
 } // namespace
 
-D3DGeometrySet::D3DGeometrySet(const GeometrySet &geometrySet)
-    : mItemId(geometrySet.id)
+D3DGeometrySet::D3DGeometrySet(const Item &geometrySource)
+    : mItemId(geometrySource.id)
 {
-    mUsedItems += geometrySet.id;
-    for (auto item : geometrySet.items)
+    mUsedItems += geometrySource.id;
+    for (auto item : geometrySource.items)
         if (auto geometry = castItem<Geometry>(item))
             mGeometries.push_back({
                 .itemId = geometry->id,

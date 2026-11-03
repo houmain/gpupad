@@ -184,13 +184,11 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
         return vs;
     };
 
-    const auto addGeometrySetOnce = [&](ItemId geometrySetId) {
-        const auto geometrySet =
-            sessionModel.findItem<GeometrySet>(geometrySetId);
+    const auto addGeometrySetOnce = [&](const Item *geometrySource) {
         auto renderGeometrySet =
-            addOnce(commandQueue.geometrySets, geometrySet);
+            addOnce(commandQueue.geometrySets, geometrySource);
         if (renderGeometrySet) {
-            const auto &items = geometrySet->items;
+            const auto &items = geometrySource->items;
             for (auto i = 0; i < items.size(); ++i)
                 if (auto geometry = castItem<Geometry>(items[i])) {
                     if (auto block = sessionModel.findItem<Block>(
@@ -218,9 +216,16 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
         if (as) {
             auto instanceIndex = 0;
             for (auto item : accelerationStructure->items)
-                if (auto instance = castItem<Instance>(item))
+                if (auto instance = castItem<Instance>(item)) {
+                    // Inline geometry forms a private GeometrySet keyed by the
+                    // Instance ID; otherwise use the referenced shared set.
+                    const Item *geometrySource = instance;
+                    if (instance->items.empty())
+                        geometrySource = sessionModel.findItem<GeometrySet>(
+                            instance->geometrySetId);
                     as->setGeometrySet(instanceIndex++,
-                        addGeometrySetOnce(instance->geometrySetId));
+                        addGeometrySetOnce(geometrySource));
+                }
         }
         return as;
     };

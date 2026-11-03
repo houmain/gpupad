@@ -390,6 +390,8 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
         map(mInstanceProperties->geometrySet,
             SessionModel::InstanceGeometrySetId);
         map(mInstanceProperties->transform, SessionModel::InstanceTransform);
+        setFormEnabled(mInstanceProperties->labelGeometrySet,
+            mInstanceProperties->geometrySet, !mModel.rowCount(index));
         break;
 
     case Item::Type::GeometrySet:

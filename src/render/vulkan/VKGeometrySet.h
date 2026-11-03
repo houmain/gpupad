@@ -6,7 +6,7 @@
 class VKGeometrySet
 {
 public:
-    explicit VKGeometrySet(const GeometrySet &geometrySet);
+    explicit VKGeometrySet(const Item &geometrySource);
     bool operator==(const VKGeometrySet &rhs) const;
 
     void setVertexBuffer(int geometryIndex, VKBuffer *buffer,

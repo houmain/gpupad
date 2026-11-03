@@ -25,7 +25,9 @@ D3DAccelerationStructure::D3DAccelerationStructure(
         if (auto instance = castItem<Instance>(item))
             mInstances.push_back({
                 .itemId = instance->id,
-                .geometrySetId = instance->geometrySetId,
+                .geometrySetId = (instance->items.empty()
+                        ? instance->geometrySetId
+                        : instance->id),
                 .transform = instance->transform,
             });
 }

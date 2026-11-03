@@ -1,10 +1,10 @@
 #include "VKGeometrySet.h"
 
-VKGeometrySet::VKGeometrySet(const GeometrySet &geometrySet)
-    : mItemId(geometrySet.id)
+VKGeometrySet::VKGeometrySet(const Item &geometrySource)
+    : mItemId(geometrySource.id)
 {
-    mUsedItems += geometrySet.id;
-    for (auto item : geometrySet.items)
+    mUsedItems += geometrySource.id;
+    for (auto item : geometrySource.items)
         if (auto geometry = castItem<Geometry>(item))
             mGeometries.push_back({
                 .itemId = geometry->id,

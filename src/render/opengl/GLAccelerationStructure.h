@@ -8,7 +8,7 @@ class GLBuffer;
 class GLGeometrySet
 {
 public:
-    explicit GLGeometrySet(const GeometrySet &) { }
+    explicit GLGeometrySet(const Item &) { }
     bool operator==(const GLGeometrySet &) const { return true; }
     void setVertexBuffer(int, GLBuffer *, const Block &, GLRenderSession &) { }
     void setIndexBuffer(int, GLBuffer *, const Block &, GLRenderSession &) { }

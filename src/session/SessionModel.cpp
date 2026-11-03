@@ -177,6 +177,7 @@ Qt::ItemFlags SessionModel::flags(const QModelIndex &index) const
     case Item::Type::Stream:
     case Item::Type::Target:
     case Item::Type::AccelerationStructure:
+    case Item::Type::Instance:
     case Item::Type::GeometrySet:           flags |= Qt::ItemIsDropEnabled; break;
     default:                                break;
     }

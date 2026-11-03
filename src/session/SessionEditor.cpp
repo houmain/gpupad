@@ -392,7 +392,9 @@ void SessionEditor::addItem(Item::Type type)
     else if (type == Item::Type::Program)
         mModel.insertItem(Item::Type::Shader, index);
     else if (type == Item::Type::AccelerationStructure) {
-        mModel.insertItem(Item::Type::Instance, index);
+        const auto instance = mModel.insertItem(Item::Type::Instance, index);
+        mModel.insertItem(Item::Type::Geometry, instance);
+        setExpanded(instance, true);
     } else if (type == Item::Type::GeometrySet)
         mModel.insertItem(Item::Type::Geometry, index);
 
