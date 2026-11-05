@@ -3,6 +3,50 @@
 #include "BufferBase.h"
 
 namespace {
+    uint32_t getScalarSize(Field::DataType dataType)
+    {
+        return (dataType == Field::DataType::Int64
+                || dataType == Field::DataType::Uint64
+                || dataType == Field::DataType::Double)
+            ? 8u
+            : 4u;
+    }
+
+    void addShaderRecordElements(const SpvReflectBlockVariable &member,
+        uint32_t parentOffset, std::vector<ShaderRecordElement> *elements)
+    {
+        const auto memberOffset = parentOffset + member.offset;
+        const auto arraySize = getBufferMemberArraySize(member);
+        const auto arrayStride = getBufferMemberArrayStride(member);
+        if (member.member_count) {
+            for (auto a = 0; a < arraySize; ++a)
+                for (auto i = 0u; i < member.member_count; ++i)
+                    addShaderRecordElements(member.members[i],
+                        memberOffset + a * arrayStride, elements);
+            return;
+        }
+
+        const auto dataType = getBufferMemberDataType(member);
+        const auto scalarSize = getScalarSize(dataType);
+        const auto columns = getBufferMemberColumnCount(member);
+        const auto rows = getBufferMemberRowCount(member);
+        const auto columnStride = getBufferMemberColumnStride(member);
+        const auto columnSize = scalarSize * rows;
+        for (auto a = 0; a < arraySize; ++a) {
+            const auto arrayOffset = memberOffset
+                + (arrayStride ? a * arrayStride
+                               : a * columns * columnSize);
+            for (auto c = 0; c < columns; ++c)
+                for (auto r = 0; r < rows; ++r)
+                    elements->push_back({
+                        .offset = arrayOffset
+                            + c * (columnStride ? columnStride : columnSize)
+                            + r * scalarSize,
+                        .dataType = dataType,
+                    });
+        }
+    }
+
     QString getBufferMemberFullName(const SpvReflectBlockVariable &block,
         uint32_t arrayElement, const SpvReflectBlockVariable &member)
     {
@@ -104,6 +148,46 @@ namespace {
         }
     }
 } // namespace
+
+ShaderRecordLayout getShaderRecordLayout(
+    const SpvReflectBlockVariable &block)
+{
+    auto result = ShaderRecordLayout{ .size = block.padded_size };
+    for (auto i = 0u; i < block.member_count; ++i)
+        addShaderRecordElements(block.members[i], 0, &result.elements);
+    for (const auto &element : result.elements)
+        result.size = std::max(result.size,
+            element.offset + getScalarSize(element.dataType));
+    return result;
+}
+
+std::vector<std::byte> packShaderRecordData(
+    const ShaderRecordLayout &layout, const ScriptValueList &values)
+{
+    auto result = std::vector<std::byte>(layout.size);
+    for (auto i = 0u; i < layout.elements.size(); ++i) {
+        const auto &element = layout.elements[i];
+        const auto value = (i < static_cast<uint32_t>(values.size())
+                ? values[i]
+                : 0.0);
+        const auto write = [&]<typename T>() {
+            const auto typedValue = static_cast<T>(value);
+            if (element.offset + sizeof(T) <= result.size())
+                std::memcpy(result.data() + element.offset, &typedValue,
+                    sizeof(T));
+        };
+        switch (element.dataType) {
+        case Field::DataType::Int32:  write.template operator()<int32_t>(); break;
+        case Field::DataType::Uint32: write.template operator()<uint32_t>(); break;
+        case Field::DataType::Int64:  write.template operator()<int64_t>(); break;
+        case Field::DataType::Uint64: write.template operator()<uint64_t>(); break;
+        case Field::DataType::Float:  write.template operator()<float>(); break;
+        case Field::DataType::Double: write.template operator()<double>(); break;
+        default:                      Q_UNREACHABLE();
+        }
+    }
+    return result;
+}
 
 PipelineBase::PipelineBase(ItemId itemId) : mItemId(itemId) { }
 

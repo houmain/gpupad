@@ -23,6 +23,7 @@ public:
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
     void setProgram(VKProgram *program);
+    void setShaderTable(const ShaderTable *shaderTable);
     void setTarget(VKTarget *target);
     void setVextexStream(VKStream *vertexStream);
     void setIndexBuffer(VKBuffer *indices, const Block &block);
@@ -53,6 +54,7 @@ private:
     const Session mSession;
     MessageList mMessages;
     VKProgram *mProgram{ };
+    const ShaderTable *mShaderTable{ };
     VKTarget *mTarget{ };
     VKStream *mVertexStream{ };
     VKBuffer *mBuffer{ };

@@ -62,6 +62,8 @@ SessionEditor::SessionEditor(QWidget *parent)
     addAction(mAddCallAction, Item::Type::Call);
     addAction(mAddAttachmentAction, Item::Type::Attachment);
     addAction(mAddShaderAction, Item::Type::Shader);
+    addAction(mAddShaderTableAction, Item::Type::ShaderTable);
+    addAction(mAddRecordAction, Item::Type::Record);
     addAction(mAddBindingAction, Item::Type::Binding);
     addAction(mAddBlockAction, Item::Type::Block);
     addAction(mAddFieldAction, Item::Type::Field);
@@ -91,6 +93,7 @@ void SessionEditor::addItemActions(QMenu *menu)
     menu->addAction(mAddAttributeAction);
     menu->addAction(mAddAttachmentAction);
     menu->addAction(mAddShaderAction);
+    menu->addAction(mAddRecordAction);
     menu->addAction(mAddGeometryAction);
     menu->addAction(mAddInstanceAction);
     menu->addSeparator();
@@ -101,6 +104,7 @@ void SessionEditor::addItemActions(QMenu *menu)
     menu->addAction(mAddTargetAction);
     menu->addAction(mAddBindingAction);
     menu->addAction(mAddProgramAction);
+    menu->addAction(mAddShaderTableAction);
     menu->addAction(mAddCallAction);
     menu->addAction(mAddScriptAction);
     menu->addAction(mAddGeometrySetAction);
@@ -119,6 +123,7 @@ void SessionEditor::updateItemActions()
              TypeAction{ Item::Type::Block, mAddBlockAction },
              TypeAction{ Item::Type::Field, mAddFieldAction },
              TypeAction{ Item::Type::Shader, mAddShaderAction },
+             TypeAction{ Item::Type::Record, mAddRecordAction },
              TypeAction{ Item::Type::Attribute, mAddAttributeAction },
              TypeAction{ Item::Type::Attachment, mAddAttachmentAction },
              TypeAction{ Item::Type::Instance, mAddInstanceAction },
@@ -391,6 +396,8 @@ void SessionEditor::addItem(Item::Type type)
         mModel.insertItem(Item::Type::Attribute, index);
     else if (type == Item::Type::Program)
         mModel.insertItem(Item::Type::Shader, index);
+    else if (type == Item::Type::ShaderTable)
+        mModel.insertItem(Item::Type::Record, index);
     else if (type == Item::Type::AccelerationStructure) {
         const auto instance = mModel.insertItem(Item::Type::Instance, index);
         mModel.insertItem(Item::Type::Geometry, instance);

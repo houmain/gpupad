@@ -74,6 +74,14 @@
      <item row="3" column="1">
       <widget class="ReferenceComboBox" name="program"/>
      </item>
+     <item row="27" column="0">
+      <widget class="QLabel" name="labelShaderTable">
+       <property name="text"><string>Shader Table</string></property>
+      </widget>
+     </item>
+     <item row="27" column="1">
+      <widget class="ReferenceComboBox" name="shaderTable"/>
+     </item>
      <item row="4" column="0">
       <widget class="QLabel" name="labelTarget">
        <property name="text">

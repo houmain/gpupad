@@ -5,6 +5,7 @@
 #  include "D3DShader.h"
 #  include "D3DStream.h"
 #  include <map>
+#  include <set>
 
 class D3DTarget;
 class D3DProgram;
@@ -14,7 +15,8 @@ class D3DTexture;
 class D3DPipeline : public PipelineBase
 {
 public:
-    D3DPipeline(ItemId itemId, D3DProgram *program);
+    D3DPipeline(ItemId itemId, D3DProgram *program,
+        const ShaderTable *shaderTable = nullptr);
     ~D3DPipeline();
 
     bool createGraphics(D3DContext &context, Call::PrimitiveType primitiveType,
@@ -55,6 +57,36 @@ private:
         std::optional<D3DBuffer> buffer;
     };
 
+    struct LocalBinding
+    {
+        const Binding *binding{};
+        UINT shaderRegister{};
+        UINT registerSpace{};
+        ShaderRecordLayout layout;
+
+        UINT count() const
+        {
+            return (layout.size + sizeof(uint32_t) - 1) / sizeof(uint32_t);
+        }
+        bool hasSameLayout(const LocalBinding &rhs) const
+        {
+            return std::tie(shaderRegister, registerSpace, layout)
+                == std::tie(rhs.shaderRegister, rhs.registerSpace, rhs.layout);
+        }
+    };
+
+    struct RayTracingRecord
+    {
+        const Record *item{};
+        std::wstring exportName;
+        std::vector<LocalBinding> localBindings;
+        UINT64 offset{};
+    };
+
+    static bool hasSameLocalBindingLayout(
+        const std::vector<LocalBinding> &left,
+        const std::vector<LocalBinding> &right);
+
     bool setupGraphicsPipelineState(D3DContext &context,
         Call::PrimitiveType primitiveType, D3DTarget *target,
         D3D12_GRAPHICS_PIPELINE_STATE_DESC *state);
@@ -65,6 +97,11 @@ private:
     bool createInputLayout(std::vector<D3D12_INPUT_ELEMENT_DESC> *inputLayout);
     bool createRootSignature(D3DContext &context);
     bool createRootSignatureRayTracing(D3DContext &context);
+    bool prepareLocalBindings(RayTracingRecord &record,
+        std::initializer_list<const D3DShader *> shaders);
+    bool createLocalRootSignatures(D3DContext &context,
+        CD3DX12_STATE_OBJECT_DESC &stateObject);
+    bool updateShaderTable(ScriptEngine &scriptEngine);
     bool createRootSignatureFromTables(D3DContext &context,
         std::vector<DescriptorTableDesc> descriptorTableDescs,
         std::vector<CD3DX12_STATIC_SAMPLER_DESC> staticSamplers);
@@ -79,6 +116,7 @@ private:
         UINT arrayElement);
 
     D3DProgram &mProgram;
+    const ShaderTable *mShaderTable{ };
     D3DStream *mVertexStream{ };
     std::vector<const D3DStream::D3DAttribute *> mVertexAttributes;
     bool mCreated{ };
@@ -94,6 +132,11 @@ private:
     std::vector<DescriptorHeapEntry> mDescriptorHeapEntries;
     std::vector<UINT> mDescriptorTableEntries;
     std::vector<std::unique_ptr<DynamicConstantBuffer>> mDynamicConstantBuffers;
+    RayTracingRecord mRayGenerationRecordData;
+    std::vector<RayTracingRecord> mMissRecordData;
+    std::vector<RayTracingRecord> mHitRecordData;
+    std::set<std::pair<UINT, UINT>> mLocalConstantRegisters;
+    std::vector<ComPtr<ID3D12RootSignature>> mLocalRootSignatures;
 };
 
 #endif // D3D_ENABLED

@@ -383,12 +383,41 @@
       ]
     },
     {
+      "type": "ShaderTable",
+      "id": 2000001,
+      "name": "Shader Table",
+      "programId": 10021,
+      "items": [
+        {
+          "type": "Record",
+          "id": 2000002,
+          "name": "Ray Generation",
+          "recordType": "RayGeneration",
+          "shaderId": 10022
+        },
+        {
+          "type": "Record",
+          "id": 2000003,
+          "name": "Miss",
+          "recordType": "Miss",
+          "shaderId": 10028
+        },
+        {
+          "type": "Record",
+          "id": 2000004,
+          "name": "Hit",
+          "recordType": "Hit",
+          "closestHitShaderId": 10029
+        }
+      ]
+    },
+    {
       "type": "Call",
       "id": 10023,
       "name": "Trace Rays",
       "checked": true,
       "callType": "TraceRays",
-      "programId": 10021,
+      "shaderTableId": 2000001,
       "workGroupsX": "1280",
       "workGroupsY": "720",
       "workGroupsZ": "1",

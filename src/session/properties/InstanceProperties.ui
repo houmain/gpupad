@@ -14,7 +14,7 @@
    <item>
     <layout class="QFormLayout" name="formLayout">
      <property name="labelAlignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
      <property name="horizontalSpacing">
       <number>8</number>
@@ -73,9 +73,6 @@
      </item>
      <item row="3" column="1">
       <widget class="ExpressionLineEdit" name="shaderInstanceId">
-       <property name="placeholderText">
-        <string>ordinal (24-bit)</string>
-       </property>
        <property name="toolTip">
         <string>24-bit value exposed to shaders as the instance ID. Leave empty to use the ordinal instance index.</string>
        </property>
@@ -110,16 +107,16 @@
       </widget>
      </item>
      <item row="6" column="0">
-      <widget class="QLabel" name="labelTriangleCulling">
+      <widget class="QLabel" name="labelOpacityMode">
        <property name="text">
-        <string>Triangle Culling</string>
+        <string>Opacity</string>
        </property>
       </widget>
      </item>
      <item row="6" column="1">
-      <widget class="QCheckBox" name="triangleCulling">
+      <widget class="DataComboBox" name="opacityMode">
        <property name="toolTip">
-        <string>Allow per-ray front/back triangle culling flags to affect this instance. Rays without a culling flag are unchanged.</string>
+        <string>Use each Geometry setting or override every Geometry in this instance.</string>
        </property>
       </widget>
      </item>
@@ -138,16 +135,16 @@
       </widget>
      </item>
      <item row="8" column="0">
-      <widget class="QLabel" name="labelOpacityMode">
+      <widget class="QLabel" name="labelTriangleCulling">
        <property name="text">
-        <string>Opacity</string>
+        <string>Triangle Culling</string>
        </property>
       </widget>
      </item>
      <item row="8" column="1">
-      <widget class="DataComboBox" name="opacityMode">
+      <widget class="QCheckBox" name="triangleCulling">
        <property name="toolTip">
-        <string>Use each Geometry setting or override every Geometry in this instance.</string>
+        <string>Allow per-ray front/back triangle culling flags to affect this instance. Rays without a culling flag are unchanged.</string>
        </property>
       </widget>
      </item>
@@ -157,6 +154,11 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>DataComboBox</class>
+   <extends>QComboBox</extends>
+   <header>widgets/DataComboBox.h</header>
+  </customwidget>
+  <customwidget>
    <class>ReferenceComboBox</class>
    <extends>QComboBox</extends>
    <header>widgets/ReferenceComboBox.h</header>
@@ -165,11 +167,6 @@
    <class>ExpressionLineEdit</class>
    <extends>QLineEdit</extends>
    <header>widgets//ExpressionLineEdit.h</header>
-  </customwidget>
-  <customwidget>
-   <class>DataComboBox</class>
-   <extends>QComboBox</extends>
-   <header>widgets//DataComboBox.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -23,7 +23,7 @@ CallProperties::CallProperties(PropertiesEditor *propertiesEditor)
         &CallProperties::updateWidgets);
 
     for (auto combobox :
-        { mUi->program, mUi->vertexStream, mUi->target, mUi->indexBufferBlock,
+        { mUi->program, mUi->shaderTable, mUi->vertexStream, mUi->target, mUi->indexBufferBlock,
             mUi->indirectBufferBlock, mUi->texture, mUi->fromTexture,
             mUi->buffer, mUi->fromBuffer })
         connect(combobox, &ReferenceComboBox::textRequired,
@@ -33,6 +33,9 @@ CallProperties::CallProperties(PropertiesEditor *propertiesEditor)
 
     connect(mUi->program, &ReferenceComboBox::listRequired,
         [this]() { return mPropertiesEditor.getItemIds(Item::Type::Program); });
+    connect(mUi->shaderTable, &ReferenceComboBox::listRequired, [this]() {
+        return mPropertiesEditor.getItemIds(Item::Type::ShaderTable);
+    });
     connect(mUi->vertexStream, &ReferenceComboBox::listRequired, [this]() {
         return mPropertiesEditor.getItemIds(Item::Type::Stream, true);
     });
@@ -96,6 +99,7 @@ void CallProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->executeOn, SessionModel::CallExecuteOn);
 
     mapper.addMapping(mUi->program, SessionModel::CallProgramId);
+    mapper.addMapping(mUi->shaderTable, SessionModel::CallShaderTableId);
     mapper.addMapping(mUi->target, SessionModel::CallTargetId);
     mapper.addMapping(mUi->vertexStream, SessionModel::CallVertexStreamId);
 
@@ -136,7 +140,9 @@ void CallProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelExecuteOn, mUi->executeOn,
         !kind.sound);
     setFormVisibility(mUi->formLayout, mUi->labelProgram, mUi->program,
-        kind.draw || kind.compute || kind.trace);
+        kind.draw || kind.compute);
+    setFormVisibility(mUi->formLayout, mUi->labelShaderTable,
+        mUi->shaderTable, kind.trace);
     setFormVisibility(mUi->formLayout, mUi->labelTarget, mUi->target,
         kind.draw);
     setFormVisibility(mUi->formLayout, mUi->labelVertexStream,

@@ -254,6 +254,8 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
                 mUsedItems += script->id;
         } else if (auto binding = castItem<Binding>(item)) {
             const auto &b = *binding;
+            if (b.parent && b.parent->type == Item::Type::Record)
+                return;
             switch (b.bindingType) {
             case Binding::BindingType::Uniform: {
                 // evaluate dynamically created bindings
@@ -380,7 +382,13 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
                     break;
 
                 case Call::CallType::TraceRays:
-                    queueCall.setProgram(addProgramOnce(call->programId));
+                    if (const auto shaderTable =
+                            sessionModel.findItem<ShaderTable>(
+                                call->shaderTableId)) {
+                        queueCall.setShaderTable(shaderTable);
+                        queueCall.setProgram(
+                            addProgramOnce(shaderTable->programId));
+                    }
                     break;
 
                 case Call::CallType::ClearTexture:

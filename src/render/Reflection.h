@@ -77,6 +77,11 @@ public:
             mModule->push_constant_block_count);
     }
 
+    std::span<const SpvReflectBlockVariable *const> shaderRecordBlocks() const
+    {
+        return mShaderRecordBlocks;
+    }
+
     std::span<const SpvReflectInterfaceVariable *const> inputVariables() const
     {
         return std::span(mModule->input_variables,
@@ -86,6 +91,8 @@ public:
 private:
     std::shared_ptr<const Builder> mBuilder;
     std::shared_ptr<const SpvReflectShaderModule> mModule;
+    std::shared_ptr<const SpvReflectShaderModule> mShaderRecordModule;
+    std::vector<const SpvReflectBlockVariable *> mShaderRecordBlocks;
 };
 
 constexpr const char globalUniformBlockName[]{ "$Global" };

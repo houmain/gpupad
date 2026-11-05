@@ -86,6 +86,14 @@ const D3DShader *D3DProgram::getShader(Shader::ShaderType type) const
     return nullptr;
 }
 
+const D3DShader *D3DProgram::getShader(ItemId itemId) const
+{
+    for (const auto &shader : mShaders)
+        if (shader.itemId() == itemId)
+            return &shader;
+    return nullptr;
+}
+
 bool D3DProgram::hasShader(Shader::ShaderType type) const
 {
     return getShader(type) != nullptr;

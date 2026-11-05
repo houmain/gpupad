@@ -191,9 +191,11 @@ D3D12_DESCRIPTOR_RANGE_TYPE D3DPipeline::getRangeType(
     }
 }
 
-D3DPipeline::D3DPipeline(ItemId itemId, D3DProgram *program)
+D3DPipeline::D3DPipeline(ItemId itemId, D3DProgram *program,
+    const ShaderTable *shaderTable)
     : PipelineBase(itemId)
     , mProgram(*program)
+    , mShaderTable(shaderTable)
 {
 }
 
@@ -574,6 +576,11 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
             continue;
         for (const auto &binding : shader.reflection().descriptorBindings()) {
             const auto bindDesc = getD3DBindingDesc(binding);
+
+            if (mShaderTable && bindDesc.Type == D3D_SIT_CBUFFER
+                && mLocalConstantRegisters.contains(
+                    { bindDesc.Space, bindDesc.BindPoint }))
+                continue;
 
             if (bindDesc.Type == D3D_SIT_SAMPLER)
                 continue;

@@ -150,11 +150,13 @@ set(SOURCES
   src/session/properties/GroupProperties.ui
   src/session/properties/InstanceProperties.ui
   src/session/properties/ProgramProperties.ui
+  src/session/properties/RecordProperties.ui
   src/session/properties/PropertiesEditor.cpp
   src/session/properties/ScriptProperties.ui
   src/session/properties/SessionProperties.cpp
   src/session/properties/SessionProperties.ui
   src/session/properties/ShaderProperties.ui
+  src/session/properties/ShaderTableProperties.ui
   src/session/properties/StreamProperties.ui
   src/session/properties/TargetProperties.ui
   src/session/properties/TextureProperties.cpp

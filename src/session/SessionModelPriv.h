@@ -40,6 +40,12 @@
     ADD(ShaderEntryPoint, Shader, entryPoint)                                 \
     ADD(ShaderPreamble, Shader, preamble)                                     \
     ADD(ShaderIncludePaths, Shader, includePaths)                             \
+    ADD(ShaderTableProgramId, ShaderTable, programId)                         \
+    ADD(RecordType, Record, recordType)                                       \
+    ADD(RecordShaderId, Record, shaderId)                                     \
+    ADD(RecordIntersectionShaderId, Record, intersectionShaderId)             \
+    ADD(RecordAnyHitShaderId, Record, anyHitShaderId)                         \
+    ADD(RecordClosestHitShaderId, Record, closestHitShaderId)                 \
     ADD(BindingType, Binding, bindingType)                                    \
     ADD(BindingEditor, Binding, editor)                                       \
     ADD(BindingValues, Binding, values)                                       \
@@ -107,6 +113,7 @@
     ADD(CallChecked, Call, checked)                                           \
     ADD(CallType, Call, callType)                                             \
     ADD(CallProgramId, Call, programId)                                       \
+    ADD(CallShaderTableId, Call, shaderTableId)                               \
     ADD(CallTargetId, Call, targetId)                                         \
     ADD(CallVertexStreamId, Call, vertexStreamId)                             \
     ADD(CallPrimitiveType, Call, primitiveType)                               \

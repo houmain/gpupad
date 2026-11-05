@@ -23,6 +23,11 @@ void D3DCall::setProgram(D3DProgram *program)
     mProgram = program;
 }
 
+void D3DCall::setShaderTable(const ShaderTable *shaderTable)
+{
+    mShaderTable = shaderTable;
+}
+
 void D3DCall::setTarget(D3DTarget *target)
 {
     mTarget = target;
@@ -107,6 +112,11 @@ void D3DCall::execute(D3DContext &context, Bindings &&bindings,
     MessageList &messages, ScriptEngine &scriptEngine)
 {
     if (mKind.draw || mKind.compute || mKind.trace) {
+        if (mKind.trace && !mShaderTable) {
+            messages.insert(mCall.id, MessageType::ScriptError,
+                "No shader table set");
+            return;
+        }
         if (!mProgram) {
             messages.insert(mCall.id, MessageType::ProgramNotAssigned);
             return;
@@ -121,7 +131,8 @@ void D3DCall::execute(D3DContext &context, Bindings &&bindings,
         if (!mProgram->link(context))
             return;
 
-        mPipeline = std::make_unique<D3DPipeline>(mCall.id, mProgram);
+        mPipeline = std::make_unique<D3DPipeline>(
+            mCall.id, mProgram, mShaderTable);
     }
 
     if (mKind.draw) {

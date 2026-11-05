@@ -14,6 +14,8 @@ namespace Ui {
     class BlockProperties;
     class FieldProperties;
     class ProgramProperties;
+    class ShaderTableProperties;
+    class RecordProperties;
     class ShaderProperties;
     class StreamProperties;
     class AttributeProperties;
@@ -55,6 +57,7 @@ public:
     bool openCurrentItemFile(FileDialog::Options options);
     QVariantList getFileNames(Item::Type type, bool addNull = false) const;
     QVariantList getItemIds(Item::Type type, bool addNull = false) const;
+    QVariantList getShaderIds(Shader::ShaderType type) const;
     QString getItemName(ItemId itemId) const;
 
 private:
@@ -62,6 +65,7 @@ private:
     void updateBlockWidgets(const QModelIndex &index);
     void updateTargetWidgets(const QModelIndex &index);
     void updateGeometryWidgets();
+    void updateRecordWidgets();
     void deduceBlockOffset();
     void deduceBlockRowCount();
     void deduceShaderType();
@@ -81,6 +85,8 @@ private:
     std::unique_ptr<Ui::FieldProperties> mFieldProperties;
     TextureProperties *mTextureProperties{};
     std::unique_ptr<Ui::ProgramProperties> mProgramProperties;
+    std::unique_ptr<Ui::ShaderTableProperties> mShaderTableProperties;
+    std::unique_ptr<Ui::RecordProperties> mRecordProperties;
     std::unique_ptr<Ui::ShaderProperties> mShaderProperties;
     BindingProperties *mBindingProperties{};
     std::unique_ptr<Ui::AttributeProperties> mAttributeProperties;

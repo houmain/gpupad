@@ -74,6 +74,9 @@ SessionModel::SessionModel(QObject *parent) : SessionModelCore(parent)
     mTypeIcons[Item::Type::Program] = QIcon::fromTheme("applications-system");
     mTypeIcons[Item::Type::Shader] =
         QIcon::fromTheme("accessories-text-editor");
+    mTypeIcons[Item::Type::ShaderTable] =
+        QIcon::fromTheme("applications-system");
+    mTypeIcons[Item::Type::Record] = QIcon::fromTheme("mail-attachment");
     mTypeIcons[Item::Type::Binding] = QIcon::fromTheme("insert-text");
     mTypeIcons[Item::Type::Stream] =
         QIcon::fromTheme("media-playback-start-rtl");
@@ -174,6 +177,8 @@ Qt::ItemFlags SessionModel::flags(const QModelIndex &index) const
     case Item::Type::Block:
     case Item::Type::Texture:
     case Item::Type::Program:
+    case Item::Type::ShaderTable:
+    case Item::Type::Record:
     case Item::Type::Stream:
     case Item::Type::Target:
     case Item::Type::AccelerationStructure:
@@ -687,6 +692,19 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         break;
     }
 
+    case Item::Type::Record: {
+        const auto &record = static_cast<const Record &>(item);
+        const auto hit = (record.recordType == Record::RecordType::Hit);
+        result &= (column != RecordShaderId || !hit);
+        result &= (column != RecordIntersectionShaderId
+            || (hit && record.intersectionShaderId));
+        result &= (column != RecordAnyHitShaderId
+            || (hit && record.anyHitShaderId));
+        result &= (column != RecordClosestHitShaderId
+            || (hit && record.closestHitShaderId));
+        break;
+    }
+
     case Item::Type::Texture: {
         const auto &texture = static_cast<const Texture &>(item);
         auto kind = getKind(texture);
@@ -781,8 +799,8 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         const auto &call = static_cast<const Call &>(item);
         const auto kind = getKind(call);
         const auto callType = call.callType;
-        result &= (column != CallProgramId || kind.draw || kind.compute
-            || kind.trace);
+        result &= (column != CallProgramId || kind.draw || kind.compute);
+        result &= (column != CallShaderTableId || kind.trace);
         result &= (column != CallTargetId || kind.draw);
         result &= (column != CallVertexStreamId || (kind.draw && !kind.mesh));
         result &= (column != CallPrimitiveType || (kind.draw && !kind.mesh));

@@ -68,6 +68,8 @@ private:
     QAction *mAddSamplerAction{};
     QAction *mAddProgramAction{};
     QAction *mAddShaderAction{};
+    QAction *mAddShaderTableAction{};
+    QAction *mAddRecordAction{};
     QAction *mAddBindingAction{};
     QAction *mAddStreamAction{};
     QAction *mAddAttributeAction{};

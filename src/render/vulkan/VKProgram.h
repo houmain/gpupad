@@ -18,6 +18,7 @@ public:
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
     const StageReflection &reflection() const { return mReflection; }
     const std::vector<VKShader> &shaders() const { return mShaders; }
+    const VKShader *getShader(ItemId itemId) const;
     VKPrintf &printf() { return mPrintf; }
 
 private:

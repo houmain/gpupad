@@ -94,6 +94,8 @@ namespace {
         case Item::Type::Texture:    return new Texture();
         case Item::Type::Program:    return new Program();
         case Item::Type::Shader:     return new Shader();
+        case Item::Type::ShaderTable: return new ShaderTable();
+        case Item::Type::Record:     return new Record();
         case Item::Type::Binding:    return new Binding();
         case Item::Type::Stream:     return new Stream();
         case Item::Type::Attribute:  return new Attribute();
@@ -132,6 +134,10 @@ namespace {
                 return new Program(static_cast<const Program &>(item));
             case Item::Type::Shader:
                 return new Shader(static_cast<const Shader &>(item));
+            case Item::Type::ShaderTable:
+                return new ShaderTable(static_cast<const ShaderTable &>(item));
+            case Item::Type::Record:
+                return new Record(static_cast<const Record &>(item));
             case Item::Type::Binding:
                 return new Binding(static_cast<const Binding &>(item));
             case Item::Type::Stream:
@@ -236,6 +242,7 @@ bool SessionModelCore::canContainType(const QModelIndex &index,
         case Item::Type::Buffer:
         case Item::Type::Texture:
         case Item::Type::Program:
+        case Item::Type::ShaderTable:
         case Item::Type::Binding:
         case Item::Type::Stream:
         case Item::Type::Target:
@@ -248,6 +255,8 @@ bool SessionModelCore::canContainType(const QModelIndex &index,
     case Item::Type::Buffer:  return (type == Item::Type::Block);
     case Item::Type::Block:   return (type == Item::Type::Field);
     case Item::Type::Program: return (type == Item::Type::Shader);
+    case Item::Type::ShaderTable: return (type == Item::Type::Record);
+    case Item::Type::Record: return (type == Item::Type::Binding);
     case Item::Type::Stream:  return (type == Item::Type::Attribute);
     case Item::Type::Target:  return (type == Item::Type::Attachment);
     case Item::Type::AccelerationStructure:
@@ -265,6 +274,8 @@ Item::Type SessionModelCore::getDefaultChildType(const QModelIndex &index) const
     case Item::Type::Buffer:                return Item::Type::Block;
     case Item::Type::Block:                 return Item::Type::Field;
     case Item::Type::Program:               return Item::Type::Shader;
+    case Item::Type::ShaderTable:           return Item::Type::Record;
+    case Item::Type::Record:                return Item::Type::Binding;
     case Item::Type::Stream:                return Item::Type::Attribute;
     case Item::Type::Target:                return Item::Type::Attachment;
     case Item::Type::AccelerationStructure: return Item::Type::Instance;

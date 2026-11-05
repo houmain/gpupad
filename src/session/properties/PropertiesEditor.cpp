@@ -19,6 +19,8 @@
 #include "ui_FieldProperties.h"
 #include "ui_GroupProperties.h"
 #include "ui_ProgramProperties.h"
+#include "ui_ShaderTableProperties.h"
+#include "ui_RecordProperties.h"
 #include "ui_ScriptProperties.h"
 #include "ui_ShaderProperties.h"
 #include "ui_StreamProperties.h"
@@ -85,38 +87,44 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
     setFrameShape(QFrame::NoFrame);
     setBackgroundRole(QPalette::AlternateBase);
 
-    const auto add = [&](auto &ui) {
+    const auto addWidget = [&](Item::Type type, QWidget *widget) {
+        const auto index = mStack->addWidget(widget);
+        Q_ASSERT(index == static_cast<int>(type));
+    };
+    const auto add = [&](Item::Type type, auto &ui) {
         auto widget = new QWidget(this);
         instantiate(ui);
         ui->setupUi(widget);
-        mStack->addWidget(widget);
+        addWidget(type, widget);
     };
     mRootProperties = new QWidget(this);
-    mStack->addWidget(mRootProperties);
+    addWidget(Item::Type::Root, mRootProperties);
     mSessionProperties = new SessionProperties(this);
-    mStack->addWidget(mSessionProperties);
-    add(mGroupProperties);
-    add(mBufferProperties);
-    add(mBlockProperties);
-    add(mFieldProperties);
+    addWidget(Item::Type::Session, mSessionProperties);
+    add(Item::Type::Group, mGroupProperties);
+    add(Item::Type::Buffer, mBufferProperties);
+    add(Item::Type::Block, mBlockProperties);
+    add(Item::Type::Field, mFieldProperties);
     mTextureProperties = new TextureProperties(this);
-    mStack->addWidget(mTextureProperties);
-    add(mProgramProperties);
-    add(mShaderProperties);
+    addWidget(Item::Type::Texture, mTextureProperties);
+    add(Item::Type::Program, mProgramProperties);
+    add(Item::Type::Shader, mShaderProperties);
+    add(Item::Type::ShaderTable, mShaderTableProperties);
+    add(Item::Type::Record, mRecordProperties);
     mBindingProperties = new BindingProperties(this);
-    mStack->addWidget(mBindingProperties);
-    add(mStreamProperties);
-    add(mAttributeProperties);
-    add(mTargetProperties);
+    addWidget(Item::Type::Binding, mBindingProperties);
+    add(Item::Type::Stream, mStreamProperties);
+    add(Item::Type::Attribute, mAttributeProperties);
+    add(Item::Type::Target, mTargetProperties);
     mAttachmentProperties = new AttachmentProperties(this);
-    mStack->addWidget(mAttachmentProperties);
+    addWidget(Item::Type::Attachment, mAttachmentProperties);
     mCallProperties = new CallProperties(this);
-    mStack->addWidget(mCallProperties);
-    add(mScriptProperties);
-    add(mGeometrySetProperties);
-    add(mGeometryProperties);
-    add(mAccelerationStructureProperties);
-    add(mInstanceProperties);
+    addWidget(Item::Type::Call, mCallProperties);
+    add(Item::Type::Script, mScriptProperties);
+    add(Item::Type::GeometrySet, mGeometrySetProperties);
+    add(Item::Type::Geometry, mGeometryProperties);
+    add(Item::Type::AccelerationStructure, mAccelerationStructureProperties);
+    add(Item::Type::Instance, mInstanceProperties);
 
     mMapper->setModel(&mModel);
     connect(mSubmitTimer, &QTimer::timeout, mSessionProperties,
@@ -162,9 +170,29 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
     connect(mAttributeProperties->field, &ReferenceComboBox::listRequired,
         [this]() { return getItemIds(Item::Type::Field); });
 
-    connect(mInstanceProperties->geometrySet,
-        &ReferenceComboBox::listRequired,
+    connect(mInstanceProperties->geometrySet, &ReferenceComboBox::listRequired,
         [this]() { return getItemIds(Item::Type::GeometrySet, true); });
+
+    connect(mShaderTableProperties->program, &ReferenceComboBox::listRequired,
+        [this]() { return getItemIds(Item::Type::Program, true); });
+    connect(mRecordProperties->type, &DataComboBox::currentDataChanged, this,
+        &PropertiesEditor::updateRecordWidgets);
+    connect(mRecordProperties->shader, &ReferenceComboBox::listRequired,
+        [this]() {
+            const auto type = static_cast<Record::RecordType>(
+                mRecordProperties->type->currentData().toInt());
+            return getShaderIds(type == Record::RecordType::Miss
+                    ? Shader::ShaderType::RayMiss
+                    : Shader::ShaderType::RayGeneration);
+        });
+    connect(mRecordProperties->intersectionShader,
+        &ReferenceComboBox::listRequired,
+        [this]() { return getShaderIds(Shader::ShaderType::RayIntersection); });
+    connect(mRecordProperties->anyHitShader, &ReferenceComboBox::listRequired,
+        [this]() { return getShaderIds(Shader::ShaderType::RayAnyHit); });
+    connect(mRecordProperties->closestHitShader,
+        &ReferenceComboBox::listRequired,
+        [this]() { return getShaderIds(Shader::ShaderType::RayClosestHit); });
 
     connect(mGeometryProperties->type, &DataComboBox::currentDataChanged, this,
         &PropertiesEditor::updateGeometryWidgets);
@@ -183,11 +211,14 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
             return FileDialog::getFileTitle(data.toString());
         });
 
-    for (auto comboBox :
-        { mAttributeProperties->field, mInstanceProperties->geometrySet,
-            mGeometryProperties->vertexBufferBlock,
-            mGeometryProperties->indexBufferBlock,
-            mGeometryProperties->transformBufferBlock })
+    for (auto comboBox : { mAttributeProperties->field,
+             mInstanceProperties->geometrySet, mShaderTableProperties->program,
+             mRecordProperties->shader, mRecordProperties->intersectionShader,
+             mRecordProperties->anyHitShader,
+             mRecordProperties->closestHitShader,
+             mGeometryProperties->vertexBufferBlock,
+             mGeometryProperties->indexBufferBlock,
+             mGeometryProperties->transformBufferBlock })
         connect(comboBox, &ReferenceComboBox::textRequired,
             [this](QVariant data) { return getItemName(data.toInt()); });
 
@@ -210,6 +241,7 @@ void PropertiesEditor::fillComboBoxes()
     fillComboBox<Target::PolygonMode>(mTargetProperties->polygonMode);
     fillComboBox<Target::LogicOperation>(mTargetProperties->logicOperation);
     fillComboBox<Shader::ShaderType>(mShaderProperties->type);
+    fillComboBox<Record::RecordType>(mRecordProperties->type);
     renameComboBoxItem(mShaderProperties->type, "Tess Control",
         "Tessellation Control");
     renameComboBoxItem(mShaderProperties->type, "Tess Evaluation",
@@ -276,6 +308,29 @@ QVariantList PropertiesEditor::getItemIds(Item::Type type, bool addNull) const
     return result;
 }
 
+QVariantList PropertiesEditor::getShaderIds(Shader::ShaderType type) const
+{
+    auto result = QVariantList{ 0 };
+    const auto current = currentModelIndex();
+    if (mModel.getItemType(current) == Item::Type::Record) {
+        if (const auto table = mModel.item<ShaderTable>(current.parent()))
+            if (const auto program =
+                    mModel.findItem<Program>(table->programId)) {
+                for (const auto item : program->items)
+                    if (const auto shader = castItem<Shader>(item);
+                        shader && shader->shaderType == type)
+                        result.append(shader->id);
+                return result;
+            }
+    }
+    mModel.forEachItemScoped(currentModelIndex(), [&](const Item &item) {
+        if (const auto shader = castItem<Shader>(item);
+            shader && shader->shaderType == type)
+            result.append(shader->id);
+    });
+    return result;
+}
+
 void PropertiesEditor::updateModel()
 {
     mMapper->submit();
@@ -333,6 +388,37 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
     case Item::Type::Program:
         map(mProgramProperties->name, SessionModel::Name);
         break;
+
+    case Item::Type::ShaderTable:
+        map(mShaderTableProperties->name, SessionModel::Name);
+        map(mShaderTableProperties->program,
+            SessionModel::ShaderTableProgramId);
+        break;
+
+    case Item::Type::Record: {
+        map(mRecordProperties->name, SessionModel::Name);
+        map(mRecordProperties->type, SessionModel::RecordType);
+        map(mRecordProperties->shader, SessionModel::RecordShaderId);
+        map(mRecordProperties->intersectionShader,
+            SessionModel::RecordIntersectionShaderId);
+        map(mRecordProperties->anyHitShader,
+            SessionModel::RecordAnyHitShaderId);
+        map(mRecordProperties->closestHitShader,
+            SessionModel::RecordClosestHitShaderId);
+        const auto record = mModel.item<Record>(index);
+        auto tableIndex = 0;
+        if (record)
+            for (const auto item : record->parent->items) {
+                const auto other = castItem<Record>(item);
+                if (!other || other->recordType != record->recordType)
+                    continue;
+                if (other == record)
+                    break;
+                ++tableIndex;
+            }
+        mRecordProperties->index->setText(QString::number(tableIndex));
+        break;
+    }
 
     case Item::Type::Shader:
         map(mShaderProperties->file, SessionModel::FileName);
@@ -400,8 +486,7 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
             SessionModel::InstanceHitGroupRecordOffset);
         map(mInstanceProperties->triangleCulling,
             SessionModel::InstanceTriangleCulling);
-        map(mInstanceProperties->frontFace,
-            SessionModel::InstanceFrontFace);
+        map(mInstanceProperties->frontFace, SessionModel::InstanceFrontFace);
         map(mInstanceProperties->opacityMode,
             SessionModel::InstanceOpacityMode);
         setFormEnabled(mInstanceProperties->labelGeometrySet,
@@ -432,14 +517,30 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
     mMapper->setRootIndex(mModel.parent(index));
     mMapper->setCurrentModelIndex(index);
 
-    // values of Item::Type must match order of Stack Widgets
-    static_assert(static_cast<int>(Item::Type::Root) == 0);
-    static_assert(static_cast<int>(Item::Type::Instance) == 19);
-    const auto lastStackWidget = static_cast<Item::Type>(mStack->count() - 1);
-    Q_ASSERT(lastStackWidget == Item::Type::Instance);
+    if (mModel.getItemType(index) == Item::Type::Record)
+        updateRecordWidgets();
 
+    // values of Item::Type must match order of Stack Widgets
     const auto stackIndex = static_cast<int>(mModel.getItemType(index));
     mStack->setCurrentIndex(stackIndex);
+}
+
+void PropertiesEditor::updateRecordWidgets()
+{
+    const auto type = static_cast<Record::RecordType>(
+        mRecordProperties->type->currentData().toInt());
+    const auto hit = (type == Record::RecordType::Hit);
+    setFormVisibility(mRecordProperties->formLayout,
+        mRecordProperties->labelShader, mRecordProperties->shader, !hit);
+    setFormVisibility(mRecordProperties->formLayout,
+        mRecordProperties->labelIntersectionShader,
+        mRecordProperties->intersectionShader, hit);
+    setFormVisibility(mRecordProperties->formLayout,
+        mRecordProperties->labelAnyHitShader, mRecordProperties->anyHitShader,
+        hit);
+    setFormVisibility(mRecordProperties->formLayout,
+        mRecordProperties->labelClosestHitShader,
+        mRecordProperties->closestHitShader, hit);
 }
 
 IEditor *PropertiesEditor::openEditor(const FileItem &fileItem)
@@ -543,9 +644,11 @@ IEditor *PropertiesEditor::openItemEditor(const QModelIndex &index)
         case Call::CallType::Compute:
         case Call::CallType::ComputeIndirect:
         case Call::CallType::ComputeSound:
-        case Call::CallType::TraceRays:
             return openItemEditor(
                 mModel.getIndex(mModel.findItem(call->programId)));
+        case Call::CallType::TraceRays:
+            return openItemEditor(
+                mModel.getIndex(mModel.findItem(call->shaderTableId)));
         case Call::CallType::ClearTexture:
         case Call::CallType::CopyTexture:
         case Call::CallType::SwapTextures:
@@ -712,6 +815,9 @@ void PropertiesEditor::updateGeometryWidgets()
         ui.transformBufferBlock, hasTriangles);
     setFormVisibility(ui.formLayout, ui.labelCount, ui.count, true);
     setFormVisibility(ui.formLayout, ui.labelOffset, ui.offset, true);
+    setFormVisibility(ui.formLayout, ui.labelOpaque, ui.opaque, true);
+    setFormVisibility(ui.formLayout, ui.labelNoDuplicateAnyHitInvocation,
+        ui.noDuplicateAnyHitInvocation, true);
 }
 
 void PropertiesEditor::deduceBlockOffset()

@@ -105,3 +105,11 @@ std::vector<KDGpu::ShaderStage> VKProgram::getShaderStages()
         stages.push_back(shader.getShaderStage());
     return stages;
 }
+
+const VKShader *VKProgram::getShader(ItemId itemId) const
+{
+    for (const auto &shader : mShaders)
+        if (shader.itemId() == itemId)
+            return &shader;
+    return nullptr;
+}

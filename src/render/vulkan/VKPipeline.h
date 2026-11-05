@@ -12,14 +12,16 @@ class VKStream;
 class VKPipeline : public PipelineBase
 {
 public:
-    VKPipeline(ItemId itemId, VKProgram *program);
+    VKPipeline(ItemId itemId, VKProgram *program,
+        const ShaderTable *shaderTable = nullptr);
     ~VKPipeline();
 
     bool createGraphics(VKContext &context,
         KDGpu::PrimitiveOptions &primitiveOptions, VKTarget *target,
         VKStream *vertexStream);
     bool createCompute(VKContext &context);
-    bool createRayTracing(VKContext &context);
+    bool createRayTracing(VKContext &context, ScriptEngine &scriptEngine);
+    bool updateRayTracingShaderBindingTable(ScriptEngine &scriptEngine);
     bool updateBindings(VKContext &context, ScriptEngine &scriptEngine);
     std::optional<KDGpu::RenderPassCommandRecorder> beginRenderPass(
         VKContext &context, bool flipViewport);
@@ -73,8 +75,11 @@ private:
     bool createLayout(VKContext &context);
     bool hasPushConstants() const;
     bool updatePushConstants(ScriptEngine &scriptEngine);
+    std::vector<std::byte> getRecordData(const Record &record,
+        ScriptEngine &scriptEngine, bool *valid);
 
     VKProgram &mProgram;
+    const ShaderTable *mShaderTable{ };
     VKTarget *mTarget{};
     VKStream *mVertexStream{};
     bool mCreated{};
@@ -89,4 +94,10 @@ private:
     std::vector<std::byte> mPushConstantData;
     KDGpu::PushConstantRange mPushConstantRange{};
     KDGpu::RayTracingShaderBindingTable mRayTracingShaderBindingTable;
+    const Record *mRayGenerationRecord{};
+    std::vector<const Record *> mMissRecords;
+    std::vector<const Record *> mHitRecords;
+    size_t mRayGenerationRecordDataSize{};
+    size_t mMissRecordDataSize{};
+    size_t mHitRecordDataSize{};
 };

@@ -23,6 +23,11 @@ void VKCall::setProgram(VKProgram *program)
     mProgram = program;
 }
 
+void VKCall::setShaderTable(const ShaderTable *shaderTable)
+{
+    mShaderTable = shaderTable;
+}
+
 void VKCall::setTarget(VKTarget *target)
 {
     mTarget = target;
@@ -123,6 +128,11 @@ void VKCall::execute(VKContext &context, Bindings &&bindings,
     }
 
     if (mKind.draw || mKind.compute || mKind.trace) {
+        if (mKind.trace && !mShaderTable) {
+            messages.insert(mCall.id, MessageType::ScriptError,
+                "No shader table set");
+            return;
+        }
         if (!mProgram) {
             messages.insert(mCall.id, MessageType::ProgramNotAssigned);
             return;
@@ -140,7 +150,8 @@ void VKCall::execute(VKContext &context, Bindings &&bindings,
         if (mVertexStream)
             mUsedItems += mVertexStream->usedItems();
 
-        mPipeline = std::make_unique<VKPipeline>(mCall.id, mProgram);
+        mPipeline = std::make_unique<VKPipeline>(
+            mCall.id, mProgram, mShaderTable);
     }
 
     if (mKind.draw) {
@@ -389,7 +400,9 @@ void VKCall::executeCompute(VKContext &context, MessageList &messages,
 void VKCall::executeTraceRays(VKContext &context, MessageList &messages,
     ScriptEngine &scriptEngine)
 {
-    if (!mPipeline || !mPipeline->createRayTracing(context))
+    if (!mPipeline
+        || !mPipeline->createRayTracing(context, scriptEngine)
+        || !mPipeline->updateRayTracingShaderBindingTable(scriptEngine))
         return;
 
     const auto canRender = mPipeline->updateBindings(context, scriptEngine);

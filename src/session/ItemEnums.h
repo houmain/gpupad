@@ -15,6 +15,8 @@ namespace ItemEnums {
         Texture,
         Program,
         Shader,
+        ShaderTable,
+        Record,
         Binding,
         Stream,
         Attribute,
@@ -472,6 +474,13 @@ namespace ItemEnums2 {
 
     };
     Q_ENUM_NS(CallType)
+
+    enum RecordType {
+        RayGeneration,
+        Miss,
+        Hit,
+    };
+    Q_ENUM_NS(RecordType)
 
     enum StencilOperation {
         Keep = 0x1E00, // GL_KEEP

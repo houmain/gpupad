@@ -11,6 +11,13 @@
 namespace {
     const auto maxVariableBindGroupEntries = 128;
 
+    bool hasRecordDataBlockName(const SpvReflectBlockVariable &block,
+        const QString &name)
+    {
+        return name == QString::fromUtf8(block.name ? block.name : "")
+            || name == getBufferBlockTypeName(block);
+    }
+
     KDGpu::ResourceBindingType getResourceType(SpvReflectDescriptorType type)
     {
         return static_cast<KDGpu::ResourceBindingType>(type);
@@ -97,9 +104,11 @@ namespace {
     }
 } // namespace
 
-VKPipeline::VKPipeline(ItemId itemId, VKProgram *program)
+VKPipeline::VKPipeline(ItemId itemId, VKProgram *program,
+    const ShaderTable *shaderTable)
     : PipelineBase(itemId)
     , mProgram(*program)
+    , mShaderTable(shaderTable)
 {
 }
 
@@ -409,7 +418,8 @@ bool VKPipeline::createCompute(VKContext &context)
     return mComputePipeline.isValid();
 }
 
-bool VKPipeline::createRayTracing(VKContext &context)
+bool VKPipeline::createRayTracing(VKContext &context,
+    ScriptEngine &scriptEngine)
 {
     if (std::exchange(mCreated, true))
         return mRayTracingPipeline.isValid();
@@ -422,59 +432,122 @@ bool VKPipeline::createRayTracing(VKContext &context)
     options.shaderStages = mProgram.getShaderStages();
     options.layout = mPipelineLayout;
 
-    auto shaderGroupEntriesRayGen = std::vector<size_t>();
-    auto shaderGroupEntriesHit = std::vector<std::pair<size_t, uint32_t>>();
-    auto shaderGroupEntriesMiss = std::vector<std::pair<size_t, uint32_t>>();
-    for (const auto &shader : mProgram.shaders()) {
-        switch (shader.type()) {
-        case Shader::ShaderType::RayGeneration:
-            shaderGroupEntriesRayGen.push_back(options.shaderGroups.size());
+    if (!mShaderTable) {
+        mMessages.insert(mItemId, MessageType::ScriptError,
+            "No shader table set");
+        return false;
+    }
+    mUsedItems += mShaderTable->id;
+
+    const auto fail = [&](ItemId itemId, const QString &text) {
+        mMessages.insert(itemId, MessageType::ScriptError, text);
+        return false;
+    };
+    const auto getShader = [&](ItemId shaderId, Shader::ShaderType type,
+                               const QString &role) -> const VKShader * {
+        const auto shader = mProgram.getShader(shaderId);
+        if (!shader || shader->type() != type) {
+            fail(shaderId ? shaderId : mShaderTable->id,
+                QStringLiteral("%1 has an invalid shader reference")
+                    .arg(role));
+            return nullptr;
+        }
+        return shader;
+    };
+
+    auto rayGenerationGroup = std::optional<size_t>();
+    auto hitGroups = std::vector<size_t>();
+    auto missGroups = std::vector<size_t>();
+    for (const auto item : mShaderTable->items) {
+        const auto record = castItem<Record>(item);
+        if (!record)
+            continue;
+        mUsedItems += record->id;
+        switch (record->recordType) {
+        case Record::RecordType::RayGeneration: {
+            if (rayGenerationGroup)
+                return fail(record->id,
+                    "A shader table must contain exactly one ray-generation record");
+            const auto shader = getShader(record->shaderId,
+                Shader::ShaderType::RayGeneration,
+                "Ray-generation record");
+            if (!shader)
+                return false;
+            rayGenerationGroup = options.shaderGroups.size();
+            mRayGenerationRecord = record;
             options.shaderGroups.push_back({
                 .type = KDGpu::RayTracingShaderGroupType::General,
-                .generalShaderIndex = shader.shaderIndex(),
+                .generalShaderIndex = shader->shaderIndex(),
             });
-            break;
-
-        case Shader::ShaderType::RayMiss:
-            shaderGroupEntriesMiss.emplace_back(options.shaderGroups.size(), 0);
-            options.shaderGroups.push_back({
-                .type = KDGpu::RayTracingShaderGroupType::General,
-                .generalShaderIndex = shader.shaderIndex(),
-            });
-            break;
-
-        case Shader::ShaderType::RayIntersection:
-        case Shader::ShaderType::RayAnyHit:
-        case Shader::ShaderType::RayClosestHit:   {
-            // merge in last hit group (entry is currently unused)
-            if (shaderGroupEntriesHit.empty()
-                || shaderGroupEntriesHit.back().first + 1
-                    != options.shaderGroups.size()) {
-                shaderGroupEntriesHit.emplace_back(options.shaderGroups.size(),
-                    0);
-                options.shaderGroups.push_back({
-                    .type = KDGpu::RayTracingShaderGroupType::TrianglesHit,
-                });
-            }
-            auto &shaderGroup = options.shaderGroups.back();
-            if (shader.type() == Shader::ShaderType::RayIntersection) {
-                shaderGroup.type =
-                    KDGpu::RayTracingShaderGroupType::ProceduralHit;
-                shaderGroup.intersectionShaderIndex = shader.shaderIndex();
-            } else if (shader.type() == Shader::ShaderType::RayAnyHit) {
-                shaderGroup.anyHitShaderIndex = shader.shaderIndex();
-            } else if (shader.type() == Shader::ShaderType::RayClosestHit) {
-                shaderGroup.closestHitShaderIndex = shader.shaderIndex();
-            }
             break;
         }
 
-        default:
-            mMessages.insert(mItemId, MessageType::ShaderError,
-                "shader type not implemented");
-            return false;
+        case Record::RecordType::Miss: {
+            const auto shader = getShader(record->shaderId,
+                Shader::ShaderType::RayMiss, "Miss record");
+            if (!shader)
+                return false;
+            missGroups.push_back(options.shaderGroups.size());
+            mMissRecords.push_back(record);
+            options.shaderGroups.push_back({
+                .type = KDGpu::RayTracingShaderGroupType::General,
+                .generalShaderIndex = shader->shaderIndex(),
+            });
+            break;
+        }
+
+        case Record::RecordType::Hit: {
+            const auto intersection = record->intersectionShaderId
+                ? getShader(record->intersectionShaderId,
+                      Shader::ShaderType::RayIntersection,
+                      "Intersection shader")
+                : nullptr;
+            const auto anyHit = record->anyHitShaderId
+                ? getShader(record->anyHitShaderId,
+                      Shader::ShaderType::RayAnyHit, "Any-hit shader")
+                : nullptr;
+            const auto closestHit = record->closestHitShaderId
+                ? getShader(record->closestHitShaderId,
+                      Shader::ShaderType::RayClosestHit,
+                      "Closest-hit shader")
+                : nullptr;
+            if ((record->intersectionShaderId && !intersection)
+                || (record->anyHitShaderId && !anyHit)
+                || (record->closestHitShaderId && !closestHit))
+                return false;
+            hitGroups.push_back(options.shaderGroups.size());
+            mHitRecords.push_back(record);
+            options.shaderGroups.push_back({
+                .type = intersection
+                    ? KDGpu::RayTracingShaderGroupType::ProceduralHit
+                    : KDGpu::RayTracingShaderGroupType::TrianglesHit,
+            });
+            auto &shaderGroup = options.shaderGroups.back();
+            if (intersection)
+                shaderGroup.intersectionShaderIndex = intersection->shaderIndex();
+            if (anyHit)
+                shaderGroup.anyHitShaderIndex = anyHit->shaderIndex();
+            if (closestHit)
+                shaderGroup.closestHitShaderIndex = closestHit->shaderIndex();
+            break;
+        }
         }
     }
+    if (!rayGenerationGroup)
+        return fail(mShaderTable->id,
+            "A shader table must contain exactly one ray-generation record");
+
+    auto validRecordData = true;
+    mRayGenerationRecordDataSize = getRecordData(
+        *mRayGenerationRecord, scriptEngine, &validRecordData).size();
+    for (const auto record : mMissRecords)
+        mMissRecordDataSize = std::max(mMissRecordDataSize,
+            getRecordData(*record, scriptEngine, &validRecordData).size());
+    for (const auto record : mHitRecords)
+        mHitRecordDataSize = std::max(mHitRecordDataSize,
+            getRecordData(*record, scriptEngine, &validRecordData).size());
+    if (!validRecordData)
+        return false;
 
     mRayTracingPipeline = context.device.createRayTracingPipeline(options);
     if (!mRayTracingPipeline.isValid())
@@ -484,17 +557,133 @@ bool VKPipeline::createRayTracing(VKContext &context)
     sbt = KDGpu::RayTracingShaderBindingTable(&context.device,
         KDGpu::RayTracingShaderBindingTableOptions{
             .nbrMissShaders =
-                static_cast<uint32_t>(shaderGroupEntriesMiss.size()),
+                static_cast<uint32_t>(missGroups.size()),
             .nbrHitShaders =
-                static_cast<uint32_t>(shaderGroupEntriesHit.size()),
+                static_cast<uint32_t>(hitGroups.size()),
+            .rayGenRecordDataSize = mRayGenerationRecordDataSize,
+            .missRecordDataSize = mMissRecordDataSize,
+            .hitRecordDataSize = mHitRecordDataSize,
         });
-    for (auto shaderGroupIndex : shaderGroupEntriesRayGen)
-        sbt.addRayGenShaderGroup(mRayTracingPipeline, shaderGroupIndex);
-    for (auto [shaderGroupIndex, entry] : shaderGroupEntriesHit)
-        sbt.addHitShaderGroup(mRayTracingPipeline, shaderGroupIndex, entry);
-    for (auto [shaderGroupIndex, entry] : shaderGroupEntriesMiss)
-        sbt.addMissShaderGroup(mRayTracingPipeline, shaderGroupIndex, entry);
+    sbt.addRayGenShaderGroup(mRayTracingPipeline,
+        static_cast<uint32_t>(*rayGenerationGroup));
+    for (auto entry = size_t{}; entry < hitGroups.size(); ++entry)
+        sbt.addHitShaderGroup(mRayTracingPipeline,
+            static_cast<uint32_t>(hitGroups[entry]),
+            static_cast<uint32_t>(entry));
+    for (auto entry = size_t{}; entry < missGroups.size(); ++entry)
+        sbt.addMissShaderGroup(mRayTracingPipeline,
+            static_cast<uint32_t>(missGroups[entry]),
+            static_cast<uint32_t>(entry));
     return true;
+}
+
+std::vector<std::byte> VKPipeline::getRecordData(const Record &record,
+    ScriptEngine &scriptEngine, bool *valid)
+{
+    const auto getShaders = [&]() {
+        auto result = std::vector<const VKShader *>();
+        const auto add = [&](ItemId shaderId) {
+            if (const auto shader = mProgram.getShader(shaderId))
+                result.push_back(shader);
+        };
+        if (record.recordType == Record::RecordType::Hit) {
+            add(record.intersectionShaderId);
+            add(record.anyHitShaderId);
+            add(record.closestHitShaderId);
+        } else {
+            add(record.shaderId);
+        }
+        return result;
+    };
+    const auto shaders = getShaders();
+    auto result = std::vector<std::byte>();
+    for (const auto item : record.items) {
+        const auto binding = castItem<Binding>(item);
+        if (!binding)
+            continue;
+        mUsedItems += binding->id;
+        if (binding->bindingType != Binding::BindingType::Uniform) {
+            mMessages.insert(binding->id, MessageType::ScriptError,
+                "Shader-table records currently support only Uniform bindings");
+            *valid = false;
+            continue;
+        }
+
+        auto incompatibleLayout = false;
+        const auto block = [&]() -> const SpvReflectBlockVariable * {
+            auto found = static_cast<const SpvReflectBlockVariable *>(nullptr);
+            auto foundLayout = ShaderRecordLayout{};
+            for (const auto shader : shaders)
+                for (const auto candidate :
+                    shader->reflection().shaderRecordBlocks())
+                    if (hasRecordDataBlockName(*candidate, binding->name)) {
+                        const auto candidateLayout =
+                            getShaderRecordLayout(*candidate);
+                        if (found && foundLayout != candidateLayout) {
+                            mMessages.insert(binding->id,
+                                MessageType::ScriptError,
+                                "Record-data block has incompatible layouts");
+                            *valid = false;
+                            incompatibleLayout = true;
+                            return nullptr;
+                        }
+                        found = candidate;
+                        foundLayout = candidateLayout;
+                    }
+            return found;
+        }();
+        if (!block) {
+            if (!incompatibleLayout)
+                mMessages.insert(binding->id, MessageType::ScriptError,
+                    QStringLiteral("No shader record block named '%1'")
+                        .arg(binding->name));
+            *valid = false;
+            continue;
+        }
+
+        const auto layout = getShaderRecordLayout(*block);
+        const auto values =
+            scriptEngine.evaluateValues(binding->values, binding->id);
+        checkValueCount(values.size(), -1,
+            static_cast<int>(layout.elements.size()), binding->id,
+            scriptEngine.messages());
+        const auto data = packShaderRecordData(layout, values);
+        result.insert(result.end(), data.begin(), data.end());
+    }
+    return result;
+}
+
+bool VKPipeline::updateRayTracingShaderBindingTable(
+    ScriptEngine &scriptEngine)
+{
+    auto valid = true;
+    const auto update = [&](const Record &record, size_t capacity,
+                            const auto &write) {
+        const auto data = getRecordData(record, scriptEngine, &valid);
+        if (data.size() > capacity) {
+            mMessages.insert(record.id, MessageType::ScriptError,
+                "Shader-record data grew beyond its allocated size");
+            valid = false;
+            return;
+        }
+        write(std::span<const std::byte>(data));
+    };
+    if (mRayGenerationRecord)
+        update(*mRayGenerationRecord, mRayGenerationRecordDataSize,
+            [&](auto data) {
+                mRayTracingShaderBindingTable.setRayGenRecordData(data);
+            });
+    for (auto i = size_t{}; i < mMissRecords.size(); ++i)
+        update(*mMissRecords[i], mMissRecordDataSize, [&](auto data) {
+            mRayTracingShaderBindingTable.setMissRecordData(data,
+                static_cast<uint32_t>(i));
+        });
+    for (auto i = size_t{}; i < mHitRecords.size(); ++i)
+        update(*mHitRecords[i], mHitRecordDataSize, [&](auto data) {
+            mRayTracingShaderBindingTable.setHitRecordData(data,
+                static_cast<uint32_t>(i));
+        });
+    return valid;
 }
 
 bool VKPipeline::createLayout(VKContext &context)

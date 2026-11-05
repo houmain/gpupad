@@ -367,7 +367,9 @@ void RenderSessionBase::configure()
                 itemsToEvaluate.append(script);
         } else if (auto binding = castItem<Binding>(item)) {
             if (binding->bindingType == Binding::BindingType::Uniform)
-                itemsToEvaluate.append(binding);
+                if (!binding->parent
+                    || binding->parent->type != Item::Type::Record)
+                    itemsToEvaluate.append(binding);
         }
     });
 

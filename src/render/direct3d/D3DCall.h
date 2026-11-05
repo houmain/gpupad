@@ -24,6 +24,7 @@ public:
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
     void setProgram(D3DProgram *program);
+    void setShaderTable(const ShaderTable *shaderTable);
     void setTarget(D3DTarget *target);
     void setVextexStream(D3DStream *vertexStream);
     void setIndexBuffer(D3DBuffer *indices, const Block &block);
@@ -57,6 +58,7 @@ private:
     const Session mSession;
     MessageList mMessages;
     D3DProgram *mProgram{ };
+    const ShaderTable *mShaderTable{ };
     D3DTarget *mTarget{ };
     D3DStream *mVertexStream{ };
     D3DBuffer *mBuffer{ };

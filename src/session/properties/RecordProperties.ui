@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>RecordProperties</class>
+ <widget class="QWidget" name="RecordProperties">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>245</width>
+    <height>186</height>
+   </rect>
+  </property>
+  <layout class="QHBoxLayout">
+   <item>
+    <layout class="QFormLayout" name="formLayout">
+     <property name="labelAlignment">
+      <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+     </property>
+     <property name="horizontalSpacing">
+      <number>8</number>
+     </property>
+     <property name="verticalSpacing">
+      <number>2</number>
+     </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item row="0" column="0">
+      <widget class="QLabel" name="labelName">
+       <property name="text">
+        <string>Name</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="name"/>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="labelType">
+       <property name="text">
+        <string>Type</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="DataComboBox" name="type"/>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="labelShader">
+       <property name="text">
+        <string>Shader</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="ReferenceComboBox" name="shader"/>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="labelIntersectionShader">
+       <property name="text">
+        <string>Intersection Shader</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="ReferenceComboBox" name="intersectionShader"/>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="labelAnyHitShader">
+       <property name="text">
+        <string>Any-Hit Shader</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="ReferenceComboBox" name="anyHitShader"/>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="labelClosestHitShader">
+       <property name="text">
+        <string>Closest-Hit Shader</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="ReferenceComboBox" name="closestHitShader"/>
+     </item>
+     <item row="6" column="0">
+      <widget class="QLabel" name="labelIndex">
+       <property name="text">
+        <string>Table Index</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="QLineEdit" name="index">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>DataComboBox</class>
+   <extends>QComboBox</extends>
+   <header>widgets/DataComboBox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ReferenceComboBox</class>
+   <extends>QComboBox</extends>
+   <header>widgets/ReferenceComboBox.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

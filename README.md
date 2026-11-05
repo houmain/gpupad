@@ -77,7 +77,8 @@ Specifies where draws calls should render to. Multiple images can be attached. D
 Allows to bind data to a program's uniforms, samplers, images, buffers and
 acceleration structures. A binding affects all subsequent calls, until it is
 replaced by a binding with the same name, or the scope ends (see *Groups*). The
-name of a binding needs to match the name of a program's binding point.
+name of a binding needs to match the name of a program's binding point. A
+binding nested below a shader-table record is local to that record instead.
 
 - **Buffer** -
 Buffer blocks define the structure of a region within a binary. They consist of rows with multiple fields of some data type. Buffers can be backed by binary files.
@@ -86,7 +87,10 @@ Buffer blocks define the structure of a region within a binary. They consist of 
 Serves as the input for vertex shaders. A stream consists of multiple attributes, which get their data from the referenced buffer blocks.
 
 - **Acceleration Structure** -
-Allows to define the instances and geometry for ray tracing calls.
+Allows to define the instances of geometry for ray tracing calls. Instances can either directly contain the geometry or reference a geometry set.
+
+- **Shader Table** -
+Defines the ray-generation, hit or miss records used by a ray tracing call. Bindings below a record provide data local to that record.
 
 - **Group** -
 Allows to structure more complex sessions. They open a new scope unless *inline scope* is checked. Items within a scope are not visible for items outside the scope (they do not appear in the combo boxes).

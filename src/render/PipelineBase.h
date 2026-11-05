@@ -5,6 +5,27 @@
 #include "scripting/ScriptEngine.h"
 #include <span>
 
+struct ShaderRecordElement
+{
+    uint32_t offset{};
+    Field::DataType dataType{};
+
+    bool operator==(const ShaderRecordElement &) const = default;
+};
+
+struct ShaderRecordLayout
+{
+    uint32_t size{};
+    std::vector<ShaderRecordElement> elements;
+
+    bool operator==(const ShaderRecordLayout &) const = default;
+};
+
+ShaderRecordLayout getShaderRecordLayout(
+    const SpvReflectBlockVariable &block);
+std::vector<std::byte> packShaderRecordData(
+    const ShaderRecordLayout &layout, const ScriptValueList &values);
+
 class PipelineBase
 {
 public:

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ShaderTableProperties</class>
+ <widget class="QWidget" name="ShaderTableProperties">
+  <layout class="QHBoxLayout">
+   <item>
+    <layout class="QFormLayout" name="formLayout">
+     <property name="labelAlignment"><set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set></property>
+     <property name="horizontalSpacing"><number>8</number></property>
+     <property name="verticalSpacing"><number>2</number></property>
+     <property name="leftMargin"><number>0</number></property>
+     <property name="topMargin"><number>0</number></property>
+     <property name="rightMargin"><number>0</number></property>
+     <property name="bottomMargin"><number>0</number></property>
+     <item row="0" column="0"><widget class="QLabel" name="labelName"><property name="text"><string>Name</string></property></widget></item>
+     <item row="0" column="1"><widget class="QLineEdit" name="name"/></item>
+     <item row="1" column="0"><widget class="QLabel" name="labelProgram"><property name="text"><string>Program</string></property></widget></item>
+     <item row="1" column="1"><widget class="ReferenceComboBox" name="program"/></item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget><class>ReferenceComboBox</class><extends>QComboBox</extends><header>widgets/ReferenceComboBox.h</header></customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

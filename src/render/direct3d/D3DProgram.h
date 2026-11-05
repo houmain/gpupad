@@ -15,6 +15,7 @@ public:
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
     const std::vector<D3DShader> &shaders() const { return mShaders; }
     const D3DShader *getShader(Shader::ShaderType type) const;
+    const D3DShader *getShader(ItemId itemId) const;
     bool hasShader(Shader::ShaderType type) const;
     D3DPrintf &printf() { return mPrintf; }
     bool setupPipelineState(D3D12_GRAPHICS_PIPELINE_STATE_DESC &state);

@@ -118,6 +118,22 @@ struct Shader : FileItem
     QString includePaths;
 };
 
+struct ShaderTable : Item
+{
+    ItemId programId{ };
+};
+
+struct Record : Item
+{
+    using RecordType = ItemEnums2::RecordType;
+
+    RecordType recordType{ RecordType::RayGeneration };
+    ItemId shaderId{ };
+    ItemId intersectionShaderId{ };
+    ItemId anyHitShaderId{ };
+    ItemId closestHitShaderId{ };
+};
+
 struct Binding : Item
 {
     using BindingType = ItemEnums::BindingType;
@@ -229,6 +245,7 @@ struct Call : Item
     bool checked{ true };
     CallType callType{ };
     ItemId programId{ };
+    ItemId shaderTableId{ };
     ItemId targetId{ };
     ItemId vertexStreamId{ };
 
@@ -417,6 +434,16 @@ template <>
 inline Item::Type getItemType<Shader>()
 {
     return Item::Type::Shader;
+}
+template <>
+inline Item::Type getItemType<ShaderTable>()
+{
+    return Item::Type::ShaderTable;
+}
+template <>
+inline Item::Type getItemType<Record>()
+{
+    return Item::Type::Record;
 }
 template <>
 inline Item::Type getItemType<Binding>()

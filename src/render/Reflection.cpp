@@ -1,22 +1,89 @@
 
 #include "Reflection.h"
 
-Reflection::Reflection(const std::vector<uint32_t> &spirv)
-{
-    auto module = std::make_unique<SpvReflectShaderModule>();
-    if (!spirv.empty()) {
-        const auto result = spvReflectCreateShaderModule(
-            spirv.size() * sizeof(uint32_t), spirv.data(), module.get());
-        if (result != SPV_REFLECT_RESULT_SUCCESS)
-            *module = {};
+namespace {
+    std::shared_ptr<const SpvReflectShaderModule> createModule(
+        const std::vector<uint32_t> &spirv)
+    {
+        auto module = std::make_unique<SpvReflectShaderModule>();
+        if (!spirv.empty()) {
+            const auto result = spvReflectCreateShaderModule(
+                spirv.size() * sizeof(uint32_t), spirv.data(), module.get());
+            if (result != SPV_REFLECT_RESULT_SUCCESS)
+                *module = {};
+        }
+
+        return std::shared_ptr<SpvReflectShaderModule>(module.release(),
+            [](SpvReflectShaderModule *module) {
+                if (module)
+                    spvReflectDestroyShaderModule(module);
+                delete module;
+            });
     }
 
-    mModule = std::shared_ptr<SpvReflectShaderModule>(module.release(),
-        [](SpvReflectShaderModule *module) {
-            if (module)
-                spvReflectDestroyShaderModule(module);
-            delete module;
-        });
+    std::vector<uint32_t> remapShaderRecordStorageClass(
+        const std::vector<uint32_t> &spirv)
+    {
+        // SpvReflect exposes full block layout only for descriptors and push
+        // constants. Reflect a copy with shader-record variables remapped to
+        // push constants so it supplies the same SpvReflectBlockVariable data.
+        auto storageClassOperands = std::vector<size_t>();
+        auto foundVariable = false;
+        const auto remember = [&](size_t index) {
+            if (spirv[index] == SpvStorageClassShaderRecordBufferKHR)
+                storageClassOperands.push_back(index);
+        };
+        for (auto offset = 5u; offset < spirv.size();) {
+            const auto instruction = spirv[offset];
+            const auto wordCount = instruction >> 16;
+            const auto operation = instruction & 0xffff;
+            if (!wordCount || offset + wordCount > spirv.size())
+                return {};
+
+            switch (operation) {
+            case SpvOpTypePointer:
+            case SpvOpTypeForwardPointer:
+                if (wordCount >= 3)
+                    remember(offset + 2);
+                break;
+            case SpvOpVariable:
+            case SpvOpUntypedVariableKHR:
+                if (wordCount >= 4
+                    && spirv[offset + 3]
+                        == SpvStorageClassShaderRecordBufferKHR) {
+                    foundVariable = true;
+                    remember(offset + 3);
+                }
+                break;
+            }
+            offset += wordCount;
+        }
+        if (!foundVariable)
+            return {};
+
+        auto result = spirv;
+        for (const auto index : storageClassOperands)
+            result[index] = SpvStorageClassPushConstant;
+        return result;
+    }
+} // namespace
+
+Reflection::Reflection(const std::vector<uint32_t> &spirv)
+    : mModule(createModule(spirv))
+{
+    const auto remappedSpirv = remapShaderRecordStorageClass(spirv);
+    if (remappedSpirv.empty())
+        return;
+
+    mShaderRecordModule = createModule(remappedSpirv);
+    for (auto i = 0u; i < mShaderRecordModule->push_constant_block_count; ++i) {
+        const auto block = &mShaderRecordModule->push_constant_blocks[i];
+        auto isOriginalPushConstant = false;
+        for (const auto &original : pushConstantBlocks())
+            isOriginalPushConstant |= (original.spirv_id == block->spirv_id);
+        if (!isOriginalPushConstant)
+            mShaderRecordBlocks.push_back(block);
+    }
 }
 
 Reflection::~Reflection() = default;
