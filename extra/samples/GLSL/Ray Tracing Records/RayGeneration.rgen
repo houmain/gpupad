@@ -1,0 +1,24 @@
+#version 460
+#extension GL_EXT_ray_tracing : require
+#extension GL_GOOGLE_include_directive : require
+
+#include "RayPayload.glsl"
+
+layout(binding = 0, set = 0) uniform accelerationStructureEXT Scene;
+layout(binding = 1, set = 0, rgba8) uniform image2D OutputImage;
+layout(location = 0) rayPayloadEXT RayPayload Payload;
+
+void main()
+{
+    const uvec2 index = gl_LaunchIDEXT.xy;
+    const uvec2 dimensions = gl_LaunchSizeEXT.xy;
+    vec2 uv = (vec2(index) + 0.5) / vec2(dimensions) * 2.0 - 1.0;
+    uv.x *= float(dimensions.x) / float(dimensions.y);
+
+    const vec3 origin = vec3(uv.x, -uv.y, -2.0);
+    const vec3 direction = vec3(0.0, 0.0, 1.0);
+    Payload.Color = vec3(0.0);
+    traceRayEXT(Scene, gl_RayFlagsOpaqueEXT, 0xff,
+        0, 0, 0, origin, 0.001, direction, 100.0, 0);
+    imageStore(OutputImage, ivec2(index), vec4(Payload.Color, 1.0));
+}

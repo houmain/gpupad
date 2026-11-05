@@ -1,0 +1,224 @@
+{
+  "type": "Session",
+  "id": 1,
+  "name": "Ray Tracing Records",
+  "renderer": "Direct3D",
+  "apiVersion": "1.2",
+  "shaderLanguage": "HLSL",
+  "shaderCompiler": "DXC",
+  "shaderCompilerSettings": {
+    "shaderModel": "6.5"
+  },
+  "flipViewport": false,
+  "reverseCulling": false,
+  "items": [
+    {
+      "type": "Texture",
+      "id": 2,
+      "name": "OutputImage",
+      "target": "Target2D",
+      "format": "RGBA8_UNorm",
+      "width": "800",
+      "height": "450",
+      "samples": 1,
+      "flipVertically": false
+    },
+    {
+      "type": "Buffer",
+      "id": 3,
+      "name": "Vertices",
+      "items": [
+        {
+          "type": "Block",
+          "id": 4,
+          "name": "Position",
+          "offset": "0",
+          "rowCount": "3",
+          "items": [
+            {
+              "type": "Field",
+              "id": 5,
+              "name": "Position",
+              "dataType": "Float",
+              "count": 3,
+              "padding": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Script",
+      "id": 6,
+      "name": "Generate Scene",
+      "fileName": "generateScene.js",
+      "executeOn": "ResetEvaluation"
+    },
+    {
+      "type": "GeometrySet",
+      "id": 7,
+      "name": "Shared Triangle",
+      "items": [
+        {
+          "type": "Geometry",
+          "id": 8,
+          "name": "Triangle",
+          "geometryType": "Triangles",
+          "vertexBufferBlockId": 4,
+          "count": "1",
+          "offset": "0",
+          "opaque": true
+        }
+      ]
+    },
+    {
+      "type": "AccelerationStructure",
+      "id": 9,
+      "name": "Scene",
+      "items": [
+        {
+          "type": "Instance",
+          "id": 10,
+          "name": "Red Triangle",
+          "geometrySetId": 7,
+          "transform": "[1, 0, 0, -0.65, 0, 1, 0, 0, 0, 0, 1, 0]",
+          "shaderInstanceId": "0",
+          "visibilityMask": "255",
+          "hitGroupRecordOffset": "0",
+          "triangleCulling": false,
+          "frontFace": "CW",
+          "opacityMode": "GeometryDefault"
+        },
+        {
+          "type": "Instance",
+          "id": 11,
+          "name": "Blue Triangle",
+          "geometrySetId": 7,
+          "transform": "[1, 0, 0, 0.65, 0, 1, 0, 0, 0, 0, 1, 0]",
+          "shaderInstanceId": "1",
+          "visibilityMask": "255",
+          "hitGroupRecordOffset": "1",
+          "triangleCulling": false,
+          "frontFace": "CW",
+          "opacityMode": "GeometryDefault"
+        }
+      ]
+    },
+    {
+      "type": "Binding",
+      "id": 12,
+      "name": "OutputImage",
+      "bindingType": "Image",
+      "textureId": 2,
+      "level": 0,
+      "layer": -1,
+      "imageFormat": "Internal"
+    },
+    {
+      "type": "Binding",
+      "id": 13,
+      "name": "Scene",
+      "bindingType": "AccelerationStructure",
+      "accelerationStructureId": 9
+    },
+    {
+      "type": "Program",
+      "id": 14,
+      "name": "Program",
+      "items": [
+        {
+          "type": "Shader",
+          "id": 15,
+          "name": "Ray Generation",
+          "fileName": "RayGeneration.hlsl",
+          "shaderType": "RayGeneration",
+          "entryPoint": "RayGeneration"
+        },
+        {
+          "type": "Shader",
+          "id": 16,
+          "name": "Miss",
+          "fileName": "RayMiss.hlsl",
+          "shaderType": "RayMiss",
+          "entryPoint": "RayMiss"
+        },
+        {
+          "type": "Shader",
+          "id": 17,
+          "name": "Closest Hit",
+          "fileName": "RayClosestHit.hlsl",
+          "shaderType": "RayClosestHit",
+          "entryPoint": "RayClosestHit"
+        }
+      ]
+    },
+    {
+      "type": "ShaderTable",
+      "id": 18,
+      "name": "Shader Table",
+      "programId": 14,
+      "items": [
+        {
+          "type": "Record",
+          "id": 19,
+          "name": "Ray Generation",
+          "recordType": "RayGeneration",
+          "shaderId": 15
+        },
+        {
+          "type": "Record",
+          "id": 20,
+          "name": "Miss",
+          "recordType": "Miss",
+          "shaderId": 16
+        },
+        {
+          "type": "Record",
+          "id": 21,
+          "name": "Red Hit",
+          "recordType": "Hit",
+          "closestHitShaderId": 17,
+          "items": [
+            {
+              "type": "Binding",
+              "id": 22,
+              "name": "HitRecordData",
+              "bindingType": "Uniform",
+              "editor": "Color",
+              "values": ["1.0", "0.12", "0.04", "1.0"]
+            }
+          ]
+        },
+        {
+          "type": "Record",
+          "id": 23,
+          "name": "Blue Hit",
+          "recordType": "Hit",
+          "closestHitShaderId": 17,
+          "items": [
+            {
+              "type": "Binding",
+              "id": 24,
+              "name": "HitRecordData",
+              "bindingType": "Uniform",
+              "editor": "Color",
+              "values": ["0.04", "0.28", "1.0", "1.0"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Call",
+      "id": 25,
+      "name": "Trace Rays",
+      "checked": true,
+      "callType": "TraceRays",
+      "shaderTableId": 18,
+      "workGroupsX": "800",
+      "workGroupsY": "450",
+      "workGroupsZ": "1",
+      "executeOn": "EveryEvaluation"
+    }
+  ]
+}
