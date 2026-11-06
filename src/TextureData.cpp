@@ -1270,7 +1270,10 @@ bool TextureData::loadOpenImageIO(const QString &fileName)
     return false;
 #else // OPENIMAGEIO_ENABLED
     using namespace OIIO;
-    auto input = ImageInput::open(qUtf8Printable(fileName));
+
+    auto config = ImageSpec();
+    config["oiio:UnassociatedAlpha"] = 1;
+    auto input = ImageInput::open(qUtf8Printable(fileName), &config);
     if (!input) {
         OIIO::geterror();
         return false;
