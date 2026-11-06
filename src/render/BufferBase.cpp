@@ -35,6 +35,12 @@ QByteArray &BufferBase::writableData()
     return mData;
 }
 
+void BufferBase::markDeviceWrite()
+{
+    ++mContentRevision;
+    mDeviceCopyModified = true;
+}
+
 bool BufferBase::swap(BufferBase &other)
 {
     if (mSize != other.mSize)
@@ -42,5 +48,7 @@ bool BufferBase::swap(BufferBase &other)
 
     mDeviceCopyModified = true;
     other.mDeviceCopyModified = true;
+    ++mContentRevision;
+    ++other.mContentRevision;
     return true;
 }

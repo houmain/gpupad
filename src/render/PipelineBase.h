@@ -3,6 +3,7 @@
 #include "Reflection.h"
 #include "RenderSessionBase.h"
 #include "scripting/ScriptEngine.h"
+#include <set>
 #include <span>
 
 struct ShaderRecordElement
@@ -30,6 +31,7 @@ class PipelineBase
 {
 public:
     void setBindings(Bindings &&bindings);
+    void markBufferWrites();
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 protected:
@@ -47,9 +49,11 @@ protected:
     bool applyBufferMemberBindings(std::span<std::byte> bufferData,
         const SpvReflectBlockVariable &block, uint32_t arrayElement,
         ScriptEngine &scriptEngine);
+    void addWritableBuffer(BufferBase *buffer);
 
     ItemId mItemId{ };
     Bindings mBindings;
+    std::set<BufferBase *> mWritableBuffers;
     MessageList mMessages;
     QSet<ItemId> mUsedItems;
 };

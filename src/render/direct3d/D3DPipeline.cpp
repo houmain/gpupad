@@ -677,6 +677,8 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
                             : 0);
                 const auto isUav = (bindDesc.Type == D3D_SIT_UAV_RWBYTEADDRESS
                     || bindDesc.Type == D3D_SIT_UAV_RWSTRUCTURED);
+                if (isUav)
+                    addWritableBuffer(buffer);
 
                 if (buffer->size() < structureByteStride) {
                     // buffer smaller than structure size
@@ -744,6 +746,7 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
                     mUsedItems += imageBinding->texture->itemId();
                     auto texture =
                         static_cast<D3DTexture *>(imageBinding->texture);
+                    addWritableBuffer(texture->textureBuffer());
                     texture->prepareUnorderedAccessView(context, descriptor,
                         imageBinding->level);
                     texture->boundAsImage(imageBinding->level);

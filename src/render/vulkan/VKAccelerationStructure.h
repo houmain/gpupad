@@ -52,6 +52,8 @@ private:
         VKGeometrySet *geometrySet{ };
     };
 
+    void memoryBarrierBeforeUpdate(
+        KDGpu::CommandRecorder &commandRecorder);
     void memoryBarrier(KDGpu::CommandRecorder &commandRecorder,
         KDGpu::PipelineStageFlags destinationStages);
 
@@ -60,4 +62,5 @@ private:
     QSet<ItemId> mUsedItems;
     std::vector<VKInstance> mInstances;
     KDGpu::AccelerationStructure mTopLevelAs;
+    std::vector<uint64_t> mLastInputKey;
 };

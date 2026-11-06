@@ -130,15 +130,38 @@ void VKGeometrySet::memoryBarrier(KDGpu::CommandRecorder &commandRecorder)
     });
 }
 
+void VKGeometrySet::memoryBarrierBeforeUpdate(
+    KDGpu::CommandRecorder &commandRecorder)
+{
+    commandRecorder.memoryBarrier(KDGpu::MemoryBarrierOptions{
+        .srcStages = KDGpu::PipelineStageFlagBit::AllCommandsBit,
+        .dstStages =
+            KDGpu::PipelineStageFlagBit::AccelerationStructureBuildBit,
+        .memoryBarriers = {
+            {
+                .srcMask = KDGpu::AccessFlagBit::AccelerationStructureReadBit,
+                .dstMask =
+                    KDGpu::AccessFlagBit::AccelerationStructureReadBit
+                    | KDGpu::AccessFlagBit::AccelerationStructureWriteBit,
+            },
+        },
+    });
+}
+
 void VKGeometrySet::prepare(VKContext &context, ScriptEngine &scriptEngine)
 {
-    if (mBottomLevelAs.isValid())
-        return;
-
     auto buildOptions =
         KDGpu::BuildAccelerationStructureOptions::BuildOptions{ };
     auto geometryTypesAndCount = std::vector<
         KDGpu::AccelerationStructureOptions::GeometryTypeAndCount>();
+    auto inputKey = std::vector<uint64_t>{
+        static_cast<uint64_t>(mGeometries.size())
+    };
+    auto updateKey = inputKey;
+    const auto append = [](auto &key,
+                            std::initializer_list<uint64_t> values) {
+        key.insert(key.end(), values.begin(), values.end());
+    };
 
     for (const auto &geometry : mGeometries) {
         mUsedItems += geometry.itemId;
@@ -209,6 +232,18 @@ void VKGeometrySet::prepare(VKContext &context, ScriptEngine &scriptEngine)
                 .maxPrimitiveCount = primitiveCount,
             });
             buildOptions.geometries.push_back(aabbsGeometry);
+
+            const auto values = std::initializer_list<uint64_t>{
+                static_cast<uint64_t>(geometry.type),
+                static_cast<uint64_t>(geometryFlags.toInt()), primitiveCount,
+                primitiveOffset,
+                vertexBuffer.buffer().bufferDeviceAddress()
+                    + geometry.vertexBufferOffset,
+                geometry.vertexStride
+            };
+            append(inputKey, values);
+            append(updateKey, values);
+            inputKey.push_back(vertexBuffer.contentRevision());
         } else {
             const auto triangleGeometry =
                 KDGpu::AccelerationStructureGeometryTrianglesData{
@@ -229,6 +264,40 @@ void VKGeometrySet::prepare(VKContext &context, ScriptEngine &scriptEngine)
                 .maxPrimitiveCount = primitiveCount,
             });
             buildOptions.geometries.push_back(triangleGeometry);
+
+            const auto indexAddress = geometry.indexBuffer
+                ? geometry.indexBuffer->buffer().bufferDeviceAddress()
+                    + geometry.indexBufferOffset
+                : 0;
+            const auto transformAddress = geometry.transformBuffer
+                ? geometry.transformBuffer->buffer().bufferDeviceAddress()
+                    + geometry.transformBufferOffset
+                : 0;
+            const auto values = std::initializer_list<uint64_t>{
+                static_cast<uint64_t>(geometry.type),
+                static_cast<uint64_t>(geometryFlags.toInt()), primitiveCount,
+                primitiveOffset,
+                static_cast<uint64_t>(triangleGeometry.vertexFormat),
+                triangleGeometry.vertexDataOffset,
+                triangleGeometry.vertexStride, triangleGeometry.maxVertex,
+                static_cast<uint64_t>(triangleGeometry.indexType),
+                triangleGeometry.indexDataOffset,
+                triangleGeometry.transformDataOffset,
+                vertexBuffer.buffer().bufferDeviceAddress()
+                    + geometry.vertexBufferOffset,
+                indexAddress, transformAddress
+            };
+            append(inputKey, values);
+            append(updateKey, values);
+            inputKey.push_back(vertexBuffer.contentRevision());
+            const auto indexRevision = geometry.indexBuffer
+                ? geometry.indexBuffer->contentRevision()
+                : 0;
+            inputKey.push_back(indexRevision);
+            updateKey.push_back(indexRevision);
+            inputKey.push_back(geometry.transformBuffer
+                    ? geometry.transformBuffer->contentRevision()
+                    : 0);
         }
         buildOptions.buildRangeInfos.push_back({
             .primitiveCount = primitiveCount,
@@ -240,15 +309,45 @@ void VKGeometrySet::prepare(VKContext &context, ScriptEngine &scriptEngine)
 
     if (buildOptions.geometries.empty())
         return;
-    mBottomLevelAs = context.device.createAccelerationStructure(
-        KDGpu::AccelerationStructureOptions{
+
+    if (mBottomLevelAs.isValid() && mInputKey == inputKey)
+        return;
+
+    const auto compatible =
+        mBottomLevelAs.isValid() && mUpdateKey == updateKey;
+    const auto update = compatible && mUpdateCapable;
+    const auto updateCapable = mUpdateCapable || compatible;
+
+    if (update) {
+        memoryBarrierBeforeUpdate(*context.commandRecorder);
+        buildOptions.mode = KDGpu::BuildAccelerationStructureMode::Update;
+        buildOptions.sourceStructure = mBottomLevelAs;
+        buildOptions.destinationStructure = mBottomLevelAs;
+    } else {
+        auto flags = KDGpu::AccelerationStructureFlags{
+            KDGpu::AccelerationStructureFlagBits::PreferFastTrace
+        };
+        if (updateCapable)
+            flags |= KDGpu::AccelerationStructureFlagBits::AllowUpdate;
+        auto bottomLevelAs = context.device.createAccelerationStructure(
+            KDGpu::AccelerationStructureOptions{
             .type = KDGpu::AccelerationStructureType::BottomLevel,
-            .flags = KDGpu::AccelerationStructureFlagBits::PreferFastTrace,
+            .flags = flags,
             .geometryTypesAndCount = std::move(geometryTypesAndCount),
         });
-    buildOptions.destinationStructure = mBottomLevelAs;
+        buildOptions.destinationStructure = bottomLevelAs;
+        if (mBottomLevelAs.isValid())
+            context.stagingAccelerationStructures.push_back(
+                std::move(mBottomLevelAs));
+        mBottomLevelAs = std::move(bottomLevelAs);
+        mUpdateCapable = updateCapable;
+    }
+
     context.commandRecorder->buildAccelerationStructures({
         .buildGeometryInfos = { std::move(buildOptions) },
     });
     memoryBarrier(*context.commandRecorder);
+    mInputKey = std::move(inputKey);
+    mUpdateKey = std::move(updateKey);
+    ++mRevision;
 }

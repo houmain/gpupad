@@ -2,6 +2,7 @@
 
 #include "message/MessageList.h"
 #include "session/Item.h"
+#include <cstdint>
 
 class BufferBase
 {
@@ -15,6 +16,8 @@ public:
     const QString &fileName() const { return mFileName; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
     int size() const { return mSize; }
+    uint64_t contentRevision() const { return mContentRevision; }
+    void markDeviceWrite();
 
 protected:
     explicit BufferBase(int size);
@@ -29,4 +32,5 @@ protected:
     QSet<ItemId> mUsedItems;
     bool mSystemCopyModified{};
     bool mDeviceCopyModified{};
+    uint64_t mContentRevision{};
 };

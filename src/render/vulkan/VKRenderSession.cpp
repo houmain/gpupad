@@ -154,6 +154,7 @@ void VKRenderSession::render()
     obtainTimeQueryResults();
     context.commandBuffers.clear();
     context.stagingBuffers.clear();
+    context.stagingAccelerationStructures.clear();
 }
 
 void VKRenderSession::finish()

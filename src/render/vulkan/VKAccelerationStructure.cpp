@@ -1,4 +1,5 @@
 #include "VKAccelerationStructure.h"
+#include <bit>
 
 VKAccelerationStructure::VKAccelerationStructure(
     const AccelerationStructure &accelStruct)
@@ -61,12 +62,27 @@ void VKAccelerationStructure::memoryBarrier(
     });
 }
 
+void VKAccelerationStructure::memoryBarrierBeforeUpdate(
+    KDGpu::CommandRecorder &commandRecorder)
+{
+    commandRecorder.memoryBarrier(KDGpu::MemoryBarrierOptions{
+        .srcStages = KDGpu::PipelineStageFlagBit::AllCommandsBit,
+        .dstStages =
+            KDGpu::PipelineStageFlagBit::AccelerationStructureBuildBit,
+        .memoryBarriers = {
+            {
+                .srcMask = KDGpu::AccessFlagBit::AccelerationStructureReadBit,
+                .dstMask =
+                    KDGpu::AccessFlagBit::AccelerationStructureReadBit
+                    | KDGpu::AccessFlagBit::AccelerationStructureWriteBit,
+            },
+        },
+    });
+}
+
 void VKAccelerationStructure::prepare(VKContext &context,
     ScriptEngine &scriptEngine)
 {
-    if (mTopLevelAs.isValid())
-        return;
-
     const auto getTransformValues = [&](ItemId itemId,
                                         const QString &transform) {
         if (transform.isEmpty())
@@ -83,6 +99,7 @@ void VKAccelerationStructure::prepare(VKContext &context,
 
     auto geometryInstances =
         KDGpu::AccelerationStructureGeometryInstancesData{ };
+    auto inputKey = std::vector<uint64_t>();
     for (auto instanceIndex = 0u; instanceIndex < mInstances.size();
          ++instanceIndex) {
         const auto &instance = mInstances[instanceIndex];
@@ -145,38 +162,63 @@ void VKAccelerationStructure::prepare(VKContext &context,
             getTransformValues(instance.itemId, instance.transform);
         for (auto i = 0; i < transform.size(); ++i)
             geometryInstance.transform[i / 4][i % 4] = transform[i];
+
+        for (const auto &row : geometryInstance.transform)
+            for (const auto value : row)
+                inputKey.push_back(std::bit_cast<uint32_t>(value));
+        inputKey.insert(inputKey.end(),
+            { geometryInstance.instanceCustomIndex, geometryInstance.mask,
+                geometryInstance.instanceShaderBindingTableRecordOffset,
+                static_cast<uint64_t>(geometryInstance.flags.toInt()),
+                instance.geometrySet->revision() });
     }
 
     if (geometryInstances.data.empty())
         return;
-    mTopLevelAs = context.device.createAccelerationStructure({
-        .type = KDGpu::AccelerationStructureType::TopLevel,
-        .flags = KDGpu::AccelerationStructureFlagBits::PreferFastTrace,
-        .geometryTypesAndCount = {
-            {
-                .geometry = geometryInstances,
-                .maxPrimitiveCount =
-                    static_cast<uint32_t>(geometryInstances.data.size()),
-            },
-        },
-    });
-    context.commandRecorder->buildAccelerationStructures({
-        .buildGeometryInfos = {
-            {
-                .geometries = { geometryInstances },
-                .destinationStructure = mTopLevelAs,
-                .buildRangeInfos = {
-                    {
-                        .primitiveCount = static_cast<uint32_t>(
-                            geometryInstances.data.size()),
-                        .primitiveOffset = 0,
-                        .firstVertex = 0,
-                        .transformOffset = 0,
-                    },
+
+    if (mTopLevelAs.isValid() && mLastInputKey == inputKey)
+        return;
+
+    const auto update = mTopLevelAs.isValid();
+    if (!update) {
+        mTopLevelAs = context.device.createAccelerationStructure({
+            .type = KDGpu::AccelerationStructureType::TopLevel,
+            .flags = KDGpu::AccelerationStructureFlagBits::PreferFastTrace
+                | KDGpu::AccelerationStructureFlagBits::AllowUpdate,
+            .geometryTypesAndCount = {
+                {
+                    .geometry = geometryInstances,
+                    .maxPrimitiveCount = static_cast<uint32_t>(
+                        geometryInstances.data.size()),
                 },
             },
-        },
+        });
+    } else {
+        memoryBarrierBeforeUpdate(*context.commandRecorder);
+    }
+
+    auto buildOptions =
+        KDGpu::BuildAccelerationStructureOptions::BuildOptions{
+            .geometries = { geometryInstances },
+            .destinationStructure = mTopLevelAs,
+            .buildRangeInfos = {
+                {
+                    .primitiveCount = static_cast<uint32_t>(
+                        geometryInstances.data.size()),
+                    .primitiveOffset = 0,
+                    .firstVertex = 0,
+                    .transformOffset = 0,
+                },
+            },
+        };
+    if (update) {
+        buildOptions.mode = KDGpu::BuildAccelerationStructureMode::Update;
+        buildOptions.sourceStructure = mTopLevelAs;
+    }
+    context.commandRecorder->buildAccelerationStructures({
+        .buildGeometryInfos = { std::move(buildOptions) },
     });
     memoryBarrier(*context.commandRecorder,
         KDGpu::PipelineStageFlagBit::AllCommandsBit);
+    mLastInputKey = std::move(inputKey);
 }

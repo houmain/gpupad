@@ -52,6 +52,7 @@ void VKBuffer::clear(VKContext &context)
         .dstBuffer = buffer(),
         .byteSize = static_cast<uint64_t>(mSize),
     });
+    markDeviceWrite();
 }
 
 void VKBuffer::copy(VKContext &context, VKBuffer &source)
@@ -73,6 +74,7 @@ void VKBuffer::copy(VKContext &context, VKBuffer &source)
         .dst = buffer(),
         .byteSize = static_cast<uint64_t>(mSize),
     });
+    markDeviceWrite();
 }
 
 bool VKBuffer::swap(VKBuffer &other)
@@ -170,6 +172,7 @@ void VKBuffer::upload(VKContext &context)
             .byteSize = static_cast<KDGpu::DeviceSize>(mData.size()),
         });
     }
+    ++mContentRevision;
     mSystemCopyModified = mDeviceCopyModified = false;
 }
 

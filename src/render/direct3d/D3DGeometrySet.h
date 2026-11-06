@@ -22,6 +22,7 @@ public:
     {
         return (mBottomLevel ? mBottomLevel->GetGPUVirtualAddress() : 0);
     }
+    uint64_t revision() const { return mRevision; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
@@ -54,7 +55,11 @@ private:
     QSet<ItemId> mUsedItems;
     std::vector<D3DGeometry> mGeometries;
     ComPtr<ID3D12Resource> mBottomLevel;
-    ComPtr<ID3D12Resource> mScratchBuffer;
+    std::vector<UINT64> mInputKey;
+    std::vector<UINT64> mUpdateKey;
+    UINT64 mUpdateScratchSize{};
+    uint64_t mRevision{};
+    bool mUpdateCapable{};
 };
 
 #endif // D3D_ENABLED

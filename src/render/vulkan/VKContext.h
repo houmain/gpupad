@@ -44,6 +44,7 @@ struct VKContext
     std::vector<KDGpu::CommandBuffer> commandBuffers;
     std::optional<KDGpu::CommandRecorder> commandRecorder;
     std::vector<KDGpu::Buffer> stagingBuffers;
+    std::vector<KDGpu::AccelerationStructure> stagingAccelerationStructures;
     uint32_t soundWorkGroupCount{ };
 
     const KDGpu::AdapterFeatures &features() const

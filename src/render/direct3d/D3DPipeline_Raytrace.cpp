@@ -210,7 +210,7 @@ bool D3DPipeline::createRayTracing(D3DContext &context)
     auto pipelineConfig =
         stateObject
             .CreateSubobject<CD3DX12_RAYTRACING_PIPELINE_CONFIG_SUBOBJECT>();
-    pipelineConfig->Config(1);
+    pipelineConfig->Config(2);
 
     if (FAILED(device->CreateStateObject(stateObject,
             IID_PPV_ARGS(&mRayTracingStateObject)))) {

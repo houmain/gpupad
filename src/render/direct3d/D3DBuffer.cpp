@@ -46,6 +46,7 @@ void D3DBuffer::clear(D3DContext &context)
     context.graphicsCommandList->ClearUnorderedAccessViewUint(
         shaderVisibleGpuDescHandle, nonShaderVisibleCpuDescHandle,
         mResource.Get(), values, 0, nullptr);
+    markDeviceWrite();
 }
 
 void D3DBuffer::copy(D3DContext &context, D3DBuffer &source)
@@ -53,6 +54,7 @@ void D3DBuffer::copy(D3DContext &context, D3DBuffer &source)
     resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_DEST);
     source.resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_SOURCE);
     context.graphicsCommandList->CopyResource(resource(), source.resource());
+    markDeviceWrite();
 }
 
 bool D3DBuffer::swap(D3DBuffer &other)
@@ -155,6 +157,7 @@ void D3DBuffer::upload(D3DContext &context)
     resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_DEST);
     context.graphicsCommandList->CopyBufferRegion(mResource.Get(), 0,
         stagingBuffer.Get(), 0, static_cast<UINT64>(mSize));
+    ++mContentRevision;
 
     mSystemCopyModified = mDeviceCopyModified = false;
 }

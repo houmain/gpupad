@@ -349,6 +349,7 @@ void VKCall::executeDraw(VKContext &context, MessageList &messages,
         });
     }
     renderPass.end();
+    mPipeline->markBufferWrites();
     mUsedItems += mPipeline->usedItems();
 }
 
@@ -394,6 +395,7 @@ void VKCall::executeCompute(VKContext &context, MessageList &messages,
         computePass.dispatchCompute(computeCommand);
     }
     computePass.end();
+    mPipeline->markBufferWrites();
     mUsedItems += mPipeline->usedItems();
 }
 
@@ -432,6 +434,7 @@ void VKCall::executeTraceRays(VKContext &context, MessageList &messages,
     });
 
     rayTracingPass.end();
+    mPipeline->markBufferWrites();
     mUsedItems += mPipeline->usedItems();
 }
 

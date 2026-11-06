@@ -918,6 +918,8 @@ MessageType VKPipeline::updateBindings(VKContext &context,
         const auto writeable =
             !(desc.decoration_flags & SPV_REFLECT_DECORATION_NON_WRITABLE);
         buffer->prepareShaderStorageBuffer(context, readable, writeable);
+        if (writeable)
+            addWritableBuffer(buffer);
         setBindGroupResource(desc.set, isVariableLengthArray,
             {
                 .binding = desc.binding,
@@ -1028,6 +1030,8 @@ MessageType VKPipeline::updateBindings(VKContext &context,
         const auto writeable =
             !(desc.decoration_flags & SPV_REFLECT_DECORATION_NON_WRITABLE);
         buffer->prepareStorageTexelBuffer(context, readable, writeable);
+        if (writeable)
+            addWritableBuffer(buffer);
 
         mUsedItems += imageBinding->bindingItemId;
         mUsedItems += texture->itemId();

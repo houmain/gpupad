@@ -194,6 +194,19 @@ PipelineBase::PipelineBase(ItemId itemId) : mItemId(itemId) { }
 void PipelineBase::setBindings(Bindings &&bindings)
 {
     mBindings = std::move(bindings);
+    mWritableBuffers.clear();
+}
+
+void PipelineBase::addWritableBuffer(BufferBase *buffer)
+{
+    if (buffer)
+        mWritableBuffers.insert(buffer);
+}
+
+void PipelineBase::markBufferWrites()
+{
+    for (auto buffer : mWritableBuffers)
+        buffer->markDeviceWrite();
 }
 
 std::pair<uint32_t, uint32_t> PipelineBase::getBufferBindingOffsetSize(

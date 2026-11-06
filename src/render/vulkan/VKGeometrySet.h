@@ -21,6 +21,7 @@ public:
     {
         return mBottomLevelAs;
     }
+    uint64_t revision() const { return mRevision; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
@@ -47,6 +48,8 @@ private:
     };
 
     VKGeometry &getGeometry(int geometryIndex);
+    void memoryBarrierBeforeUpdate(
+        KDGpu::CommandRecorder &commandRecorder);
     void memoryBarrier(KDGpu::CommandRecorder &commandRecorder);
 
     ItemId mItemId{ };
@@ -54,4 +57,8 @@ private:
     QSet<ItemId> mUsedItems;
     std::vector<VKGeometry> mGeometries;
     KDGpu::AccelerationStructure mBottomLevelAs;
+    std::vector<uint64_t> mInputKey;
+    std::vector<uint64_t> mUpdateKey;
+    uint64_t mRevision{};
+    bool mUpdateCapable{};
 };

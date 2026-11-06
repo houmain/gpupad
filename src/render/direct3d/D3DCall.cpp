@@ -296,6 +296,7 @@ void D3DCall::executeDraw(D3DContext &context, MessageList &messages,
             mIndirectCommandSignature.Get(), drawCount,
             mIndirectBuffer->resource(), indirectOffset, nullptr, 0);
     }
+    mPipeline->markBufferWrites();
     mUsedItems += mPipeline->usedItems();
 }
 
@@ -389,6 +390,7 @@ void D3DCall::executeCompute(D3DContext &context, MessageList &messages,
             mIndirectCommandSignature.Get(), 1, mIndirectBuffer->resource(),
             indirectOffset, nullptr, 0);
     }
+    mPipeline->markBufferWrites();
     mUsedItems += mPipeline->usedItems();
 }
 
@@ -404,6 +406,7 @@ void D3DCall::executeTraceRays(D3DContext &context, MessageList &messages,
         scriptEngine.evaluateUInt(mCall.workGroupsX, mCall.id),
         scriptEngine.evaluateUInt(mCall.workGroupsY, mCall.id),
         scriptEngine.evaluateUInt(mCall.workGroupsZ, mCall.id));
+    mPipeline->markBufferWrites();
     mUsedItems += mPipeline->usedItems();
 }
 

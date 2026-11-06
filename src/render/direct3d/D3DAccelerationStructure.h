@@ -60,7 +60,9 @@ private:
     std::vector<D3DInstance> mInstances;
     ComPtr<ID3D12Resource> mInstanceBuffer;
     ComPtr<ID3D12Resource> mTopLevel;
-    ComPtr<ID3D12Resource> mScratchBuffer;
+    std::vector<D3D12_RAYTRACING_INSTANCE_DESC> mLastInstanceDescs;
+    std::vector<uint64_t> mLastGeometryRevisions;
+    UINT64 mUpdateScratchSize{};
 };
 
 #endif // D3D_ENABLED
