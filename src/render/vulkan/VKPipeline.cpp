@@ -643,7 +643,7 @@ std::vector<std::byte> VKPipeline::getRecordData(const Record &record,
 
         const auto layout = getShaderRecordLayout(*block);
         const auto values =
-            scriptEngine.evaluateValues(binding->values, binding->id);
+            mBindings.evaluatedUniformValues.value(binding->id);
         checkValueCount(values.size(), -1,
             static_cast<int>(layout.elements.size()), binding->id,
             scriptEngine.messages());

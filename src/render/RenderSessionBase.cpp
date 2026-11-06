@@ -361,15 +361,29 @@ void RenderSessionBase::configure()
 
     // collect items to evaluate, since doing so can modify list
     auto itemsToEvaluate = QVector<const Item *>();
+    auto recordBindings = QVector<const Binding *>();
+    auto activeShaderTables = QSet<ItemId>();
+    mSessionModelCopy.forEachItem<Call>([&](const Call &call) {
+        if (call.checked && call.callType == Call::CallType::TraceRays
+            && shouldExecute(call.executeOn, mEvaluationType))
+            activeShaderTables.insert(call.shaderTableId);
+    });
     mSessionModelCopy.forEachItem([&](const Item &item) {
         if (auto script = castItem<Script>(item)) {
             if (shouldExecute(script->executeOn, mEvaluationType))
                 itemsToEvaluate.append(script);
         } else if (auto binding = castItem<Binding>(item)) {
-            if (binding->bindingType == Binding::BindingType::Uniform)
-                if (!binding->parent
-                    || binding->parent->type != Item::Type::Record)
+            if (binding->bindingType == Binding::BindingType::Uniform) {
+                if (binding->parent
+                    && binding->parent->type == Item::Type::Record) {
+                    if (binding->parent->parent
+                        && activeShaderTables.contains(
+                            binding->parent->parent->id))
+                        recordBindings.append(binding);
+                } else {
                     itemsToEvaluate.append(binding);
+                }
+            }
         }
     });
 
@@ -385,23 +399,30 @@ void RenderSessionBase::configure()
             evaluateBindingValues(*binding, scriptEngine);
         }
     }
+
+    // Record bindings may use globals established by scripts and ordinary
+    // bindings, but record-local names must not overwrite those globals.
+    for (const auto *binding : std::as_const(recordBindings))
+        evaluateBindingValues(*binding, scriptEngine, false);
 }
 
 void RenderSessionBase::evaluateBindingValues(const Binding &binding,
-    ScriptEngine &scriptEngine)
+    ScriptEngine &scriptEngine, bool setGlobal)
 {
-    auto &values = mBindingValues[binding.id];
-    if (values.isEmpty()) {
+    auto it = mBindingValues.find(binding.id);
+    if (it == mBindingValues.end()) {
+        auto values = ScriptValueList();
         if (auto it = mBindingValueOverrides.constFind(binding.id);
             it != mBindingValueOverrides.cend()) {
             values = scriptEngine.evaluateValues(*it, binding.id);
         } else {
             values = scriptEngine.evaluateValues(binding.values, binding.id);
         }
-        // set global in script state
-        scriptEngine.setGlobal(binding.name, values);
+        it = mBindingValues.insert(binding.id, std::move(values));
         mUsedItems += binding.id;
     }
+    if (setGlobal)
+        scriptEngine.setGlobal(binding.name, it.value());
 }
 
 void RenderSessionBase::configured()

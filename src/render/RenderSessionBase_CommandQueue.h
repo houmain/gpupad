@@ -427,6 +427,7 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
                     const auto callItemId = call.itemId();
                     auto &context = commandQueue->context;
                     auto merged = mergeBindings(state);
+                    merged.evaluatedUniformValues = mBindingValues;
 
                     auto &self = *static_cast<RenderSession *>(this);
                     auto timeQuery = std::shared_ptr<void>();

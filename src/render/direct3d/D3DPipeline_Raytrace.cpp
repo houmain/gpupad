@@ -473,8 +473,8 @@ bool D3DPipeline::updateShaderTable(ScriptEngine &scriptEngine)
         auto destination = static_cast<std::byte *>(mappedData)
             + record.offset + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
         for (const auto &binding : record.localBindings) {
-            const auto values = scriptEngine.evaluateValues(
-                binding.binding->values, binding.binding->id);
+            const auto values = mBindings.evaluatedUniformValues.value(
+                binding.binding->id);
             checkValueCount(values.size(), -1,
                 static_cast<int>(binding.layout.elements.size()),
                 binding.binding->id, scriptEngine.messages());

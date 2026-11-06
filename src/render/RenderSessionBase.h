@@ -88,6 +88,7 @@ struct Bindings
     std::map<QString, BufferBinding> buffers;
     std::map<QString, SubroutineBinding> subroutines;
     std::map<QString, AccelerationStructureBinding> accelerationStructures;
+    QMap<ItemId, ScriptValueList> evaluatedUniformValues;
 };
 
 using Duration = std::chrono::duration<double>;
@@ -177,7 +178,7 @@ private:
     void updateCachedProperties(ItemId itemId, QList<int> values);
     std::optional<size_t> addTimeQuery(ItemId callId);
     void evaluateBindingValues(const Binding &binding,
-        ScriptEngine &scriptEngine);
+        ScriptEngine &scriptEngine, bool setGlobal = true);
 
     static Bindings mergeBindings(const BindingState &state);
 
