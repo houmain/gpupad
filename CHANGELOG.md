@@ -3,6 +3,27 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 4.7.0] - 2026-11-07
+
+### Added
+- Allow to select HLSL compiler shader model.
+- Added ray query support.
+- Added item `Geometry Set`, which can be referenced by multiple `Acceleration Structures`/`Instances`.
+- Added more properties to `Instance` and `Geometry`.
+- Added items `Shader Table` and `Record`.
+- Allow updating `Acceleration Structure`.
+- Added "Ray Query" sample.
+- Added "Ray Tracing Records" samples.
+
+### Changed
+- Binding `Acceleration Structures` instead of referencing them by `Trace Rays` calls.
+- `Trace Rays` calls reference `Shader Table` instead of `Program`.
+- Updating timer queries also during steady evaluation.
+
+### Fixed
+- Improved performance of message window.
+- Texture loading does not automatically premultiply alpha.
+
 ## [Version 4.6.0] - 2026-10-22
 
 ### Added
@@ -1245,6 +1266,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 4.7.0]: https://github.com/houmain/gpupad/compare/4.6.0...4.7.0
 [version 4.6.0]: https://github.com/houmain/gpupad/compare/4.5.1...4.6.0
 [version 4.5.1]: https://github.com/houmain/gpupad/compare/4.5.0...4.5.1
 [version 4.5.0]: https://github.com/houmain/gpupad/compare/4.4.0...4.5.0

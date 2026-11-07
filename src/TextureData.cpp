@@ -565,7 +565,15 @@ namespace {
     {
         const auto min = std::numeric_limits<Dest>::lowest();
         const auto max = std::numeric_limits<Dest>::max();
-        return static_cast<Dest>(value < min ? min : max < value ? max : value);
+        if constexpr (std::integral<Dest> && std::integral<T>) {
+            return static_cast<Dest>(std::cmp_less(value, min) ?
+                min : std::cmp_less(max, value) ?
+                max : value);
+        }
+        else {
+            const auto v = static_cast<long double>(value);
+            return static_cast<Dest>(v < min ? min : max < v ? max : v);
+        }
     }
 
     template <typename Source, typename Dest, int Shift>
