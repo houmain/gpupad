@@ -1,21 +1,5 @@
 #include "D3DAccelerationStructure.h"
 
-namespace {
-    ComPtr<ID3D12Resource> createBuffer(ID3D12Device &device, UINT64 size,
-        D3D12_HEAP_TYPE heapType, D3D12_RESOURCE_STATES initialState,
-        D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE)
-    {
-        const auto heapProperties = CD3DX12_HEAP_PROPERTIES(heapType);
-        const auto desc = CD3DX12_RESOURCE_DESC::Buffer(size, flags);
-        auto resource = ComPtr<ID3D12Resource>();
-        if (FAILED(device.CreateCommittedResource(&heapProperties,
-                D3D12_HEAP_FLAG_NONE, &desc, initialState, nullptr,
-                IID_PPV_ARGS(&resource))))
-            return { };
-        return resource;
-    }
-} // namespace
-
 D3DAccelerationStructure::D3DAccelerationStructure(
     const AccelerationStructure &accelStruct)
     : mItemId(accelStruct.id)

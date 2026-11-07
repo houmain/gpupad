@@ -3,6 +3,7 @@
 #include "message/MessageList.h"
 #include "editors/IEditor.h"
 #include <QFrame>
+#include <QSet>
 
 class Theme;
 class QQmlNetworkAccessManagerFactory;

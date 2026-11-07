@@ -1,21 +1,5 @@
 #include "D3DGeometrySet.h"
 
-namespace {
-    ComPtr<ID3D12Resource> createBuffer(ID3D12Device &device, UINT64 size,
-        D3D12_HEAP_TYPE heapType, D3D12_RESOURCE_STATES initialState,
-        D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE)
-    {
-        const auto heapProperties = CD3DX12_HEAP_PROPERTIES(heapType);
-        const auto desc = CD3DX12_RESOURCE_DESC::Buffer(size, flags);
-        auto resource = ComPtr<ID3D12Resource>();
-        if (FAILED(device.CreateCommittedResource(&heapProperties,
-                D3D12_HEAP_FLAG_NONE, &desc, initialState, nullptr,
-                IID_PPV_ARGS(&resource))))
-            return { };
-        return resource;
-    }
-} // namespace
-
 D3DGeometrySet::D3DGeometrySet(const Item &geometrySource)
     : mItemId(geometrySource.id)
 {
@@ -131,9 +115,8 @@ bool D3DGeometrySet::build(D3DContext &context, ScriptEngine &scriptEngine)
         return false;
 
     auto geometryDescs = std::vector<D3D12_RAYTRACING_GEOMETRY_DESC>();
-    auto inputKey = std::vector<UINT64>{
-        static_cast<UINT64>(mGeometries.size())
-    };
+    auto inputKey =
+        std::vector<UINT64>{ static_cast<UINT64>(mGeometries.size()) };
     auto updateKey = inputKey;
     for (const auto &geometry : mGeometries) {
         mUsedItems += geometry.itemId;
@@ -156,8 +139,7 @@ bool D3DGeometrySet::build(D3DContext &context, ScriptEngine &scriptEngine)
             .Flags = geometryFlags,
         };
 
-        if (geometry.type
-            == Geometry::GeometryType::AxisAlignedBoundingBoxes) {
+        if (geometry.type == Geometry::GeometryType::AxisAlignedBoundingBoxes) {
             const auto maxPrimitiveCount = geometry.vertexCount;
             const auto primitiveCount = (geometry.primitiveCount.isEmpty()
                     ? maxPrimitiveCount
@@ -233,10 +215,12 @@ bool D3DGeometrySet::build(D3DContext &context, ScriptEngine &scriptEngine)
                                 std::initializer_list<UINT64> values) {
             key.insert(key.end(), values.begin(), values.end());
         };
-        append(inputKey, { static_cast<UINT64>(desc.Type),
-                             static_cast<UINT64>(desc.Flags) });
-        append(updateKey, { static_cast<UINT64>(desc.Type),
-                              static_cast<UINT64>(desc.Flags) });
+        append(inputKey,
+            { static_cast<UINT64>(desc.Type),
+                static_cast<UINT64>(desc.Flags) });
+        append(updateKey,
+            { static_cast<UINT64>(desc.Type),
+                static_cast<UINT64>(desc.Flags) });
         if (desc.Type
             == D3D12_RAYTRACING_GEOMETRY_TYPE_PROCEDURAL_PRIMITIVE_AABBS) {
             const auto values = std::initializer_list<UINT64>{
@@ -248,14 +232,13 @@ bool D3DGeometrySet::build(D3DContext &context, ScriptEngine &scriptEngine)
             inputKey.push_back(geometry.vertexBuffer->contentRevision());
         } else {
             const auto &triangles = desc.Triangles;
-            const auto values = std::initializer_list<UINT64>{
-                triangles.Transform3x4,
-                static_cast<UINT64>(triangles.IndexFormat),
-                static_cast<UINT64>(triangles.VertexFormat),
-                triangles.IndexCount, triangles.VertexCount,
-                triangles.IndexBuffer, triangles.VertexBuffer.StartAddress,
-                triangles.VertexBuffer.StrideInBytes
-            };
+            const auto values =
+                std::initializer_list<UINT64>{ triangles.Transform3x4,
+                    static_cast<UINT64>(triangles.IndexFormat),
+                    static_cast<UINT64>(triangles.VertexFormat),
+                    triangles.IndexCount, triangles.VertexCount,
+                    triangles.IndexBuffer, triangles.VertexBuffer.StartAddress,
+                    triangles.VertexBuffer.StrideInBytes };
             append(inputKey, values);
             append(updateKey, values);
             inputKey.push_back(geometry.vertexBuffer->contentRevision());
@@ -309,29 +292,26 @@ bool D3DGeometrySet::build(D3DContext &context, ScriptEngine &scriptEngine)
               D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
               D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
     auto scratchBuffer = createBuffer(*device.Get(),
-        info.ScratchDataSizeInBytes,
-        D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+        info.ScratchDataSizeInBytes, D3D12_HEAP_TYPE_DEFAULT,
+        D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
         D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
     if (!bottomLevel || !scratchBuffer)
         return false;
 
     if (update) {
-        const auto barrier =
-            CD3DX12_RESOURCE_BARRIER::UAV(bottomLevel.Get());
+        const auto barrier = CD3DX12_RESOURCE_BARRIER::UAV(bottomLevel.Get());
         commandList->ResourceBarrier(1, &barrier);
     }
 
-    const auto buildDesc =
-        D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC{
-            .DestAccelerationStructureData =
-                bottomLevel->GetGPUVirtualAddress(),
-            .Inputs = inputs,
-            .SourceAccelerationStructureData = update
-                ? mBottomLevel->GetGPUVirtualAddress()
-                : D3D12_GPU_VIRTUAL_ADDRESS{},
-            .ScratchAccelerationStructureData =
-                scratchBuffer->GetGPUVirtualAddress(),
-        };
+    const auto buildDesc = D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC{
+        .DestAccelerationStructureData = bottomLevel->GetGPUVirtualAddress(),
+        .Inputs = inputs,
+        .SourceAccelerationStructureData = update
+            ? mBottomLevel->GetGPUVirtualAddress()
+            : D3D12_GPU_VIRTUAL_ADDRESS{ },
+        .ScratchAccelerationStructureData =
+            scratchBuffer->GetGPUVirtualAddress(),
+    };
     commandList->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
     const auto barrier = CD3DX12_RESOURCE_BARRIER::UAV(bottomLevel.Get());
     commandList->ResourceBarrier(1, &barrier);

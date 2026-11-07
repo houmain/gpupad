@@ -11,6 +11,7 @@ namespace KDGpu {
 }
 struct ktxVulkanDeviceInfo;
 
+#include "VKDevice.h"
 #include <KDGpu/acceleration_structure.h>
 #include <KDGpu/bind_group.h>
 #include <KDGpu/bind_group_layout_options.h>
@@ -29,7 +30,6 @@ struct ktxVulkanDeviceInfo;
 #include <KDGpu/texture_view.h>
 #include <KDGpu/vulkan/vulkan_graphics_api.h>
 #include "KDGpuEnums.h"
-#include "VKDevice.h"
 #include "VKRenderSession.h"
 #include "FileCache.h"
 #include "FileDialog.h"

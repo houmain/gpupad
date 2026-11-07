@@ -56,10 +56,14 @@ private:
     ComPtr<ID3D12DescriptorHeap> mShaderVisibleDescHeap;
     ComPtr<ID3D12DescriptorHeap> mNonShaderVisibleDescHeap;
     std::vector<ComPtr<ID3D12Resource>> mUploadBuffers;
-    D3D12_RESOURCE_STATES mCurrentState{};
-    uint64_t mUploadFrameIndex{};
-    size_t mNextUploadBuffer{};
-    bool mCheckModification{};
+    D3D12_RESOURCE_STATES mCurrentState{ };
+    uint64_t mUploadFrameIndex{ };
+    size_t mNextUploadBuffer{ };
+    bool mCheckModification{ };
 };
+
+ComPtr<ID3D12Resource> createBuffer(ID3D12Device &device, UINT64 size,
+    D3D12_HEAP_TYPE heapType, D3D12_RESOURCE_STATES initialState,
+    D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
 
 #endif // D3D_ENABLED

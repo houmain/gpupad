@@ -2,6 +2,22 @@
 #include "Singletons.h"
 #include <QScopeGuard>
 
+ComPtr<ID3D12Resource> createBuffer(ID3D12Device &device, UINT64 size,
+    D3D12_HEAP_TYPE heapType, D3D12_RESOURCE_STATES initialState,
+    D3D12_RESOURCE_FLAGS flags)
+{
+    const auto heapProperties = CD3DX12_HEAP_PROPERTIES(heapType);
+    const auto desc = CD3DX12_RESOURCE_DESC::Buffer(size, flags);
+    auto resource = ComPtr<ID3D12Resource>();
+    if (FAILED(device.CreateCommittedResource(&heapProperties,
+            D3D12_HEAP_FLAG_NONE, &desc, initialState, nullptr,
+            IID_PPV_ARGS(&resource))))
+        return { };
+    return resource;
+}
+
+//-------------------------------------------------------------------------
+
 D3DBuffer::D3DBuffer(const Buffer &buffer, D3DRenderSession &renderSession)
     : BufferBase(buffer, renderSession.getBufferSize(buffer))
 {
@@ -146,10 +162,11 @@ void D3DBuffer::upload(D3DContext &context)
         mNextUploadBuffer = 0;
     }
     if (mNextUploadBuffer == mUploadBuffers.size())
-        mUploadBuffers.emplace_back(createStagingBuffer(context, D3D12_HEAP_TYPE_UPLOAD));
+        mUploadBuffers.emplace_back(
+            createStagingBuffer(context, D3D12_HEAP_TYPE_UPLOAD));
     auto &stagingBuffer = mUploadBuffers[mNextUploadBuffer++];
 
-    auto mappedData = std::add_pointer_t<void>{};
+    auto mappedData = std::add_pointer_t<void>{ };
     AssertIfFailed(stagingBuffer->Map(0, nullptr, &mappedData));
     std::memcpy(mappedData, mData.constData(), mSize);
     stagingBuffer->Unmap(0, nullptr);
@@ -182,7 +199,7 @@ bool D3DBuffer::finishDownload()
 {
     auto modified = false;
     if (mDownloadBuffer) {
-        auto mappedData = std::add_pointer_t<void>{};
+        auto mappedData = std::add_pointer_t<void>{ };
         AssertIfFailed(mDownloadBuffer->Map(0, nullptr, &mappedData));
         Q_ASSERT(mData.size() >= mSize);
         if (!mCheckModification
@@ -369,8 +386,8 @@ void D3DBuffer::prepareTextureBufferUnorderedAccessView(D3DContext &context,
             .NumElements = static_cast<UINT>(mSize / texelSize),
         },
     };
-    context.device.CreateUnorderedAccessView(mResource.Get(), nullptr,
-        &uavDesc, descriptor);
+    context.device.CreateUnorderedAccessView(mResource.Get(), nullptr, &uavDesc,
+        descriptor);
 }
 
 D3D12_GPU_VIRTUAL_ADDRESS D3DBuffer::getDeviceAddress()
