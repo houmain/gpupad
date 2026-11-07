@@ -33,6 +33,8 @@ private:
     void exportMessages();
     void connectSessionModel();
     void invalidateLocations();
+    void scheduleVisibleRowsResize();
+    void resizeVisibleRowsToContents();
 
     QWidget *mTitleBar{};
     QTimer *mUpdateItemsTimer{};
@@ -45,4 +47,5 @@ private:
     std::shared_ptr<const MessageLocationIndex> mCachedLocations;
     bool mUpdateInProgress{};
     bool mSessionModelConnected{};
+    bool mVisibleRowsResizePending{};
 };

@@ -12,6 +12,8 @@
 #include <QHeaderView>
 #include <QPointer>
 #include <QRegularExpression>
+#include <QScrollBar>
+#include <QSet>
 #include <QThreadPool>
 #include <QTimer>
 #include <QToolButton>
@@ -90,13 +92,6 @@ public:
             case MessageSeverity::Warning: return mWarningIcon;
             case MessageSeverity::Info:    return mInfoIcon;
             }
-        }
-        if (role == Qt::ToolTipRole) {
-            const auto text = getMessageText(message);
-            const auto location = row.getLocationText();
-            return (location.isEmpty()
-                    ? text
-                    : text + QStringLiteral("\n") + location);
         }
         if (role == Qt::TextAlignmentRole && index.column() == 1)
             return static_cast<int>(Qt::AlignLeft | Qt::AlignVCenter);
@@ -215,16 +210,21 @@ MessageWindow::MessageWindow(QWidget *parent)
     verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
     verticalHeader()->setDefaultSectionSize(fontMetrics().height() + 6);
     horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
-    horizontalHeader()->setSectionResizeMode(1, QHeaderView::Interactive);
-    horizontalHeader()->resizeSection(1, 260);
+    horizontalHeader()->setResizeContentsPrecision(0);
+    horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     setEditTriggers(NoEditTriggers);
     setSelectionMode(SingleSelection);
     setSelectionBehavior(SelectRows);
     setVerticalScrollMode(ScrollPerPixel);
     setShowGrid(false);
     setAlternatingRowColors(true);
-    setWordWrap(false);
-    setTextElideMode(Qt::ElideRight);
+    setWordWrap(true);
+    setTextElideMode(Qt::ElideNone);
+
+    connect(verticalScrollBar(), &QScrollBar::valueChanged, this,
+        &MessageWindow::scheduleVisibleRowsResize);
+    connect(horizontalHeader(), &QHeaderView::sectionResized, this,
+        [this](int, int, int) { scheduleVisibleRowsResize(); });
 
     mExportButton->setIcon(
         QIcon(QIcon::fromTheme(QString::fromUtf8("application-exit"))));
@@ -352,11 +352,54 @@ void MessageWindow::applySnapshot(
         if (row >= 0)
             setCurrentIndex(mModel->index(row, 0));
     }
+    scheduleVisibleRowsResize();
 
     mAppliedMessagesRevision = messagesRevision;
     mAppliedLocationRevision = locationRevision;
     if (messagesAdded)
         Q_EMIT this->messagesAdded();
+}
+
+void MessageWindow::scheduleVisibleRowsResize()
+{
+    if (mVisibleRowsResizePending)
+        return;
+
+    mVisibleRowsResizePending = true;
+    QTimer::singleShot(0, this, [this]() {
+        resizeVisibleRowsToContents();
+        mVisibleRowsResizePending = false;
+    });
+}
+
+void MessageWindow::resizeVisibleRowsToContents()
+{
+    if (mModel->rowCount() == 0 || viewport()->height() <= 0)
+        return;
+
+    resizeColumnToContents(1);
+
+    auto resizedRows = QSet<int>{ };
+    while (true) {
+        const auto firstRow = rowAt(0);
+        if (firstRow < 0)
+            return;
+
+        auto lastRow = rowAt(viewport()->height() - 1);
+        if (lastRow < 0)
+            lastRow = mModel->rowCount() - 1;
+
+        auto resizedAny = false;
+        for (auto row = firstRow; row <= lastRow; ++row) {
+            if (resizedRows.contains(row))
+                continue;
+            resizedRows.insert(row);
+            resizeRowToContents(row);
+            resizedAny = true;
+        }
+        if (!resizedAny)
+            return;
+    }
 }
 
 void MessageWindow::handleItemActivated(const QModelIndex &index)
