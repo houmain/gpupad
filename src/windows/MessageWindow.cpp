@@ -83,8 +83,9 @@ public:
         const auto &row = mSnapshot->rows[index.row()];
         const auto &message = row.message;
         if (role == Qt::DisplayRole) {
-            return (index.column() == 0 ? getMessageText(message)
-                                        : row.getLocationText());
+            return (index.column() == 0
+                    ? getMessageText(message)
+                    : FileDialog::getFileTitle(message.fileName));
         }
         if (role == Qt::DecorationRole && index.column() == 0) {
             switch (getMessageSeverity(message)) {
@@ -93,6 +94,9 @@ public:
             case MessageSeverity::Info:    return mInfoIcon;
             }
         }
+        if (role == Qt::ToolTipRole)
+            return row.getLocationText();
+
         if (role == Qt::TextAlignmentRole && index.column() == 1)
             return static_cast<int>(Qt::AlignLeft | Qt::AlignVCenter);
         if (role == Qt::UserRole + 1)
