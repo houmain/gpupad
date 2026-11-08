@@ -611,6 +611,40 @@ IEditor *PropertiesEditor::openItemEditor(const QModelIndex &index)
         return editor;
     }
 
+    // open all shaders of Record
+    if (auto record = castItem<Record>(item)) {
+        for (auto shaderId : {
+                 record->shaderId,
+                 record->intersectionShaderId,
+                 record->anyHitShaderId,
+                 record->closestHitShaderId,
+             })
+            if (auto shader = mModel.findItem(shaderId)) {
+                openItemEditor(mModel.getIndex(shader));
+                Singletons::editorManager().setAutoRaise(false);
+            }
+        Singletons::editorManager().setAutoRaise(true);
+        return nullptr;
+    }
+
+    // open all shaders of ShaderTable
+    if (auto shaderTable = castItem<ShaderTable>(item)) {
+        for (auto shaderTableItem : shaderTable->items)
+            if (auto record = castItem<Record>(shaderTableItem))
+                for (auto shaderId : {
+                         record->shaderId,
+                         record->intersectionShaderId,
+                         record->anyHitShaderId,
+                         record->closestHitShaderId,
+                     })
+                    if (auto shader = mModel.findItem(shaderId)) {
+                        openItemEditor(mModel.getIndex(shader));
+                        Singletons::editorManager().setAutoRaise(false);
+                    }
+        Singletons::editorManager().setAutoRaise(true);
+        return nullptr;
+    }
+
     // open item of binding
     if (auto binding = castItem<Binding>(item)) {
         switch (binding->bindingType) {
