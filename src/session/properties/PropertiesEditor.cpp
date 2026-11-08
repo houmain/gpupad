@@ -30,8 +30,10 @@
 #include "ui_GeometryProperties.h"
 #include "ui_GeometrySetProperties.h"
 #include <QDataWidgetMapper>
+#include <QLabel>
 #include <QStackedWidget>
 #include <QTimer>
+#include <QVBoxLayout>
 
 namespace {
     class StackedWidget final : public QStackedWidget
@@ -135,8 +137,26 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
     mSubmitTimer->setSingleShot(true);
     qApp->installEventFilter(this);
 
+    auto container = new QWidget(this);
+    auto layout = new QVBoxLayout(container);
+    layout->setContentsMargins(0, 4, 0, 0);
+    layout->setSpacing(0);
+    auto typeLabel = new QLabel(container);
+    auto labelFont = typeLabel->font();
+    labelFont.setBold(true);
+    typeLabel->setFont(labelFont);
+    typeLabel->setEnabled(false);
+    const auto updateTypeLabel = [this, typeLabel](int index) {
+        const auto type = static_cast<Item::Type>(index);
+        typeLabel->setText("  " + splitPascalCase(mModel.getTypeName(type)));
+    };
+    connect(mStack, &QStackedWidget::currentChanged, updateTypeLabel);
+    updateTypeLabel(mStack->currentIndex());
+    layout->addWidget(typeLabel);
+    layout->addWidget(mStack);
+
     setWidgetResizable(true);
-    setWidget(mStack);
+    setWidget(container);
 
     connect(mShaderProperties->fileNew, &QToolButton::clicked,
         [this]() { saveCurrentItemFileAs(FileDialog::ShaderExtensions); });
