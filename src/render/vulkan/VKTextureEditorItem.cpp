@@ -383,9 +383,24 @@ bool VKTextureEditorItem::copySharedTexture(ShareHandle shareHandle,
         return false;
 
     const auto shareHandleData = shareHandle.lock();
-    const auto shareHandleChanged = shareHandleData
-        != mCurrentShareHandle.lock();
-    if (shareHandleChanged) {
+    const auto previousShareHandleData = mCurrentShareHandle.lock();
+    const auto shareHandleChanged =
+        (shareHandleData != previousShareHandleData);
+    const auto textureSamples = std::max(samples, 1);
+#if defined(OPENGL_ENABLED)
+    // Texture swappping alternates the source object every evaluation. The
+    // editor-owned Vulkan texture and its OpenGL memory view remain reusable.
+    const auto canReuseOpenGLSharing = (shareHandleChanged
+        && mTextureSamples == textureSamples && previousShareHandleData
+        && shareHandleData
+        && previousShareHandleData->type == ShareHandleType::OPENGL_TEXTURE_ID
+        && shareHandleData->type == ShareHandleType::OPENGL_TEXTURE_ID);
+#else
+    const auto canReuseOpenGLSharing = false;
+#endif
+    const auto sharingChanged =
+        (shareHandleChanged || mTextureSamples != textureSamples);
+    if (sharingChanged && !canReuseOpenGLSharing) {
         auto deviceLock = window().beginCommandQueue();
         window().submitCommandQueueWaitIdle();
     }
@@ -393,14 +408,14 @@ bool VKTextureEditorItem::copySharedTexture(ShareHandle shareHandle,
     auto deviceLock = window().beginCommandQueue();
     auto &context = window().context();
 
-    if (shareHandleChanged)
+    if (sharingChanged && !canReuseOpenGLSharing)
         releaseTextureSharing(context);
 
     if (!shareHandleData)
         return false;
 
     mCurrentShareHandle = shareHandle;
-    mTextureSamples = std::max(samples, 1);
+    mTextureSamples = textureSamples;
 
     if (shareHandleData->type == ShareHandleType::VK_TEXTURE_PTR) {
         auto &vkTexture = *static_cast<VKTexture *>(shareHandleData->handle);
