@@ -37,8 +37,8 @@ bool D3DAccelerationStructure::operator==(
     return true;
 }
 
-void D3DAccelerationStructure::setGeometrySet(
-    int instanceIndex, D3DGeometrySet *geometrySet)
+void D3DAccelerationStructure::setGeometrySet(int instanceIndex,
+    D3DGeometrySet *geometrySet)
 {
     Q_ASSERT(instanceIndex >= 0
         && instanceIndex < static_cast<int>(mInstances.size()));
@@ -57,13 +57,17 @@ bool D3DAccelerationStructure::build(D3DContext &context,
     auto instanceDescs = std::vector<D3D12_RAYTRACING_INSTANCE_DESC>();
     auto geometryRevisions = std::vector<uint64_t>();
     for (auto instanceIndex = 0u; instanceIndex < mInstances.size();
-         ++instanceIndex) {
+        ++instanceIndex) {
         const auto &instance = mInstances[instanceIndex];
         mUsedItems += instance.itemId;
-        if (!instance.geometrySet
-            || !instance.geometrySet->build(context, scriptEngine))
+        if (!instance.geometrySet)
             return false;
-        mUsedItems += instance.geometrySet->usedItems();
+
+        const auto usedItemsGuard = QScopeGuard(
+            [&]() { mUsedItems += instance.geometrySet->usedItems(); });
+
+        if (!instance.geometrySet->build(context, scriptEngine))
+            return false;
 
         auto shaderInstanceId = static_cast<uint32_t>(instanceIndex);
         if (!instance.shaderInstanceId.isEmpty()) {
@@ -74,9 +78,9 @@ bool D3DAccelerationStructure::build(D3DContext &context,
                 return false;
             shaderInstanceId = *value;
         }
-        const auto visibilityMask = scriptEngine.evaluateUInt(
-            instance.visibilityMask, instance.itemId, 0, 0xFF,
-            QStringLiteral("Visibility mask"));
+        const auto visibilityMask =
+            scriptEngine.evaluateUInt(instance.visibilityMask, instance.itemId,
+                0, 0xFF, QStringLiteral("Visibility mask"));
         if (!visibilityMask)
             return false;
         const auto hitGroupRecordOffset = scriptEngine.evaluateUInt(
@@ -90,8 +94,8 @@ bool D3DAccelerationStructure::build(D3DContext &context,
         instanceDesc.Transform[1][1] = 1.0f;
         instanceDesc.Transform[2][2] = 1.0f;
         if (!instance.transform.isEmpty()) {
-            auto transform = scriptEngine.evaluateValues(
-                instance.transform, instance.itemId);
+            auto transform = scriptEngine.evaluateValues(instance.transform,
+                instance.itemId);
             if (transform.size() != 12 && transform.size() != 16) {
                 mMessages.insert(instance.itemId,
                     MessageType::UniformComponentMismatch,
@@ -114,14 +118,11 @@ bool D3DAccelerationStructure::build(D3DContext &context,
             instanceDesc.Flags |=
                 D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE;
         if (instance.opacityMode == Instance::OpacityMode::ForceOpaque)
-            instanceDesc.Flags |=
-                D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE;
-        else if (instance.opacityMode
-            == Instance::OpacityMode::ForceNonOpaque)
+            instanceDesc.Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE;
+        else if (instance.opacityMode == Instance::OpacityMode::ForceNonOpaque)
             instanceDesc.Flags |=
                 D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_NON_OPAQUE;
-        instanceDesc.AccelerationStructure =
-            instance.geometrySet->gpuAddress();
+        instanceDesc.AccelerationStructure = instance.geometrySet->gpuAddress();
         instanceDescs.push_back(instanceDesc);
         geometryRevisions.push_back(instance.geometrySet->revision());
     }
@@ -132,13 +133,12 @@ bool D3DAccelerationStructure::build(D3DContext &context,
     if (mTopLevel && mLastInstanceDescs.size() == instanceDescs.size()
         && mLastGeometryRevisions == geometryRevisions
         && std::memcmp(mLastInstanceDescs.data(), instanceDescs.data(),
-               instanceDescs.size()
-                   * sizeof(D3D12_RAYTRACING_INSTANCE_DESC))
+               instanceDescs.size() * sizeof(D3D12_RAYTRACING_INSTANCE_DESC))
             == 0)
         return true;
 
-    const auto instanceBufferSize =
-        instanceDescs.size() * sizeof(D3D12_RAYTRACING_INSTANCE_DESC);
+    const auto instanceBufferSize = instanceDescs.size()
+        * sizeof(D3D12_RAYTRACING_INSTANCE_DESC);
     auto instanceBuffer = createBuffer(context.device, instanceBufferSize,
         D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
     if (!instanceBuffer)
@@ -177,8 +177,8 @@ bool D3DAccelerationStructure::build(D3DContext &context,
               D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
               D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
     auto scratchBuffer = createBuffer(*device.Get(),
-        info.ScratchDataSizeInBytes,
-        D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+        info.ScratchDataSizeInBytes, D3D12_HEAP_TYPE_DEFAULT,
+        D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
         D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
     if (!topLevel || !scratchBuffer)
         return false;
@@ -188,17 +188,15 @@ bool D3DAccelerationStructure::build(D3DContext &context,
         commandList->ResourceBarrier(1, &barrier);
     }
 
-    const auto buildDesc =
-        D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC{
-            .DestAccelerationStructureData =
-                topLevel->GetGPUVirtualAddress(),
-            .Inputs = inputs,
-            .SourceAccelerationStructureData = update
-                ? mTopLevel->GetGPUVirtualAddress()
-                : D3D12_GPU_VIRTUAL_ADDRESS{},
-            .ScratchAccelerationStructureData =
-                scratchBuffer->GetGPUVirtualAddress(),
-        };
+    const auto buildDesc = D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC{
+        .DestAccelerationStructureData = topLevel->GetGPUVirtualAddress(),
+        .Inputs = inputs,
+        .SourceAccelerationStructureData = update
+            ? mTopLevel->GetGPUVirtualAddress()
+            : D3D12_GPU_VIRTUAL_ADDRESS{ },
+        .ScratchAccelerationStructureData =
+            scratchBuffer->GetGPUVirtualAddress(),
+    };
     commandList->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
     const auto barrier = CD3DX12_RESOURCE_BARRIER::UAV(topLevel.Get());
     commandList->ResourceBarrier(1, &barrier);

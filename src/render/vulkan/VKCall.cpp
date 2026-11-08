@@ -150,8 +150,8 @@ void VKCall::execute(VKContext &context, Bindings &&bindings,
         if (mVertexStream)
             mUsedItems += mVertexStream->usedItems();
 
-        mPipeline = std::make_unique<VKPipeline>(
-            mCall.id, mProgram, mShaderTable);
+        mPipeline =
+            std::make_unique<VKPipeline>(mCall.id, mProgram, mShaderTable);
     }
 
     if (mKind.draw) {
@@ -402,16 +402,16 @@ void VKCall::executeCompute(VKContext &context, MessageList &messages,
 void VKCall::executeTraceRays(VKContext &context, MessageList &messages,
     ScriptEngine &scriptEngine)
 {
-    if (!mPipeline
-        || !mPipeline->createRayTracing(context, scriptEngine)
-        || !mPipeline->updateRayTracingShaderBindingTable(scriptEngine))
+    if (!mPipeline)
         return;
 
-    const auto canRender = mPipeline->updateBindings(context, scriptEngine);
-    if (!canRender) {
-        mUsedItems += mPipeline->usedItems();
+    const auto usedItemsGuard =
+        qScopeGuard([&]() { mUsedItems += mPipeline->usedItems(); });
+
+    if (!mPipeline->createRayTracing(context, scriptEngine)
+        || !mPipeline->updateRayTracingShaderBindingTable(scriptEngine)
+        || !mPipeline->updateBindings(context, scriptEngine))
         return;
-    }
 
     auto rayTracingPass = mPipeline->beginRayTracingPass(context);
     if (!rayTracingPass.isValid())
@@ -435,7 +435,6 @@ void VKCall::executeTraceRays(VKContext &context, MessageList &messages,
 
     rayTracingPass.end();
     mPipeline->markBufferWrites();
-    mUsedItems += mPipeline->usedItems();
 }
 
 void VKCall::executeClearTexture(VKContext &context, MessageList &messages)

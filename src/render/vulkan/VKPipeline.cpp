@@ -448,12 +448,14 @@ bool VKPipeline::createRayTracing(VKContext &context,
         const auto shader = mProgram.getShader(shaderId);
         if (!shader || shader->type() != type) {
             fail(shaderId ? shaderId : mShaderTable->id,
-                QStringLiteral("%1 has an invalid shader reference")
-                    .arg(role));
+                QStringLiteral("%1 has an invalid shader reference").arg(role));
             return nullptr;
         }
         return shader;
     };
+
+    for (const auto item : mShaderTable->items)
+        mUsedItems += item->id;
 
     auto rayGenerationGroup = std::optional<size_t>();
     auto hitGroups = std::vector<size_t>();
@@ -462,15 +464,14 @@ bool VKPipeline::createRayTracing(VKContext &context,
         const auto record = castItem<Record>(item);
         if (!record)
             continue;
-        mUsedItems += record->id;
         switch (record->recordType) {
         case Record::RecordType::RayGeneration: {
             if (rayGenerationGroup)
                 return fail(record->id,
-                    "A shader table must contain exactly one ray-generation record");
+                    "A shader table must contain exactly one ray-generation "
+                    "record");
             const auto shader = getShader(record->shaderId,
-                Shader::ShaderType::RayGeneration,
-                "Ray-generation record");
+                Shader::ShaderType::RayGeneration, "Ray-generation record");
             if (!shader)
                 return false;
             rayGenerationGroup = options.shaderGroups.size();
@@ -508,8 +509,7 @@ bool VKPipeline::createRayTracing(VKContext &context,
                 : nullptr;
             const auto closestHit = record->closestHitShaderId
                 ? getShader(record->closestHitShaderId,
-                      Shader::ShaderType::RayClosestHit,
-                      "Closest-hit shader")
+                      Shader::ShaderType::RayClosestHit, "Closest-hit shader")
                 : nullptr;
             if ((record->intersectionShaderId && !intersection)
                 || (record->anyHitShaderId && !anyHit)
@@ -524,7 +524,8 @@ bool VKPipeline::createRayTracing(VKContext &context,
             });
             auto &shaderGroup = options.shaderGroups.back();
             if (intersection)
-                shaderGroup.intersectionShaderIndex = intersection->shaderIndex();
+                shaderGroup.intersectionShaderIndex =
+                    intersection->shaderIndex();
             if (anyHit)
                 shaderGroup.anyHitShaderIndex = anyHit->shaderIndex();
             if (closestHit)
@@ -538,8 +539,9 @@ bool VKPipeline::createRayTracing(VKContext &context,
             "A shader table must contain exactly one ray-generation record");
 
     auto validRecordData = true;
-    mRayGenerationRecordDataSize = getRecordData(
-        *mRayGenerationRecord, scriptEngine, &validRecordData).size();
+    mRayGenerationRecordDataSize =
+        getRecordData(*mRayGenerationRecord, scriptEngine, &validRecordData)
+            .size();
     for (const auto record : mMissRecords)
         mMissRecordDataSize = std::max(mMissRecordDataSize,
             getRecordData(*record, scriptEngine, &validRecordData).size());
@@ -556,21 +558,19 @@ bool VKPipeline::createRayTracing(VKContext &context,
     auto &sbt = mRayTracingShaderBindingTable;
     sbt = KDGpu::RayTracingShaderBindingTable(&context.device,
         KDGpu::RayTracingShaderBindingTableOptions{
-            .nbrMissShaders =
-                static_cast<uint32_t>(missGroups.size()),
-            .nbrHitShaders =
-                static_cast<uint32_t>(hitGroups.size()),
+            .nbrMissShaders = static_cast<uint32_t>(missGroups.size()),
+            .nbrHitShaders = static_cast<uint32_t>(hitGroups.size()),
             .rayGenRecordDataSize = mRayGenerationRecordDataSize,
             .missRecordDataSize = mMissRecordDataSize,
             .hitRecordDataSize = mHitRecordDataSize,
         });
     sbt.addRayGenShaderGroup(mRayTracingPipeline,
         static_cast<uint32_t>(*rayGenerationGroup));
-    for (auto entry = size_t{}; entry < hitGroups.size(); ++entry)
+    for (auto entry = size_t{ }; entry < hitGroups.size(); ++entry)
         sbt.addHitShaderGroup(mRayTracingPipeline,
             static_cast<uint32_t>(hitGroups[entry]),
             static_cast<uint32_t>(entry));
-    for (auto entry = size_t{}; entry < missGroups.size(); ++entry)
+    for (auto entry = size_t{ }; entry < missGroups.size(); ++entry)
         sbt.addMissShaderGroup(mRayTracingPipeline,
             static_cast<uint32_t>(missGroups[entry]),
             static_cast<uint32_t>(entry));
@@ -612,7 +612,7 @@ std::vector<std::byte> VKPipeline::getRecordData(const Record &record,
         auto incompatibleLayout = false;
         const auto block = [&]() -> const SpvReflectBlockVariable * {
             auto found = static_cast<const SpvReflectBlockVariable *>(nullptr);
-            auto foundLayout = ShaderRecordLayout{};
+            auto foundLayout = ShaderRecordLayout{ };
             for (const auto shader : shaders)
                 for (const auto candidate :
                     shader->reflection().shaderRecordBlocks())
@@ -642,8 +642,7 @@ std::vector<std::byte> VKPipeline::getRecordData(const Record &record,
         }
 
         const auto layout = getShaderRecordLayout(*block);
-        const auto values =
-            mBindings.evaluatedUniformValues.value(binding->id);
+        const auto values = mBindings.evaluatedUniformValues.value(binding->id);
         checkValueCount(values.size(), -1,
             static_cast<int>(layout.elements.size()), binding->id,
             scriptEngine.messages());
@@ -653,8 +652,7 @@ std::vector<std::byte> VKPipeline::getRecordData(const Record &record,
     return result;
 }
 
-bool VKPipeline::updateRayTracingShaderBindingTable(
-    ScriptEngine &scriptEngine)
+bool VKPipeline::updateRayTracingShaderBindingTable(ScriptEngine &scriptEngine)
 {
     auto valid = true;
     const auto update = [&](const Record &record, size_t capacity,
@@ -673,12 +671,12 @@ bool VKPipeline::updateRayTracingShaderBindingTable(
             [&](auto data) {
                 mRayTracingShaderBindingTable.setRayGenRecordData(data);
             });
-    for (auto i = size_t{}; i < mMissRecords.size(); ++i)
+    for (auto i = size_t{ }; i < mMissRecords.size(); ++i)
         update(*mMissRecords[i], mMissRecordDataSize, [&](auto data) {
             mRayTracingShaderBindingTable.setMissRecordData(data,
                 static_cast<uint32_t>(i));
         });
-    for (auto i = size_t{}; i < mHitRecords.size(); ++i)
+    for (auto i = size_t{ }; i < mHitRecords.size(); ++i)
         update(*mHitRecords[i], mHitRecordDataSize, [&](auto data) {
             mRayTracingShaderBindingTable.setHitRecordData(data,
                 static_cast<uint32_t>(i));

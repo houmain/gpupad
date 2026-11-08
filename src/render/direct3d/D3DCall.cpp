@@ -131,8 +131,8 @@ void D3DCall::execute(D3DContext &context, Bindings &&bindings,
         if (!mProgram->link(context))
             return;
 
-        mPipeline = std::make_unique<D3DPipeline>(
-            mCall.id, mProgram, mShaderTable);
+        mPipeline =
+            std::make_unique<D3DPipeline>(mCall.id, mProgram, mShaderTable);
     }
 
     if (mKind.draw) {
@@ -397,8 +397,13 @@ void D3DCall::executeCompute(D3DContext &context, MessageList &messages,
 void D3DCall::executeTraceRays(D3DContext &context, MessageList &messages,
     ScriptEngine &scriptEngine)
 {
-    if (!mPipeline
-        || !mPipeline->createRayTracing(context)
+    if (!mPipeline)
+        return;
+
+    const auto usedItemsGuard =
+        qScopeGuard([&]() { mUsedItems += mPipeline->usedItems(); });
+
+    if (!mPipeline->createRayTracing(context)
         || !mPipeline->bindRayTracing(context, scriptEngine))
         return;
 
@@ -407,7 +412,6 @@ void D3DCall::executeTraceRays(D3DContext &context, MessageList &messages,
         scriptEngine.evaluateUInt(mCall.workGroupsY, mCall.id),
         scriptEngine.evaluateUInt(mCall.workGroupsZ, mCall.id));
     mPipeline->markBufferWrites();
-    mUsedItems += mPipeline->usedItems();
 }
 
 void D3DCall::executeClearTexture(D3DContext &context, MessageList &messages)

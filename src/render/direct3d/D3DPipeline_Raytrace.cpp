@@ -9,9 +9,7 @@ bool D3DPipeline::hasSameLocalBindingLayout(
 {
     return left.size() == right.size()
         && std::equal(left.begin(), left.end(), right.begin(),
-            [](const auto &a, const auto &b) {
-                return a.hasSameLayout(b);
-            });
+            [](const auto &a, const auto &b) { return a.hasSameLayout(b); });
 }
 
 bool D3DPipeline::createRayTracing(D3DContext &context)
@@ -41,12 +39,14 @@ bool D3DPipeline::createRayTracing(D3DContext &context)
         const auto shader = mProgram.getShader(shaderId);
         if (!shader || shader->type() != type) {
             fail(shaderId ? shaderId : mShaderTable->id,
-                QStringLiteral("%1 has an invalid shader reference")
-                    .arg(role));
+                QStringLiteral("%1 has an invalid shader reference").arg(role));
             return nullptr;
         }
         return shader;
     };
+
+    for (const auto item : mShaderTable->items)
+        mUsedItems += item->id;
 
     const Record *rayGenerationRecord = nullptr;
     auto missRecords = std::vector<const Record *>();
@@ -55,12 +55,12 @@ bool D3DPipeline::createRayTracing(D3DContext &context)
         const auto record = castItem<Record>(item);
         if (!record)
             continue;
-        mUsedItems += record->id;
         switch (record->recordType) {
         case Record::RecordType::RayGeneration:
             if (rayGenerationRecord)
                 return fail(record->id,
-                    "A shader table must contain exactly one ray-generation record");
+                    "A shader table must contain exactly one ray-generation "
+                    "record");
             rayGenerationRecord = record;
             break;
         case Record::RecordType::Miss: missRecords.push_back(record); break;
@@ -82,17 +82,15 @@ bool D3DPipeline::createRayTracing(D3DContext &context)
     for (const auto record : hitRecords) {
         if (record->intersectionShaderId
             && !getShader(record->intersectionShaderId,
-                Shader::ShaderType::RayIntersection,
-                "Intersection shader"))
+                Shader::ShaderType::RayIntersection, "Intersection shader"))
             return false;
         if (record->anyHitShaderId
-            && !getShader(record->anyHitShaderId,
-                Shader::ShaderType::RayAnyHit, "Any-hit shader"))
+            && !getShader(record->anyHitShaderId, Shader::ShaderType::RayAnyHit,
+                "Any-hit shader"))
             return false;
         if (record->closestHitShaderId
             && !getShader(record->closestHitShaderId,
-                Shader::ShaderType::RayClosestHit,
-                "Closest-hit shader"))
+                Shader::ShaderType::RayClosestHit, "Closest-hit shader"))
             return false;
     }
 
@@ -122,32 +120,28 @@ bool D3DPipeline::createRayTracing(D3DContext &context)
         const auto intersection =
             mProgram.getShader(record->intersectionShaderId);
         const auto anyHit = mProgram.getShader(record->anyHitShaderId);
-        const auto closestHit =
-            mProgram.getShader(record->closestHitShaderId);
+        const auto closestHit = mProgram.getShader(record->closestHitShaderId);
         auto &data = mHitRecordData.emplace_back(RayTracingRecord{
             .item = record,
             .exportName = hitGroupExport(record->id),
         });
-        if (!prepareLocalBindings(data,
-                { intersection, anyHit, closestHit }))
+        if (!prepareLocalBindings(data, { intersection, anyHit, closestHit }))
             return false;
     }
 
-    auto shaderLayouts = std::map<ItemId,
-        const std::vector<LocalBinding> *>();
+    auto shaderLayouts = std::map<ItemId, const std::vector<LocalBinding> *>();
     for (const auto &data : mHitRecordData)
         for (const auto shaderId : { data.item->intersectionShaderId,
-                 data.item->anyHitShaderId,
-                 data.item->closestHitShaderId }) {
+                 data.item->anyHitShaderId, data.item->closestHitShaderId }) {
             if (!shaderId)
                 continue;
             const auto [it, inserted] =
                 shaderLayouts.emplace(shaderId, &data.localBindings);
             if (!inserted
-                && !hasSameLocalBindingLayout(
-                    *it->second, data.localBindings))
+                && !hasSameLocalBindingLayout(*it->second, data.localBindings))
                 return fail(data.item->id,
-                    "Hit records sharing a shader must use the same local binding layout");
+                    "Hit records sharing a shader must use the same local "
+                    "binding layout");
         }
 
     if (!createRootSignatureRayTracing(context))
@@ -253,8 +247,8 @@ bool D3DPipeline::createRayTracing(D3DContext &context)
     const auto missOffset = alignTable(rayGenerationSize);
     const auto hitGroupOffset =
         alignTable(missOffset + missRecords.size() * missStride);
-    const auto bufferSize = alignTable(
-        hitGroupOffset + hitRecords.size() * hitStride);
+    const auto bufferSize =
+        alignTable(hitGroupOffset + hitRecords.size() * hitStride);
 
     const auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
     const auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
@@ -285,14 +279,12 @@ bool D3DPipeline::createRayTracing(D3DContext &context)
         mRayGenerationRecordData.exportName.c_str());
     for (auto i = size_t{ }; i < mMissRecordData.size(); ++i) {
         mMissRecordData[i].offset = missOffset + i * missStride;
-        identifiersValid &= copyIdentifier(
-            mMissRecordData[i].offset,
+        identifiersValid &= copyIdentifier(mMissRecordData[i].offset,
             mMissRecordData[i].exportName.c_str());
     }
     for (auto i = size_t{ }; i < mHitRecordData.size(); ++i) {
         mHitRecordData[i].offset = hitGroupOffset + i * hitStride;
-        identifiersValid &= copyIdentifier(
-            mHitRecordData[i].offset,
+        identifiersValid &= copyIdentifier(mHitRecordData[i].offset,
             mHitRecordData[i].exportName.c_str());
     }
     mShaderBindingTable->Unmap(0, nullptr);
@@ -347,10 +339,11 @@ bool D3DPipeline::prepareLocalBindings(RayTracingRecord &record,
                 const auto descriptorName =
                     QString::fromUtf8(desc.name ? desc.name : "");
                 const auto typeName = QString::fromUtf8(desc.type_description
-                        && desc.type_description->type_name
-                    ? desc.type_description->type_name
-                    : "");
-                if (binding->name != descriptorName && binding->name != typeName)
+                            && desc.type_description->type_name
+                        ? desc.type_description->type_name
+                        : "");
+                if (binding->name != descriptorName
+                    && binding->name != typeName)
                     continue;
 
                 const auto candidate = LocalBinding{
@@ -366,7 +359,8 @@ bool D3DPipeline::prepareLocalBindings(RayTracingRecord &record,
                 }
                 if (found && !local.hasSameLayout(candidate)) {
                     mMessages.insert(binding->id, MessageType::ScriptError,
-                        "Local binding resolves to incompatible constant buffers");
+                        "Local binding resolves to incompatible constant "
+                        "buffers");
                     return false;
                 }
                 local = candidate;
@@ -387,8 +381,8 @@ bool D3DPipeline::prepareLocalBindings(RayTracingRecord &record,
                 return false;
             }
         record.localBindings.push_back(local);
-        mLocalConstantRegisters.emplace(
-            local.registerSpace, local.shaderRegister);
+        mLocalConstantRegisters.emplace(local.registerSpace,
+            local.shaderRegister);
     }
     return true;
 }
@@ -404,8 +398,8 @@ bool D3DPipeline::createLocalRootSignatures(D3DContext &context,
             recordsByExport.emplace(record.exportName, &record);
         if (inserted)
             return true;
-        return hasSameLocalBindingLayout(
-            it->second->localBindings, record.localBindings);
+        return hasSameLocalBindingLayout(it->second->localBindings,
+            record.localBindings);
     };
     if (!add(mRayGenerationRecordData)) {
         mMessages.insert(mShaderTable->id, MessageType::ScriptError,
@@ -415,7 +409,8 @@ bool D3DPipeline::createLocalRootSignatures(D3DContext &context,
     for (const auto &record : mMissRecordData)
         if (!add(record)) {
             mMessages.insert(record.item->id, MessageType::ScriptError,
-                "Records sharing a shader must use the same local binding layout");
+                "Records sharing a shader must use the same local binding "
+                "layout");
             return false;
         }
     for (const auto &record : mHitRecordData)
@@ -429,15 +424,15 @@ bool D3DPipeline::createLocalRootSignatures(D3DContext &context,
             parameters.emplace_back().InitAsConstants(binding.count(),
                 binding.shaderRegister, binding.registerSpace);
         const auto desc = CD3DX12_ROOT_SIGNATURE_DESC(
-            static_cast<UINT>(parameters.size()), parameters.data(), 0,
-            nullptr, D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE);
+            static_cast<UINT>(parameters.size()), parameters.data(), 0, nullptr,
+            D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE);
         auto blob = ComPtr<ID3DBlob>();
         auto errors = ComPtr<ID3DBlob>();
         if (FAILED(D3D12SerializeRootSignature(&desc,
                 D3D_ROOT_SIGNATURE_VERSION_1, &blob, &errors))) {
             mMessages.insert(record->item->id, MessageType::ScriptError,
                 errors ? QString::fromUtf8(static_cast<const char *>(
-                             errors->GetBufferPointer()),
+                                               errors->GetBufferPointer()),
                              static_cast<qsizetype>(errors->GetBufferSize()))
                        : "Cannot serialize local root signature");
             return false;
@@ -450,8 +445,9 @@ bool D3DPipeline::createLocalRootSignatures(D3DContext &context,
                 "Cannot create local root signature");
             return false;
         }
-        auto local = stateObject.CreateSubobject<
-            CD3DX12_LOCAL_ROOT_SIGNATURE_SUBOBJECT>();
+        auto local =
+            stateObject
+                .CreateSubobject<CD3DX12_LOCAL_ROOT_SIGNATURE_SUBOBJECT>();
         local->SetRootSignature(signature.Get());
         auto association = stateObject.CreateSubobject<
             CD3DX12_SUBOBJECT_TO_EXPORTS_ASSOCIATION_SUBOBJECT>();
@@ -464,17 +460,17 @@ bool D3DPipeline::createLocalRootSignatures(D3DContext &context,
 
 bool D3DPipeline::updateShaderTable(ScriptEngine &scriptEngine)
 {
-    auto mappedData = std::add_pointer_t<void>{};
+    auto mappedData = std::add_pointer_t<void>{ };
     if (FAILED(mShaderBindingTable->Map(0, nullptr, &mappedData))) {
         mMessages.insert(mItemId, MessageType::CreatingPipelineFailed);
         return false;
     }
     const auto write = [&](const RayTracingRecord &record) {
-        auto destination = static_cast<std::byte *>(mappedData)
-            + record.offset + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+        auto destination = static_cast<std::byte *>(mappedData) + record.offset
+            + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
         for (const auto &binding : record.localBindings) {
-            const auto values = mBindings.evaluatedUniformValues.value(
-                binding.binding->id);
+            const auto values =
+                mBindings.evaluatedUniformValues.value(binding.binding->id);
             checkValueCount(values.size(), -1,
                 static_cast<int>(binding.layout.elements.size()),
                 binding.binding->id, scriptEngine.messages());
