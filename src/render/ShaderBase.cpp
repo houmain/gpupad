@@ -233,7 +233,7 @@ bool shaderSessionSettingsDiffer(const Session &a, const Session &b)
 
     const auto common = [](const Session &a) {
         return std::tie(a.renderer, a.apiVersion, a.shaderCompiler,
-            a.shaderPreamble, a.shaderIncludePaths);
+            a.shaderLanguage, a.shaderPreamble, a.shaderIncludePaths);
     };
     return common(a) != common(b);
 }
