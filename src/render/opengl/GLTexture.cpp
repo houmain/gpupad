@@ -334,13 +334,14 @@ bool GLTexture::clear(GLContext &gl, std::array<double, 4> color, double depth,
 bool GLTexture::copy(GLContext &gl, GLTexture &source)
 {
     const auto level = 0;
+    const auto width =
+        std::min(source.mData.getLevelWidth(level), mData.getLevelWidth(level));
+    const auto height = std::min(source.mData.getLevelHeight(level),
+        mData.getLevelHeight(level));
     const auto sourceTextureId = source.getReadOnlyTextureId(gl);
     const auto destTextureId = getReadWriteTextureId(gl);
-
     gl.glCopyImageSubData(sourceTextureId, source.target(), level, 0, 0, 0,
-        destTextureId, target(), level, 0, 0, 0,
-        source.mData.getLevelWidth(level), source.mData.getLevelHeight(level),
-        1);
+        destTextureId, target(), level, 0, 0, 0, width, height, 1);
     return (glGetError() == GL_NO_ERROR);
 }
 
