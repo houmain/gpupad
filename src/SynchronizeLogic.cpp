@@ -305,6 +305,8 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
                 mRenderSession->setBindingValues(binding->id, binding->values);
                 triggerAutomaticEvaluation();
             }
+    } else if (index.column() == SessionModel::InputItemId) {
+        invalidateRenderSession();
     } else if (mRenderSession
         && mRenderSession->usedItems().contains(item.id)) {
         invalidateRenderSession();

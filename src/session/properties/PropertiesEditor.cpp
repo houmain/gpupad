@@ -13,11 +13,14 @@
 #include "editors/binary/BinaryEditor.h"
 #include "editors/source/SourceEditor.h"
 #include "editors/texture/TextureEditor.h"
+#include "widgets/DataComboBox.h"
+#include "widgets/ReferenceComboBox.h"
 #include "ui_AttributeProperties.h"
 #include "ui_BlockProperties.h"
 #include "ui_BufferProperties.h"
 #include "ui_FieldProperties.h"
 #include "ui_GroupProperties.h"
+#include "ui_ComponentProperties.h"
 #include "ui_ProgramProperties.h"
 #include "ui_ShaderTableProperties.h"
 #include "ui_RecordProperties.h"
@@ -31,6 +34,8 @@
 #include "ui_GeometrySetProperties.h"
 #include <QDataWidgetMapper>
 #include <QLabel>
+#include <QHBoxLayout>
+#include <QSignalBlocker>
 #include <QStackedWidget>
 #include <QTimer>
 #include <QVBoxLayout>
@@ -104,6 +109,7 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
     mSessionProperties = new SessionProperties(this);
     addWidget(Item::Type::Session, mSessionProperties);
     add(Item::Type::Group, mGroupProperties);
+    add(Item::Type::Component, mComponentProperties);
     add(Item::Type::Buffer, mBufferProperties);
     add(Item::Type::Block, mBlockProperties);
     add(Item::Type::Field, mFieldProperties);
@@ -128,6 +134,21 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
     add(Item::Type::AccelerationStructure, mAccelerationStructureProperties);
     add(Item::Type::Instance, mInstanceProperties);
 
+    mComponentInputProperties = new QWidget(this);
+    auto componentInputLayout = new QFormLayout(mComponentInputProperties);
+    mComponentInput = new ReferenceComboBox(mComponentInputProperties);
+    componentInputLayout->addRow(tr("Item"), mComponentInput);
+    mComponentInputStackIndex = mStack->addWidget(mComponentInputProperties);
+
+    connect(mComponentInput, &ReferenceComboBox::listRequired, this,
+        &PropertiesEditor::getComponentInputItemIds);
+    connect(mComponentInput, &ReferenceComboBox::textRequired,
+        [this](QVariant data) {
+            return data.toInt() ? getItemName(data.toInt()) : tr("Default");
+        });
+    connect(mComponentInput, qOverload<int>(&QComboBox::activated), this,
+        [this]() { mMapper->submit(); });
+
     mMapper->setModel(&mModel);
     connect(mSubmitTimer, &QTimer::timeout, mSessionProperties,
         &SessionProperties::submitShaderCompilerSettings);
@@ -139,20 +160,23 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
 
     auto container = new QWidget(this);
     auto layout = new QVBoxLayout(container);
-    layout->setContentsMargins(0, 4, 0, 0);
+    layout->setContentsMargins(0, 8, 0, 0);
     layout->setSpacing(0);
-    auto typeLabel = new QLabel(container);
-    auto labelFont = typeLabel->font();
+    auto header = new QWidget(container);
+    header->setMinimumHeight(20);
+    auto headerLayout = new QHBoxLayout(header);
+    headerLayout->setContentsMargins(8, 0, 8, 0);
+    mTypeLabel = new QLabel(header);
+    auto labelFont = mTypeLabel->font();
     labelFont.setBold(true);
-    typeLabel->setFont(labelFont);
-    typeLabel->setEnabled(false);
-    const auto updateTypeLabel = [this, typeLabel](int index) {
-        const auto type = static_cast<Item::Type>(index);
-        typeLabel->setText("  " + splitPascalCase(mModel.getTypeName(type)));
-    };
-    connect(mStack, &QStackedWidget::currentChanged, updateTypeLabel);
-    updateTypeLabel(mStack->currentIndex());
-    layout->addWidget(typeLabel);
+    mTypeLabel->setFont(labelFont);
+    mTypeLabel->setEnabled(false);
+    mSessionInterface = new DataComboBox(header);
+    mSessionInterface->setToolTip(tr("Session interface"));
+    headerLayout->addWidget(mTypeLabel);
+    headerLayout->addStretch();
+    headerLayout->addWidget(mSessionInterface);
+    layout->addWidget(header);
     layout->addWidget(mStack);
 
     setWidgetResizable(true);
@@ -255,6 +279,7 @@ PropertiesEditor::~PropertiesEditor() = default;
 
 void PropertiesEditor::fillComboBoxes()
 {
+    fillComboBox<Item::Interface>(mSessionInterface);
     fillComboBox<Field::DataType>(mFieldProperties->type);
     fillComboBox<Target::FrontFace>(mTargetProperties->frontFace);
     fillComboBox<Target::CullMode>(mTargetProperties->cullMode);
@@ -321,7 +346,9 @@ QVariantList PropertiesEditor::getItemIds(Item::Type type, bool addNull) const
     if (addNull)
         result += 0;
 
-    mModel.forEachItemScoped(currentModelIndex(), [&](const Item &item) {
+    const auto currentIndex = currentModelIndex();
+
+    mModel.forEachItemScoped(currentIndex, [&](const Item &item) {
         if (item.type == type)
             result.append(item.id);
     });
@@ -361,19 +388,158 @@ QModelIndex PropertiesEditor::currentModelIndex() const
     return mModel.index(mMapper->currentIndex(), 0, mMapper->rootIndex());
 }
 
+QVariantList PropertiesEditor::getComponentInputItemIds() const
+{
+    auto result = QVariantList{ 0 };
+    const auto currentIndex = currentModelIndex();
+    const auto *current = &mModel.getItem(currentIndex);
+    const auto *currentComponent = current->parent;
+    if (!currentComponent || currentComponent->type != Item::Type::Component)
+        return result;
+
+    mModel.forEachItemScoped(currentIndex, [&](const Item &candidate) {
+        if (candidate.type != current->type || candidate.id == current->id)
+            return;
+
+        const auto *child = &candidate;
+        for (auto *parent = candidate.parent; parent;
+            child = parent, parent = parent->parent) {
+            if (parent == currentComponent)
+                return;
+            if (parent->type == Item::Type::Component) {
+                if (child->componentInterface != Item::Interface::Output)
+                    return;
+                break;
+            }
+        }
+        result.append(candidate.id);
+    });
+    return result;
+}
+
+void PropertiesEditor::updateTypeLabel(Item::Type itemType,
+    Item::Interface componentInterface)
+{
+    {
+        const auto blocker = QSignalBlocker(mSessionInterface);
+        fillComboBox<Item::Interface>(mSessionInterface);
+        if (componentInterface == Item::Interface::Input)
+            mSessionInterface->removeItem(mSessionInterface->findData(
+                static_cast<int>(Item::Interface::Output)));
+        else if (componentInterface == Item::Interface::Output)
+            mSessionInterface->removeItem(mSessionInterface->findData(
+                static_cast<int>(Item::Interface::Input)));
+    }
+
+    auto typeLabel = splitPascalCase(mModel.getTypeName(itemType));
+    switch (componentInterface) {
+    case Item::Interface::Input:
+        typeLabel = tr("Input %1").arg(typeLabel);
+        break;
+    case Item::Interface::Output:
+        typeLabel = tr("Output %1").arg(typeLabel);
+        break;
+    case Item::Interface::Internal: break;
+    }
+    mTypeLabel->setText(typeLabel);
+}
+
+void PropertiesEditor::updateSessionInterfaceControl(const QModelIndex &index,
+    Item::Type itemType)
+{
+    const auto canBeInSessionInterface = [&]() {
+        switch (itemType) {
+        case Item::Type::Buffer:
+        case Item::Type::Texture:
+        case Item::Type::Program:
+        case Item::Type::ShaderTable:
+        case Item::Type::Stream:
+        case Item::Type::Target:
+        case Item::Type::GeometrySet:
+        case Item::Type::AccelerationStructure: return true;
+        default:                                break;
+        }
+        // these types cannot be moved to top level without changing behavior
+        const auto isTopLevel = (index.parent().isValid()
+            && mModel.getItemType(index.parent()) == Item::Type::Session);
+        if (!isTopLevel)
+            return false;
+        switch (itemType) {
+        case Item::Type::Group:
+        case Item::Type::Binding:
+        case Item::Type::Call:
+        case Item::Type::Script:  return true;
+        default:                  return false;
+        }
+    }();
+    mSessionInterface->setVisible(canBeInSessionInterface);
+    if (canBeInSessionInterface)
+        mMapper->addMapping(mSessionInterface, SessionModel::SessionInterface);
+}
+
+bool PropertiesEditor::showComponentProperties(const QModelIndex &index,
+    Item::Type itemType, Item::Interface componentInterface)
+{
+    if (componentInterface == Item::Interface::Input
+        && itemType != Item::Type::Binding) {
+        mMapper->addMapping(mComponentInput, SessionModel::InputItemId);
+        setMapperCurrentIndex(index);
+        mStack->setCurrentIndex(mComponentInputStackIndex);
+        return true;
+    }
+    if (componentInterface == Item::Interface::Output) {
+        setMapperCurrentIndex(index);
+        mStack->setCurrentWidget(mRootProperties);
+        return true;
+    }
+    return false;
+}
+
+void PropertiesEditor::setMapperCurrentIndex(const QModelIndex &index)
+{
+    mMapper->setRootIndex(mModel.parent(index));
+    mMapper->setCurrentModelIndex(index);
+}
+
 void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
 {
     mMapper->submit();
     mMapper->clearMapping();
 
-    if (!index.isValid())
+    if (!index.isValid()) {
+        mTypeLabel->setText("");
+        mSessionInterface->setVisible(false);
         return mStack->setCurrentIndex(0);
+    }
 
+    const auto itemType = mModel.getItemType(index);
+    const auto componentInterface = (index.parent().isValid()
+                && mModel.getItemType(index.parent()) == Item::Type::Component
+            ? mModel.getItem(index).componentInterface
+            : Item::Interface::Internal);
+    updateTypeLabel(itemType, componentInterface);
+    updateSessionInterfaceControl(index, itemType);
+    if (showComponentProperties(index, itemType, componentInterface))
+        return;
+
+    addMappings(index, itemType);
+    setMapperCurrentIndex(index);
+
+    if (itemType == Item::Type::Record)
+        updateRecordWidgets();
+
+    // values of Item::Type must match order of Stack Widgets
+    mStack->setCurrentIndex(static_cast<int>(itemType));
+}
+
+void PropertiesEditor::addMappings(const QModelIndex &index,
+    Item::Type itemType)
+{
     const auto map = [&](QWidget *control, SessionModel::ColumnType column) {
         mMapper->addMapping(control, column);
     };
 
-    switch (mModel.getItemType(index)) {
+    switch (itemType) {
     case Item::Type::Root: break;
 
     case Item::Type::Session: mSessionProperties->addMappings(*mMapper); break;
@@ -383,6 +549,11 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
         map(mGroupProperties->inlineScope, SessionModel::GroupInlineScope);
         map(mGroupProperties->iterations, SessionModel::GroupIterations);
         map(mGroupProperties->dynamic, SessionModel::GroupDynamic);
+        break;
+
+    case Item::Type::Component:
+        map(mComponentProperties->name, SessionModel::Name);
+        map(mComponentProperties->source, SessionModel::ComponentSource);
         break;
 
     case Item::Type::Buffer:
@@ -533,16 +704,6 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
             SessionModel::GeometryNoDuplicateAnyHitInvocation);
         break;
     }
-
-    mMapper->setRootIndex(mModel.parent(index));
-    mMapper->setCurrentModelIndex(index);
-
-    if (mModel.getItemType(index) == Item::Type::Record)
-        updateRecordWidgets();
-
-    // values of Item::Type must match order of Stack Widgets
-    const auto stackIndex = static_cast<int>(mModel.getItemType(index));
-    mStack->setCurrentIndex(stackIndex);
 }
 
 void PropertiesEditor::updateRecordWidgets()
@@ -576,6 +737,11 @@ IEditor *PropertiesEditor::openEditor(const FileItem &fileItem)
 IEditor *PropertiesEditor::openItemEditor(const QModelIndex &index)
 {
     const auto &item = mModel.getItem(index);
+    const auto *resolvedItem = mModel.resolveComponentInput(&item);
+    if (!resolvedItem)
+        return nullptr;
+    if (resolvedItem != &item)
+        return openItemEditor(mModel.getIndex(resolvedItem));
 
     // open all shaders of program
     if (auto program = castItem<Program>(item)) {

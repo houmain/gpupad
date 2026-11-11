@@ -4,12 +4,12 @@
 #include "../Item.h"
 #include <QComboBox>
 #include <QFormLayout>
-#include <QLabel>
 #include <QMetaEnum>
 #include <QScrollArea>
 
 namespace Ui {
     class GroupProperties;
+    class ComponentProperties;
     class BufferProperties;
     class BlockProperties;
     class FieldProperties;
@@ -30,6 +30,8 @@ namespace Ui {
 class QStackedWidget;
 class QDataWidgetMapper;
 class QTimer;
+class DataComboBox;
+class ReferenceComboBox;
 class IEditor;
 class SessionModel;
 class TextureProperties;
@@ -62,6 +64,15 @@ public:
 
 private:
     bool eventFilter(QObject *watched, QEvent *event) override;
+    QVariantList getComponentInputItemIds() const;
+    void updateTypeLabel(Item::Type itemType,
+        Item::Interface componentInterface);
+    void updateSessionInterfaceControl(const QModelIndex &index,
+        Item::Type itemType);
+    bool showComponentProperties(const QModelIndex &index, Item::Type itemType,
+        Item::Interface componentInterface);
+    void addMappings(const QModelIndex &index, Item::Type itemType);
+    void setMapperCurrentIndex(const QModelIndex &index);
     void updateBlockWidgets(const QModelIndex &index);
     void updateTargetWidgets(const QModelIndex &index);
     void updateGeometryWidgets();
@@ -77,23 +88,29 @@ private:
     QStackedWidget *mStack;
     QDataWidgetMapper *mMapper;
     QTimer *mSubmitTimer;
-    QWidget *mRootProperties{};
-    SessionProperties *mSessionProperties{};
+    QLabel *mTypeLabel{ };
+    DataComboBox *mSessionInterface{ };
+    ReferenceComboBox *mComponentInput{ };
+    QWidget *mComponentInputProperties{ };
+    int mComponentInputStackIndex{ };
+    QWidget *mRootProperties{ };
+    SessionProperties *mSessionProperties{ };
     std::unique_ptr<Ui::GroupProperties> mGroupProperties;
+    std::unique_ptr<Ui::ComponentProperties> mComponentProperties;
     std::unique_ptr<Ui::BlockProperties> mBlockProperties;
     std::unique_ptr<Ui::BufferProperties> mBufferProperties;
     std::unique_ptr<Ui::FieldProperties> mFieldProperties;
-    TextureProperties *mTextureProperties{};
+    TextureProperties *mTextureProperties{ };
     std::unique_ptr<Ui::ProgramProperties> mProgramProperties;
     std::unique_ptr<Ui::ShaderTableProperties> mShaderTableProperties;
     std::unique_ptr<Ui::RecordProperties> mRecordProperties;
     std::unique_ptr<Ui::ShaderProperties> mShaderProperties;
-    BindingProperties *mBindingProperties{};
+    BindingProperties *mBindingProperties{ };
     std::unique_ptr<Ui::AttributeProperties> mAttributeProperties;
     std::unique_ptr<Ui::TargetProperties> mTargetProperties;
     std::unique_ptr<Ui::StreamProperties> mStreamProperties;
-    AttachmentProperties *mAttachmentProperties{};
-    CallProperties *mCallProperties{};
+    AttachmentProperties *mAttachmentProperties{ };
+    CallProperties *mCallProperties{ };
     std::unique_ptr<Ui::ScriptProperties> mScriptProperties;
     std::unique_ptr<Ui::AccelerationStructureProperties>
         mAccelerationStructureProperties;

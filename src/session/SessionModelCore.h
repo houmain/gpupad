@@ -12,6 +12,9 @@ public:
         Name = 0,
         Custom,
         FileName,
+        SessionInterface,
+        ComponentInterface,
+        InputItemId,
 
         SessionRenderer,
         SessionApiVersion,
@@ -28,6 +31,7 @@ public:
         GroupInlineScope,
         GroupIterations,
         GroupDynamic,
+        ComponentSource,
         BlockOffset,
         BlockRowCount,
         FieldDataType,
@@ -244,5 +248,5 @@ private:
     QUndoStack mUndoStack;
     QMap<ItemId, const Item *> mItemsById;
     QString mBeginUndoMacro;
-    int mInUndoMacro{};
+    int mInUndoMacro{ };
 };

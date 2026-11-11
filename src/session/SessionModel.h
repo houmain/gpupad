@@ -26,6 +26,9 @@ public:
         int column, const QModelIndex &parent) override;
     bool removeRows(int row, int count,
         const QModelIndex &parent = QModelIndex()) override;
+    void deleteItem(const QModelIndex &index);
+    bool isComponentContent(const QModelIndex &index) const;
+    bool isComponentOrContent(const QModelIndex &index) const;
 
     QList<QMetaObject::Connection> connectUndoActions(QAction *undo,
         QAction *redo);
@@ -36,7 +39,7 @@ public:
     QIcon getTypeIcon(Item::Type type) const;
     QString getItemName(ItemId id) const;
     QString getFullItemName(ItemId id) const;
-    QString ensureFileName(const FileItem &item, QString hint = {});
+    QString ensureFileName(const FileItem &item, QString hint = { });
     void setActiveItems(QSet<ItemId> itemIds);
     void setActiveItemColor(QColor color);
 
@@ -44,8 +47,11 @@ public:
     QVariantList itemProperties(const Item &item) const;
     JsonArray getJson(const QModelIndexList &indexes,
         bool serializingScriptItem = false) const;
-    void dropJson(const JsonArray &json, int row, const QModelIndex &parent,
-        bool updateExisting);
+    void dropJson(const JsonArray &json, int row, const QModelIndex &parent);
+    QModelIndex insertComponent(const QString &fileName,
+        const QModelIndex &parent, int row = -1);
+    const Item *resolveComponentInput(const Item *item) const;
+    QSet<ItemId> resolveComponentInputs();
     bool save(const QString &fileName);
     bool load(const QString &fileName);
     const Item *findItemByPath(const QModelIndex &index,
@@ -99,7 +105,10 @@ public:
     {
         const auto &pos = getItem(index);
         if (pos.parent)
-            forEachItemRecUp(*pos.parent, pos, function);
+            forEachItemRecUp(*pos.parent, pos, [&](const Item &item) {
+                if (isItemVisibleInScope(pos, item))
+                    function(item);
+            });
     }
 
     template <typename F> // F(const FileItem&)
@@ -125,15 +134,25 @@ Q_SIGNALS:
     void undoStackCleanChanged(bool isClean);
 
 private:
+    enum class DropMode {
+        Insert,
+        Update,
+        ComponentContent,
+        ComponentImport,
+    };
+
+    bool isItemVisibleInScope(const Item &current, const Item &candidate) const;
     bool shouldSerializeColumn(const Item &item, ColumnType column) const;
     JsonArray generateJsonFromUrls(QModelIndex target,
         const QList<QUrl> &urls) const;
     JsonArray parseDraggedJson(QModelIndex &target,
         const QMimeData *data) const;
+    void dropJson(const JsonArray &json, int row, const QModelIndex &parent,
+        DropMode mode);
     void serialize(JsonObject &object, const Item &item, bool relativeFilePaths,
         bool serializingScriptItem = false) const;
     void deserialize(const JsonObject &object, const QModelIndex &parent,
-        int row, bool updateExisting);
+        int row, DropMode mode);
 
     template <typename F>
     void forEachItemRec(const Item &item, bool scoped, const F &function) const

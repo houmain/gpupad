@@ -363,9 +363,22 @@ JsonObject AppScriptObject::toJsonObject(const QJSValue &value)
     return (object ? *object : JsonObject());
 }
 
+bool AppScriptObject::preventComponentContentModification(const Item *item)
+{
+    const auto index = threadSessionModel().getIndex(item);
+    if (threadSessionModel().isComponentOrContent(index)) {
+        throwJsError("Component items cannot be added or removed");
+        return true;
+    }
+    return false;
+}
+
 QJSValue AppScriptObject::insertItemAt(const Item *parent, int row,
     QJSValue object)
 {
+    if (preventComponentContentModification(parent))
+        return QJSValue::UndefinedValue;
+
     auto id = object.property("id").toInt();
     if (!id) {
         // update ID inplace
@@ -382,7 +395,7 @@ QJSValue AppScriptObject::insertItemAt(const Item *parent, int row,
     withSessionModel(
         [parentId = parent->id, row, update](SessionModel &session) {
             const auto parent = session.getIndex(session.findItem(parentId));
-            session.dropJson({ update }, row, parent, true);
+            session.dropJson({ update }, row, parent);
         });
     updateItemProperties(parent);
 
@@ -442,7 +455,7 @@ void AppScriptObject::replaceItems(QJSValue parentIdent, QJSValue array)
         }
 
     const auto parent = findSessionItem(parentIdent);
-    if (!parent)
+    if (!parent || preventComponentContentModification(parent))
         return;
 
     // collect Items in current list
@@ -491,7 +504,7 @@ void AppScriptObject::replaceItems(QJSValue parentIdent, QJSValue array)
             for (const auto &item : unusedItems)
                 session.deleteItem(session.getIndex(session.findItem(item.id)));
             const auto parent = session.getIndex(session.findItem(parentId));
-            session.dropJson(update, session.rowCount(parent), parent, true);
+            session.dropJson(update, session.rowCount(parent), parent);
         });
 
     updateItemProperties(parent);
@@ -829,6 +842,8 @@ void AppScriptObject::clearItems(QJSValue parentIdent)
     const auto parent = findSessionItem(parentIdent);
     if (!parent)
         return throwJsError("Invalid parent");
+    if (preventComponentContentModification(parent))
+        return;
 
     withSessionModel([parentId = parent->id](SessionModel &session) {
         const auto index = session.getIndex(session.findItem(parentId));
@@ -845,6 +860,9 @@ void AppScriptObject::deleteItem(QJSValue itemIdent)
         return;
 
     const auto parent = item->parent;
+    if (preventComponentContentModification(parent))
+        return;
+
     withSessionModel([itemId = item->id](SessionModel &session) {
         const auto index = session.getIndex(session.findItem(itemId));
         if (index.isValid())

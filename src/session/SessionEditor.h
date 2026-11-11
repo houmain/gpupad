@@ -50,6 +50,8 @@ private:
     void delete_();
     void openContextMenu(const QPoint &pos);
     void addItem(Item::Type type);
+    void addComponent();
+    void hideComponentContent(const QModelIndex &index);
     void renameCurrentItem();
     bool canPaste() const;
     void handleItemActivated(const QModelIndex &index);
@@ -57,9 +59,11 @@ private:
 
     SessionModel &mModel;
     QMenu *mContextMenu{};
+    QMenu *mComponentContextMenu{};
     QString mFileName;
     QAction *mRenameAction{};
     QAction *mAddGroupAction{};
+    QAction *mAddComponentAction{};
     QAction *mAddBufferAction{};
     QAction *mAddBlockAction{};
     QAction *mAddFieldAction{};

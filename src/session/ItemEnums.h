@@ -9,6 +9,7 @@ namespace ItemEnums {
         Root,
         Session,
         Group,
+        Component,
         Buffer,
         Block,
         Field,
@@ -30,6 +31,13 @@ namespace ItemEnums {
         Instance,
     };
     Q_ENUM_NS(ItemType)
+
+    enum class Interface {
+        Internal,
+        Input,
+        Output,
+    };
+    Q_ENUM_NS(Interface)
 
     enum TextureTarget {
         Target1D = 0x0DE0,

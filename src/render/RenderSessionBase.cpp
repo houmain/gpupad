@@ -95,6 +95,7 @@ void RenderSessionBase::prepare(bool itemsChanged,
     if (sessionReset) {
         mUsedItems.clear();
         mSessionModelCopy = Singletons::sessionModel();
+        mUsedItems += mSessionModelCopy.resolveComponentInputs();
         mBindingValueOverrides.clear();
     }
     if (!recording()) {

@@ -9,6 +9,43 @@
 #include <QUrl>
 
 namespace {
+    void materializeSessionInterfaces(JsonArray &items, bool topLevel,
+        JsonArray &topLevelInterfaceItems)
+    {
+        auto remainingItems = JsonArray{ };
+        for (auto value : items) {
+            if (!value.is_object()) {
+                remainingItems.push_back(std::move(value));
+                continue;
+            }
+
+            auto object = *jsonObject(value);
+            if (const auto childrenValue = findJsonValue(object, "items");
+                childrenValue && childrenValue->is_array()) {
+                auto children = *jsonArray(*childrenValue);
+                materializeSessionInterfaces(children, false,
+                    topLevelInterfaceItems);
+                if (children.empty())
+                    object.erase("items");
+                else
+                    object["items"] = std::move(children);
+            }
+
+            const auto interface =
+                jsonValue<QString>(object, "sessionInterface");
+            if (!interface.isEmpty() && interface != "Internal") {
+                object["componentInterface"] = interface;
+                object.erase("sessionInterface");
+                if (!topLevel) {
+                    topLevelInterfaceItems.push_back(std::move(object));
+                    continue;
+                }
+            }
+            remainingItems.push_back(std::move(object));
+        }
+        items = std::move(remainingItems);
+    }
+
     template <typename T>
     QVariantMap propertyInfo(const QString &name)
     {
@@ -51,6 +88,9 @@ QVariantList SessionModel::itemProperties(const Item &item) const
         propertyInfo<decltype(item.type)>("type"),
         propertyInfo<decltype(item.name)>("name"),
         propertyInfo<decltype(item.custom)>("custom"),
+        propertyInfo<decltype(item.sessionInterface)>("sessionInterface"),
+        propertyInfo<decltype(item.componentInterface)>("componentInterface"),
+        propertyInfo<decltype(item.inputItemId)>("inputItemId"),
     };
     if (const auto fileItem = castItem<FileItem>(&item))
         result.append(propertyInfo<decltype(fileItem->fileName)>("fileName"));
@@ -67,6 +107,7 @@ SessionModel::SessionModel(QObject *parent) : SessionModelCore(parent)
 {
     mTypeIcons[Item::Type::Session] = QIcon::fromTheme("folder");
     mTypeIcons[Item::Type::Group] = QIcon::fromTheme("folder");
+    mTypeIcons[Item::Type::Component] = QIcon::fromTheme("dialog-information");
     mTypeIcons[Item::Type::Buffer] = QIcon::fromTheme("x-office-spreadsheet");
     mTypeIcons[Item::Type::Block] = QIcon::fromTheme("format-justify-left");
     mTypeIcons[Item::Type::Field] = QIcon::fromTheme("mail-attachment");
@@ -161,14 +202,14 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
 
 Qt::ItemFlags SessionModel::flags(const QModelIndex &index) const
 {
-    Q_UNUSED(index);
     auto type = getItemType(index);
     auto flags = Qt::ItemFlags();
     flags |= Qt::ItemIsSelectable;
     flags |= Qt::ItemIsEnabled;
     flags |= Qt::ItemIsEditable;
     flags |= Qt::ItemIsUserCheckable;
-    flags |= Qt::ItemIsDragEnabled;
+    if (!isComponentContent(index))
+        flags |= Qt::ItemIsDragEnabled;
     switch (type) {
     case Item::Type::Root:
     case Item::Type::Session:
@@ -196,13 +237,36 @@ Qt::ItemFlags SessionModel::flags(const QModelIndex &index) const
 
 bool SessionModel::removeRows(int row, int count, const QModelIndex &parent)
 {
-    // do not allow to move Session
-    if (!parent.isValid())
+    // do not allow to move Session or from Component
+    if (!parent.isValid() || isComponentOrContent(parent))
         return false;
 
     SessionModelCore::removeRows(row, count, parent);
     mDraggedIndices.clear();
     return true;
+}
+
+void SessionModel::deleteItem(const QModelIndex &index)
+{
+    if (isComponentContent(index))
+        return;
+    SessionModelCore::deleteItem(index);
+}
+
+bool SessionModel::isComponentContent(const QModelIndex &index) const
+{
+    for (auto parent = index.parent(); parent.isValid();
+        parent = parent.parent())
+        if (getItemType(parent) == Item::Type::Component)
+            return true;
+    return false;
+}
+
+bool SessionModel::isComponentOrContent(const QModelIndex &index) const
+{
+    return index.isValid()
+        && (getItemType(index) == Item::Type::Component
+            || isComponentContent(index));
 }
 
 void SessionModel::setActiveItems(QSet<ItemId> itemIds)
@@ -261,6 +325,37 @@ QString SessionModel::getFullItemName(ItemId id) const
         name = item->name + sep + name;
     }
     return name;
+}
+
+bool SessionModel::isItemVisibleInScope(const Item &current,
+    const Item &candidate) const
+{
+    const auto findComponent = [](const Item &item, const Item **child) {
+        auto *component = static_cast<const Component *>(nullptr);
+        auto *componentChild = &item;
+        for (auto *parent = item.parent; parent;
+            componentChild = parent, parent = parent->parent) {
+            if (parent->type == Item::Type::Component) {
+                component = static_cast<const Component *>(parent);
+                break;
+            }
+        }
+        if (child)
+            *child = component ? componentChild : nullptr;
+        return component;
+    };
+
+    const auto *currentComponent = findComponent(current, nullptr);
+    const auto *componentChild = static_cast<const Item *>(nullptr);
+    const auto *component = findComponent(candidate, &componentChild);
+    if (!component)
+        return true;
+    if (component != currentComponent)
+        return componentChild->componentInterface == Item::Interface::Output;
+    const auto currentIsInput = current.parent == currentComponent
+        && current.componentInterface == Item::Interface::Input;
+    return !currentIsInput
+        || componentChild->componentInterface == Item::Interface::Output;
 }
 
 QStringList SessionModel::mimeTypes() const
@@ -362,6 +457,12 @@ bool SessionModel::canDropMimeData(const QMimeData *data, Qt::DropAction action,
     const auto jsonArray = parseDraggedJson(target, data);
     if (jsonArray.empty())
         return false;
+    if (isComponentOrContent(target))
+        return false;
+    if (action == Qt::MoveAction)
+        for (const auto &index : mDraggedIndices)
+            if (isComponentContent(index))
+                return false;
 
     for (const JsonValue &value : jsonArray) {
         const auto object = jsonObject(value);
@@ -406,6 +507,42 @@ bool SessionModel::load(const QString &fileName)
     return true;
 }
 
+QModelIndex SessionModel::insertComponent(const QString &fileName_,
+    const QModelIndex &parent, int row)
+{
+    const auto fileName = toNativeCanonicalAbsoluteFilePath(fileName_);
+
+    const auto previousDirectory = QDir::currentPath();
+    auto sourceModel = SessionModel();
+    const auto loaded = sourceModel.load(fileName);
+    QDir::setCurrent(previousDirectory);
+    if (!loaded)
+        return QModelIndex();
+
+    auto sourceIndices = QModelIndexList{ };
+    const auto sourceSessionIndex = sourceModel.sessionItemIndex();
+    for (auto i = 0; i < sourceModel.rowCount(sourceSessionIndex); ++i)
+        sourceIndices.append(sourceModel.index(i, 0, sourceSessionIndex));
+    auto sourceItems = sourceModel.getJson(sourceIndices);
+    // move nested interface items to the Component's top level
+    auto topLevelInterfaceItems = JsonArray{ };
+    materializeSessionInterfaces(sourceItems, true, topLevelInterfaceItems);
+    sourceItems.insert(sourceItems.end(),
+        std::make_move_iterator(topLevelInterfaceItems.begin()),
+        std::make_move_iterator(topLevelInterfaceItems.end()));
+
+    beginUndoMacro(tr("Add Component"));
+    const auto componentIndex = insertItem(Item::Type::Component, parent, row);
+    if (componentIndex.isValid()) {
+        setField(componentIndex, Name, FileDialog::getFileTitle(fileName));
+        setField(componentIndex, ComponentSource, fileName);
+        dropJson(sourceItems, 0, componentIndex, DropMode::ComponentImport);
+    }
+    endUndoMacro();
+
+    return componentIndex;
+}
+
 bool SessionModel::save(const QString &fileName)
 {
     QDir::setCurrent(QFileInfo(fileName).path());
@@ -444,6 +581,8 @@ bool SessionModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
     Q_UNUSED(column);
     if (action == Qt::IgnoreAction)
         return true;
+    if (!canDropMimeData(data, action, row, column, parent))
+        return false;
 
     auto target = parent;
     auto jsonArray = parseDraggedJson(target, data);
@@ -469,7 +608,7 @@ bool SessionModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
     if (!target.isValid() && sessionItemIndex().isValid())
         return false;
 
-    dropJson(jsonArray, row, target, false);
+    dropJson(jsonArray, row, target, DropMode::Insert);
     mDraggedIndices.clear();
 
     endUndoMacro();
@@ -497,6 +636,64 @@ QString SessionModel::ensureFileName(const FileItem &item, QString hint)
     return fileName;
 }
 
+QSet<ItemId> SessionModel::resolveComponentInputs()
+{
+    auto referencedItems = QSet<ItemId>{ };
+    forEachItem<Component>(
+        [this, &referencedItems](const Component &component) {
+            auto replacements = QMap<ItemId, ItemId>{ };
+            for (const auto *item : component.items) {
+                if (const auto *replacement = resolveComponentInput(item);
+                    replacement && replacement != item) {
+                    replacements.insert(item->id, replacement->id);
+                    referencedItems.insert(item->id);
+                }
+            }
+            if (replacements.isEmpty())
+                return;
+
+            forEachItem(getIndex(&component),
+                [this, &replacements](const Item &item) {
+#define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY)                                 \
+    if constexpr (std::is_same_v<decltype(ITEM_TYPE::PROPERTY), ItemId>       \
+        && std::string_view(#PROPERTY).ends_with("Id")) {                     \
+        if (item.type == Item::Type::ITEM_TYPE) {                             \
+            const auto value = static_cast<const ITEM_TYPE &>(item).PROPERTY; \
+            if (const auto it = replacements.constFind(value);                \
+                it != replacements.cend())                                    \
+                setField(&item, COLUMN_TYPE, it.value());                     \
+        }                                                                     \
+    }
+                    ADD_EACH_COLUMN_TYPE()
+#undef ADD
+                });
+        });
+    clearUndoStack();
+    return referencedItems;
+}
+
+const Item *SessionModel::resolveComponentInput(const Item *item) const
+{
+    if (!item || item->type == Item::Type::Binding || !item->parent
+        || item->parent->type != Item::Type::Component
+        || item->componentInterface != Item::Interface::Input)
+        return item;
+
+    auto visited = QSet<ItemId>{ };
+    while (item->parent && item->parent->type == Item::Type::Component
+        && item->componentInterface == Item::Interface::Input) {
+        if (!item->inputItemId || visited.contains(item->id))
+            return nullptr;
+        visited.insert(item->id);
+
+        const auto *replacement = findItem(item->inputItemId);
+        if (!replacement || replacement->type != item->type)
+            return nullptr;
+        item = replacement;
+    }
+    return item;
+}
+
 JsonArray SessionModel::getJson(const QModelIndexList &indexes,
     bool serializingScriptItem) const
 {
@@ -517,12 +714,35 @@ JsonArray SessionModel::getJson(const QModelIndexList &indexes,
     return itemArray;
 }
 
-void SessionModel::dropJson(const JsonArray &jsonArray, int row,
-    const QModelIndex &parent, bool updateExisting)
+void SessionModel::dropJson(const JsonArray &json, int row,
+    const QModelIndex &parent)
 {
+    dropJson(json, row, parent, DropMode::Update);
+}
+
+void SessionModel::dropJson(const JsonArray &jsonArray, int row,
+    const QModelIndex &parent, DropMode mode)
+{
+    const auto updateExisting = (mode == DropMode::Update);
+    const auto componentContent = (mode == DropMode::ComponentContent
+        || mode == DropMode::ComponentImport);
+    if (!componentContent && isComponentOrContent(parent)) {
+        if (!updateExisting)
+            return;
+        const auto *parentItem = &getItem(parent);
+        for (const auto &value : jsonArray) {
+            const auto object = jsonObject(value);
+            if (!object || object->count("items"))
+                return;
+            const auto item = findItem(jsonValue<ItemId>(*object, "id"));
+            if (!item || item->parent != parentItem)
+                return;
+        }
+    }
+
     for (const JsonValue &value : jsonArray)
         if (const auto object = jsonObject(value))
-            deserialize(*object, parent, row++, updateExisting);
+            deserialize(*object, parent, row++, mode);
 
     // fixup item references
     const auto keys = mDroppedIdsReplaced.keys();
@@ -535,14 +755,25 @@ void SessionModel::dropJson(const JsonArray &jsonArray, int row,
 }
 
 void SessionModel::deserialize(const JsonObject &object,
-    const QModelIndex &parent, int row, bool updateExisting)
+    const QModelIndex &parent, int row, DropMode mode)
 {
-    auto id =
-        (object.count("id") ? jsonValue<int>(object, "id") : getNextItemId());
+    const auto updateExisting = (mode == DropMode::Update);
+    const auto forceNewIds = (mode == DropMode::ComponentImport);
+    const auto componentContent = (mode == DropMode::ComponentContent
+        || mode == DropMode::ComponentImport);
+    const auto sourceId =
+        (object.count("id") ? jsonValue<int>(object, "id") : 0);
+    auto id = (sourceId ? sourceId : getNextItemId());
+
+    if (forceNewIds) {
+        id = getNextItemId();
+        if (sourceId)
+            mDroppedIdsReplaced.insert(sourceId, id);
+    }
 
     auto existingItem = findItem(id);
     auto untitledFileName = QString();
-    if (existingItem && !updateExisting) {
+    if (!forceNewIds && existingItem && !updateExisting) {
         // generate new id when it collides with an existing item
         const auto prevId = std::exchange(id, getNextItemId());
         mDroppedIdsReplaced.insert(prevId, id);
@@ -553,6 +784,10 @@ void SessionModel::deserialize(const JsonObject &object,
     } else if (mDraggedUntitledFileNames.contains(id)) {
         untitledFileName = mDraggedUntitledFileNames[id];
     }
+
+    if (!componentContent && isComponentOrContent(parent)
+        && (!existingItem || existingItem->parent != &getItem(parent)))
+        return;
 
     auto ok = true;
     const auto type = (existingItem ? existingItem->type
@@ -580,11 +815,11 @@ void SessionModel::deserialize(const JsonObject &object,
                 // reference to an already patched id?
                 auto it = mDroppedIdsReplaced.find(value.toInt());
                 if (it != mDroppedIdsReplaced.end()) {
-                    setData(index, column, it.value());
+                    setField(index, column, it.value());
                     return;
                 }
                 // otherwise remember reference for fixup
-                mDroppedReferences.append(index);
+                mDroppedReferences.append(getIndex(index, column));
             }
             setField(index, column, value);
         };
@@ -598,6 +833,12 @@ void SessionModel::deserialize(const JsonObject &object,
             setField(index, Name, value);
         } else if (property == "custom") {
             setField(index, Custom, value);
+        } else if (property == "sessionInterface") {
+            setField(index, SessionInterface, value);
+        } else if (property == "componentInterface") {
+            setField(index, ComponentInterface, value);
+        } else if (property == "inputItemId") {
+            dropColumn(property, index, InputItemId, value);
         } else if (property == "fileName") {
             setField(index, FileName,
                 toNativeCanonicalAbsoluteFilePath(value.toString()));
@@ -622,10 +863,13 @@ void SessionModel::deserialize(const JsonObject &object,
         }
     }
 
+    if (!existingItem && type == Item::Type::Component
+        && mode != DropMode::ComponentImport)
+        mode = DropMode::ComponentContent;
     if (const auto items = jsonArray(object, "items"))
         for (const JsonValue &value : *items)
             if (const auto child = jsonObject(value))
-                deserialize(*child, index, -1, updateExisting);
+                deserialize(*child, index, -1, mode);
 }
 
 void SessionModel::serialize(JsonObject &object, const Item &item,
@@ -636,6 +880,14 @@ void SessionModel::serialize(JsonObject &object, const Item &item,
     object["name"] = item.name;
     if (serializingScriptItem || !item.custom.isEmpty())
         object["custom"] = toJsonValue(item.custom);
+    if (serializingScriptItem
+        || item.sessionInterface != Item::Interface::Internal)
+        object["sessionInterface"] = toJsonValue(item.sessionInterface);
+    if (serializingScriptItem
+        || item.componentInterface != Item::Interface::Internal)
+        object["componentInterface"] = toJsonValue(item.componentInterface);
+    if (serializingScriptItem || item.inputItemId)
+        object["inputItemId"] = item.inputItemId;
 
     if (auto fileItem = castItem<FileItem>(item)) {
         const auto &fileName = fileItem->fileName;
@@ -713,8 +965,8 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         result &= (column != RecordShaderId || !hit);
         result &= (column != RecordIntersectionShaderId
             || (hit && record.intersectionShaderId));
-        result &= (column != RecordAnyHitShaderId
-            || (hit && record.anyHitShaderId));
+        result &=
+            (column != RecordAnyHitShaderId || (hit && record.anyHitShaderId));
         result &= (column != RecordClosestHitShaderId
             || (hit && record.closestHitShaderId));
         break;

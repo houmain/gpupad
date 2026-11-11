@@ -14,6 +14,7 @@ SessionEditor::SessionEditor(QWidget *parent)
     : QTreeView(parent)
     , mModel(Singletons::sessionModel())
     , mContextMenu(new QMenu(this))
+    , mComponentContextMenu(new QMenu(this))
 {
     setModel(&mModel);
     setFrameShape(QFrame::NoFrame);
@@ -29,13 +30,24 @@ SessionEditor::SessionEditor(QWidget *parent)
     setEditTriggers(QTreeView::EditKeyPressed | QTreeView::SelectedClicked);
     setContextMenuPolicy(Qt::CustomContextMenu);
     setAutoExpandDelay(750);
-    setFileName({});
+    setFileName({ });
     setRootIsDecorated(false);
 
     connect(this, &QTreeView::activated, this,
         &SessionEditor::handleItemActivated);
     connect(this, &QTreeView::customContextMenuRequested, this,
         &SessionEditor::openContextMenu);
+    connect(&mModel, &SessionModel::rowsInserted, this,
+        [this](const QModelIndex &parent, int first, int last) {
+            hideComponentContent(parent);
+            for (auto row = first; row <= last; ++row)
+                hideComponentContent(mModel.index(row, 0, parent));
+        });
+    connect(&mModel, &SessionModel::dataChanged, this,
+        [this](const QModelIndex &topLeft, const QModelIndex &) {
+            if (topLeft.column() == SessionModel::ComponentInterface)
+                hideComponentContent(topLeft.parent());
+        });
 
     auto usedLetters = QSet<QChar>();
     auto addAction = [&](auto &action, auto type) {
@@ -76,6 +88,11 @@ SessionEditor::SessionEditor(QWidget *parent)
         Item::Type::AccelerationStructure);
     addAction(mAddInstanceAction, Item::Type::Instance);
 
+    mAddComponentAction = new QAction(mModel.getTypeIcon(Item::Type::Component),
+        tr("Add &Component..."), this);
+    connect(mAddComponentAction, &QAction::triggered, this,
+        &SessionEditor::addComponent);
+
     addItemActions(mContextMenu);
 
     // WORKAROUND: checkbox border is too dark in dark theme
@@ -88,6 +105,8 @@ SessionEditor::SessionEditor(QWidget *parent)
 
 void SessionEditor::addItemActions(QMenu *menu)
 {
+    connect(menu, &QMenu::aboutToShow, this, &SessionEditor::updateItemActions,
+        Qt::UniqueConnection);
     menu->addAction(mAddBlockAction);
     menu->addAction(mAddFieldAction);
     menu->addAction(mAddAttributeAction);
@@ -98,6 +117,7 @@ void SessionEditor::addItemActions(QMenu *menu)
     menu->addAction(mAddInstanceAction);
     menu->addSeparator();
     menu->addAction(mAddGroupAction);
+    menu->addAction(mAddComponentAction);
     menu->addAction(mAddBufferAction);
     menu->addAction(mAddStreamAction);
     menu->addAction(mAddTextureAction);
@@ -165,11 +185,14 @@ QList<QMetaObject::Connection> SessionEditor::connectEditActions(
     const auto updateEditActions = [this, actions]() {
         const auto isItemSelected = hasFocus() && currentIndex().isValid()
             && mModel.getItemType(currentIndex()) != Item::Type::Session;
-        actions.cut->setEnabled(isItemSelected);
+        const auto isComponentContent =
+            mModel.isComponentContent(currentIndex());
+        actions.cut->setEnabled(isItemSelected && !isComponentContent);
         actions.copy->setEnabled(isItemSelected);
-        actions.delete_->setEnabled(isItemSelected);
+        actions.delete_->setEnabled(isItemSelected && !isComponentContent);
         actions.rename->setEnabled(isItemSelected);
-        actions.paste->setEnabled(hasFocus() && canPaste());
+        actions.paste->setEnabled(hasFocus() && canPaste()
+            && !isComponentContent);
     };
     c += connect(selectionModel(), &QItemSelectionModel::currentChanged,
         updateEditActions);
@@ -178,15 +201,22 @@ QList<QMetaObject::Connection> SessionEditor::connectEditActions(
         updateEditActions);
     updateEditActions();
 
-    auto pos = mContextMenu->actions().constFirst();
-    if (pos != actions.undo) {
-        mContextMenu->insertAction(pos, actions.undo);
-        mContextMenu->insertAction(pos, actions.redo);
-        mContextMenu->insertSeparator(pos);
-        mContextMenu->insertActions(pos,
+    const auto addEditActions = [&actions](QMenu *menu) {
+        const auto pos = (menu->actions().isEmpty()
+                ? nullptr
+                : menu->actions().constFirst());
+        if (pos == actions.undo)
+            return;
+        menu->insertAction(pos, actions.undo);
+        menu->insertAction(pos, actions.redo);
+        menu->insertSeparator(pos);
+        menu->insertActions(pos,
             { actions.cut, actions.copy, actions.paste, actions.delete_ });
-        mContextMenu->insertSeparator(pos);
-    }
+        if (pos)
+            menu->insertSeparator(pos);
+    };
+    addEditActions(mContextMenu);
+    addEditActions(mComponentContextMenu);
     return c;
 }
 
@@ -262,7 +292,7 @@ bool SessionEditor::clear()
 {
     mModel.clear();
     if (!FileDialog::isUntitled(mFileName))
-        setFileName({});
+        setFileName({ });
     selectSession();
     return true;
 }
@@ -377,11 +407,17 @@ void SessionEditor::openContextMenu(const QPoint &pos)
 
     updateItemActions();
 
-    mContextMenu->popup(mapToGlobal(pos));
+    auto *menu = (mModel.isComponentOrContent(currentIndex())
+            ? mComponentContextMenu
+            : mContextMenu);
+    menu->popup(mapToGlobal(pos));
 }
 
 void SessionEditor::addItem(Item::Type type)
 {
+    if (mModel.isComponentOrContent(currentIndex()))
+        return;
+
     mModel.beginUndoMacro("Add");
 
     const auto index = mModel.insertItem(type, currentIndex(), -1);
@@ -412,9 +448,52 @@ void SessionEditor::addItem(Item::Type type)
     Q_EMIT itemAdded(index);
 }
 
+void SessionEditor::addComponent()
+{
+    if (mModel.isComponentOrContent(currentIndex()))
+        return;
+
+    auto &dialog = Singletons::fileDialog();
+    if (!dialog.exec(FileDialog::SessionExtensions))
+        return;
+
+    const auto index =
+        mModel.insertComponent(dialog.fileName(), currentIndex());
+    if (!index.isValid())
+        return;
+
+    setCurrentIndex(index);
+    setExpanded(index, true);
+    Q_EMIT itemAdded(index);
+}
+
+void SessionEditor::hideComponentContent(const QModelIndex &index)
+{
+    if (!mModel.item<Component>(index)) {
+        if (!mModel.item<Component>(index.parent())
+            || mModel.getItem(index).componentInterface
+                == Item::Interface::Internal)
+            return;
+        for (auto row = 0; row < mModel.rowCount(index); ++row)
+            setRowHidden(row, index, true);
+        return;
+    }
+
+    for (auto row = 0; row < mModel.rowCount(index); ++row) {
+        const auto child = mModel.index(row, 0, index);
+        const auto interface = mModel.getItem(child).componentInterface;
+        setRowHidden(row, index, interface == Item::Interface::Internal);
+        if (interface != Item::Interface::Internal) {
+            setExpanded(child, false);
+            for (auto i = 0; i < mModel.rowCount(child); ++i)
+                setRowHidden(i, child, true);
+        }
+    }
+}
+
 void SessionEditor::activateFirstTextureItem()
 {
-    auto index = QModelIndex{};
+    auto index = QModelIndex{ };
     mModel.forEachItem([&](const Item &item) {
         if (item.type == Item::Type::Texture && !index.isValid())
             index = mModel.getIndex(&item);
@@ -425,7 +504,7 @@ void SessionEditor::activateFirstTextureItem()
 
 void SessionEditor::handleItemActivated(const QModelIndex &index)
 {
-    if (mModel.item<Group>(index)) {
+    if (mModel.item<Group>(index) || mModel.item<Component>(index)) {
         setExpanded(index, !isExpanded(index));
     } else {
         Q_EMIT itemActivated(index);

@@ -53,7 +53,7 @@ QVariant ItemScriptObject::updateValue(const QString &key,
         [itemId = mItemId, update](SessionModel &session) {
             const auto index = session.getIndex(session.findItem(itemId));
             if (index.isValid())
-                session.dropJson({ update }, index.row(), index.parent(), true);
+                session.dropJson({ update }, index.row(), index.parent());
         });
     return input;
 }

@@ -29,6 +29,7 @@
 #include <QDockWidget>
 #include <QMimeData>
 #include <QToolButton>
+#include <QLabel>
 
 // increase when restoring old session states does not work properly
 const auto MainWindowStateVersion = 1;

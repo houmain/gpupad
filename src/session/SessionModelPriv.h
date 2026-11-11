@@ -20,6 +20,7 @@
     ADD(GroupInlineScope, Group, inlineScope)                                 \
     ADD(GroupDynamic, Group, dynamic)                                         \
     ADD(GroupIterations, Group, iterations)                                   \
+    ADD(ComponentSource, Component, source)                                   \
     ADD(BlockOffset, Block, offset)                                           \
     ADD(BlockRowCount, Block, rowCount)                                       \
     ADD(FieldDataType, Field, dataType)                                       \
@@ -246,7 +247,7 @@ template <typename T>
 auto toJsonValue(const T &v)
     -> std::enable_if_t<std::is_enum<T>::value, JsonValue>
 {
-    return QMetaEnum::fromType<T>().valueToKey(v);
+    return QMetaEnum::fromType<T>().valueToKey(static_cast<int>(v));
 }
 
 template <>

@@ -15,6 +15,7 @@ struct Item;
 struct Item
 {
     using Type = ItemEnums::ItemType;
+    using Interface = ItemEnums::Interface;
 
     virtual ~Item() = default;
 
@@ -24,6 +25,9 @@ struct Item
     QList<Item *> items;
     QString name;
     QVariantMap custom;
+    Interface sessionInterface{ Interface::Internal };
+    Interface componentInterface{ Interface::Internal };
+    ItemId inputItemId{ };
 };
 
 struct FileItem : Item
@@ -65,6 +69,11 @@ struct Group : ScopeItem
     QString iterations{ "1" };
     bool inlineScope{ };
     bool dynamic{ };
+};
+
+struct Component : ScopeItem
+{
+    QString source;
 };
 
 struct Buffer : FileItem
@@ -500,6 +509,11 @@ inline Item::Type getItemType<GeometrySet>()
 {
     return Item::Type::GeometrySet;
 }
+template <>
+inline Item::Type getItemType<Component>()
+{
+    return Item::Type::Component;
+}
 
 template <typename T>
 const T *castItem(const Item &item)
@@ -522,7 +536,7 @@ template <>
 inline const ScopeItem *castItem<ScopeItem>(const Item &item)
 {
     if (item.type == Item::Type::Root || item.type == Item::Type::Session
-        || item.type == Item::Type::Group)
+        || item.type == Item::Type::Group || item.type == Item::Type::Component)
         return static_cast<const ScopeItem *>(&item);
     return nullptr;
 }

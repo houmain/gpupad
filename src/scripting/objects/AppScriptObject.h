@@ -177,6 +177,7 @@ private:
     JsonObject toJsonObject(const QJSValue &object);
     void withSessionModel(UpdateSessionFunction &&updateFunction);
     QModelIndex getOriginIndex(QJSValue originIdent);
+    bool preventComponentContentModification(const Item *item);
     const Item *findSessionItem(QJSValue itemIdent,
         const QModelIndex &originIndex, bool searchSubItems);
     const Item *findSessionItem(QJSValue itemIdent);

@@ -85,28 +85,29 @@ namespace {
     Item *allocateItem(Item::Type type)
     {
         switch (type) {
-        case Item::Type::Root:       break;
-        case Item::Type::Session:    return new Session();
-        case Item::Type::Group:      return new Group();
-        case Item::Type::Buffer:     return new Buffer();
-        case Item::Type::Block:      return new Block();
-        case Item::Type::Field:      return new Field();
-        case Item::Type::Texture:    return new Texture();
-        case Item::Type::Program:    return new Program();
-        case Item::Type::Shader:     return new Shader();
+        case Item::Type::Root:        break;
+        case Item::Type::Session:     return new Session();
+        case Item::Type::Group:       return new Group();
+        case Item::Type::Component:   return new Component();
+        case Item::Type::Buffer:      return new Buffer();
+        case Item::Type::Block:       return new Block();
+        case Item::Type::Field:       return new Field();
+        case Item::Type::Texture:     return new Texture();
+        case Item::Type::Program:     return new Program();
+        case Item::Type::Shader:      return new Shader();
         case Item::Type::ShaderTable: return new ShaderTable();
-        case Item::Type::Record:     return new Record();
-        case Item::Type::Binding:    return new Binding();
-        case Item::Type::Stream:     return new Stream();
-        case Item::Type::Attribute:  return new Attribute();
-        case Item::Type::Target:     return new Target();
-        case Item::Type::Attachment: return new Attachment();
-        case Item::Type::Call:       return new Call();
-        case Item::Type::Script:     return new Script();
+        case Item::Type::Record:      return new Record();
+        case Item::Type::Binding:     return new Binding();
+        case Item::Type::Stream:      return new Stream();
+        case Item::Type::Attribute:   return new Attribute();
+        case Item::Type::Target:      return new Target();
+        case Item::Type::Attachment:  return new Attachment();
+        case Item::Type::Call:        return new Call();
+        case Item::Type::Script:      return new Script();
         case Item::Type::AccelerationStructure:
             return new AccelerationStructure();
-        case Item::Type::Instance: return new Instance();
-        case Item::Type::Geometry: return new Geometry();
+        case Item::Type::Instance:    return new Instance();
+        case Item::Type::Geometry:    return new Geometry();
         case Item::Type::GeometrySet: return new GeometrySet();
         }
         Q_UNREACHABLE();
@@ -122,6 +123,8 @@ namespace {
                 return new Session(static_cast<const Session &>(item));
             case Item::Type::Group:
                 return new Group(static_cast<const Group &>(item));
+            case Item::Type::Component:
+                return new Component(static_cast<const Component &>(item));
             case Item::Type::Buffer:
                 return new Buffer(static_cast<const Buffer &>(item));
             case Item::Type::Block:
@@ -237,8 +240,10 @@ bool SessionModelCore::canContainType(const QModelIndex &index,
     case Item::Type::Root: return (type == Item::Type::Session);
     case Item::Type::Session:
     case Item::Type::Group:
+    case Item::Type::Component:
         switch (type) {
         case Item::Type::Group:
+        case Item::Type::Component:
         case Item::Type::Buffer:
         case Item::Type::Texture:
         case Item::Type::Program:
@@ -249,22 +254,21 @@ bool SessionModelCore::canContainType(const QModelIndex &index,
         case Item::Type::Call:
         case Item::Type::Script:
         case Item::Type::AccelerationStructure:
-        case Item::Type::GeometrySet: return true;
+        case Item::Type::GeometrySet:           return true;
         default:                                return false;
         }
-    case Item::Type::Buffer:  return (type == Item::Type::Block);
-    case Item::Type::Block:   return (type == Item::Type::Field);
-    case Item::Type::Program: return (type == Item::Type::Shader);
+    case Item::Type::Buffer:      return (type == Item::Type::Block);
+    case Item::Type::Block:       return (type == Item::Type::Field);
+    case Item::Type::Program:     return (type == Item::Type::Shader);
     case Item::Type::ShaderTable: return (type == Item::Type::Record);
-    case Item::Type::Record: return (type == Item::Type::Binding);
-    case Item::Type::Stream:  return (type == Item::Type::Attribute);
-    case Item::Type::Target:  return (type == Item::Type::Attachment);
+    case Item::Type::Record:      return (type == Item::Type::Binding);
+    case Item::Type::Stream:      return (type == Item::Type::Attribute);
+    case Item::Type::Target:      return (type == Item::Type::Attachment);
     case Item::Type::AccelerationStructure:
         return (type == Item::Type::Instance);
-    case Item::Type::Instance:
-        return (type == Item::Type::Geometry);
+    case Item::Type::Instance:    return (type == Item::Type::Geometry);
     case Item::Type::GeometrySet: return (type == Item::Type::Geometry);
-    default:                   return false;
+    default:                      return false;
     }
 }
 
@@ -335,6 +339,11 @@ QVariant SessionModelCore::data(const QModelIndex &index, int role) const
     switch (column) {
     case ColumnType::Name:   return item.name;
     case ColumnType::Custom: return item.custom;
+    case ColumnType::SessionInterface:
+        return static_cast<int>(item.sessionInterface);
+    case ColumnType::ComponentInterface:
+        return static_cast<int>(item.componentInterface);
+    case ColumnType::InputItemId: return item.inputItemId;
 
     case ColumnType::FileName:
         if (auto fileItem = castItem<FileItem>(item))
@@ -389,6 +398,20 @@ bool SessionModelCore::setData(const QModelIndex &index, const QVariant &value,
         undoableAssignment(index, &item.custom, value.toMap());
         return true;
     }
+
+    case ColumnType::SessionInterface:
+        undoableAssignment(index, &item.sessionInterface,
+            fromVariant<Item::Interface>(value));
+        return true;
+
+    case ColumnType::ComponentInterface:
+        undoableAssignment(index, &item.componentInterface,
+            fromVariant<Item::Interface>(value));
+        return true;
+
+    case ColumnType::InputItemId:
+        undoableAssignment(index, &item.inputItemId, value.toInt());
+        return true;
 
     case ColumnType::FileName:
         if (castItem<FileItem>(item)) {
