@@ -482,6 +482,21 @@ void SessionModel::clear()
     SessionModelCore::clear();
 }
 
+QString SessionModel::ensureFileName(const FileItem &item, QString hint)
+{
+    auto fileName = item.fileName;
+    if (fileName.isEmpty())
+        fileName = std::move(hint);
+    if (fileName.isEmpty()) {
+        if (!FileDialog::getFileExtension(item.name).isEmpty())
+            fileName = toNativeCanonicalAbsoluteFilePath(item.name);
+        else
+            fileName = FileDialog::generateNextUntitledFileName(item.name);
+    }
+    setField(&item, FileName, fileName);
+    return fileName;
+}
+
 JsonArray SessionModel::getJson(const QModelIndexList &indexes,
     bool serializingScriptItem) const
 {

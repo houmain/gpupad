@@ -268,23 +268,6 @@ namespace {
         return textureData;
     }
 
-    void ensureFileName(SessionModel &session, const FileItem &item,
-        QString *hint)
-    {
-        auto fileName = item.fileName;
-        if (fileName.isEmpty() && hint)
-            fileName = *hint;
-        if (fileName.isEmpty()) {
-            if (!FileDialog::getFileExtension(item.name).isEmpty()) {
-                fileName = toNativeCanonicalAbsoluteFilePath(item.name);
-            } else {
-                fileName = FileDialog::generateNextUntitledFileName(item.name);
-            }
-        }
-        session.setField(&item, SessionModel::FileName, fileName);
-        if (hint)
-            *hint = fileName;
-    }
 } // namespace
 
 bool AppScriptObject::isSessionAvailable() const
@@ -901,7 +884,7 @@ QJSValue AppScriptObject::openEditor(QJSValue fileNameOrItemIdent)
     withSessionModel(
         [itemId = item->id, fileName](SessionModel &session) mutable {
             if (const auto item = session.findItem<FileItem>(itemId)) {
-                ensureFileName(session, *item, fileName.get());
+                *fileName = session.ensureFileName(*item, *fileName);
 
                 if (onMainThread()) {
                     auto &editors = Singletons::editorManager();
@@ -940,7 +923,7 @@ void AppScriptObject::setBufferData(QJSValue itemIdent, QJSValue data)
                 const auto block = castItem<Block>(buffer->items[0]);
                 session.setField(block, SessionModel::BlockRowCount, rowCount);
             }
-            ensureFileName(session, *buffer, &fileName);
+            fileName = session.ensureFileName(*buffer, fileName);
             if (onMainThread())
                 Singletons::fileCache().updateBinary(buffer->fileName,
                     bufferData);
@@ -965,7 +948,7 @@ void AppScriptObject::setBlockData(QJSValue itemIdent, QJSValue data)
         if (auto block = session.findItem<Block>(blockId))
             if (auto buffer = castItem<Buffer>(block->parent)) {
                 session.setField(block, SessionModel::BlockRowCount, rowCount);
-                ensureFileName(session, *buffer, &fileName);
+                fileName = session.ensureFileName(*buffer, fileName);
                 if (onMainThread()) {
                     auto offset = 0, rowCount = 0;
                     Singletons::synchronizeLogic().evaluateBlockProperties(
@@ -990,7 +973,7 @@ void AppScriptObject::setTextureData(QJSValue itemIdent, QJSValue data)
     withSessionModel([textureId = texture->id, textureData,
                          fileName = QString()](SessionModel &session) mutable {
         if (auto texture = session.findItem<Texture>(textureId)) {
-            ensureFileName(session, *texture, &fileName);
+            fileName = session.ensureFileName(*texture, fileName);
             if (onMainThread())
                 Singletons::fileCache().updateTexture(texture->fileName,
                     textureData);
@@ -1007,7 +990,7 @@ void AppScriptObject::setShaderSource(QJSValue itemIdent, QJSValue data)
     withSessionModel([shaderId = shader->id, data = data.toString(),
                          fileName = QString()](SessionModel &session) mutable {
         if (auto shader = session.findItem<Shader>(shaderId)) {
-            ensureFileName(session, *shader, &fileName);
+            fileName = session.ensureFileName(*shader, fileName);
             if (onMainThread())
                 Singletons::fileCache().updateSource(shader->fileName, data);
         }
@@ -1023,7 +1006,7 @@ void AppScriptObject::setScriptSource(QJSValue itemIdent, QJSValue data)
     withSessionModel([scriptId = script->id, data = data.toString(),
                          fileName = QString()](SessionModel &session) mutable {
         if (auto script = session.findItem<Script>(scriptId)) {
-            ensureFileName(session, *script, &fileName);
+            fileName = session.ensureFileName(*script, fileName);
             if (onMainThread())
                 Singletons::fileCache().updateSource(script->fileName, data);
         }

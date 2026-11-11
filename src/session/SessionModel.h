@@ -36,6 +36,7 @@ public:
     QIcon getTypeIcon(Item::Type type) const;
     QString getItemName(ItemId id) const;
     QString getFullItemName(ItemId id) const;
+    QString ensureFileName(const FileItem &item, QString hint = {});
     void setActiveItems(QSet<ItemId> itemIds);
     void setActiveItemColor(QColor color);
 

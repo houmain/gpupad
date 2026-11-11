@@ -71,11 +71,16 @@ int runHeadless(QApplication &app)
         for (const auto &message : MessageList::getMessagesSnapshot())
             if (getMessageSeverity(message) == MessageSeverity::Error)
                 return false;
-        for (auto [itemIdent, editor] : std::exchange(editorsToSave, { }))
-            if (!editor->save()) {
-                invalidArgument("saving item '" + itemIdent + "' failed");
+        for (auto [fileName, editor] : std::exchange(editorsToSave, { })) {
+            const auto editorFileName = editor->fileName();
+            editor->setFileName(fileName);
+            const auto saved = editor->save();
+            editor->setFileName(editorFileName);
+            if (!saved) {
+                invalidArgument("saving output '" + fileName + "' failed");
                 return false;
             }
+        }
         return true;
     };
 
@@ -135,12 +140,22 @@ int runHeadless(QApplication &app)
                     return invalidArgument(
                         "item '" + itemIdent + "' not found");
 
+                if (const auto texture = castItem<Texture>(item)) {
+                    sessionModel.ensureFileName(*texture);
+                    if (auto editor = editorManager.openEditor(*texture)) {
+                        editorsToSave[fileName] = editor;
+                        continue;
+                    }
+                    return invalidArgument(
+                        "invalid texture item '" + itemIdent + "'");
+                }
+
                 const auto index = sessionModel.getIndex(item,
                     SessionModel::ColumnType::FileName);
                 if (sessionModel.setData(index, fileName))
                     if (const auto fileItem = castItem<FileItem>(item))
                         if (auto editor = editorManager.openEditor(*fileItem)) {
-                            editorsToSave[itemIdent] = editor;
+                            editorsToSave[fileName] = editor;
                             continue;
                         }
                 return invalidArgument("invalid file item '" + itemIdent + "'");
