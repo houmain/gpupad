@@ -334,14 +334,15 @@ bool GLTexture::clear(GLContext &gl, std::array<double, 4> color, double depth,
 bool GLTexture::copy(GLContext &gl, GLTexture &source)
 {
     const auto level = 0;
+    const auto sourceTextureId = source.getReadOnlyTextureId(gl);
+    const auto destTextureId = getReadWriteTextureId(gl);
     const auto width =
         std::min(source.mData.getLevelWidth(level), mData.getLevelWidth(level));
     const auto height = std::min(source.mData.getLevelHeight(level),
         mData.getLevelHeight(level));
-    const auto sourceTextureId = source.getReadOnlyTextureId(gl);
-    const auto destTextureId = getReadWriteTextureId(gl);
     gl.glCopyImageSubData(sourceTextureId, source.target(), level, 0, 0, 0,
         destTextureId, target(), level, 0, 0, 0, width, height, 1);
+    mData.setRowOrder(source.mData.rowOrder());
     return (glGetError() == GL_NO_ERROR);
 }
 
@@ -361,7 +362,9 @@ bool GLTexture::updateMipmaps(GLContext &gl)
 {
     if (mMipmapsInvalidated) {
         if (levels() > 1) {
+            const auto rowOrder = mData.rowOrder();
             gl.glBindTexture(target(), getReadWriteTextureId(gl));
+            mData.setRowOrder(rowOrder);
             gl.glGenerateMipmap(target());
             Q_ASSERT(glGetError() == GL_NO_ERROR);
         }
