@@ -190,7 +190,7 @@ void ScriptEngine::validateScript(const QString &script,
         evaluateScript("if (false) {" + script + "}", fileName);
 }
 
-void ScriptEngine::evaluateScript(const QString &script,
+QJSValue ScriptEngine::evaluateScript(const QString &script,
     const QString &fileName, ItemId itemId)
 {
     Q_ASSERT(QThread::currentThread() == thread());
@@ -200,6 +200,7 @@ void ScriptEngine::evaluateScript(const QString &script,
         mConsoleScriptObject->setLocation(itemId, fileName);
     const auto result = mJsEngine->evaluate(script, fileName);
     outputError(result, itemId);
+    return result;
 }
 
 ScriptValueList ScriptEngine::evaluateValues(const QString &valueExpression,

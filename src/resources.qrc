@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/">
+        <file alias="docs/scripting-reference.md">../docs/scripting-reference.md</file>
+        <file alias="docs/session-reference.md">../docs/session-reference.md</file>
         <file>images/16x16/window-close.png</file>
         <file>images/32x32/icon.png</file>
         <file>images/64x64/icon.png</file>

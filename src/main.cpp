@@ -1,9 +1,11 @@
 #include "FileDialog.h"
+#include "Mcp.h"
 #include "SingleApplication/singleapplication.h"
 #include "Style.h"
 #include "windows/MainWindow.h"
 #include "windows/AboutDialog.h"
 #include <QApplication>
+#include <QFileInfo>
 #include <QSettings>
 #include <QSurfaceFormat>
 
@@ -48,8 +50,10 @@ void restoreProcessPriority()
 
 void attachToConsole()
 {
-    const auto hasStdout = GetFileType(GetStdHandle(STD_OUTPUT_HANDLE)) != FILE_TYPE_UNKNOWN;
-    const auto hasStderr = GetFileType(GetStdHandle(STD_ERROR_HANDLE)) != FILE_TYPE_UNKNOWN;
+    const auto hasStdout = GetFileType(GetStdHandle(STD_OUTPUT_HANDLE))
+        != FILE_TYPE_UNKNOWN;
+    const auto hasStderr = GetFileType(GetStdHandle(STD_ERROR_HANDLE))
+        != FILE_TYPE_UNKNOWN;
     if (!AttachConsole(ATTACH_PARENT_PROCESS))
         return;
     FILE *in, *out, *err;
@@ -120,6 +124,7 @@ void outputHelpToStdout()
         "\n"
         "Usage: gpupad (--option | filename)*\n"
         "  --headless                        run in headless mode.\n"
+        "  --mcp                             run as an MCP stdio server.\n"
         "  --help                            print this help.\n"
         "\n"
         "In headless mode the following parameters are available:\n"
@@ -159,6 +164,9 @@ int run(int argc, char *argv[])
 
     auto instance = SingleApplication(true, singleApplicationMode);
     auto window = MainWindow();
+    auto externalScriptServer = ExternalScriptServer();
+    if (!externalScriptServer.listen() && instance.isPrimary())
+        qWarning("Starting the external script server failed");
 
     QObject::connect(&instance, &SingleApplication::receivedMessage,
         [&](quint32 instanceId, QByteArray argument) {
@@ -240,7 +248,11 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(format);
 #endif
 
-    if (std::string_view(argv[0]).ends_with("gpupad-headless"))
+    const auto executableName =
+        QFileInfo(QString::fromLocal8Bit(argv[0])).completeBaseName();
+    if (executableName.compare("gpupad-mcp", Qt::CaseInsensitive) == 0)
+        return runMcp(argc, argv);
+    if (executableName.compare("gpupad-headless", Qt::CaseInsensitive) == 0)
         return runHeadless(argc, argv);
 
     if (const auto arg1 = std::string_view(argc > 1 ? argv[1] : "");
@@ -248,6 +260,8 @@ int main(int argc, char *argv[])
 
         if (arg1 == "--headless")
             return runHeadless(argc, argv);
+        if (arg1 == "--mcp")
+            return runMcp(argc, argv);
 
         attachToConsole();
         outputHelpToStdout();
