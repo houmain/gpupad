@@ -151,8 +151,8 @@ BindingProperties::BindingProperties(PropertiesEditor *propertiesEditor)
         });
     connect(mUi->buffer, &ReferenceComboBox::currentDataChanged, this,
         &BindingProperties::updateWidgets);
-    for (auto comboBox : { mUi->texture, mUi->buffer, mUi->block,
-             mUi->accelerationStructure })
+    for (auto comboBox :
+        { mUi->texture, mUi->buffer, mUi->block, mUi->accelerationStructure })
         connect(comboBox, &ReferenceComboBox::textRequired,
             [this](QVariant id) {
                 return mPropertiesEditor.getItemName(id.toInt());
@@ -169,8 +169,10 @@ BindingProperties::~BindingProperties()
     delete mUi;
 }
 
-void BindingProperties::addMappings(QDataWidgetMapper &mapper)
+void BindingProperties::addMappings(QDataWidgetMapper &mapper,
+    bool isComponentInput)
 {
+    mIsComponentInput = isComponentInput;
     mapper.addMapping(mUi->type, SessionModel::BindingType);
     mapper.addMapping(mUi->editor, SessionModel::BindingEditor);
     mapper.addMapping(mUi->texture, SessionModel::BindingTextureId);
@@ -190,10 +192,6 @@ void BindingProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->comparisonFunc, SessionModel::BindingComparisonFunc);
     mapper.addMapping(mUi->subroutine, SessionModel::BindingSubroutine);
     mapper.addMapping(this, SessionModel::BindingValues);
-
-    // populate filtered image formats before binding
-    mapper.submit();
-    updateWidgets();
     mapper.addMapping(mUi->imageFormat, SessionModel::BindingImageFormat);
     mapper.addMapping(mUi->name, SessionModel::Name);
 }
@@ -273,6 +271,10 @@ void BindingProperties::updateWidgets()
 
     mSuspendSetValues = true;
 
+    setFormVisibility(mUi->formLayout, mUi->labelName, mUi->name,
+        !mIsComponentInput);
+    setFormVisibility(mUi->formLayout, mUi->labelType, mUi->type,
+        !mIsComponentInput);
     setFormVisibility(mUi->formLayout, mUi->labelEditor, mUi->editor, uniform);
     setFormVisibility(mUi->formLayout, mUi->labelExpressions, mUi->expressions,
         uniform && !color);
@@ -291,7 +293,7 @@ void BindingProperties::updateWidgets()
         mUi->accelerationStructure, accelerationStructure);
 
     const auto textureKind =
-        (image || sampler ? currentTextureKind() : TextureKind{});
+        (image || sampler ? currentTextureKind() : TextureKind{ });
     setFormVisibility(mUi->formLayout, mUi->labelLevel, mUi->level, image);
     setFormVisibility(mUi->formLayout, mUi->labelLayer, mUi->layerWidget,
         textureKind.array || textureKind.dimensions == 3

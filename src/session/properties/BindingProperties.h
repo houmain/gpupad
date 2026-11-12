@@ -20,7 +20,7 @@ public:
     explicit BindingProperties(PropertiesEditor *propertiesEditor);
     ~BindingProperties();
 
-    void addMappings(QDataWidgetMapper &mapper);
+    void addMappings(QDataWidgetMapper &mapper, bool isComponentInput);
     Binding::BindingType currentType() const;
     Binding::Editor currentEditor() const;
     TextureKind currentTextureKind() const;
@@ -39,5 +39,6 @@ private:
     PropertiesEditor &mPropertiesEditor;
     Ui::BindingProperties *mUi;
     QStringList mValues;
-    bool mSuspendSetValues{};
+    bool mIsComponentInput{ };
+    bool mSuspendSetValues{ };
 };

@@ -420,58 +420,25 @@ QVariantList PropertiesEditor::getComponentInputItemIds() const
 void PropertiesEditor::updateTypeLabel(Item::Type itemType,
     Item::Interface componentInterface)
 {
-    {
-        const auto blocker = QSignalBlocker(mSessionInterface);
-        fillComboBox<Item::Interface>(mSessionInterface);
-        if (componentInterface == Item::Interface::Input)
-            mSessionInterface->removeItem(mSessionInterface->findData(
-                static_cast<int>(Item::Interface::Output)));
-        else if (componentInterface == Item::Interface::Output)
-            mSessionInterface->removeItem(mSessionInterface->findData(
-                static_cast<int>(Item::Interface::Input)));
-    }
+    const auto blocker = QSignalBlocker(mSessionInterface);
+    fillComboBox<Item::Interface>(mSessionInterface);
+    if (componentInterface == Item::Interface::Input)
+        mSessionInterface->removeItem(mSessionInterface->findData(
+            static_cast<int>(Item::Interface::Output)));
+    else if (componentInterface == Item::Interface::Output)
+        mSessionInterface->removeItem(mSessionInterface->findData(
+            static_cast<int>(Item::Interface::Input)));
 
-    auto typeLabel = splitPascalCase(mModel.getTypeName(itemType));
-    switch (componentInterface) {
-    case Item::Interface::Input:
-        typeLabel = tr("Input %1").arg(typeLabel);
-        break;
-    case Item::Interface::Output:
-        typeLabel = tr("Output %1").arg(typeLabel);
-        break;
-    case Item::Interface::Internal: break;
-    }
-    mTypeLabel->setText(typeLabel);
+    mTypeLabel->setText((componentInterface == Item::Interface::Internal ? "%1"
+            : componentInterface == Item::Interface::Input ? tr("Input %1")
+                                                           : tr("Output %1"))
+            .arg(splitPascalCase(mModel.getTypeName(itemType))));
 }
 
 void PropertiesEditor::updateSessionInterfaceControl(const QModelIndex &index,
     Item::Type itemType)
 {
-    const auto canBeInSessionInterface = [&]() {
-        switch (itemType) {
-        case Item::Type::Buffer:
-        case Item::Type::Texture:
-        case Item::Type::Program:
-        case Item::Type::ShaderTable:
-        case Item::Type::Stream:
-        case Item::Type::Target:
-        case Item::Type::GeometrySet:
-        case Item::Type::AccelerationStructure: return true;
-        default:                                break;
-        }
-        // these types cannot be moved to top level without changing behavior
-        const auto isTopLevel = (index.parent().isValid()
-            && mModel.getItemType(index.parent()) == Item::Type::Session);
-        if (!isTopLevel)
-            return false;
-        switch (itemType) {
-        case Item::Type::Group:
-        case Item::Type::Binding:
-        case Item::Type::Call:
-        case Item::Type::Script:  return true;
-        default:                  return false;
-        }
-    }();
+    const auto canBeInSessionInterface = mModel.itemCanBeInSessionInterface(index);
     mSessionInterface->setVisible(canBeInSessionInterface);
     if (canBeInSessionInterface)
         mMapper->addMapping(mSessionInterface, SessionModel::SessionInterface);
@@ -620,7 +587,10 @@ void PropertiesEditor::addMappings(const QModelIndex &index,
             SessionModel::ShaderIncludePaths);
         break;
 
-    case Item::Type::Binding: mBindingProperties->addMappings(*mMapper); break;
+    case Item::Type::Binding:
+        mBindingProperties->addMappings(*mMapper,
+            mModel.getItem(index).componentInterface == Item::Interface::Input);
+        break;
 
     case Item::Type::Stream:
         map(mStreamProperties->name, SessionModel::Name);

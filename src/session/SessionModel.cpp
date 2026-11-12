@@ -206,10 +206,11 @@ Qt::ItemFlags SessionModel::flags(const QModelIndex &index) const
     auto flags = Qt::ItemFlags();
     flags |= Qt::ItemIsSelectable;
     flags |= Qt::ItemIsEnabled;
-    flags |= Qt::ItemIsEditable;
     flags |= Qt::ItemIsUserCheckable;
-    if (!isComponentContent(index))
+    if (!isComponentContent(index)) {
+        flags |= Qt::ItemIsEditable;
         flags |= Qt::ItemIsDragEnabled;
+    }
     switch (type) {
     case Item::Type::Root:
     case Item::Type::Session:
@@ -325,6 +326,30 @@ QString SessionModel::getFullItemName(ItemId id) const
         name = item->name + sep + name;
     }
     return name;
+}
+
+bool SessionModel::itemCanBeInSessionInterface(const QModelIndex &index) const
+{
+    const auto itemType = getItemType(index);
+    switch (itemType) {
+    case Item::Type::Buffer:
+    case Item::Type::Texture:
+    case Item::Type::Program:
+    case Item::Type::ShaderTable:
+    case Item::Type::Stream:
+    case Item::Type::Target:
+    case Item::Type::GeometrySet:
+    case Item::Type::AccelerationStructure:
+        return true;
+        // these types cannot be moved to top level without changing behavior
+    case Item::Type::Group:
+    case Item::Type::Binding:
+    case Item::Type::Call:
+    case Item::Type::Script:
+        return (getItemType(index.parent()) == Item::Type::Session);
+    default: break;
+    }
+    return false;
 }
 
 bool SessionModel::isItemVisibleInScope(const Item &current,
