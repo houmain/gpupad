@@ -495,7 +495,7 @@ bool SessionModel::canDropMimeData(const QMimeData *data, Qt::DropAction action,
             return false;
         auto ok = false;
         const auto typeName = jsonValue<QString>(*object, "type");
-        const auto type = getTypeByName(typeName, ok);
+        const auto type = getItemTypeByName(typeName, &ok);
         if (!ok || !canContainType(target, type))
             return false;
     }
@@ -817,7 +817,7 @@ void SessionModel::deserialize(const JsonObject &object,
     auto ok = true;
     const auto type = (existingItem ? existingItem->type
             : object.count("type")
-            ? getTypeByName(jsonValue<QString>(object, "type"), ok)
+            ? getItemTypeByName(jsonValue<QString>(object, "type"), &ok)
             : getDefaultChildType(parent));
     if (!ok)
         return;
@@ -900,7 +900,7 @@ void SessionModel::deserialize(const JsonObject &object,
 void SessionModel::serialize(JsonObject &object, const Item &item,
     bool relativeFilePaths, bool serializingScriptItem) const
 {
-    object["type"] = getTypeName(item.type);
+    object["type"] = getItemTypeName(item.type);
     object["id"] = item.id;
     object["name"] = item.name;
     if (serializingScriptItem || !item.custom.isEmpty())

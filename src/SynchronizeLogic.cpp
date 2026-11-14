@@ -357,7 +357,7 @@ void SynchronizeLogic::handleFileItemFileChanged(const FileItem &item)
         // only reset to type name when it currently has a filename
         if (FileDialog::getFileExtension(item.name).isEmpty())
             return;
-        name = mModel.getTypeName(item.type);
+        name = getItemTypeName(item.type);
     }
     if (name != item.name)
         mModel.setField(&item, SessionModel::Name, name);

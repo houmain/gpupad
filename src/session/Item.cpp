@@ -2,6 +2,11 @@
 #include "ItemEnums.h"
 #include <QMetaEnum>
 
+QString getItemTypeName(Item::Type type)
+{
+    return QMetaEnum::fromType<Item::Type>().valueToKey(static_cast<int>(type));
+}
+
 Item::Type getItemTypeByName(const QString &name, bool *ok)
 {
     const auto metaType = QMetaEnum::fromType<ItemEnums::ItemType>();

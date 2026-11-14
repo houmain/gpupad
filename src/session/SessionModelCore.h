@@ -184,8 +184,6 @@ public:
     void beginUndoMacro(const QString &text);
     void endUndoMacro();
 
-    Item::Type getTypeByName(const QString &name, bool &ok) const;
-    QString getTypeName(Item::Type type) const;
     bool canContainType(const QModelIndex &index, Item::Type type) const;
     Item::Type getDefaultChildType(const QModelIndex &index) const;
     QModelIndex insertItem(Item::Type type, QModelIndex parent, int row = -1,

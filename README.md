@@ -98,14 +98,12 @@ Allows to structure more complex sessions. They open a new scope unless *inline 
 - **Script** -
 Allows to define JavaScript functions and variables in script files, which can subsequently be used in uniform binding expressions.
 Scripts can also be used to dynamically populate the session and generate buffer and texture data.
-There is one JavaScript state for the whole session and the scripts are evaluated in consecutive order (*Group* scopes do not have an effect).
+There is one JavaScript state for the whole session and the scripts are evaluated in consecutive order (*Group* scopes do not have an effect). See [Scripting reference](docs/scripting-reference.md) and [Session item reference](docs/session-reference.md) for details.
+
+- **Component** - 
+Allows to embed sessions as single items. Items marked as Input or Output in the source session appear as interface items within the Component.
 
 <img src="docs/session.png">
-
-## Scripting
-
-- [Scripting reference](docs/scripting-reference.md)
-- [Session item reference](docs/session-reference.md)
 
 ## Installation
 

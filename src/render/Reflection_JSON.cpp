@@ -191,7 +191,7 @@ namespace {
         return { "", "", "" };
     }
 
-    QString getTypeName(const SpvReflectTypeDescription &type)
+    QString getItemTypeName(const SpvReflectTypeDescription &type)
     {
         const auto [prefix, single, dims] = getTypeDesc(type);
         const auto kind = [&]() -> const char * {
@@ -238,7 +238,7 @@ namespace {
             json["type"] = type.type_name;
         } else {
             Q_ASSERT(!type.member_count);
-            if (auto typeName = getTypeName(type); !typeName.isEmpty())
+            if (auto typeName = getItemTypeName(type); !typeName.isEmpty())
                 json["type"] = typeName;
             if (auto imageFormat = getImageFormat(type))
                 json["imageFormat"] = imageFormat;
@@ -288,7 +288,7 @@ namespace {
         const auto &type = *variable.type_description;
         if (variable.name)
             json["name"] = variable.name;
-        json["type"] = getTypeName(type);
+        json["type"] = getItemTypeName(type);
         if (type.type_flags & SPV_REFLECT_TYPE_FLAG_STRUCT)
             json["members"] = getMembersJson(type);
         if (variable.semantic)

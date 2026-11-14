@@ -353,6 +353,7 @@ struct CallKind
     bool trace;
 };
 
+QString getItemTypeName(Item::Type type);
 Item::Type getItemTypeByName(const QString &name, bool *ok = nullptr);
 int getDataTypeSize(Field::DataType dataType);
 int getFieldSize(const Field &field);

@@ -221,18 +221,6 @@ void SessionModelCore::clear()
     undoStack().setUndoLimit(0);
 }
 
-QString SessionModelCore::getTypeName(Item::Type type) const
-{
-    return QMetaEnum::fromType<Item::Type>().valueToKey(static_cast<int>(type));
-}
-
-Item::Type SessionModelCore::getTypeByName(const QString &name, bool &ok) const
-{
-    auto type =
-        QMetaEnum::fromType<Item::Type>().keyToValue(qPrintable(name), &ok);
-    return (ok ? static_cast<Item::Type>(type) : Item::Type::Group);
-}
-
 bool SessionModelCore::canContainType(const QModelIndex &index,
     Item::Type type) const
 {
@@ -516,7 +504,7 @@ QModelIndex SessionModelCore::insertItem(Item::Type type, QModelIndex parent,
         parent = parent.parent();
     }
 
-    const auto typeName = getTypeName(type);
+    const auto typeName = getItemTypeName(type);
     auto name = typeName;
     for (auto i = 2; findChildByName(parent, name).isValid(); ++i)
         name = typeName + QStringLiteral(" %1").arg(i);

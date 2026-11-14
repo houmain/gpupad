@@ -799,6 +799,11 @@ QJSValue AppScriptObject::trackItems(QJSValue itemIdent, QJSValue callback)
     return trackItems(itemIdent, QJSValue::UndefinedValue, true, callback);
 }
 
+void AppScriptObject::untrackItems(int trackingIndex)
+{
+    mItemTrackings.erase(trackingIndex);
+}
+
 void AppScriptObject::loadSession(QString fileName)
 {
     if (!onMainThread())
@@ -1047,22 +1052,27 @@ quint64 AppScriptObject::getBufferHandle(QJSValue itemIdent)
     return 0;
 }
 
+QJSValue AppScriptObject::processItemShader(QJSValue itemIdent,
+    QString processType)
+{
+    auto result = QVariant();
+    if (const auto shader = findSessionItem<Shader>(itemIdent))
+        result = processShader(shader->fileName, getSourceType(*shader),
+            processType);
+    return (result.isValid() ? QJSValue(jsEngine().toManagedValue(result))
+                             : QJSValue::UndefinedValue);
+}
+
 QJSValue AppScriptObject::processShader(QJSValue fileNameOrItemIdent,
     QString processType)
 {
     auto result = QVariant();
-    if (fileNameOrItemIdent.isString()) {
-        dispatchToMainThread([&]() {
-            if (auto editor = Singletons::editorManager().getSourceEditor(
-                    getAbsolutePath(fileNameOrItemIdent.toString())))
-                result = processShader(editor->fileName(), editor->sourceType(),
-                    processType);
-        });
-    } else {
-        if (const auto shader = findSessionItem<Shader>(fileNameOrItemIdent))
-            result = processShader(shader->fileName, getSourceType(*shader),
+    dispatchToMainThread([&]() {
+        if (auto editor = Singletons::editorManager().getSourceEditor(
+                getAbsolutePath(fileNameOrItemIdent.toString())))
+            result = processShader(editor->fileName(), editor->sourceType(),
                 processType);
-    }
+    });
     return (result.isValid() ? QJSValue(jsEngine().toManagedValue(result))
                              : QJSValue::UndefinedValue);
 }

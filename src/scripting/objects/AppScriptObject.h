@@ -85,9 +85,10 @@ public:
     Q_INVOKABLE QJSValue enumerateCameras();
     Q_INVOKABLE QJSValue createSessionRenderer(QVariantMap options);
     Q_INVOKABLE QJSValue createMediaEncoder(QVariantMap options);
-
-    // session
     Q_INVOKABLE void loadSession(QString fileName);
+    Q_INVOKABLE QJSValue processShader(QJSValue fileName, QString processType);
+
+    // deprecated in 4.8
     Q_INVOKABLE QJSValue getItemProperties(QJSValue itemIdent);
     Q_INVOKABLE void clearSession();
     Q_INVOKABLE QJSValue getItem(QJSValue itemIdent);
@@ -103,6 +104,7 @@ public:
     Q_INVOKABLE QJSValue trackItems(QJSValue itemIdent, QJSValue originIdent,
         QJSValue callback);
     Q_INVOKABLE QJSValue trackItems(QJSValue itemIdent, QJSValue callback);
+    Q_INVOKABLE void untrackItems(int trackingIndex);
     Q_INVOKABLE QJSValue insertItem(QJSValue object);
     Q_INVOKABLE QJSValue insertItem(QJSValue parentIdent, QJSValue object);
     Q_INVOKABLE QJSValue insertBeforeItem(QJSValue siblingIdent,
@@ -120,7 +122,7 @@ public:
     Q_INVOKABLE void setShaderSource(QJSValue itemIdent, QJSValue data);
     Q_INVOKABLE quint64 getTextureHandle(QJSValue itemIdent);
     Q_INVOKABLE quint64 getBufferHandle(QJSValue itemIdent);
-    Q_INVOKABLE QJSValue processShader(QJSValue fileNameOrItemIdent,
+    Q_INVOKABLE QJSValue processItemShader(QJSValue itemIdent,
         QString processType);
 
     const QDir &basePath() const { return mBasePath; }

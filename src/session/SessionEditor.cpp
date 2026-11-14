@@ -51,7 +51,7 @@ SessionEditor::SessionEditor(QWidget *parent)
 
     auto usedLetters = QSet<QChar>();
     auto addAction = [&](auto &action, auto type) {
-        auto typeName = mModel.getTypeName(type);
+        auto typeName = getItemTypeName(type);
 
         // automatically insert & before first unused letter
         for (auto i = 0; i < typeName.size(); i++) {

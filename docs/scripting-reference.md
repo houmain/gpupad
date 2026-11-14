@@ -3,32 +3,14 @@
 Scripts share one persistent JavaScript state for the session.
 Objects can be inspected with `console.log(object)`.
 
-## Parameter Types
-
-- `Item` is a session item exposed as mutable JavaScript object. The properties match
-  the serialized session properties documented in the
-  [session item reference](session-reference.md), and the `items` property
-  contain the children.
-
-- `ItemIdent` parameters accept:
-
-  - An `Item` object.
-  - A numeric item ID.
-  - A `/`-separated item path relative to the origin, for example
-    `"Program/cube.vs"`.
-  - A predicate function accepting an `Item`. Predicate searches may include
-    descendants according to the `subItems` argument; the single-argument
-    overload searches the session recursively.
-
 ## App
 
 - `frame: Number`
-- `evaluation: "Paused" | "Automatic" | "Steady"` - Assign `"Reset"`,
-  `"Manual"`, or `"Finish"` to control evaluation.
+- `evaluation: "Paused|Automatic|Steady"` - Additionally `"Reset|Manual|Finish"` can be set to control evaluation.
 - `time: Number`
 - `soundTime: Number`
 - `timeDelta: Number`
-- `date: [year, month, day, time]` - The current date.
+- `date: [year, month, day, time]` - An array containing the current date.
 - `keyboard: Keyboard`
 - `mouse: Mouse`
 - `session: Item`
@@ -38,28 +20,8 @@ Objects can be inspected with `console.log(object)`.
 - `palette: Object`
 - `mediaEncoderFormats: EncoderFormats`
 - `loadSession(fileName)`
-- `clearSession()`
-- `getItem(ItemIdent): Item`
-- `findItem(ItemIdent, origin: ItemIdent?, subItems: Boolean?): Item?`
-- `findItems(ItemIdent, origin: ItemIdent?, subItems: Boolean?): [Item]`
-- `trackItems(ItemIdent, origin: ItemIdent?, subItems: Boolean?, Callback)`
-- `getParentItem(ItemIdent): Item?`
-- `insertItem(parent: ItemIdent?, Object): Item`
-- `insertAfterItem(sibling: ItemIdent, Object): Item`
-- `insertBeforeItem(sibling: ItemIdent, Object): Item`
-- `getItemProperties(QJSValue itemIdent): [ItemProperty]`
-- `deleteItem(ItemIdent)`
-- `clearItems(ItemIdent)`
-- `replaceItems(parent: ItemIdent, [Object])`
-- `openEditor(fileName | ItemIdent): Editor?`
-- `setBlockData(ItemIdent, [Number])`
-- `setBufferData(ItemIdent, [Number])`
-- `setScriptSource(ItemIdent, String)`
-- `setShaderSource(ItemIdent, String)`
-- `setTextureData(ItemIdent, [Number])`
-- `processShader(fileName | ItemIdent, processType): String | Data`
-- `getBufferHandle(ItemIdent): Number`
-- `getTextureHandle(ItemIdent): Number`
+- `openEditor(fileName): Editor?`
+- `processShader(fileName, processType): String | Data`
 - `isUntitled(fileName): Boolean`
 - `getFileTitle(fileName): String`
 - `callAction(id, arguments...): Result`
@@ -77,6 +39,36 @@ Objects can be inspected with `console.log(object)`.
 - `writeBinaryFile(fileName, Data): Boolean`
 - `appendBinaryFile(fileName, Data): Boolean`
 
+## Item
+
+`Item` is a session item exposed as mutable JavaScript object. The properties match the serialized session properties documented in the [session item reference](session-reference.md).
+
+- `properties(): [Object]` - Returns the `name` and `type` of each property.
+- `parent(): Item?`
+- `findItem(ItemIdent, subItems: Boolean = true): Item?`
+- `findItems(ItemIdent, subItems: Boolean = true): [Item]`
+- `getItem(ItemIdent): Item` - Like findItem but requires the item to exist.
+- `trackItems(ItemIdent, subItems: Boolean?, Function): TrackingIndex` - Registers a function taking an Item, which should be called whenever the tracked items are modified.
+- `untrackItems(TrackingIndex)` - Takes a tracking index and stopps tracking.
+- `insert(Object): Item` - Inserts a child item.
+- `insertBefore(Object): Item` - Inserts a sibling before the item.
+- `insertAfter(Object): Item` - Inserts a sibling after the item.
+- `replaceItems([Object])`
+- `clear()` - Clears the item's children.
+- `remove()`
+- `openEditor(): Editor?` 
+- `setData([Number])` - Available on Buffer, Block, and Texture items.
+- `setSource(String)` - Available on Script and Shader items.
+- `processShader(processType): String | Data`
+- `getDeviceHandle(): Number` - Available on Buffer and Texture items.
+
+`ItemIdent` parameters accept:
+  - A `/`-separated item path relative to the origin, for example
+    `"Program/cube.vs"`.
+  - A numeric item ID.
+  - An Item object.
+  - A predicate function taking an Item.
+    
 ## Editor
 
 - `type: String`

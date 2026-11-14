@@ -432,7 +432,7 @@ void PropertiesEditor::updateTypeLabel(Item::Type itemType,
     mTypeLabel->setText((componentInterface == Item::Interface::Internal ? "%1"
             : componentInterface == Item::Interface::Input ? tr("Input %1")
                                                            : tr("Output %1"))
-            .arg(splitPascalCase(mModel.getTypeName(itemType))));
+            .arg(splitPascalCase(getItemTypeName(itemType))));
 }
 
 void PropertiesEditor::updateSessionInterfaceControl(const QModelIndex &index,
