@@ -25,7 +25,7 @@ Objects can be inspected with `console.log(object)`.
 - `isUntitled(fileName): Boolean`
 - `getFileTitle(fileName): String`
 - `callAction(id, arguments...): Result`
-- `evaluateScript(fileName): Result`
+- `evaluateScript(fileName)`
 - `makeDirectory(fileName): Boolean`
 - `enumerateFiles(pattern): [fileName]`
 - `enumerateDirs(pattern): [dirName]`
@@ -48,7 +48,7 @@ Objects can be inspected with `console.log(object)`.
 - `findItem(ItemIdent, subItems: Boolean = true): Item?`
 - `findItems(ItemIdent, subItems: Boolean = true): [Item]`
 - `getItem(ItemIdent): Item` - Like findItem but requires the item to exist.
-- `trackItems(ItemIdent, subItems: Boolean?, Function): TrackingIndex` - Registers a function taking an Item, which should be called whenever the tracked items are modified.
+- `trackItems(ItemIdent, subItems: Boolean?, Function): TrackingIndex` - Registers a function taking an Item and an action `"added|modified|removed"`, which should be called whenever the tracked items are modified.
 - `untrackItems(TrackingIndex)` - Takes a tracking index and stopps tracking.
 - `insert(Object): Item` - Inserts a child item.
 - `insertBefore(Object): Item` - Inserts a sibling before the item.

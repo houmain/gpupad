@@ -313,7 +313,7 @@ struct Instance : Item
     QString visibilityMask{ "255" };
     QString hitGroupRecordOffset{ "0" };
     bool triangleCulling{ };
-    FrontFace frontFace{ FrontFace::CW };
+    FrontFace frontFace{ FrontFace::CCW };
     OpacityMode opacityMode{ OpacityMode::GeometryDefault };
 };
 
