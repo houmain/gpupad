@@ -50,6 +50,9 @@ namespace {
                             & SPV_REFLECT_DECORATION_NON_WRITABLE
                         ? D3D_SIT_BYTEADDRESS
                         : D3D_SIT_UAV_RWBYTEADDRESS);
+            // descriptor arrays can omit the SPIR-V user type
+            if (typeName.startsWith("type.StructuredBuffer."))
+                return D3D_SIT_STRUCTURED;
             return (binding.decoration_flags
                         & SPV_REFLECT_DECORATION_NON_WRITABLE
                     ? D3D_SIT_STRUCTURED

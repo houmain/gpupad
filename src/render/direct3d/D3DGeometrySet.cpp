@@ -39,7 +39,7 @@ void D3DGeometrySet::setVertexBuffer(int geometryIndex, D3DBuffer *buffer,
     auto &geometry = getGeometry(geometryIndex);
     geometry.vertexStride = getBlockStride(block);
     if (geometry.type == Geometry::GeometryType::AxisAlignedBoundingBoxes) {
-        const auto expectedStride = sizeof(VkAabbPositionsKHR);
+        const auto expectedStride = sizeof(D3D12_RAYTRACING_AABB);
         if (geometry.vertexStride != expectedStride) {
             mMessages.insert(geometry.itemId,
                 MessageType::InvalidGeometryStride,
