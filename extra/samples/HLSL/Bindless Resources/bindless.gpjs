@@ -1,0 +1,268 @@
+{
+  "type": "Session",
+  "id": 1,
+  "name": "Bindless Resources",
+  "renderer": "Direct3D",
+  "shaderLanguage": "HLSL",
+  "shaderCompiler": "DXC",
+  "shaderCompilerSettings": {
+    "shaderModel": "6.5"
+  },
+  "items": [
+    {
+      "type": "Buffer",
+      "id": 2,
+      "name": "Value0",
+      "items": [
+        {
+          "type": "Block",
+          "id": 3,
+          "name": "Value",
+          "offset": "0",
+          "rowCount": "1",
+          "items": [
+            {
+              "type": "Field",
+              "id": 4,
+              "name": "value",
+              "dataType": "Uint32",
+              "count": 1,
+              "padding": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Buffer",
+      "id": 5,
+      "name": "Value1",
+      "items": [
+        {
+          "type": "Block",
+          "id": 6,
+          "name": "Value",
+          "offset": "0",
+          "rowCount": "1",
+          "items": [
+            {
+              "type": "Field",
+              "id": 7,
+              "name": "value",
+              "dataType": "Uint32",
+              "count": 1,
+              "padding": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Buffer",
+      "id": 8,
+      "name": "Value2",
+      "items": [
+        {
+          "type": "Block",
+          "id": 9,
+          "name": "Value",
+          "offset": "0",
+          "rowCount": "1",
+          "items": [
+            {
+              "type": "Field",
+              "id": 10,
+              "name": "value",
+              "dataType": "Uint32",
+              "count": 1,
+              "padding": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Buffer",
+      "id": 11,
+      "name": "Selection",
+      "items": [
+        {
+          "type": "Block",
+          "id": 12,
+          "name": "Indices",
+          "offset": "0",
+          "rowCount": "3",
+          "items": [
+            {
+              "type": "Field",
+              "id": 13,
+              "name": "index",
+              "dataType": "Uint32",
+              "count": 1,
+              "padding": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Buffer",
+      "id": 14,
+      "name": "Results",
+      "items": [
+        {
+          "type": "Block",
+          "id": 15,
+          "name": "Values",
+          "offset": "0",
+          "rowCount": "6",
+          "items": [
+            {
+              "type": "Field",
+              "id": 16,
+              "name": "value",
+              "dataType": "Uint32",
+              "count": 1,
+              "padding": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Buffer",
+      "id": 17,
+      "name": "Value3",
+      "items": [
+        {
+          "type": "Block",
+          "id": 18,
+          "name": "Value",
+          "offset": "0",
+          "rowCount": "1",
+          "items": [
+            {
+              "type": "Field",
+              "id": 19,
+              "name": "value",
+              "dataType": "Uint32",
+              "count": 1,
+              "padding": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Script",
+      "id": 20,
+      "name": "Generate Inputs",
+      "fileName": "generateInputs.js",
+      "executeOn": "ResetEvaluation"
+    },
+    {
+      "type": "Binding",
+      "id": 21,
+      "name": "Values[0]",
+      "bindingType": "Buffer",
+      "bufferId": 2
+    },
+    {
+      "type": "Binding",
+      "id": 22,
+      "name": "Values[1]",
+      "bindingType": "Buffer",
+      "bufferId": 5
+    },
+    {
+      "type": "Binding",
+      "id": 23,
+      "name": "Values[2]",
+      "bindingType": "Buffer",
+      "bufferId": 8
+    },
+    {
+      "type": "Binding",
+      "id": 24,
+      "name": "Selection",
+      "bindingType": "Buffer",
+      "bufferId": 11
+    },
+    {
+      "type": "Binding",
+      "id": 25,
+      "name": "Results",
+      "bindingType": "Buffer",
+      "bufferId": 14
+    },
+    {
+      "type": "Program",
+      "id": 26,
+      "name": "Compute Program",
+      "items": [
+        {
+          "type": "Shader",
+          "id": 27,
+          "name": "Compute",
+          "fileName": "compute.hlsl",
+          "shaderType": "Compute",
+          "entryPoint": "main"
+        }
+      ]
+    },
+    {
+      "type": "Program",
+      "id": 28,
+      "name": "Ray Program",
+      "items": [
+        {
+          "type": "Shader",
+          "id": 29,
+          "name": "Ray Generation",
+          "fileName": "raygen.hlsl",
+          "shaderType": "RayGeneration",
+          "entryPoint": "main"
+        }
+      ]
+    },
+    {
+      "type": "ShaderTable",
+      "id": 30,
+      "name": "Shader Table",
+      "programId": 28,
+      "items": [
+        {
+          "type": "Record",
+          "id": 31,
+          "name": "Ray Generation",
+          "recordType": "RayGeneration",
+          "shaderId": 29
+        }
+      ]
+    },
+    {
+      "type": "Call",
+      "id": 32,
+      "name": "Compute Lookup",
+      "checked": true,
+      "callType": "Compute",
+      "programId": 26,
+      "workGroupsX": "1",
+      "workGroupsY": "1",
+      "workGroupsZ": "1",
+      "executeOn": "EveryEvaluation"
+    },
+    {
+      "type": "Call",
+      "id": 33,
+      "name": "Ray Lookup",
+      "checked": true,
+      "callType": "TraceRays",
+      "shaderTableId": 30,
+      "workGroupsX": "3",
+      "workGroupsY": "1",
+      "workGroupsZ": "1",
+      "executeOn": "EveryEvaluation"
+    }
+  ]
+}

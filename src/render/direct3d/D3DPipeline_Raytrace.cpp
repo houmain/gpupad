@@ -514,10 +514,13 @@ bool D3DPipeline::createRootSignatureRayTracing(D3DContext &context)
                 continue;
             }
 
-            // TODO: fix non uniform indexing
-            if (!bindDesc.BindCount) {
-                mMessages.insert(mItemId, MessageType::NotImplemented,
-                    "Non-Uniform Indexing");
+            if (!bindDesc.BindCount)
+                return false;
+            if (bindDesc.BindCount
+                > D3D12_MAX_SHADER_VISIBLE_DESCRIPTOR_HEAP_SIZE_TIER_1
+                    - descriptorHeapOffset) {
+                mMessages.insert(mItemId, MessageType::FeatureNotSupported,
+                    "Descriptor heap capacity");
                 return false;
             }
 

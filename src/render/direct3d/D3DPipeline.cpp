@@ -168,12 +168,52 @@ D3D12_SHADER_INPUT_BIND_DESC D3DPipeline::getD3DBindingDesc(
         .Name = binding.name,
         .Type = getD3DShaderInputType(binding),
         .BindPoint = binding.binding,
-        .BindCount = std::max(binding.count, 1u),
+        .BindCount = binding.count,
         .Space = binding.set,
     };
     if (desc.Type == D3D_SIT_STRUCTURED
         || desc.Type == D3D_SIT_UAV_RWSTRUCTURED)
         desc.NumSamples = getStructuredBufferStride(binding);
+
+    if (!desc.BindCount || desc.BindCount == UINT_MAX) {
+        desc.BindCount = 0;
+        if (desc.Type != D3D_SIT_STRUCTURED || binding.array.dims_count != 1) {
+            mMessages.insert(mItemId, MessageType::NotImplemented,
+                "Unbounded resource array");
+            return desc;
+        }
+
+        const auto name = QString::fromUtf8(binding.name);
+        const auto prefix = name + '[';
+        for (auto it = mBindings.buffers.lower_bound(prefix);
+            it != mBindings.buffers.end() && it->first.startsWith(prefix);
+            ++it) {
+            const auto suffix = it->first.mid(prefix.size());
+            if (!suffix.endsWith(']'))
+                continue;
+            const auto text = suffix.chopped(1);
+            auto ok = false;
+            const auto index = text.toUInt(&ok);
+            if (!ok || QString::number(index) != text)
+                continue;
+            if (index >= D3D12_MAX_SHADER_VISIBLE_DESCRIPTOR_HEAP_SIZE_TIER_1) {
+                mMessages.insert(mItemId, MessageType::FeatureNotSupported,
+                    "Descriptor heap capacity");
+                desc.BindCount = 0;
+                return desc;
+            }
+            desc.BindCount = std::max(desc.BindCount, index + 1);
+        }
+        for (auto i = 0u; i < std::max(desc.BindCount, 1u); ++i) {
+            const auto elementName = QStringLiteral("%1[%2]").arg(name).arg(i);
+            if (!find(mBindings.buffers, elementName)) {
+                mMessages.insert(mItemId, MessageType::BufferNotSet,
+                    elementName);
+                desc.BindCount = 0;
+                return desc;
+            }
+        }
+    }
     return desc;
 }
 
@@ -458,10 +498,13 @@ bool D3DPipeline::createRootSignature(D3DContext &context)
                 continue;
             }
 
-            // TODO: fix non uniform indexing
-            if (!bindDesc.BindCount) {
-                mMessages.insert(mItemId, MessageType::NotImplemented,
-                    "Non-Uniform Indexing");
+            if (!bindDesc.BindCount)
+                return false;
+            if (bindDesc.BindCount
+                > D3D12_MAX_SHADER_VISIBLE_DESCRIPTOR_HEAP_SIZE_TIER_1
+                    - descriptorHeapOffset) {
+                mMessages.insert(mItemId, MessageType::FeatureNotSupported,
+                    "Descriptor heap capacity");
                 return false;
             }
 
@@ -577,6 +620,11 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
         for (const auto &binding : shader.reflection().descriptorBindings()) {
             const auto bindDesc = getD3DBindingDesc(binding);
 
+            if (!bindDesc.BindCount) {
+                canRender = false;
+                continue;
+            }
+
             if (mShaderTable && bindDesc.Type == D3D_SIT_CBUFFER
                 && mLocalConstantRegisters.contains(
                     { bindDesc.Space, bindDesc.BindPoint }))
@@ -649,27 +697,6 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
             case D3D_SIT_BYTEADDRESS:
             case D3D_SIT_UAV_RWSTRUCTURED:
             case D3D_SIT_UAV_RWBYTEADDRESS: {
-                auto buffer = std::add_pointer_t<D3DBuffer>{ };
-                auto bufferOffset = uint32_t{ };
-                auto bufferSize = uint32_t{ };
-                if (bindingName == PrintfBase::bufferBindingName()) {
-                    buffer = &mProgram.printf().getInitializedBuffer(context);
-                } else if (
-                    auto bufferBinding = find(mBindings.buffers, bindingName)) {
-                    buffer = static_cast<D3DBuffer *>(bufferBinding->buffer);
-                    std::tie(bufferOffset, bufferSize) =
-                        getBufferBindingOffsetSize(*bufferBinding,
-                            scriptEngine);
-                    mUsedItems += bufferBinding->bindingItemId;
-                    mUsedItems += bufferBinding->blockItemId;
-                }
-                if (!buffer) {
-                    mMessages.insert(mItemId, MessageType::BufferNotSet,
-                        bindingName);
-                    canRender = false;
-                    continue;
-                }
-
                 const auto structureByteStride =
                     (bindDesc.Type == D3D_SIT_STRUCTURED
                                 || bindDesc.Type == D3D_SIT_UAV_RWSTRUCTURED
@@ -677,20 +704,39 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
                             : 0);
                 const auto isUav = (bindDesc.Type == D3D_SIT_UAV_RWBYTEADDRESS
                     || bindDesc.Type == D3D_SIT_UAV_RWSTRUCTURED);
-                if (isUav)
-                    addWritableBuffer(buffer);
-
-                if (buffer->size() < structureByteStride) {
-                    // buffer smaller than structure size
-                    // TODO: warn when buffer block stride is smaller
-                    mMessages.insert(mItemId, MessageType::BufferNotSet,
-                        bindingName);
-                    canRender = false;
-                    continue;
-                }
-
-                // TODO:
                 for (auto i = 0u; i < bindDesc.BindCount; ++i) {
+                    const auto elementName = (bindDesc.Type
+                                    == D3D_SIT_STRUCTURED
+                                && (binding.count != 1
+                                    || binding.array.dims_count)
+                            ? QStringLiteral("%1[%2]").arg(bindingName).arg(i)
+                            : bindingName);
+                    auto buffer = std::add_pointer_t<D3DBuffer>{ };
+                    auto bufferOffset = uint32_t{ };
+                    auto bufferSize = uint32_t{ };
+                    if (elementName == PrintfBase::bufferBindingName()) {
+                        buffer =
+                            &mProgram.printf().getInitializedBuffer(context);
+                    } else if (auto bufferBinding =
+                                   find(mBindings.buffers, elementName)) {
+                        buffer =
+                            static_cast<D3DBuffer *>(bufferBinding->buffer);
+                        std::tie(bufferOffset, bufferSize) =
+                            getBufferBindingOffsetSize(*bufferBinding,
+                                scriptEngine);
+                        mUsedItems += bufferBinding->bindingItemId;
+                        mUsedItems += bufferBinding->blockItemId;
+                    }
+                    if (!buffer || buffer->size() < structureByteStride) {
+                        mMessages.insert(mItemId, MessageType::BufferNotSet,
+                            elementName);
+                        canRender = false;
+                        descriptor.Offset(1, context.descriptorSize);
+                        continue;
+                    }
+                    if (isUav)
+                        addWritableBuffer(buffer);
+
                     if (isUav) {
                         const auto isReadonly =
                             (bindDesc.Type == D3D_SIT_STRUCTURED);
