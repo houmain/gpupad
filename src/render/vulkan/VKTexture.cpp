@@ -104,6 +104,9 @@ KDGpu::TextureView &VKTexture::getView(int level, int layer,
         .layer = layer,
         .format = format,
     }];
+    if (!mTexture.isValid())
+        return view;
+
     if (!view.isValid()) {
         auto options = KDGpu::TextureViewOptions{
             .viewType = getKDViewType(mKind),

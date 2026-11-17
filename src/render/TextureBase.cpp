@@ -14,6 +14,11 @@ Texture::Format toPowerOfTwoByteFormat(Texture::Format format)
     case Texture::Format::RGB8U:      return Texture::Format::RGBA8U;
     case Texture::Format::RGB8I:      return Texture::Format::RGBA8I;
     case Texture::Format::SRGB8:      return Texture::Format::SRGB8_Alpha8;
+    case Texture::Format::RGB16_UNorm: return Texture::Format::RGBA16_UNorm;
+    case Texture::Format::RGB16_SNorm: return Texture::Format::RGBA16_SNorm;
+    case Texture::Format::RGB16U:      return Texture::Format::RGBA16U;
+    case Texture::Format::RGB16I:      return Texture::Format::RGBA16I;
+    case Texture::Format::RGB16F:      return Texture::Format::RGBA16F;
     default:                          return format;
     }
 }
