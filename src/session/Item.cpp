@@ -137,6 +137,9 @@ CallKind getKind(const Call &call)
         break;
     case Call::CallType::ComputeSound: kind.compute = kind.sound = true; break;
     case Call::CallType::TraceRays:    kind.trace = true; break;
+    case Call::CallType::TraceRaysIndirect:
+        kind.trace = kind.indirect = true;
+        break;
     default:                           break;
     }
 
@@ -178,7 +181,9 @@ bool callTypeSupportsShaderType(Call::CallType callType,
     case Call::CallType::ComputeSound:
         return (shaderType == Shader::ShaderType::Compute);
 
-    case Call::CallType::TraceRays: return isRayTracingShaderType(shaderType);
+    case Call::CallType::TraceRays:
+    case Call::CallType::TraceRaysIndirect:
+        return isRayTracingShaderType(shaderType);
     default:                        return false;
     }
 }

@@ -6,6 +6,8 @@
 #include "D3DTarget.h"
 #include "D3DTexture.h"
 #include <QScopeGuard>
+#include <cstddef>
+#include <cstring>
 #include <cmath>
 
 D3DCall::D3DCall(const Call &call, const Session &session)
@@ -70,7 +72,9 @@ void D3DCall::setIndirectBuffer(D3DBuffer *commands, const Block &block)
         mUsedItems += field->id;
 
     mIndirectStride = getBlockStride(block);
-    const auto expectedStride = getIndirectCommandSize(mCall.callType);
+    const auto expectedStride = (mCall.callType == Call::CallType::TraceRaysIndirect
+            ? static_cast<int>(3 * sizeof(uint32_t))
+            : getIndirectCommandSize(mCall.callType));
     if (mIndirectStride != expectedStride) {
         mMessages.insert(block.id, MessageType::InvalidIndirectStride,
             QStringLiteral("%1/%2 bytes")
@@ -170,6 +174,7 @@ void D3DCall::execute(D3DContext &context, Bindings &&bindings,
         executeCompute(context, messages, scriptEngine);
         break;
     case Call::CallType::TraceRays:
+    case Call::CallType::TraceRaysIndirect:
         executeTraceRays(context, messages, scriptEngine);
         break;
     case Call::CallType::ClearTexture:
@@ -409,11 +414,89 @@ void D3DCall::executeTraceRays(D3DContext &context, MessageList &messages,
         || !mPipeline->bindRayTracing(context, scriptEngine))
         return;
 
-    mPipeline->dispatchRays(context,
-        scriptEngine.evaluateUInt(mCall.workGroupsX, mCall.id),
-        scriptEngine.evaluateUInt(mCall.workGroupsY, mCall.id),
-        scriptEngine.evaluateUInt(mCall.workGroupsZ, mCall.id));
+    if (mKind.indirect) {
+        executeTraceRaysIndirect(context, scriptEngine);
+    } else {
+        mPipeline->dispatchRays(context,
+            scriptEngine.evaluateUInt(mCall.workGroupsX, mCall.id),
+            scriptEngine.evaluateUInt(mCall.workGroupsY, mCall.id),
+            scriptEngine.evaluateUInt(mCall.workGroupsZ, mCall.id));
+    }
     mPipeline->markBufferWrites();
+}
+
+void D3DCall::executeTraceRaysIndirect(D3DContext &context,
+    ScriptEngine &scriptEngine)
+{
+    const auto offset = scriptEngine.evaluateUInt(mIndirectOffset, mCall.id);
+    const auto dimensionSize = 3 * sizeof(UINT);
+    const auto bufferSize = static_cast<UINT>(mIndirectBuffer->size());
+    if (offset > bufferSize || dimensionSize > bufferSize - offset) {
+        mMessages.insert(mCall.id, MessageType::CallFailed,
+            "Indirect dimensions exceed buffer size");
+        return;
+    }
+
+    if (!mIndirectCommandSignature) {
+        auto options = D3D12_FEATURE_DATA_D3D12_OPTIONS5{};
+        if (FAILED(context.device.CheckFeatureSupport(
+                D3D12_FEATURE_D3D12_OPTIONS5, &options, sizeof(options)))
+            || options.RaytracingTier < D3D12_RAYTRACING_TIER_1_1) {
+            mMessages.insert(mCall.id, MessageType::NotImplemented,
+                "Indirect ray dispatch requires DXR Tier 1.1");
+            return;
+        }
+
+        const auto argument = D3D12_INDIRECT_ARGUMENT_DESC{
+            .Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_RAYS,
+        };
+        const auto signature = D3D12_COMMAND_SIGNATURE_DESC{
+            .ByteStride = sizeof(D3D12_DISPATCH_RAYS_DESC),
+            .NumArgumentDescs = 1,
+            .pArgumentDescs = &argument,
+        };
+        if (FAILED(context.device.CreateCommandSignature(&signature, nullptr,
+                IID_PPV_ARGS(&mIndirectCommandSignature)))) {
+            mMessages.insert(mCall.id, MessageType::CallFailed);
+            return;
+        }
+    }
+
+    const auto desc = mPipeline->getDispatchRaysDesc(0, 0, 0);
+    if (!mIndirectRayArguments) {
+        mIndirectRayArguments = createBuffer(context.device, sizeof(desc),
+            D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+    }
+    auto upload = createBuffer(context.device, sizeof(desc),
+        D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+    auto mappedData = std::add_pointer_t<void>{};
+    if (!mIndirectRayArguments || !upload
+        || FAILED(upload->Map(0, nullptr, &mappedData))) {
+        mMessages.insert(mCall.id, MessageType::CallFailed);
+        return;
+    }
+    std::memcpy(mappedData, &desc, sizeof(desc));
+    upload->Unmap(0, nullptr);
+
+    mIndirectBuffer->prepareCopySource(context);
+    auto transition = CD3DX12_RESOURCE_BARRIER::Transition(
+        mIndirectRayArguments.Get(), D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT,
+        D3D12_RESOURCE_STATE_COPY_DEST);
+    context.graphicsCommandList->ResourceBarrier(1, &transition);
+    context.graphicsCommandList->CopyBufferRegion(mIndirectRayArguments.Get(),
+        0, upload.Get(), 0, sizeof(desc));
+    // keep the host-owned shader table fields and copy only GPU dimensions
+    context.graphicsCommandList->CopyBufferRegion(mIndirectRayArguments.Get(),
+        offsetof(D3D12_DISPATCH_RAYS_DESC, Width), mIndirectBuffer->resource(),
+        offset, dimensionSize);
+    transition = CD3DX12_RESOURCE_BARRIER::Transition(
+        mIndirectRayArguments.Get(), D3D12_RESOURCE_STATE_COPY_DEST,
+        D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+    context.graphicsCommandList->ResourceBarrier(1, &transition);
+    context.graphicsCommandList->ExecuteIndirect(
+        mIndirectCommandSignature.Get(), 1, mIndirectRayArguments.Get(), 0,
+        nullptr, 0);
+    context.stagingBuffers.push_back(std::move(upload));
 }
 
 void D3DCall::executeClearTexture(D3DContext &context, MessageList &messages)

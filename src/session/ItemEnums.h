@@ -479,7 +479,7 @@ namespace ItemEnums2 {
         CopyBuffer,
         SwapBuffers,
         ComputeSound,
-
+        TraceRaysIndirect,
     };
     Q_ENUM_NS(CallType)
 

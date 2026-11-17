@@ -245,6 +245,7 @@ void GLCall::execute(GLContext &gl, MessageList &messages,
         executeCompute(gl, messages, scriptEngine);
         break;
     case Call::CallType::TraceRays:
+    case Call::CallType::TraceRaysIndirect:
         messages.insert(mCall.id, MessageType::RayTracingNotAvailable);
         break;
     case Call::CallType::ClearTexture: executeClearTexture(gl, messages); break;

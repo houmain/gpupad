@@ -365,7 +365,7 @@ void RenderSessionBase::configure()
     auto recordBindings = QVector<const Binding *>();
     auto activeShaderTables = QSet<ItemId>();
     mSessionModelCopy.forEachItem<Call>([&](const Call &call) {
-        if (call.checked && call.callType == Call::CallType::TraceRays
+        if (call.checked && getKind(call).trace
             && shouldExecute(call.executeOn, mEvaluationType))
             activeShaderTables.insert(call.shaderTableId);
     });
