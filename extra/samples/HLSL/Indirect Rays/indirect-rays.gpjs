@@ -1,0 +1,233 @@
+{
+  "type": "Session",
+  "id": 1,
+  "name": "Indirect Rays",
+  "renderer": "Direct3D",
+  "shaderLanguage": "HLSL",
+  "shaderCompiler": "DXC",
+  "shaderCompilerSettings": {
+    "shaderModel": "6.5"
+  },
+  "items": [
+    {
+      "type": "Buffer",
+      "id": 2,
+      "name": "Arguments",
+      "items": [
+        {
+          "type": "Block",
+          "id": 27,
+          "name": "Storage",
+          "offset": "0",
+          "rowCount": "9",
+          "items": [
+            {
+              "type": "Field",
+              "id": 28,
+              "name": "value",
+              "dataType": "Uint32",
+              "count": 1,
+              "padding": 0
+            }
+          ]
+        },
+        {
+          "type": "Block",
+          "id": 3,
+          "name": "Dimensions",
+          "offset": "24",
+          "rowCount": "1",
+          "items": [
+            {
+              "type": "Field",
+              "id": 4,
+              "name": "dimensions",
+              "dataType": "Uint32",
+              "count": 3,
+              "padding": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Buffer",
+      "id": 5,
+      "name": "Ray Results",
+      "items": [
+        {
+          "type": "Block",
+          "id": 6,
+          "name": "Results",
+          "offset": "0",
+          "rowCount": "8",
+          "items": [
+            {
+              "type": "Field",
+              "id": 7,
+              "name": "value",
+              "dataType": "Uint32",
+              "count": 1,
+              "padding": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Buffer",
+      "id": 8,
+      "name": "Compute Results",
+      "items": [
+        {
+          "type": "Block",
+          "id": 9,
+          "name": "Results",
+          "offset": "0",
+          "rowCount": "8",
+          "items": [
+            {
+              "type": "Field",
+              "id": 10,
+              "name": "value",
+              "dataType": "Uint32",
+              "count": 1,
+              "padding": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Script",
+      "id": 11,
+      "name": "Generate Inputs",
+      "fileName": "generateInputs.js",
+      "executeOn": "ResetEvaluation"
+    },
+    {
+      "type": "Binding",
+      "id": 12,
+      "name": "Settings.width",
+      "bindingType": "Uniform",
+      "editor": "Expression",
+      "values": ["4"]
+    },
+    {
+      "type": "Binding",
+      "id": 13,
+      "name": "Dimensions",
+      "bindingType": "Buffer",
+      "bufferId": 2
+    },
+    {
+      "type": "Binding",
+      "id": 14,
+      "name": "RayResults",
+      "bindingType": "Buffer",
+      "bufferId": 5
+    },
+    {
+      "type": "Binding",
+      "id": 15,
+      "name": "ComputeResults",
+      "bindingType": "Buffer",
+      "bufferId": 8
+    },
+    {
+      "type": "Program",
+      "id": 16,
+      "name": "Produce Dimensions",
+      "items": [
+        {
+          "type": "Shader",
+          "id": 17,
+          "name": "Produce",
+          "fileName": "produce.hlsl",
+          "shaderType": "Compute",
+          "entryPoint": "main"
+        }
+      ]
+    },
+    {
+      "type": "Program",
+      "id": 18,
+      "name": "Compute Control",
+      "items": [
+        {
+          "type": "Shader",
+          "id": 19,
+          "name": "Control",
+          "fileName": "control.hlsl",
+          "shaderType": "Compute",
+          "entryPoint": "main"
+        }
+      ]
+    },
+    {
+      "type": "Program",
+      "id": 20,
+      "name": "Ray Program",
+      "items": [
+        {
+          "type": "Shader",
+          "id": 21,
+          "name": "Ray Generation",
+          "fileName": "raygen.hlsl",
+          "shaderType": "RayGeneration",
+          "entryPoint": "main"
+        }
+      ]
+    },
+    {
+      "type": "ShaderTable",
+      "id": 22,
+      "name": "Shader Table",
+      "programId": 20,
+      "items": [
+        {
+          "type": "Record",
+          "id": 23,
+          "name": "Ray Generation",
+          "recordType": "RayGeneration",
+          "shaderId": 21
+        }
+      ]
+    },
+    {
+      "type": "Call",
+      "id": 24,
+      "name": "Produce Dimensions",
+      "checked": true,
+      "callType": "Compute",
+      "programId": 16,
+      "workGroupsX": "1",
+      "workGroupsY": "1",
+      "workGroupsZ": "1",
+      "executeOn": "EveryEvaluation"
+    },
+    {
+      "type": "Call",
+      "id": 25,
+      "name": "Compute Control",
+      "checked": true,
+      "callType": "ComputeIndirect",
+      "programId": 18,
+      "indirectBufferBlockId": 3,
+      "executeOn": "EveryEvaluation"
+    },
+    {
+      "type": "Call",
+      "id": 26,
+      "name": "Indirect Rays",
+      "checked": true,
+      "callType": "TraceRaysIndirect",
+      "shaderTableId": 22,
+      "indirectBufferBlockId": 3,
+      "workGroupsX": "4",
+      "workGroupsY": "1",
+      "workGroupsZ": "1",
+      "executeOn": "EveryEvaluation"
+    }
+  ]
+}
