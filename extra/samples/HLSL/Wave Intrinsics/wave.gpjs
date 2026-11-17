@@ -1,0 +1,134 @@
+{
+  "type": "Session",
+  "id": 1,
+  "name": "Wave Intrinsics",
+  "renderer": "Direct3D",
+  "shaderLanguage": "HLSL",
+  "shaderCompiler": "DXC",
+  "shaderCompilerSettings": {
+    "shaderModel": "6.0"
+  },
+  "items": [
+    {
+      "type": "Buffer",
+      "id": 2,
+      "name": "Inputs",
+      "items": [
+        {
+          "type": "Block",
+          "id": 3,
+          "name": "Values",
+          "offset": "0",
+          "rowCount": "64",
+          "items": [
+            {
+              "type": "Field",
+              "id": 4,
+              "name": "value",
+              "dataType": "Uint32",
+              "count": 1,
+              "padding": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Buffer",
+      "id": 5,
+      "name": "Results",
+      "items": [
+        {
+          "type": "Block",
+          "id": 6,
+          "name": "Summary",
+          "offset": "0",
+          "rowCount": "1",
+          "items": [
+            {
+              "type": "Field",
+              "id": 7,
+              "name": "sum",
+              "dataType": "Uint32",
+              "count": 1,
+              "padding": 0
+            },
+            {
+              "type": "Field",
+              "id": 8,
+              "name": "count",
+              "dataType": "Uint32",
+              "count": 1,
+              "padding": 0
+            }
+          ]
+        },
+        {
+          "type": "Block",
+          "id": 9,
+          "name": "Compacted IDs",
+          "offset": "8",
+          "rowCount": "64",
+          "items": [
+            {
+              "type": "Field",
+              "id": 10,
+              "name": "id",
+              "dataType": "Uint32",
+              "count": 1,
+              "padding": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Script",
+      "id": 11,
+      "name": "Generate Inputs",
+      "fileName": "generateInputs.js",
+      "executeOn": "ResetEvaluation"
+    },
+    {
+      "type": "Binding",
+      "id": 12,
+      "name": "Inputs",
+      "bindingType": "Buffer",
+      "bufferId": 2
+    },
+    {
+      "type": "Binding",
+      "id": 13,
+      "name": "Results",
+      "bindingType": "Buffer",
+      "bufferId": 5
+    },
+    {
+      "type": "Program",
+      "id": 14,
+      "name": "Program",
+      "items": [
+        {
+          "type": "Shader",
+          "id": 15,
+          "name": "Wave Operations",
+          "fileName": "wave.hlsl",
+          "shaderType": "Compute",
+          "entryPoint": "main"
+        }
+      ]
+    },
+    {
+      "type": "Call",
+      "id": 16,
+      "name": "Reduce and Compact",
+      "checked": true,
+      "callType": "Compute",
+      "programId": 14,
+      "workGroupsX": "1",
+      "workGroupsY": "1",
+      "workGroupsZ": "1",
+      "executeOn": "EveryEvaluation"
+    }
+  ]
+}
