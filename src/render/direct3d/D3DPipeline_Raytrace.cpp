@@ -595,7 +595,14 @@ void D3DPipeline::dispatchRays(D3DContext &context, UINT width, UINT height,
         return;
     }
 
-    const auto desc = D3D12_DISPATCH_RAYS_DESC{
+    const auto desc = getDispatchRaysDesc(width, height, depth);
+    commandList->DispatchRays(&desc);
+}
+
+D3D12_DISPATCH_RAYS_DESC D3DPipeline::getDispatchRaysDesc(UINT width,
+    UINT height, UINT depth) const
+{
+    return D3D12_DISPATCH_RAYS_DESC{
         .RayGenerationShaderRecord = mRayGenerationShaderRecord,
         .MissShaderTable = mMissShaderTable,
         .HitGroupTable = mHitGroupTable,
@@ -603,5 +610,4 @@ void D3DPipeline::dispatchRays(D3DContext &context, UINT width, UINT height,
         .Height = height,
         .Depth = depth,
     };
-    commandList->DispatchRays(&desc);
 }

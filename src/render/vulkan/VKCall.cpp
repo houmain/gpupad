@@ -191,6 +191,10 @@ void VKCall::execute(VKContext &context, Bindings &&bindings,
     case Call::CallType::TraceRays:
         executeTraceRays(context, messages, scriptEngine);
         break;
+    case Call::CallType::TraceRaysIndirect:
+        messages.insert(mCall.id, MessageType::NotImplemented,
+            "Indirect ray dispatch");
+        break;
     case Call::CallType::ClearTexture:
         executeClearTexture(context, messages);
         break;

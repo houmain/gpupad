@@ -382,6 +382,7 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
                     break;
 
                 case Call::CallType::TraceRays:
+                case Call::CallType::TraceRaysIndirect:
                     if (const auto shaderTable =
                             sessionModel.findItem<ShaderTable>(
                                 call->shaderTableId)) {
@@ -389,6 +390,10 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
                         queueCall.setProgram(
                             addProgramOnce(shaderTable->programId));
                     }
+                    if (auto block = sessionModel.findItem<Block>(
+                            call->indirectBufferBlockId))
+                        queueCall.setIndirectBuffer(
+                            addBufferOnce(block->parent->id), *block);
                     break;
 
                 case Call::CallType::ClearTexture:

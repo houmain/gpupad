@@ -837,6 +837,7 @@ IEditor *PropertiesEditor::openItemEditor(const QModelIndex &index)
             return openItemEditor(
                 mModel.getIndex(mModel.findItem(call->programId)));
         case Call::CallType::TraceRays:
+        case Call::CallType::TraceRaysIndirect:
             return openItemEditor(
                 mModel.getIndex(mModel.findItem(call->shaderTableId)));
         case Call::CallType::ClearTexture:
