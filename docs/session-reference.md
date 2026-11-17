@@ -510,11 +510,3 @@ A Geometry describes one triangle or axis-aligned-bounding-box primitive set in 
 
 - `"AxisAlignedBoundingBoxes"` - Procedural primitives using `vertexBufferBlockId`, `count`, and `offset`.
 - `"Triangles"` - Triangle primitives using `vertexBufferBlockId`, optional `indexBufferBlockId`, optional `transformBufferBlockId`, `count`, and `offset`.
-
-## Known defects
-
-These are implementation defects rather than part of the session format:
-
-- `DrawIndexedIndirect` currently validates its indirect Block against a 16-byte stride instead of the correct 20-byte command layout.
-- The OpenGL implementation of `DrawMeshTasks` currently uses the one-dimensional NV entry point and ignores `workGroupsY` and `workGroupsZ` instead of dispatching the documented three dimensions.
-- `DrawMeshTasksIndirect` currently validates its indirect Block against a 16-byte stride instead of the correct 12-byte command layout, and its OpenGL implementation uses the two-field NV command layout instead of the documented three-dimensional command.

@@ -156,8 +156,7 @@ void GLCall::setIndirectBuffer(GLBuffer *commands, const Block &block)
         mUsedItems += field->id;
 
     mIndirectStride = getBlockStride(block);
-    const auto expectedStride =
-        static_cast<int>((mKind.compute ? 3 : 4) * sizeof(uint32_t));
+    const auto expectedStride = getIndirectCommandSize(mCall.callType);
     if (mIndirectStride != expectedStride) {
         mMessages.insert(block.id, MessageType::InvalidIndirectStride,
             QStringLiteral("%1/%2 bytes")
@@ -357,27 +356,23 @@ void GLCall::executeDraw(GLContext &gl, MessageList &messages,
     } else if (mCall.callType == Call::CallType::DrawMeshTasks) {
         static auto glDrawMeshTasksNV =
             gl.getProcAddress<PFNGLDRAWMESHTASKSNVPROC>("glDrawMeshTasksNV");
-        if (glDrawMeshTasksNV) {
-            glDrawMeshTasksNV(0,
-                scriptEngine.evaluateUInt(mCall.workGroupsX, mCall.id));
+        const auto workGroupsX =
+            scriptEngine.evaluateUInt(mCall.workGroupsX, mCall.id);
+        const auto workGroupsY =
+            scriptEngine.evaluateUInt(mCall.workGroupsY, mCall.id);
+        const auto workGroupsZ =
+            scriptEngine.evaluateUInt(mCall.workGroupsZ, mCall.id);
+        if (!workGroupsX || !workGroupsY || !workGroupsZ) {
+            // A zero-sized dimension dispatches no work.
+        } else if (glDrawMeshTasksNV && workGroupsY == 1 && workGroupsZ == 1) {
+            glDrawMeshTasksNV(0, workGroupsX);
         } else {
             messages.insert(mCall.id, MessageType::UnsupportedShaderType);
         }
     } else if (mCall.callType == Call::CallType::DrawMeshTasksIndirect) {
-        static auto glDrawMeshTasksIndirectNV =
-            gl.getProcAddress<PFNGLDRAWMESHTASKSINDIRECTNVPROC>(
-                "glDrawMeshTasksIndirectNV");
-        static auto glMultiDrawMeshTasksIndirectNV =
-            gl.getProcAddress<PFNGLMULTIDRAWMESHTASKSINDIRECTNVPROC>(
-                "glMultiDrawMeshTasksIndirectNV");
-        const auto offset = static_cast<intptr_t>(indirectOffset);
-        if (drawCount == 1 && glDrawMeshTasksIndirectNV) {
-            glDrawMeshTasksIndirectNV(offset);
-        } else if (drawCount != 1 && glMultiDrawMeshTasksIndirectNV) {
-            glMultiDrawMeshTasksIndirectNV(offset, drawCount, mIndirectStride);
-        } else {
-            messages.insert(mCall.id, MessageType::UnsupportedShaderType);
-        }
+        // NV_mesh_shader uses a two-field, one-dimensional command that cannot
+        // represent GPUpad's three-dimensional mesh-task command.
+        messages.insert(mCall.id, MessageType::UnsupportedShaderType);
     }
 
     unbindVertexStream(gl);

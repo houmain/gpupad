@@ -70,8 +70,7 @@ void D3DCall::setIndirectBuffer(D3DBuffer *commands, const Block &block)
         mUsedItems += field->id;
 
     mIndirectStride = getBlockStride(block);
-    const auto expectedStride =
-        static_cast<int>((mKind.compute ? 3 : 4) * sizeof(uint32_t));
+    const auto expectedStride = getIndirectCommandSize(mCall.callType);
     if (mIndirectStride != expectedStride) {
         mMessages.insert(block.id, MessageType::InvalidIndirectStride,
             QStringLiteral("%1/%2 bytes")
@@ -275,12 +274,15 @@ void D3DCall::executeDraw(D3DContext &context, MessageList &messages,
         context.graphicsCommandList->DrawIndexedInstanced(count, instanceCount,
             first, baseVertex, firstInstance);
     } else if (mCall.callType == Call::CallType::DrawIndirect
-        || mCall.callType == Call::CallType::DrawIndexedIndirect) {
+        || mCall.callType == Call::CallType::DrawIndexedIndirect
+        || mCall.callType == Call::CallType::DrawMeshTasksIndirect) {
         if (!mIndirectCommandSignature) {
             const auto argument = D3D12_INDIRECT_ARGUMENT_DESC{
                 .Type = (mCall.callType == Call::CallType::DrawIndirect
                         ? D3D12_INDIRECT_ARGUMENT_TYPE_DRAW
-                        : D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED),
+                    : mCall.callType == Call::CallType::DrawIndexedIndirect
+                        ? D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED
+                        : D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_MESH),
             };
             const auto signature = D3D12_COMMAND_SIGNATURE_DESC{
                 .ByteStride = static_cast<UINT>(mIndirectStride),

@@ -76,8 +76,7 @@ void VKCall::setIndirectBuffer(VKBuffer *commands, const Block &block)
         mUsedItems += field->id;
 
     mIndirectStride = getBlockStride(block);
-    const auto expectedStride =
-        static_cast<int>((mKind.compute ? 3 : 4) * sizeof(uint32_t));
+    const auto expectedStride = getIndirectCommandSize(mCall.callType);
     if (mIndirectStride != expectedStride) {
         mMessages.insert(block.id, MessageType::InvalidIndirectStride,
             QStringLiteral("%1/%2 bytes")

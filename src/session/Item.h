@@ -359,6 +359,7 @@ int getDataTypeSize(Field::DataType dataType);
 int getFieldSize(const Field &field);
 int getFieldRowOffset(const Field &field);
 int getBlockStride(const Block &block);
+int getIndirectCommandSize(Call::CallType callType);
 TextureKind getKind(Texture::Target target, Texture::Format format);
 TextureKind getKind(const Texture &texture);
 CallKind getKind(const Call &call);

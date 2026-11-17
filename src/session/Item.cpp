@@ -1,6 +1,7 @@
 #include "Item.h"
 #include "ItemEnums.h"
 #include <QMetaEnum>
+#include <cstdint>
 
 QString getItemTypeName(Item::Type type)
 {
@@ -59,6 +60,17 @@ int getBlockStride(const Block &block)
         stride += field.count * getFieldSize(field) + field.padding;
     }
     return stride;
+}
+
+int getIndirectCommandSize(Call::CallType callType)
+{
+    switch (callType) {
+    case Call::CallType::DrawIndirect:          return 4 * sizeof(uint32_t);
+    case Call::CallType::DrawIndexedIndirect:   return 5 * sizeof(uint32_t);
+    case Call::CallType::DrawMeshTasksIndirect: return 3 * sizeof(uint32_t);
+    case Call::CallType::ComputeIndirect:       return 3 * sizeof(uint32_t);
+    default:                                    return 0;
+    }
 }
 
 TextureKind getKind(Texture::Target target, Texture::Format format)
