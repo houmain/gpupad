@@ -381,6 +381,14 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
                             addBufferOnce(block->parent->id), *block);
                     break;
 
+                case Call::CallType::DispatchGraph:
+                    queueCall.setProgram(addProgramOnce(call->programId));
+                    if (auto block = sessionModel.findItem<Block>(
+                            call->inputBufferBlockId))
+                        queueCall.setInputBuffer(
+                            addBufferOnce(block->parent->id), *block);
+                    break;
+
                 case Call::CallType::TraceRays:
                     if (const auto shaderTable =
                             sessionModel.findItem<ShaderTable>(

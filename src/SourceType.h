@@ -35,6 +35,7 @@ enum class SourceType {
     HLSL_RayCallableShader,
     Slang,
     JavaScript,
+    HLSL_NodeShader,
 };
 
 SourceType deduceSourceType(SourceType current, const QString &fileName,

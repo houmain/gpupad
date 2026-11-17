@@ -127,6 +127,7 @@ SourceType getSourceType(Session::ShaderLanguage language,
             SourceType::HLSL_RayClosestHitShader },
         { { SL::HLSL, ST::RayMiss }, SourceType::HLSL_RayMissShader },
         { { SL::HLSL, ST::RayCallable }, SourceType::HLSL_RayCallableShader },
+        { { SL::HLSL, ST::Node }, SourceType::HLSL_NodeShader },
         { { SL::Slang, ST::Includable }, SourceType::Slang },
     };
     return sMapping[{ language, type }];
@@ -174,6 +175,7 @@ Shader::ShaderType getShaderType(SourceType sourceType)
     case SourceType::HLSL_RayMissShader:         return ST::RayMiss;
     case SourceType::GLSL_RayCallableShader:
     case SourceType::HLSL_RayCallableShader:     return ST::RayCallable;
+    case SourceType::HLSL_NodeShader:            return ST::Node;
     }
     return { };
 }
@@ -215,7 +217,7 @@ Session::ShaderLanguage getShaderLanguage(SourceType sourceType)
     case SourceType::HLSL_RayClosestHitShader:
     case SourceType::HLSL_RayMissShader:
     case SourceType::HLSL_RayCallableShader:
-        return Session::ShaderLanguage::HLSL;
+    case SourceType::HLSL_NodeShader:            return Session::ShaderLanguage::HLSL;
 
     case SourceType::Slang: return Session::ShaderLanguage::Slang;
     }

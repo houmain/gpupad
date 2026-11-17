@@ -119,6 +119,17 @@ void D3DBuffer::reload()
     mSystemCopyModified |= !mData.isSharedWith(prevData);
 }
 
+const QByteArray *D3DBuffer::cpuData()
+{
+    reload();
+    if (mDeviceCopyModified && !mSystemCopyModified) {
+        mMessages.insert(mItemId, MessageType::ScriptError,
+            "Work graph input records require CPU data");
+        return nullptr;
+    }
+    return &mData;
+}
+
 void D3DBuffer::createBuffer(D3DContext &context)
 {
     if (mResource)

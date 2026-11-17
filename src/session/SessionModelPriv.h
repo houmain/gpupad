@@ -126,6 +126,7 @@
     ADD(CallInstanceCount, Call, instanceCount)                               \
     ADD(CallBaseInstance, Call, baseInstance)                                 \
     ADD(CallIndirectBufferBlockId, Call, indirectBufferBlockId)               \
+    ADD(CallInputBufferBlockId, Call, inputBufferBlockId)                     \
     ADD(CallDrawCount, Call, drawCount)                                       \
     ADD(CallWorkGroupsX, Call, workGroupsX)                                   \
     ADD(CallWorkGroupsY, Call, workGroupsY)                                   \

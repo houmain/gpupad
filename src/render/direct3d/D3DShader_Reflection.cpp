@@ -1,5 +1,6 @@
 
 #include "D3DShader.h"
+#include <type_traits>
 
 namespace {
     uint32_t getTypeSize(D3D_SHADER_VARIABLE_TYPE type)
@@ -317,8 +318,10 @@ namespace {
     }
 } // namespace
 
-Reflection generateSpirvReflection(Shader::ShaderType shaderType,
-    const Reflection &spirvReflection, ID3D12ShaderReflection *reflection)
+template <typename SourceReflection>
+static std::unique_ptr<Reflection::Builder> generateReflectionBuilder(
+    Shader::ShaderType shaderType, const Reflection &spirvReflection,
+    SourceReflection *reflection)
 {
     using BlockVariable = Reflection::Builder::BlockVariable;
     using InterfaceVariable = Reflection::Builder::InterfaceVariable;
@@ -328,32 +331,41 @@ Reflection generateSpirvReflection(Shader::ShaderType shaderType,
     builder->shaderStage = getShaderStage(shaderType);
 
     auto shaderDesc = D3D12_SHADER_DESC{ };
-    reflection->GetDesc(&shaderDesc);
-
-    const auto createInterfaceVariable =
-        [](const D3D12_SIGNATURE_PARAMETER_DESC &paramDesc) {
-            return InterfaceVariable{
-                .semantic = (paramDesc.SemanticIndex == 0
-                        ? paramDesc.SemanticName
-                        : std::format("{}{}", paramDesc.SemanticName,
-                              paramDesc.SemanticIndex)),
-                .builtIn = getBuiltIn(paramDesc.SystemValueType),
-                .format = getFormat(paramDesc.ComponentType,
-                    std::popcount(paramDesc.Mask)),
-                .location = paramDesc.Register,
-            };
-        };
-
-    for (auto i = 0u; i < shaderDesc.InputParameters; ++i) {
-        auto paramDesc = D3D12_SIGNATURE_PARAMETER_DESC{ };
-        reflection->GetInputParameterDesc(i, &paramDesc);
-        builder->inputs.push_back(createInterfaceVariable(paramDesc));
+    if constexpr (std::is_same_v<SourceReflection, ID3D12ShaderReflection>) {
+        reflection->GetDesc(&shaderDesc);
+    } else {
+        auto functionDesc = D3D12_FUNCTION_DESC{};
+        if (FAILED(reflection->GetDesc(&functionDesc)))
+            return {};
+        shaderDesc.BoundResources = functionDesc.BoundResources;
     }
 
-    for (auto i = 0u; i < shaderDesc.OutputParameters; ++i) {
-        auto paramDesc = D3D12_SIGNATURE_PARAMETER_DESC{ };
-        reflection->GetOutputParameterDesc(i, &paramDesc);
-        builder->outputs.push_back(createInterfaceVariable(paramDesc));
+    if constexpr (std::is_same_v<SourceReflection, ID3D12ShaderReflection>) {
+        const auto createInterfaceVariable =
+            [](const D3D12_SIGNATURE_PARAMETER_DESC &paramDesc) {
+                return InterfaceVariable{
+                    .semantic = (paramDesc.SemanticIndex == 0
+                            ? paramDesc.SemanticName
+                            : std::format("{}{}", paramDesc.SemanticName,
+                                  paramDesc.SemanticIndex)),
+                    .builtIn = getBuiltIn(paramDesc.SystemValueType),
+                    .format = getFormat(paramDesc.ComponentType,
+                        std::popcount(paramDesc.Mask)),
+                    .location = paramDesc.Register,
+                };
+            };
+
+        for (auto i = 0u; i < shaderDesc.InputParameters; ++i) {
+            auto paramDesc = D3D12_SIGNATURE_PARAMETER_DESC{};
+            reflection->GetInputParameterDesc(i, &paramDesc);
+            builder->inputs.push_back(createInterfaceVariable(paramDesc));
+        }
+
+        for (auto i = 0u; i < shaderDesc.OutputParameters; ++i) {
+            auto paramDesc = D3D12_SIGNATURE_PARAMETER_DESC{};
+            reflection->GetOutputParameterDesc(i, &paramDesc);
+            builder->outputs.push_back(createInterfaceVariable(paramDesc));
+        }
     }
 
     for (auto i = 0u; i < shaderDesc.BoundResources; ++i) {
@@ -546,6 +558,76 @@ Reflection generateSpirvReflection(Shader::ShaderType shaderType,
                 .count = bindDesc.BindCount,
             });
             break;
+        }
+    }
+    return builder;
+}
+
+Reflection generateSpirvReflection(Shader::ShaderType shaderType,
+    const Reflection &spirvReflection, ID3D12ShaderReflection *reflection)
+{
+    return Reflection(
+        generateReflectionBuilder(shaderType, spirvReflection, reflection));
+}
+
+Reflection generateNodeReflection(ID3D12LibraryReflection *reflection)
+{
+    if (!reflection)
+        return {};
+    auto libraryDesc = D3D12_LIBRARY_DESC{};
+    if (FAILED(reflection->GetDesc(&libraryDesc)))
+        return {};
+
+    auto builder = std::make_unique<Reflection::Builder>();
+    builder->shaderStage = getShaderStage(Shader::ShaderType::Node);
+    const auto sameBlockLayout = [](const auto &self, const auto &left,
+                                     const auto &right) -> bool {
+        const auto layout = [](const auto &block) {
+            return std::tie(block.name, block.offset, block.size,
+                block.typeName, block.typeFlags, block.decorationFlags,
+                block.numeric.scalar.width, block.numeric.scalar.signedness,
+                block.numeric.vector.component_count,
+                block.numeric.matrix.row_count,
+                block.numeric.matrix.column_count, block.numeric.matrix.stride,
+                block.array.dims_count, block.array.stride);
+        };
+        return layout(left) == layout(right)
+            && std::equal(left.array.dims,
+                left.array.dims + left.array.dims_count, right.array.dims)
+            && left.members.size() == right.members.size()
+            && std::equal(left.members.begin(), left.members.end(),
+                right.members.begin(),
+                [&](const auto &a, const auto &b) { return self(self, a, b); });
+    };
+    for (auto i = 0u; i < libraryDesc.FunctionCount; ++i) {
+        auto function = reflection->GetFunctionByIndex(i);
+        if (!function)
+            return {};
+        auto bindings = generateReflectionBuilder(Shader::ShaderType::Node,
+            Reflection{}, function);
+        if (!bindings)
+            return {};
+        for (auto &binding : bindings->descriptorsBindings) {
+            const auto existing =
+                std::find_if(builder->descriptorsBindings.begin(),
+                    builder->descriptorsBindings.end(), [&](const auto &other) {
+                        return other.descriptorType == binding.descriptorType
+                            && other.set == binding.set
+                            && other.binding == binding.binding
+                            && other.decorationFlags == binding.decorationFlags;
+                    });
+            if (existing != builder->descriptorsBindings.end()) {
+                if (std::tie(existing->name, existing->typeName,
+                        existing->count, existing->block.size,
+                        existing->userType)
+                        != std::tie(binding.name, binding.typeName,
+                            binding.count, binding.block.size, binding.userType)
+                    || !sameBlockLayout(sameBlockLayout, existing->block,
+                        binding.block))
+                    return {};
+            } else {
+                builder->descriptorsBindings.push_back(std::move(binding));
+            }
         }
     }
     return Reflection(std::move(builder));

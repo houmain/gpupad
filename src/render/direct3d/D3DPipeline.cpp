@@ -387,6 +387,161 @@ bool D3DPipeline::createCompute(D3DContext &context)
     return true;
 }
 
+bool D3DPipeline::createWorkGraph(D3DContext &context)
+{
+    if (std::exchange(mCreated, true))
+        return mWorkGraphStateObject && mRootSignature;
+
+    auto options = D3D12_FEATURE_DATA_D3D12_OPTIONS21{};
+    auto device = ComPtr<ID3D12Device5>();
+    if (FAILED(context.device.CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS21,
+            &options, sizeof(options)))
+        || options.WorkGraphsTier < D3D12_WORK_GRAPHS_TIER_1_0
+        || FAILED(context.device.QueryInterface(IID_PPV_ARGS(&device)))) {
+        mMessages.insert(mItemId, MessageType::FeatureNotSupported,
+            "Work graphs");
+        return false;
+    }
+    const auto shader = mProgram.getShader(Shader::ShaderType::Node);
+    if (!shader || mProgram.shaders().size() != 1 || !shader->binary()) {
+        mMessages.insert(mItemId, MessageType::ScriptError,
+            "Work graphs require one node library");
+        return false;
+    }
+    if (!createRootSignature(context))
+        return false;
+    createDescriptorHeap(context);
+
+    const auto library = D3D12_DXIL_LIBRARY_DESC{
+        .DXILLibrary = { shader->binary()->GetBufferPointer(),
+            shader->binary()->GetBufferSize() },
+    };
+    const auto graph = D3D12_WORK_GRAPH_DESC{
+        .ProgramName = L"main",
+        .Flags = D3D12_WORK_GRAPH_FLAG_INCLUDE_ALL_AVAILABLE_NODES,
+    };
+    auto root = mRootSignature.Get();
+    const auto subobjects = std::array{
+        D3D12_STATE_SUBOBJECT{
+            D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE, &root },
+        D3D12_STATE_SUBOBJECT{
+            D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY, &library },
+        D3D12_STATE_SUBOBJECT{ D3D12_STATE_SUBOBJECT_TYPE_WORK_GRAPH, &graph },
+    };
+    const auto desc = D3D12_STATE_OBJECT_DESC{
+        .Type = D3D12_STATE_OBJECT_TYPE_EXECUTABLE,
+        .NumSubobjects = static_cast<UINT>(subobjects.size()),
+        .pSubobjects = subobjects.data(),
+    };
+    const auto result =
+        device->CreateStateObject(&desc, IID_PPV_ARGS(&mWorkGraphStateObject));
+    if (FAILED(result)) {
+        mMessages.insert(mItemId, MessageType::ScriptError,
+            QStringLiteral("Work graph HRESULT 0x%1")
+                .arg(static_cast<UINT>(result), 8, 16, QLatin1Char('0')));
+        return false;
+    }
+    auto properties = ComPtr<ID3D12WorkGraphProperties>();
+    auto stateProperties = ComPtr<ID3D12StateObjectProperties1>();
+    if (FAILED(mWorkGraphStateObject.As(&properties))
+        || FAILED(mWorkGraphStateObject.As(&stateProperties))) {
+        mMessages.insert(mItemId, MessageType::CreatingPipelineFailed);
+        mWorkGraphStateObject.Reset();
+        return false;
+    }
+    const auto index = properties->GetWorkGraphIndex(L"main");
+    if (index == UINT_MAX) {
+        mMessages.insert(mItemId, MessageType::ScriptError,
+            "Work graph program not found");
+        mWorkGraphStateObject.Reset();
+        return false;
+    }
+    const auto name = shader->entryPoint().toStdWString();
+    const auto entry = D3D12_NODE_ID{ name.c_str(), 0 };
+    mWorkGraphEntryIndex = properties->GetEntrypointIndex(index, entry);
+    if (mWorkGraphEntryIndex == UINT_MAX) {
+        mMessages.insert(mItemId, MessageType::ScriptError,
+            "Work graph entry node not found");
+        mWorkGraphStateObject.Reset();
+        return false;
+    }
+    mWorkGraphRecordSize =
+        properties->GetEntrypointRecordSizeInBytes(index, mWorkGraphEntryIndex);
+    mWorkGraphIdentifier = stateProperties->GetProgramIdentifier(L"main");
+    auto memory = D3D12_WORK_GRAPH_MEMORY_REQUIREMENTS{};
+    properties->GetWorkGraphMemoryRequirements(index, &memory);
+    mWorkGraphBackingSize = memory.MaxSizeInBytes;
+    if (mWorkGraphBackingSize) {
+        mWorkGraphBackingMemory = createBuffer(context.device,
+            mWorkGraphBackingSize, D3D12_HEAP_TYPE_DEFAULT,
+            D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+            D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+        if (!mWorkGraphBackingMemory) {
+            mMessages.insert(mItemId, MessageType::CreatingPipelineFailed);
+            mWorkGraphStateObject.Reset();
+            return false;
+        }
+    }
+    mMessages.insert(mItemId, MessageType::ShaderInfo,
+        QStringLiteral("Work graph: %1 nodes, %2 entry bytes, %3 backing bytes")
+            .arg(properties->GetNumNodes(index))
+            .arg(mWorkGraphRecordSize)
+            .arg(mWorkGraphBackingSize));
+    return true;
+}
+
+bool D3DPipeline::dispatchGraph(D3DContext &context, ScriptEngine &scriptEngine,
+    UINT count, UINT stride, const void *records)
+{
+    auto commandList = ComPtr<ID3D12GraphicsCommandList10>();
+    if (FAILED(context.graphicsCommandList.As(&commandList))) {
+        mMessages.insert(mItemId, MessageType::FeatureNotSupported,
+            "Work graph command list");
+        return false;
+    }
+    if (stride < mWorkGraphRecordSize || stride % 4) {
+        mMessages.insert(mItemId, MessageType::ScriptError,
+            "Work graph input record stride does not match entry");
+        return false;
+    }
+    if (!setDescriptors(context, scriptEngine))
+        return false;
+    commandList->SetComputeRootSignature(mRootSignature.Get());
+    if (mDescriptorHeap) {
+        auto heap = mDescriptorHeap.Get();
+        commandList->SetDescriptorHeaps(1, &heap);
+        auto descriptor = CD3DX12_GPU_DESCRIPTOR_HANDLE{
+            mDescriptorHeap->GetGPUDescriptorHandleForHeapStart()
+        };
+        for (auto i = 0u; i < mDescriptorTableEntries.size(); ++i) {
+            commandList->SetComputeRootDescriptorTable(i, descriptor);
+            descriptor.Offset(mDescriptorTableEntries[i],
+                context.descriptorSize);
+        }
+    }
+    if (mWorkGraphInitialized && mWorkGraphBackingMemory) {
+        const auto barrier =
+            CD3DX12_RESOURCE_BARRIER::UAV(mWorkGraphBackingMemory.Get());
+        commandList->ResourceBarrier(1, &barrier);
+    }
+    const auto program = D3D12_SET_PROGRAM_DESC{
+        .Type = D3D12_PROGRAM_TYPE_WORK_GRAPH,
+        .WorkGraph = {
+            .ProgramIdentifier = mWorkGraphIdentifier,
+            .Flags = mWorkGraphInitialized ? D3D12_SET_WORK_GRAPH_FLAG_NONE : D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE,
+            .BackingMemory = {mWorkGraphBackingMemory ? mWorkGraphBackingMemory->GetGPUVirtualAddress() : 0, mWorkGraphBackingSize},
+        },
+    };
+    commandList->SetProgram(&program);
+    const auto dispatch = D3D12_DISPATCH_GRAPH_DESC{
+        .Mode = D3D12_DISPATCH_MODE_NODE_CPU_INPUT,
+        .NodeCPUInput = { mWorkGraphEntryIndex, count, records, stride },
+    };
+    commandList->DispatchGraph(&dispatch);
+    mWorkGraphInitialized = true;
+    return true;
+}
+
 bool D3DPipeline::createInputLayout(
     std::vector<D3D12_INPUT_ELEMENT_DESC> *inputLayout)
 {

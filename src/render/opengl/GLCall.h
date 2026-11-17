@@ -23,6 +23,7 @@ public:
 
     void setProgram(GLProgram *program);
     void setShaderTable(const ShaderTable *) { }
+    void setInputBuffer(GLBuffer *, const Block &) { }
     void setTarget(GLTarget *target);
     void setVextexStream(GLStream *vertexStream);
     void setIndexBuffer(GLBuffer *indices, const Block &block);
