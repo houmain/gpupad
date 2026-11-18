@@ -3,6 +3,33 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 4.8.0] - 2026-11-18
+
+### Added
+
+- Added MCP bridge, see `docs/mcp.md`.
+- Added `docs/session-reference`, `docs/scripting-reference`, `docs/headless.md`.
+- Added `--strict` option to headless mode.
+- Allow dumping items without filename in headless mode.
+- Support finite read-only Direct3D buffer resource arrays.
+- Added item type caption to properties editor.
+- Added `Component` item [WIP].
+
+### Changed
+
+- Moved session methods from `App` to `Item` script object.
+- Only showing filename in message window location column.
+- Opening shaders when activating `ShaderTable`/`Record`.
+
+### Fixed
+
+- Fixed OpenGL texture swapping call.
+- Fixed copying to smaller texture with OpenGL.
+- Fixed switching shader language invalidating session.
+- Improved used item marking when `ShaderTable`/`AccelerationStructure` is invalid.
+- Fix Direct3D AABB type and read-only array reflection.
+- Fixed crash when opening RGB 16bit PNG.
+
 ## [Version 4.7.0] - 2026-11-07
 
 ### Added
@@ -1266,6 +1293,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 4.8.0]: https://github.com/houmain/gpupad/compare/4.7.0...4.8.0
 [version 4.7.0]: https://github.com/houmain/gpupad/compare/4.6.0...4.7.0
 [version 4.6.0]: https://github.com/houmain/gpupad/compare/4.5.1...4.6.0
 [version 4.5.1]: https://github.com/houmain/gpupad/compare/4.5.0...4.5.1
