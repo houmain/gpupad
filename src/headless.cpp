@@ -49,6 +49,7 @@ int runHeadless(QApplication &app)
     auto editorsToSave = std::map<QString, IEditor *>();
     auto messages = MessageList{ };
     auto verbose = false;
+    auto strict = false;
 
     const auto workingDirectory = QDir::current();
     const auto toAbsoluteFileName = [workingDirectory](
@@ -117,6 +118,9 @@ int runHeadless(QApplication &app)
             } else if (argument == "--verbose") {
                 verbose = true;
 
+            } else if (argument == "--strict") {
+                strict = true;
+
             } else if (argument == "--set") {
                 if (!checkParameterCount(2))
                     return invalidArgument("missing parameter to " + argument);
@@ -169,7 +173,7 @@ int runHeadless(QApplication &app)
                 if (!evaluateSession())
                     return 1;
                 closeSession();
-                if (!sessionModel.load(fileName))
+                if (!sessionModel.load(fileName, strict))
                     return loadingFileFailed(fileName);
                 // Session loading changes cwd for the GUI. Keep headless output
                 // paths relative to the directory from which it was invoked.

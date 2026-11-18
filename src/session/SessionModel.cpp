@@ -9,6 +9,103 @@
 #include <QUrl>
 
 namespace {
+    using PropertyNameColumnTypeMap =
+        std::map<std::pair<Item::Type, QString>, SessionModel::ColumnType>;
+
+    const PropertyNameColumnTypeMap &propertyNameColumnTypeMap()
+    {
+        static const auto result = PropertyNameColumnTypeMap{
+#define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY) \
+    { { Item::Type::ITEM_TYPE, #PROPERTY }, SessionModel::COLUMN_TYPE },
+            ADD_EACH_COLUMN_TYPE()
+#undef ADD
+        };
+        return result;
+    }
+
+    Item::Type defaultChildType(Item::Type type)
+    {
+        switch (type) {
+        case Item::Type::Buffer:                return Item::Type::Block;
+        case Item::Type::Block:                 return Item::Type::Field;
+        case Item::Type::Program:               return Item::Type::Shader;
+        case Item::Type::ShaderTable:           return Item::Type::Record;
+        case Item::Type::Record:                return Item::Type::Binding;
+        case Item::Type::Stream:                return Item::Type::Attribute;
+        case Item::Type::Target:                return Item::Type::Attachment;
+        case Item::Type::AccelerationStructure: return Item::Type::Instance;
+        case Item::Type::Instance:              return Item::Type::Geometry;
+        case Item::Type::GeometrySet:           return Item::Type::Geometry;
+        default:                                return Item::Type::Group;
+        }
+    }
+
+    bool isFileItemType(Item::Type type)
+    {
+        switch (type) {
+        case Item::Type::Buffer:
+        case Item::Type::Texture:
+        case Item::Type::Shader:
+        case Item::Type::Script:  return true;
+        default:                  return false;
+        }
+    }
+
+    bool hasValidProperties(const JsonObject &object, Item::Type defaultType)
+    {
+        auto ok = true;
+        const auto type = (object.count("type")
+                ? getItemTypeByName(jsonValue<QString>(object, "type"), &ok)
+                : defaultType);
+        if (!ok)
+            return false;
+
+        static const auto commonProperties = QSet<QString>{
+            "id",
+            "type",
+            "name",
+            "custom",
+            "sessionInterface",
+            "componentInterface",
+            "inputItemId",
+            "items",
+        };
+        const auto &propertyMap = propertyNameColumnTypeMap();
+        for (const auto &[key, value] : object) {
+            Q_UNUSED(value);
+            const auto property = QString::fromUtf8(key.data(),
+                static_cast<qsizetype>(key.size()));
+            if (commonProperties.contains(property)
+                || (property == "fileName" && isFileItemType(type))
+                || propertyMap.contains({ type, property })) {
+                continue;
+            }
+            return false;
+        }
+
+        if (const auto items = jsonArray(object, "items"))
+            for (const auto &value : *items) {
+                const auto child = jsonObject(value);
+                if (!child
+                    || !hasValidProperties(*child, defaultChildType(type))) {
+                    return false;
+                }
+            }
+        return true;
+    }
+
+    bool hasValidProperties(const JsonArray &items, Item::Type parentType)
+    {
+        for (const auto &value : items) {
+            const auto object = jsonObject(value);
+            if (!object
+                || !hasValidProperties(*object, defaultChildType(parentType))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     void materializeSessionInterfaces(JsonArray &items, bool topLevel,
         JsonArray &topLevelInterfaceItems)
     {
@@ -502,7 +599,7 @@ bool SessionModel::canDropMimeData(const QMimeData *data, Qt::DropAction action,
     return true;
 }
 
-bool SessionModel::load(const QString &fileName)
+bool SessionModel::load(const QString &fileName, bool strictProperties)
 {
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly))
@@ -520,6 +617,12 @@ bool SessionModel::load(const QString &fileName)
             return false;
         deleteItem(QModelIndex());
         target = { };
+    }
+
+    if (strictProperties
+        && !hasValidProperties(parseDraggedJson(target, &data),
+            getItem(target).type)) {
+        return false;
     }
 
     undoStack().clear();
@@ -875,15 +978,9 @@ void SessionModel::deserialize(const JsonObject &object,
                 value = "Target2DArray";
             dropColumn(property, index, TextureTarget, value);
         } else {
-            static const auto sPropertyNameColumnTypeMap =
-                std::map<std::pair<Item::Type, QString>, ColumnType>{
-#define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY) \
-    { { Item::Type::ITEM_TYPE, #PROPERTY }, COLUMN_TYPE },
-                    ADD_EACH_COLUMN_TYPE()
-#undef ADD
-                };
-            const auto it = sPropertyNameColumnTypeMap.find({ type, property });
-            if (it != sPropertyNameColumnTypeMap.end())
+            const auto &propertyMap = propertyNameColumnTypeMap();
+            const auto it = propertyMap.find({ type, property });
+            if (it != propertyMap.end())
                 dropColumn(property, index, it->second, value);
         }
     }
