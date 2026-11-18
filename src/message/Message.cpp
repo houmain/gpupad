@@ -81,6 +81,11 @@ QString getMessageText(const Message &message)
                     ? QStringLiteral(" (%1)").arg(message.text)
                     : "");
     case LoadingFileFailed:
+        if (!message.fileName.isEmpty())
+            return tr("Loading file failed")
+                + (!message.text.isEmpty()
+                        ? tr(": %1").arg(message.text)
+                        : QString());
         if (message.text.isEmpty())
             return tr("No file set");
         return tr("Loading file '%1' failed")

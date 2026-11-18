@@ -51,14 +51,19 @@ namespace {
         }
     }
 
-    bool hasValidProperties(const JsonObject &object, Item::Type defaultType)
+    bool hasValidProperties(const JsonObject &object, Item::Type defaultType,
+        const QString &path, QString *errorMessage)
     {
         auto ok = true;
+        const auto explicitType = jsonValue<QString>(object, "type");
         const auto type = (object.count("type")
-                ? getItemTypeByName(jsonValue<QString>(object, "type"), &ok)
+                ? getItemTypeByName(explicitType, &ok)
                 : defaultType);
-        if (!ok)
+        if (!ok) {
+            *errorMessage =
+                QString("Unknown item type '%1' at %2").arg(explicitType, path);
             return false;
+        }
 
         static const auto commonProperties = QSet<QString>{
             "id",
@@ -80,26 +85,46 @@ namespace {
                 || propertyMap.contains({ type, property })) {
                 continue;
             }
+            *errorMessage = QString("Property '%1' is not valid for %2 at %3")
+                                .arg(property, getItemTypeName(type), path);
             return false;
         }
 
-        if (const auto items = jsonArray(object, "items"))
+        if (const auto items = jsonArray(object, "items")) {
+            auto index = size_t{ };
             for (const auto &value : *items) {
+                const auto childPath = path + ".items["
+                    + QString::number(index++) + "]";
                 const auto child = jsonObject(value);
-                if (!child
-                    || !hasValidProperties(*child, defaultChildType(type))) {
+                if (!child) {
+                    *errorMessage = "Expected an Item object at " + childPath;
+                    return false;
+                }
+                if (!hasValidProperties(*child, defaultChildType(type),
+                        childPath, errorMessage)) {
                     return false;
                 }
             }
+        }
         return true;
     }
 
-    bool hasValidProperties(const JsonArray &items, Item::Type parentType)
+    bool hasValidProperties(const JsonArray &items, Item::Type parentType,
+        QString *errorMessage)
     {
+        auto index = size_t{ };
         for (const auto &value : items) {
+            const auto path = (items.size() == 1
+                    ? QString("$")
+                    : "$[" + QString::number(index) + "]");
+            ++index;
             const auto object = jsonObject(value);
-            if (!object
-                || !hasValidProperties(*object, defaultChildType(parentType))) {
+            if (!object) {
+                *errorMessage = "Expected an Item object at " + path;
+                return false;
+            }
+            if (!hasValidProperties(*object, defaultChildType(parentType), path,
+                    errorMessage)) {
                 return false;
             }
         }
@@ -599,8 +624,13 @@ bool SessionModel::canDropMimeData(const QMimeData *data, Qt::DropAction action,
     return true;
 }
 
-bool SessionModel::load(const QString &fileName, bool strictProperties)
+bool SessionModel::load(const QString &fileName, bool strict,
+    QString *errorMessage)
 {
+    auto temporaryErrorMessage = QString();
+    if (!errorMessage)
+        errorMessage = &temporaryErrorMessage;
+    errorMessage->clear();
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly))
         return false;
@@ -613,15 +643,26 @@ bool SessionModel::load(const QString &fileName, bool strictProperties)
     auto target = sessionItemIndex();
     if (!canDropMimeData(&data, Qt::CopyAction, rowCount(), 0, target)) {
         // try to replace session with dropped session
-        if (!canDropMimeData(&data, Qt::CopyAction, rowCount(), 0, { }))
+        if (!canDropMimeData(&data, Qt::CopyAction, rowCount(), 0, { })) {
+            if (strict) {
+                auto validationTarget = QModelIndex();
+                const auto items = parseDraggedJson(validationTarget, &data);
+                if (items.empty()) {
+                    *errorMessage = "Invalid or empty JSON";
+                } else if (
+                    hasValidProperties(items, Item::Type::Root, errorMessage)) {
+                    *errorMessage = "Invalid item hierarchy";
+                }
+            }
             return false;
+        }
         deleteItem(QModelIndex());
         target = { };
     }
 
-    if (strictProperties
+    if (strict
         && !hasValidProperties(parseDraggedJson(target, &data),
-            getItem(target).type)) {
+            getItem(target).type, errorMessage)) {
         return false;
     }
 

@@ -54,7 +54,8 @@ public:
     const Item *resolveComponentInput(const Item *item) const;
     QSet<ItemId> resolveComponentInputs();
     bool save(const QString &fileName);
-    bool load(const QString &fileName, bool strictProperties = false);
+    bool load(const QString &fileName, bool strictProperties = false,
+        QString *errorMessage = nullptr);
     const Item *findItemByPath(const QModelIndex &index,
         const QString &path) const;
     const Item *findItemByPath(const QString &path) const

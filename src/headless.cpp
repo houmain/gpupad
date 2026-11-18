@@ -57,8 +57,13 @@ int runHeadless(QApplication &app)
         return toNativeCanonicalFilePath(
             workingDirectory.absoluteFilePath(fileName));
     };
-    const auto loadingFileFailed = [&](QString filename) {
-        messages.insert(MessageType::LoadingFileFailed, filename);
+    const auto loadingFileFailed = [&](QString filename,
+                                       QString errorMessage = { }) {
+        if (errorMessage.isEmpty())
+            messages.insert(MessageType::LoadingFileFailed, filename);
+        else
+            messages.insert(filename, 0, MessageType::LoadingFileFailed,
+                errorMessage);
         return 1;
     };
     const auto invalidArgument = [&](QString message) {
@@ -173,8 +178,9 @@ int runHeadless(QApplication &app)
                 if (!evaluateSession())
                     return 1;
                 closeSession();
-                if (!sessionModel.load(fileName, strict))
-                    return loadingFileFailed(fileName);
+                auto errorMessage = QString();
+                if (!sessionModel.load(fileName, strict, &errorMessage))
+                    return loadingFileFailed(fileName, errorMessage);
                 // Session loading changes cwd for the GUI. Keep headless output
                 // paths relative to the directory from which it was invoked.
                 QDir::setCurrent(workingDirectory.path());
