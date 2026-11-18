@@ -1,40 +1,20 @@
 #include "AboutDialog.h"
+#include "FileDialog.h"
 #include <QApplication>
 #include <QDesktopServices>
 #include <QDialogButtonBox>
-#include <QFile>
 #include <QGridLayout>
 #include <QLabel>
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QTabWidget>
 #include <QTextBrowser>
-#include <QTextStream>
 
 #if defined(GLSLANG_ENABLED)
 #  include <glslang/build_info.h>
 #endif
 
 namespace {
-    QString loadTextFile(const QString &fileName)
-    {
-        const auto paths = std::initializer_list<QString>{
-            QCoreApplication::applicationDirPath() + "/..",
-#if !defined(NDEBUG)
-            QCoreApplication::applicationDirPath() + "/../..",
-#endif
-#if defined(__linux__)
-            qEnvironmentVariable("APPDIR") + "/usr/share/gpupad",
-#endif
-        };
-        for (const auto &path : paths) {
-            auto file = QFile(path + "/" + fileName);
-            if (file.open(QFile::ReadOnly | QFile::Text))
-                return QTextStream(&file).readAll();
-        }
-        return { };
-    }
-
     QString tweakChangeLog(QString text)
     {
         static const auto header = QRegularExpression(R"((^.*)(## \[Version))",
@@ -113,12 +93,13 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent)
             &QDesktopServices::openUrl);
         tabs->addTab(textbox, title);
     };
-    addTab(tr("Change Log"), tweakChangeLog(loadTextFile("CHANGELOG.md")));
-    addTab(tr("License"), loadTextFile("LICENSE"),
+    addTab(tr("Change Log"),
+        tweakChangeLog(loadApplicationTextFile("CHANGELOG.md")));
+    addTab(tr("License"), loadApplicationTextFile("LICENSE"),
         tr("This program comes with absolutely no warranty.\n"
            "See the GNU General Public License, version 3 for details."));
 
-    auto licenses = loadTextFile("THIRD-PARTY.md");
+    auto licenses = loadApplicationTextFile("THIRD-PARTY.md");
 
     const auto qtHeader = QString("## Qt Toolkit");
     licenses.replace(qtHeader, qtHeader + " v" + QT_VERSION_STR);

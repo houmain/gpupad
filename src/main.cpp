@@ -251,8 +251,6 @@ int main(int argc, char *argv[])
 
     const auto executableName =
         QFileInfo(QString::fromLocal8Bit(argv[0])).completeBaseName();
-    if (executableName.compare("gpupad-mcp", Qt::CaseInsensitive) == 0)
-        return runMcp(argc, argv);
     if (executableName.compare("gpupad-headless", Qt::CaseInsensitive) == 0)
         return runHeadless(argc, argv);
 

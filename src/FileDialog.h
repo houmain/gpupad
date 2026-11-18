@@ -83,3 +83,4 @@ std::optional<QDir> getUserDirectory(const QString &dirName);
 QList<QDir> getApplicationDirectories(const QString &dirName);
 QFileInfoList enumerateApplicationPaths(const QString &dirName,
     QDir::Filters filters);
+QString loadApplicationTextFile(const QString &fileName);

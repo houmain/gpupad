@@ -858,13 +858,17 @@ if (GPUPAD_ENABLE_SLANG)
 endif()
 
 # install -------------------------
-set(DOC_FILES LICENSE CHANGELOG.md THIRD-PARTY.md)
+set(DOC_FILES LICENSE CHANGELOG.md THIRD-PARTY.md
+  docs/mcp.md
+  docs/headless.md
+  docs/scripting-reference.md
+  docs/session-reference.md
+)
 set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME Application)
 
 if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
     install(TARGETS ${PROJECT_NAME} DESTINATION "bin")
     install(FILES extra/bin/gpupad-headless DESTINATION "bin")
-    install(FILES extra/bin/gpupad-mcp DESTINATION "bin")
     install(FILES ${DOC_FILES} DESTINATION "share/gpupad")
     install(DIRECTORY extra/share DESTINATION .)
     install(DIRECTORY extra/samples DESTINATION "share/gpupad" COMPONENT Samples)
@@ -879,7 +883,6 @@ if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
 else()
     install(TARGETS ${PROJECT_NAME} DESTINATION "bin")
     install(FILES extra/bin/gpupad-headless.cmd DESTINATION "bin")
-    install(FILES extra/bin/gpupad-mcp.cmd DESTINATION "bin")
     install(FILES ${DOC_FILES} DESTINATION .)
     install(DIRECTORY extra/samples DESTINATION . COMPONENT Samples)
     install(DIRECTORY extra/themes DESTINATION . COMPONENT Themes)

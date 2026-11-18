@@ -1,11 +1,13 @@
 #include "FileDialog.h"
 #include <QApplication>
 #include <QDesktopServices>
+#include <QFile>
 #include <QFileDialog>
 #include <QMainWindow>
 #include <QProcess>
 #include <QStandardPaths>
 #include <QRegularExpression>
+#include <QTextStream>
 
 namespace {
     const auto UntitledTag = QStringLiteral("/UT/");
@@ -528,4 +530,26 @@ QFileInfoList enumerateApplicationPaths(const QString &dirName,
         entries += dir.entryInfoList();
     }
     return entries;
+}
+
+QString loadApplicationTextFile(const QString &fileName)
+{
+    const auto paths = std::initializer_list<QString>{
+        QCoreApplication::applicationDirPath() + "/..",
+#if !defined(_WIN32)
+        QCoreApplication::applicationDirPath() + "/../share/gpupad",
+#endif
+#if !defined(NDEBUG)
+        QCoreApplication::applicationDirPath() + "/../..",
+#endif
+#if defined(__linux__)
+        qEnvironmentVariable("APPDIR") + "/usr/share/gpupad",
+#endif
+    };
+    for (const auto &path : paths) {
+        auto file = QFile(path + "/" + fileName);
+        if (file.open(QFile::ReadOnly | QFile::Text))
+            return QTextStream(&file).readAll();
+    }
+    return { };
 }

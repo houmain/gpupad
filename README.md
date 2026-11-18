@@ -47,6 +47,9 @@ To get started, you can open and play around with the sample sessions in the *He
 
 The sample sessions can also be used as templates - saving a session As... copies all the dependencies to the new location.
 
+### Automation
+GPUpad can evaluate sessions and produce outputs without opening the main window using [headless mode](docs/headless.md). External tools and LLMs can inspect and modify a running instance through the [MCP bridge](docs/mcp.md).
+
 ### Session
 In order to try out the shaders, the session allows to define draw and compute calls, together with the pipeline state and data the programs should operate on.
 

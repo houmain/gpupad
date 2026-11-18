@@ -7,8 +7,6 @@
 #include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDir>
-#include <QFile>
-#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -25,8 +23,10 @@ namespace {
     constexpr auto maxMessageSize = 4 * 1024 * 1024;
     constexpr auto connectionTimeout = 1000;
     constexpr auto responseTimeout = 30000;
+    constexpr auto mcpReferenceUri = "gpupad://mcp";
     constexpr auto scriptingReferenceUri = "gpupad://scripting-reference";
     constexpr auto sessionReferenceUri = "gpupad://session-reference";
+    constexpr auto headlessReferenceUri = "gpupad://headless";
 
     QString serverName()
     {
@@ -65,18 +65,18 @@ namespace {
 
     QString referenceContent(const QString &uri)
     {
-        auto resourceName = QString();
-        if (uri == scriptingReferenceUri)
-            resourceName = ":/docs/scripting-reference.md";
+        auto fileName = QString();
+        if (uri == mcpReferenceUri)
+            fileName = "mcp.md";
+        else if (uri == scriptingReferenceUri)
+            fileName = "scripting-reference.md";
         else if (uri == sessionReferenceUri)
-            resourceName = ":/docs/session-reference.md";
+            fileName = "session-reference.md";
+        else if (uri == headlessReferenceUri)
+            fileName = "headless.md";
         else
             return { };
-
-        auto file = QFile(resourceName);
-        if (!file.open(QFile::ReadOnly | QFile::Text))
-            return { };
-        return QString::fromUtf8(file.readAll());
+        return loadApplicationTextFile(fileName);
     }
 
     std::optional<QJsonValue> toJson(ScriptEngine &engine,
@@ -306,9 +306,10 @@ namespace {
                         } },
                     { "instructions",
                         "Use the eval tool to access GPUpad's JavaScript "
-                        "scripting API. Read gpupad://scripting-reference and "
-                        "gpupad://session-reference for the API and session "
-                        "item references." },
+                        "scripting API. Read gpupad://mcp for bridge behavior, "
+                        "gpupad://scripting-reference and "
+                        "gpupad://session-reference for the API, and "
+                        "gpupad://headless for session validation." },
                 });
         }
 
@@ -321,19 +322,30 @@ namespace {
                     { "resources",
                         QJsonArray{
                             QJsonObject{
+                                { "uri", mcpReferenceUri },
+                                { "name", "GPUpad MCP bridge" },
+                                { "description", "MCP bridge usage" },
+                                { "mimeType", "text/markdown" },
+                            },
+                            QJsonObject{
                                 { "uri", scriptingReferenceUri },
                                 { "name", "GPUpad scripting reference" },
                                 { "description",
-                                    "The scripting API reference from "
-                                    "docs/scripting-reference.md" },
+                                    "The scripting API reference" },
                                 { "mimeType", "text/markdown" },
                             },
                             QJsonObject{
                                 { "uri", sessionReferenceUri },
                                 { "name", "GPUpad session item reference" },
+                                { "description", "The session item reference" },
+                                { "mimeType", "text/markdown" },
+                            },
+                            QJsonObject{
+                                { "uri", headlessReferenceUri },
+                                { "name", "GPUpad headless mode" },
                                 { "description",
-                                    "The session item reference from "
-                                    "docs/session-reference.md" },
+                                    "Headless execution and session "
+                                    "validation" },
                                 { "mimeType", "text/markdown" },
                             },
                         } },
@@ -342,7 +354,8 @@ namespace {
 
         if (method == "resources/read") {
             const auto uri = params.value("uri").toString();
-            if (uri != scriptingReferenceUri && uri != sessionReferenceUri)
+            if (uri != mcpReferenceUri && uri != scriptingReferenceUri
+                && uri != sessionReferenceUri && uri != headlessReferenceUri)
                 return errorResponse(id, -32602, "Unknown resource URI");
             const auto reference = referenceContent(uri);
             if (reference.isEmpty())
@@ -381,9 +394,11 @@ namespace {
                             { "name", "eval" },
                             { "description",
                                 "Evaluate JavaScript in the running GPUpad "
-                                "scripting engine. See the "
-                                "gpupad://scripting-reference and "
-                                "gpupad://session-reference resources." },
+                                "scripting engine. Read gpupad://mcp, "
+                                "gpupad://scripting-reference, "
+                                "gpupad://session-reference, and "
+                                "gpupad://headless before creating or "
+                                "validating sessions." },
                             { "inputSchema", inputSchema },
                         } } },
                 });
