@@ -253,6 +253,8 @@ A ShaderTable selects ray-tracing entry points and their local bindings. A Trace
 
 - `programId: Program-ID` - Required. References the visible Program containing every Shader used by the table's Records.
 
+A ShaderTable contains exactly one RayGeneration Record. Miss and Hit Records each form a separate zero-based sequence in their relative tree order. Interleaving the three Record types does not change these category-local indices: the first Miss Record has miss index `0`, and the first Hit Record has hit-group index `0`.
+
 ### Record
 
 A Record is one shader-table entry. Its child Bindings are local resources for that entry and do not change the surrounding binding scope.

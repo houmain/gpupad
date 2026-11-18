@@ -14,6 +14,7 @@ File paths returned by GPUpad are absolute native paths. Relative paths used by 
 
 - `session: Item` - Root Session Item. Access throws when no Session is available.
 - `loadSession(fileName: String): void` - Pauses evaluation, closes editors, clears the current Session, and loads `fileName`. It is available only to a main-thread script.
+- `closeSession(): void` - Clears the current Session and invalidates existing Item trackers and wrappers.
 - `messages: [Message]` - Snapshot of application messages. Each Message has `severity: "INFO|WARNING|ERROR"` and `text: String`, with optional `fileName: String`, `line: Number`, and `itemId: Number`.
 
 ### Evaluation and time
@@ -195,7 +196,7 @@ An Item is a mutable live view of one session item. Its data properties match [s
 - `insertBefore(object: Object): Item` - Inserts a sibling before this Item and returns it.
 - `insertAfter(object: Object): Item` - Inserts a sibling after this Item and returns it.
 - `replaceItems(objects: [Object]): void` - Makes the child list match `objects`. Existing IDs are retained; entries without IDs may reuse an unused child of the same type when that child has no children. Assigned IDs are written back into the input objects.
-- `clear(): void` - Removes this Item's children. On `app.session`, it clears the Session and invalidates existing Item trackers and wrappers.
+- `clear(): void` - Removes this Item's children.
 - `remove(): void` - Removes this Item from its parent.
 - `openEditor(): Editor?` - Opens the backing file of a Buffer, Texture, Shader, or Script. An untitled backing file is created when needed.
 - `setSource(source: String): void` - Replaces the cached source of a Shader or Script and creates an untitled backing file when needed.

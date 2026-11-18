@@ -822,6 +822,16 @@ void AppScriptObject::loadSession(QString fileName)
         throwJsError("Loading session failed: " + fileName);
 }
 
+void AppScriptObject::closeSession()
+{
+    mSessionProperty = QJSValue::UndefinedValue;
+    mItemTrackings.clear();
+    for (const auto &[id, item] : mItemObjects)
+        item.object->deleteLater();
+    mItemObjects.clear();
+    clearItems(threadSessionModel().sessionItem().id);
+}
+
 QJSValue AppScriptObject::getItemProperties(QJSValue itemIdent)
 {
     const auto item = findSessionItem(itemIdent);
@@ -834,12 +844,7 @@ QJSValue AppScriptObject::getItemProperties(QJSValue itemIdent)
 
 void AppScriptObject::clearSession()
 {
-    mSessionProperty = QJSValue::UndefinedValue;
-    mItemTrackings.clear();
-    for (const auto &[id, item] : mItemObjects)
-        item.object->deleteLater();
-    mItemObjects.clear();
-    clearItems(threadSessionModel().sessionItem().id);
+    closeSession();
 }
 
 void AppScriptObject::clearItems(QJSValue parentIdent)

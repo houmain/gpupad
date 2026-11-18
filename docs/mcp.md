@@ -48,6 +48,67 @@ call.checked = false
 ({ id: call.id, checked: call.checked })
 ```
 
+The following example replaces the current session with a complete in-memory graphics session. IDs returned by inserted Items can immediately be used for references. `setSource()` creates untitled backing files and updates their editors without writing anything to disk. The function scope also allows the example to be run repeatedly in the persistent scripting state.
+
+```javascript
+(() => {
+  app.closeSession()
+
+  const session = app.session
+  session.renderer = "OpenGL"
+  session.shaderLanguage = "GLSL"
+  session.shaderCompiler = "Driver"
+
+  const texture = session.insert({
+    type: "Texture",
+    name: "Result",
+    width: "512",
+    height: "512"
+  })
+
+  const target = session.insert({ type: "Target", name: "Target" })
+  target.insert({ type: "Attachment", textureId: texture.id })
+
+  const program = session.insert({ type: "Program", name: "Program" })
+  const vertex = program.insert({ type: "Shader", shaderType: "Vertex" })
+  vertex.setSource(`#version 330
+const vec2 positions[3] = vec2[3](
+    vec2(-0.8, -0.8),
+    vec2(0.8, -0.8),
+    vec2(0.0, 0.8));
+void main()
+{
+    gl_Position = vec4(positions[gl_VertexID], 0.0, 1.0);
+}`)
+
+  const fragment = program.insert({ type: "Shader", shaderType: "Fragment" })
+  fragment.setSource(`#version 330
+layout(location = 0) out vec4 color;
+void main()
+{
+    color = vec4(0.2, 0.6, 1.0, 1.0);
+}`)
+
+  const call = session.insert({
+    type: "Call",
+    callType: "Draw",
+    programId: program.id,
+    targetId: target.id,
+    count: "3"
+  })
+
+  return { textureId: texture.id, targetId: target.id, programId: program.id, callId: call.id }
+})()
+```
+
+After the population call has returned, a separate `eval` call can request evaluation:
+
+```javascript
+app.evaluation = "Manual"
+```
+
+Requesting evaluation separately allows the population call to return before GPUpad resets or initializes rendering state.
+
 Changes to session Items and editor contents are applied in memory and affect the next evaluation without being saved. Saving is only needed to persist changes to disk and is normally left to the user. An MCP client should save only when explicitly requested.
 
 The value of the final JavaScript expression is returned. `undefined` is reported explicitly. Boolean, number, string, null, array, and plain object results are supported. Functions, non-finite numbers, circular structures, and objects that cannot be serialized produce a tool error. Item objects should be converted to plain objects containing the required properties rather than returned directly.

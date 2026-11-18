@@ -116,11 +116,7 @@ void ItemScriptObject::replaceItems(QJSValue array)
 
 void ItemScriptObject::clear()
 {
-    if (mItemId == mAppScriptObject.threadSessionModel().sessionItem().id) {
-        mAppScriptObject.clearSession();
-    } else {
-        mAppScriptObject.clearItems(QJSValue(mItemId));
-    }
+    mAppScriptObject.clearItems(QJSValue(mItemId));
 }
 
 void ItemScriptObject::remove()
