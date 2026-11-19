@@ -808,35 +808,41 @@ QString SessionModel::ensureFileName(const FileItem &item, QString hint)
 QSet<ItemId> SessionModel::resolveComponentInputs()
 {
     auto referencedItems = QSet<ItemId>{ };
-    forEachItem<Component>(
-        [this, &referencedItems](const Component &component) {
-            auto replacements = QMap<ItemId, ItemId>{ };
-            for (const auto *item : component.items) {
-                if (const auto *replacement = resolveComponentInput(item);
-                    replacement && replacement != item) {
-                    replacements.insert(item->id, replacement->id);
-                    referencedItems.insert(item->id);
-                }
+    forEachItem<Component>([&](const Component &component) {
+        auto replacements = QMap<ItemId, ItemId>{ };
+        for (const auto *item : component.items) {
+            if (const auto *replacement = resolveComponentInput(item);
+                replacement && replacement != item) {
+                replacements.insert(item->id, replacement->id);
+                referencedItems.insert(item->id);
             }
-            if (replacements.isEmpty())
-                return;
+        }
+        if (replacements.isEmpty())
+            return;
 
-            forEachItem(getIndex(&component),
-                [this, &replacements](const Item &item) {
-#define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY)                                 \
-    if constexpr (std::is_same_v<decltype(ITEM_TYPE::PROPERTY), ItemId>       \
-        && std::string_view(#PROPERTY).ends_with("Id")) {                     \
-        if (item.type == Item::Type::ITEM_TYPE) {                             \
-            const auto value = static_cast<const ITEM_TYPE &>(item).PROPERTY; \
-            if (const auto it = replacements.constFind(value);                \
-                it != replacements.cend())                                    \
-                setField(&item, COLUMN_TYPE, it.value());                     \
-        }                                                                     \
-    }
-                    ADD_EACH_COLUMN_TYPE()
+        forEachItem(getIndex(&component), [&](const Item &item) {
+            const auto replaceReference =
+                [&]<typename ItemType, typename Property>(Item::Type itemType,
+                    ColumnType column, Property ItemType::*property,
+                    std::string_view propertyName) {
+                    if constexpr (std::is_same_v<Property, ItemId>) {
+                        if (propertyName.ends_with("Id")
+                            && item.type == itemType) {
+                            const auto value =
+                                static_cast<const ItemType &>(item).*property;
+                            if (const auto it = replacements.constFind(value);
+                                it != replacements.cend())
+                                setField(&item, column, it.value());
+                        }
+                    }
+                };
+#define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY)                                  \
+    replaceReference(Item::Type::ITEM_TYPE, COLUMN_TYPE, &ITEM_TYPE::PROPERTY, \
+        #PROPERTY);
+            ADD_EACH_COLUMN_TYPE()
 #undef ADD
-                });
         });
+    });
     clearUndoStack();
     return referencedItems;
 }
