@@ -9,6 +9,7 @@
 #include "LibraryScriptObject.h"
 #include "../IScriptRenderSession.h"
 #include "render/ProcessSource.h"
+#include <QApplication>
 #include <QFloat16>
 #include <QJSEngine>
 #include <QTextStream>
