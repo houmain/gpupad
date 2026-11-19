@@ -72,9 +72,7 @@ void D3DCall::setIndirectBuffer(D3DBuffer *commands, const Block &block)
         mUsedItems += field->id;
 
     mIndirectStride = getBlockStride(block);
-    const auto expectedStride = (mCall.callType == Call::CallType::TraceRaysIndirect
-            ? static_cast<int>(3 * sizeof(uint32_t))
-            : getIndirectCommandSize(mCall.callType));
+    const auto expectedStride = getIndirectCommandSize(mCall.callType);
     if (mIndirectStride != expectedStride) {
         mMessages.insert(block.id, MessageType::InvalidIndirectStride,
             QStringLiteral("%1/%2 bytes")
