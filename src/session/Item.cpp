@@ -69,6 +69,7 @@ int getIndirectCommandSize(Call::CallType callType)
     case Call::CallType::DrawIndexedIndirect:   return 5 * sizeof(uint32_t);
     case Call::CallType::DrawMeshTasksIndirect: return 3 * sizeof(uint32_t);
     case Call::CallType::ComputeIndirect:       return 3 * sizeof(uint32_t);
+    case Call::CallType::TraceRaysIndirect:     return 3 * sizeof(uint32_t);
     default:                                    return 0;
     }
 }
