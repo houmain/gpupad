@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 4.8.1] - 2026-11-20
+
+### Added
+
+- Added `evaluate` to App script object.
+- Added `save`, `exportTo`, `reload`, `close` methods to Editor script object.
+
+### Changed
+
+- `--set` option of headless mode sets globals of all script engines.
+
+### Fixed
+
+- Fixed OpenGL reading render target texture on first evaluation.
+- Setting version information of Windows binary.
+
 ## [Version 4.8.0] - 2026-11-18
 
 ### Added
@@ -1293,6 +1309,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 4.8.1]: https://github.com/houmain/gpupad/compare/4.8.0...4.8.1
 [version 4.8.0]: https://github.com/houmain/gpupad/compare/4.7.0...4.8.0
 [version 4.7.0]: https://github.com/houmain/gpupad/compare/4.6.0...4.7.0
 [version 4.6.0]: https://github.com/houmain/gpupad/compare/4.5.1...4.6.0
