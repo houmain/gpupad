@@ -354,6 +354,8 @@ QJSValue AppScriptObject::tryGetEditorObject(const QString &fileName)
 
 QJSValue AppScriptObject::getEditorObject(const QString &fileName)
 {
+    if (fileName.isEmpty())
+        return QJSValue::UndefinedValue;
     if (auto editor = tryGetEditorObject(fileName); !editor.isUndefined())
         return editor;
 
@@ -417,13 +419,7 @@ void AppScriptObject::evaluateScript(QString fileName)
         return throwJsError(
             "Loading file '" + FileDialog::getFileTitle(fileName) + "' failed");
 
-    if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
-        if (onMainThread())
-            Singletons::editorManager().openQmlView(fileName,
-                mEnginePtr.lock());
-    } else {
-        engine().evaluateScript(source, fileName);
-    }
+    engine().evaluateScript(source, fileName);
 }
 
 QJSValue AppScriptObject::callAction(QString id, QJSValue arguments)
@@ -439,7 +435,6 @@ QJSValue AppScriptObject::callAction(QString id, QJSValue arguments)
 
     const auto result = engine.getGlobal("result");
     engine.setGlobal("result", QJSValue::UndefinedValue);
-
     return result;
 }
 
@@ -450,15 +445,15 @@ QJSValue AppScriptObject::callAction(QString id)
 
 QJSValue AppScriptObject::openFileDialog(QString pattern)
 {
-    return openFileDialog(pattern, FileDialog::Options{ });
+    return showFileDialog(pattern, FileDialog::Options{ });
 }
 
 QJSValue AppScriptObject::saveFileDialog(QString pattern)
 {
-    return openFileDialog(pattern, FileDialog::Saving);
+    return showFileDialog(pattern, FileDialog::Saving);
 }
 
-QJSValue AppScriptObject::openFileDialog(QString pattern,
+QJSValue AppScriptObject::showFileDialog(QString pattern,
     FileDialog::Options options)
 {
     auto result = QString();

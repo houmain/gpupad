@@ -132,6 +132,7 @@ public:
     bool usesMouseState() const;
     bool usesKeyboardState() const;
     bool usesViewportSize(const QString &fileName) const;
+    void dispatchToMainThread(const std::function<void()> &function);
 
 Q_SIGNALS:
     void evaluationChanged();
@@ -167,11 +168,10 @@ private:
     void handleEvaluationModeChanged(EvaluationMode evaluationMode);
     void handleFrameChanged(int frame);
     void handleTimeChanged(double time);
-    void dispatchToMainThread(const std::function<void()> &function);
     QJSValue enumerate(QString pattern, bool directories);
     QJSValue tryGetEditorObject(const QString &fileName);
     QJSValue getEditorObject(const QString &fileName);
-    QJSValue openFileDialog(QString pattern, FileDialog::Options options);
+    QJSValue showFileDialog(QString pattern, FileDialog::Options options);
 
     // session
     bool isSessionAvailable() const;

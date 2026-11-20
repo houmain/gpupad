@@ -98,10 +98,10 @@ The Session is the root scope. It selects the rendering backend and shader toolc
 - `shaderLanguage: ShaderLanguage = GLSL` - Language used by every Shader in the Session.
 - `shaderCompiler: ShaderCompiler = Driver` - Compiler used for every Shader. It must be compatible with `renderer` and `shaderLanguage` as shown below.
 - `shaderCompilerSettings: Object = {}` - Compiler-specific settings. An omitted key has no explicit value even though the property editor initially presents Boolean settings as enabled.
-  - `autoMapBindings: Boolean` - Lets `glslang` assign missing resource bindings.
-  - `autoMapLocations: Boolean` - Lets `glslang` assign missing input/output locations.
-  - `autoSampledTextures: Boolean` - Lets `glslang` combine compatible texture and sampler declarations.
-  - `vulkanRulesRelaxed: Boolean` - Uses relaxed Vulkan rules in `glslang` for Vulkan and Direct3D targets.
+  - `autoMapBindings: Boolean = true` - Lets `glslang` assign missing resource bindings.
+  - `autoMapLocations: Boolean = true` - Lets `glslang` assign missing input/output locations.
+  - `autoSampledTextures: Boolean = true` - Lets `glslang` combine compatible texture and sampler declarations.
+  - `vulkanRulesRelaxed: Boolean = true` - Uses relaxed Vulkan rules in `glslang` for Vulkan and Direct3D targets.
   - `spirvVersion: String` - SPIR-V version requested from `glslang`; `""` selects its default.
   - `shaderModel: String` - Shader model for `D3DCompiler` or `DXC`; `""` selects 5.1 or 6.5 respectively.
 - `shaderPreamble: String` - Literal source prepended to every Shader before that Shader's own `preamble`.

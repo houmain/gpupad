@@ -78,12 +78,8 @@ int runHeadless(QApplication &app)
             if (getMessageSeverity(message) == MessageSeverity::Error)
                 return false;
         for (auto [fileName, editor] : std::exchange(editorsToSave, { })) {
-            const auto editorFileName = editor->fileName();
-            editor->setFileName(fileName);
-            const auto saved = editor->save();
-            editor->setFileName(editorFileName);
-            if (!saved) {
-                invalidArgument("saving output '" + fileName + "' failed");
+            if (!editor->exportTo(fileName)) {
+                invalidArgument("exporting to '" + fileName + "' failed");
                 return false;
             }
         }

@@ -12,8 +12,8 @@ File paths returned by GPUpad are absolute native paths. Relative paths used by 
 
 ### Session
 
-- `session: Item` - Root Session Item. Access throws when no Session is available.
-- `loadSession(fileName: String): void` - Pauses evaluation, closes editors, clears the current Session, and loads `fileName`. It is available only to a main-thread script.
+- `session: Item` - Root Session Item.
+- `loadSession(fileName: String): void` - Pauses evaluation, closes editors, clears the current Session, and loads `fileName`.
 - `closeSession(): void` - Clears the current Session and invalidates existing Item trackers and wrappers.
 - `messages: [Message]` - Snapshot of application messages. Each Message has `severity: "INFO|WARNING|ERROR"` and `text: String`, with optional `fileName: String`, `line: Number`, and `itemId: Number`.
 
@@ -29,13 +29,13 @@ File paths returned by GPUpad are absolute native paths. Relative paths used by 
 ### Scripts and actions
 
 - `selection: [Item]` - Session-tree selection supplied to a custom action.
-- `evaluateScript(fileName: String): void` - Evaluates a JavaScript file in the current state. A `.qml` file opens as a QML view when called on the main thread.
+- `evaluateScript(fileName: String): void` - Evaluates a JavaScript file in the current state.
 - `callAction(id: String, arguments: any = {}): any` - Executes a custom action. Its global `arguments` receives the supplied value, and the action's global `result` becomes the return value. Failure to find or apply the action throws.
 
 ### Editors and input
 
 - `currentEditor: Editor?` - Current editor, or `undefined` when none is active.
-- `openEditor(fileName: String): Editor?` - Opens or retrieves an editor. `.qml` files open as QML views. The Item equivalent is `item.openEditor()`.
+- `openEditor(fileName: String): Editor?` - Opens or retrieves an editor. The Item equivalent is `item.openEditor()`.
 - `mouse: Mouse` - Mouse state associated with the active editor.
 - `keyboard: Keyboard` - Keyboard state associated with the active editor.
 - `palette: Palette` - Current application colors as `#rrggbb` strings: `alternateBase`, `base`, `text`, `window`, `windowText`, `button`, and `buttonText`.
@@ -62,7 +62,7 @@ File paths returned by GPUpad are absolute native paths. Relative paths used by 
 - `"glsl"` - Generated GLSL source.
 - `"hlsl"` - Generated HLSL source.
 - `"spirv"` - SPIR-V disassembly.
-- `"spirvBinary"` - SPIR-V bytes as BinaryData.
+- `"spirvBinary"` - SPIR-V bytes as `BinaryData`.
 - `"ast"` - glslang abstract syntax tree text.
 - `"json"` - Reflection data as a JSON string.
 - `"programBinary"` - OpenGL program binary representation; available only where an OpenGL program can be linked.
@@ -214,7 +214,7 @@ For a Texture, input is a flat, interleaved component array in format order (`R`
 
 - `type: EditorType` - `"Text|Shader|Script|Binary|Texture|QmlView"`.
 - `fileName: String` - Absolute backing filename.
-- `title: String` - Display title. Assignment changes the window title only for a QML view opened from a main-thread script; `&` and `...` are removed.
+- `title: String` - Display title. Assignment changes the window title only for a QML view.
 - `viewportSize: [width, height]` - Current editor viewport size. Reading it marks the Script as dependent on viewport-size changes.
 - `save(): Boolean` - Saves the editor to its `fileName`. Returns `false` for an untitled editor or when saving fails.
 - `exportTo(fileName: String): Boolean` - Writes the editor contents to another file without changing its backing filename. The filename extension selects the output format.
@@ -247,7 +247,6 @@ Reading keyboard state marks the Script as dependent on keyboard changes.
 ## Known defects
 
 - `app.selection` is populated for custom actions but is not currently exposed as an App property.
-- `app.currentEditor` currently returns an Editor wrapper with an empty filename when no editor is active instead of `undefined`.
 - `console.log(item)` and `console.log(app.session)` currently attempt JSON serialization of an Item and can produce a serialization error instead of an object dump.
 - Assigning `Item.id` updates the wrapper value and can update another Item or insert a new Item with that ID instead of rejecting the assignment. Assigning `Item.type` can leave the wrapper showing the assigned type even though the Session retains the original type.
 - A path string passed to `Item.trackItems` finds the initial Item but is not matched correctly on later changes; numeric IDs, Item objects, and predicates continue to track correctly.

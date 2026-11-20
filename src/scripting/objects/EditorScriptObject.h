@@ -40,10 +40,12 @@ Q_SIGNALS:
     void viewportResized();
 
 private:
-    AppScriptObject *mAppScriptObject{};
+    void dispatchToMainThread(const std::function<void()> &function);
+
+    AppScriptObject *mAppScriptObject{ };
     QString mFileName;
     QString mTitle;
     QString mEditorType;
     QSize mViewportSize;
-    mutable bool mViewportSizeWasRead{};
+    mutable bool mViewportSizeWasRead{ };
 };

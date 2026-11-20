@@ -21,7 +21,7 @@ Start the normal GPUpad application first and open the session to be automated. 
 }
 ```
 
-The MCP process does not open or own a session. It translates MCP messages on standard input/output to local requests handled by the already running GPUpad application. Both processes must run as the same operating-system user. No network listener is opened.
+The MCP process does not open or own a session. It translates MCP messages on standard input/output to local requests handled by the already running GPUpad application. Both processes must run as the same operating-system user. No network listener is opened. MCP evaluations run on GPUpad's main thread.
 
 ## Tool
 
@@ -110,6 +110,21 @@ app.evaluation = "Manual"
 Requesting evaluation separately allows the population call to return before GPUpad resets or initializes rendering state.
 
 Changes to session Items and editor contents are applied in memory and affect the next evaluation without being saved. Saving is only needed to persist changes to disk and is normally left to the user. An MCP client should save only when explicitly requested.
+
+An output Texture's editor must be open during evaluation to receive the evaluated data. When an export is intended, open the editor before the `app.evaluation = "Manual"` call:
+
+```javascript
+app.session.getItem("Result").openEditor()
+```
+
+After the evaluation has finished, an explicitly requested export can be performed through the same editor. Assigning `"Finish"` in a separate call waits for pending evaluation. The destination extension selects the image or texture format:
+
+```javascript
+app.evaluation = "Finish"
+const texture = app.session.getItem("Result")
+app.makeDirectory("renders")
+texture.openEditor().exportTo("renders/result.png")
+```
 
 The value of the final JavaScript expression is returned. `undefined` is reported explicitly. Boolean, number, string, null, array, and plain object results are supported. Functions, non-finite numbers, circular structures, and objects that cannot be serialized produce a tool error. Item objects should be converted to plain objects containing the required properties rather than returned directly.
 

@@ -48,13 +48,21 @@ void EditorScriptObject::update()
     }
 }
 
+void EditorScriptObject::dispatchToMainThread(
+    const std::function<void()> &function)
+{
+    if (mAppScriptObject)
+        mAppScriptObject->dispatchToMainThread(function);
+}
+
 void EditorScriptObject::setTitle(QString title)
 {
-    if (onMainThread())
+    dispatchToMainThread([&]() {
         if (auto editor = Singletons::editorManager().getQmlView(mFileName)) {
             mTitle = title.remove("&").replace("...", "");
             editor->setWindowTitle(mTitle);
         }
+    });
 }
 
 QJsonValue EditorScriptObject::viewportSize() const
@@ -65,23 +73,38 @@ QJsonValue EditorScriptObject::viewportSize() const
 
 bool EditorScriptObject::save()
 {
-    return Singletons::editorManager().saveEditor(mFileName, false);
+    auto result = false;
+    dispatchToMainThread([&]() {
+        result = Singletons::editorManager().saveEditor(mFileName, false);
+    });
+    return result;
 }
 
 bool EditorScriptObject::exportTo(QString fileName)
 {
-    if (!onMainThread())
-        return false;
-    fileName = mAppScriptObject->getAbsolutePath(fileName);
-    return Singletons::editorManager().exportEditorTo(mFileName, fileName);
+    auto result = false;
+    dispatchToMainThread([&]() {
+        fileName = mAppScriptObject->getAbsolutePath(fileName);
+        result =
+            Singletons::editorManager().exportEditorTo(mFileName, fileName);
+    });
+    return result;
 }
 
 bool EditorScriptObject::reload()
 {
-    return Singletons::editorManager().reloadEditor(mFileName);
+    auto result = false;
+    dispatchToMainThread([&]() {
+        result = Singletons::editorManager().reloadEditor(mFileName);
+    });
+    return result;
 }
 
 bool EditorScriptObject::close()
 {
-    return Singletons::editorManager().closeEditor(mFileName, false);
+    auto result = false;
+    dispatchToMainThread([&]() {
+        result = Singletons::editorManager().closeEditor(mFileName, false);
+    });
+    return result;
 }

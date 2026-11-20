@@ -2,6 +2,8 @@
 
 Headless mode loads and evaluates sessions without opening the main window. It is writing messages on standard output.
 
+On Windows, `gpupad.exe` is a GUI-subsystem executable, so launching it directly from an interactive console may return control before output is displayed. Use the installed `gpupad-headless.cmd` wrapper, or redirect standard output and standard error when invoking `gpupad.exe --headless` from a script.
+
 ## Starting headless mode
 
 Pass `--headless` as the first argument:

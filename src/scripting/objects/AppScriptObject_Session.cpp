@@ -825,6 +825,10 @@ void AppScriptObject::loadSession(QString fileName)
 
 void AppScriptObject::closeSession()
 {
+    if (!onMainThread())
+        return throwJsError(
+            "Sessions can only be closed from a main-thread script");
+
     mSessionProperty = QJSValue::UndefinedValue;
     mItemTrackings.clear();
     for (const auto &[id, item] : mItemObjects)
