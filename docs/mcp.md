@@ -48,7 +48,13 @@ call.checked = false
 ({ id: call.id, checked: call.checked })
 ```
 
-The following example replaces the current session with a complete in-memory graphics session. IDs returned by inserted Items can immediately be used for references. `setSource()` creates untitled backing files and updates their editors without writing anything to disk. The function scope also allows the example to be run repeatedly in the persistent scripting state.
+The value of the final JavaScript expression is returned. `undefined` is reported explicitly. Boolean, number, string, null, array, and plain object results are supported. Functions, non-finite numbers, circular structures, and objects that cannot be serialized produce a tool error.
+
+Messages written with `console.log`, `console.warn`, or `console.error` during the evaluation are returned as tool content. A JavaScript exception returns an MCP tool error with its message, stack, source location, and console output.
+
+Changes to session Items and editor contents are applied in memory and affect the next evaluation without being saved. Saving is only needed to persist changes to disk and is normally left to the user. An MCP client should save only when explicitly requested.
+
+The following example replaces the current session with a complete in-memory graphics session. IDs returned by inserted Items can immediately be used for references. `setSource()` creates untitled backing files without writing anything to disk. The function scope also allows the example to be run repeatedly in the persistent scripting state. An output Texture's editor must be open during evaluation to receive the evaluated data. `app.evaluate()` triggers manual evaluation. An explicitly requested export can directly follow. The destination extension selects the image or texture format:
 
 ```javascript
 (() => {
@@ -97,38 +103,16 @@ void main()
     count: "3"
   })
 
+  const editor = texture.openEditor()
+  app.evaluate()
+
+  app.makeDirectory("renders")
+  if (!editor.exportTo("renders/result.png"))
+    throw new Error("Export failed")
+
   return { textureId: texture.id, targetId: target.id, programId: program.id, callId: call.id }
 })()
 ```
-
-After the population call has returned, a separate `eval` call can request evaluation:
-
-```javascript
-app.evaluation = "Manual"
-```
-
-Requesting evaluation separately allows the population call to return before GPUpad resets or initializes rendering state.
-
-Changes to session Items and editor contents are applied in memory and affect the next evaluation without being saved. Saving is only needed to persist changes to disk and is normally left to the user. An MCP client should save only when explicitly requested.
-
-An output Texture's editor must be open during evaluation to receive the evaluated data. When an export is intended, open the editor before the `app.evaluation = "Manual"` call:
-
-```javascript
-app.session.getItem("Result").openEditor()
-```
-
-After the evaluation has finished, an explicitly requested export can be performed through the same editor. Assigning `"Finish"` in a separate call waits for pending evaluation. The destination extension selects the image or texture format:
-
-```javascript
-app.evaluation = "Finish"
-const texture = app.session.getItem("Result")
-app.makeDirectory("renders")
-texture.openEditor().exportTo("renders/result.png")
-```
-
-The value of the final JavaScript expression is returned. `undefined` is reported explicitly. Boolean, number, string, null, array, and plain object results are supported. Functions, non-finite numbers, circular structures, and objects that cannot be serialized produce a tool error. Item objects should be converted to plain objects containing the required properties rather than returned directly.
-
-Messages written with `console.log`, `console.warn`, or `console.error` during the evaluation are returned as tool content. A JavaScript exception returns an MCP tool error with its message, stack, source location, and console output.
 
 ## Resources
 

@@ -82,12 +82,12 @@ ThemedScrollView {
   
       Button {
         text: "Manual"
-        onClicked: app.evaluation = "Manual"
+        onClicked: app.evaluate()
       }
       
       Button {
         text: "Reset"
-        onClicked: app.evaluation = "Reset"
+        onClicked: app.evaluate(true)
       }
     }
   }

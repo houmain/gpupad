@@ -1,6 +1,7 @@
 #include "EditorScriptObject.h"
 #include "AppScriptObject.h"
 #include "Singletons.h"
+#include "SynchronizeLogic.h"
 #include "editors/EditorManager.h"
 #include "editors/qml/QmlView.h"
 #include <QJsonArray>
@@ -75,6 +76,7 @@ bool EditorScriptObject::save()
 {
     auto result = false;
     dispatchToMainThread([&]() {
+        Singletons::synchronizeLogic().finishEvaluation();
         result = Singletons::editorManager().saveEditor(mFileName, false);
     });
     return result;
@@ -85,6 +87,7 @@ bool EditorScriptObject::exportTo(QString fileName)
     auto result = false;
     dispatchToMainThread([&]() {
         fileName = mAppScriptObject->getAbsolutePath(fileName);
+        Singletons::synchronizeLogic().finishEvaluation();
         result =
             Singletons::editorManager().exportEditorTo(mFileName, fileName);
     });

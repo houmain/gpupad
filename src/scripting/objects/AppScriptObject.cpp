@@ -211,21 +211,27 @@ QString AppScriptObject::evaluation() const
 
 void AppScriptObject::setEvaluation(QString mode)
 {
+    if (mode == "Automatic") {
+        mEvaluationMode = EvaluationMode::Automatic;
+    } else if (mode == "Steady") {
+        mEvaluationMode = EvaluationMode::Steady;
+    } else if (mode == "Paused") {
+        mEvaluationMode = EvaluationMode::Paused;
+    } else {
+        return throwJsError("Invalid evaluation mode");
+    }
     dispatchToMainThread([&]() {
-        auto &synchronizeLogic = Singletons::synchronizeLogic();
-        if (mode == "Reset") {
-            synchronizeLogic.resetEvaluation();
-        } else if (mode == "Manual") {
-            synchronizeLogic.manualEvaluation();
-        } else if (mode == "Automatic") {
-            synchronizeLogic.setEvaluationMode(EvaluationMode::Automatic);
-        } else if (mode == "Steady") {
-            synchronizeLogic.setEvaluationMode(EvaluationMode::Steady);
-        } else if (mode == "Paused") {
-            synchronizeLogic.setEvaluationMode(EvaluationMode::Paused);
-        } else if (mode == "Finish") {
-            synchronizeLogic.finishEvaluation();
-        }
+        Singletons::synchronizeLogic().setEvaluationMode(mEvaluationMode);
+    });
+}
+
+void AppScriptObject::evaluate(bool reset)
+{
+    dispatchToMainThread([&]() {
+        if (reset)
+            Singletons::synchronizeLogic().resetEvaluation();
+        else
+            Singletons::synchronizeLogic().manualEvaluation();
     });
 }
 

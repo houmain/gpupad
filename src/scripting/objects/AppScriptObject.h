@@ -84,6 +84,7 @@ public:
     Q_INVOKABLE QJSValue enumerateCameras();
     Q_INVOKABLE QJSValue createSessionRenderer(QVariantMap options);
     Q_INVOKABLE QJSValue createMediaEncoder(QVariantMap options);
+    Q_INVOKABLE void evaluate(bool reset = false);
     Q_INVOKABLE void loadSession(QString fileName);
     Q_INVOKABLE void closeSession();
     Q_INVOKABLE QJSValue processShader(QJSValue fileName, QString processType);

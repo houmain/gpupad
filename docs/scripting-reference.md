@@ -19,7 +19,8 @@ File paths returned by GPUpad are absolute native paths. Relative paths used by 
 
 ### Evaluation and time
 
-- `evaluation: EvaluationMode` - Current mode is `"Paused"`, `"Automatic"`, or `"Steady"`. Assigning `"Reset"` or `"Manual"` requests that evaluation, `"Finish"` finishes pending evaluation, and the three current-mode values change the mode. Other values have no effect.
+- `evaluation: String` - Read/write evaluation mode. Can be `"Paused|Automatic|Steady"`.
+- `evaluate(reset: Boolean = false): void` - Triggers a manual evaluation, or a reset evaluation when `reset` is `true`.
 - `frame: Number` - Read/write input frame index.
 - `time: Number` - Read/write input time in seconds.
 - `soundTime: Number` - Audio-generation time in seconds when sound is being generated, otherwise `time`.
