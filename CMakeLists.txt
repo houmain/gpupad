@@ -29,7 +29,18 @@ if(NOT VERSION AND GIT_FOUND)
                   OUTPUT_STRIP_TRAILING_WHITESPACE)
 endif()
 
+set(GPUPAD_VERSION_MAJOR 0)
+set(GPUPAD_VERSION_MINOR 0)
+set(GPUPAD_VERSION_PATCH 0)
+if(VERSION MATCHES "^v?([0-9]+)\\.([0-9]+)\\.([0-9]+)")
+    set(GPUPAD_VERSION_MAJOR ${CMAKE_MATCH_1})
+    set(GPUPAD_VERSION_MINOR ${CMAKE_MATCH_2})
+    set(GPUPAD_VERSION_PATCH ${CMAKE_MATCH_3})
+endif()
+
 configure_file("src/version.h.in" "${CMAKE_SOURCE_DIR}/src/_version.h")
+configure_file("src/resources.rc.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/resources.rc" @ONLY)
 
 # source files -------------------------
 set(SOURCES
@@ -283,7 +294,7 @@ if (MSVC)
     add_compile_options($<$<CONFIG:Release>:/GR->)
     add_link_options($<$<CONFIG:Release>:/LTCG>)
     
-    set(HEADERS ${HEADERS} src/resources.rc src/qt6.natvis)
+    set(HEADERS ${HEADERS} ${CMAKE_CURRENT_BINARY_DIR}/resources.rc src/qt6.natvis)
     
     # build binaries in bin directory
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/Debug/bin)
@@ -933,12 +944,9 @@ set(CPACK_COMPONENT_APPLICATION_REQUIRED TRUE)
 # added because of KTX (which has a dev and a library component)
 set(CPACK_COMPONENTS_ALL Application Samples Themes Actions)
 
-if(VERSION MATCHES "^[0-9]+\.[0-9]+\.[0-9]+")
-    string(REGEX MATCHALL "[0-9]+" VERSION_LIST "${VERSION}")
-    list(GET VERSION_LIST 0 CPACK_PACKAGE_VERSION_MAJOR)
-    list(GET VERSION_LIST 1 CPACK_PACKAGE_VERSION_MINOR)
-    list(GET VERSION_LIST 2 CPACK_PACKAGE_VERSION_PATCH)
-endif()
+set(CPACK_PACKAGE_VERSION_MAJOR ${GPUPAD_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${GPUPAD_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${GPUPAD_VERSION_PATCH})
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(CPACK_GENERATOR TGZ)

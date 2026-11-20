@@ -1,0 +1,32 @@
+IDI_ICON ICON "@CMAKE_CURRENT_SOURCE_DIR@/src/images/icon.ico"
+
+#include <winver.h>
+
+1 VERSIONINFO
+FILEVERSION @GPUPAD_VERSION_MAJOR@,@GPUPAD_VERSION_MINOR@,@GPUPAD_VERSION_PATCH@,0
+PRODUCTVERSION @GPUPAD_VERSION_MAJOR@,@GPUPAD_VERSION_MINOR@,@GPUPAD_VERSION_PATCH@,0
+FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
+FILEFLAGS 0
+FILEOS VOS_NT_WINDOWS32
+FILETYPE VFT_APP
+FILESUBTYPE VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName", "\0"
+            VALUE "FileDescription", "GPUpad\0"
+            VALUE "FileVersion", "@GPUPAD_VERSION_MAJOR@.@GPUPAD_VERSION_MINOR@.@GPUPAD_VERSION_PATCH@.0\0"
+            VALUE "InternalName", "gpupad\0"
+            VALUE "OriginalFilename", "gpupad.exe\0"
+            VALUE "ProductName", "GPUpad\0"
+            VALUE "ProductVersion", "@GPUPAD_VERSION_MAJOR@.@GPUPAD_VERSION_MINOR@.@GPUPAD_VERSION_PATCH@.0\0"
+            VALUE "LegalCopyright", "\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0409, 0x04B0
+    END
+END
