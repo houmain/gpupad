@@ -363,6 +363,12 @@ bool TextureEditor::save()
     return true;
 }
 
+bool TextureEditor::exportTo(const QString &fileName)
+{
+    auto texture = mTexture;
+    return mTextureItem->downloadImage(&texture) && texture.save(fileName);
+}
+
 void TextureEditor::replace(TextureData texture, bool emitFileChanged)
 {
     if (!mTextureItem || texture.isNull() || texture == mTexture) {

@@ -241,13 +241,21 @@ bool SourceEditor::load()
 
 bool SourceEditor::save()
 {
-    QFile file(fileName());
+    if (!exportTo(fileName()))
+        return false;
+
+    document()->setModified(false);
+    deduceSourceType();
+    return true;
+}
+
+bool SourceEditor::exportTo(const QString &fileName)
+{
+    QFile file(fileName);
     if (!file.open(QFile::WriteOnly | QFile::Text))
         return false;
 
     file.write(document()->toPlainText().toUtf8());
-    document()->setModified(false);
-    deduceSourceType();
     return true;
 }
 

@@ -26,6 +26,7 @@ public:
     void setFileName(QString fileName) override;
     bool load() override;
     bool save() override;
+    bool exportTo(const QString &fileName) override;
     void setModified() override;
     int tabifyGroup() const override { return 3; }
     QSize minimumSizeHint() const override { return mMinimumSizeHint; }

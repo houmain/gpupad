@@ -157,14 +157,22 @@ bool BinaryEditor::load()
 
 bool BinaryEditor::save()
 {
-    QSaveFile file(fileName());
+    if (!exportTo(fileName()))
+        return false;
+
+    setModified(false);
+    return true;
+}
+
+bool BinaryEditor::exportTo(const QString &fileName)
+{
+    QSaveFile file(fileName);
     if (!file.open(QFile::WriteOnly | QFile::Truncate))
         return false;
     file.write(mData);
     if (!file.commit())
         return false;
 
-    setModified(false);
     return true;
 }
 

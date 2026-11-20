@@ -28,6 +28,7 @@ public:
     void setFileName(QString fileName) override;
     bool load() override;
     bool save() override;
+    bool exportTo(const QString &fileName) override;
     int tabifyGroup() const override { return 0; }
     void setModified() override;
     void replace(QString source, bool emitFileChanged = true);

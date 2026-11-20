@@ -309,6 +309,12 @@ bool QmlView::save()
     return false;
 }
 
+bool QmlView::exportTo(const QString &fileName)
+{
+    Q_UNUSED(fileName)
+    return false;
+}
+
 void QmlView::setModified() { }
 
 QString QmlView::actionId() const

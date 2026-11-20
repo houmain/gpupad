@@ -35,6 +35,7 @@ public:
     void setRawFormat(RawFormat rawFormat);
     bool load() override;
     bool save() override;
+    bool exportTo(const QString &fileName) override;
     void copy();
     int tabifyGroup() const override;
     void setModified() override;
