@@ -186,6 +186,12 @@ void GLCall::execute(GLContext &context, Bindings &&bindings,
 {
     if (mProgram) {
         if (validateShaderTypes() && mProgram->bind(context)) {
+            // Creating a target attachment may bind its texture on the active
+            // texture unit. Do that before sampler bindings are installed.
+            if (mKind.draw && mTarget && !mTarget->bind(context)) {
+                mProgram->unbind(context);
+                return;
+            }
             setBindings(std::move(bindings));
             if (updateBindings(context, scriptEngine))
                 execute(context, messages, scriptEngine);
