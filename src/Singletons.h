@@ -1,6 +1,8 @@
 #pragma once
 
 #include <QString>
+#include <QMap>
+#include <QMutex>
 #include <memory>
 
 struct AdapterIdentity;
@@ -42,6 +44,8 @@ public:
     static InputState &inputState();
     static CustomActions &customActions();
     static ScriptEngine &defaultScriptEngine();
+    static void setScriptGlobal(const QString &name, const QString &value);
+    static QMap<QString, QString> scriptGlobals();
 
     explicit Singletons(QMainWindow *window);
     ~Singletons();
@@ -61,6 +65,8 @@ private:
     std::unique_ptr<InputState> mInputState;
     std::unique_ptr<CustomActions> mCustomActions;
     std::shared_ptr<ScriptEngine> mDefaultScriptEngine;
+    QMutex mScriptGlobalsMutex;
+    QMap<QString, QString> mScriptGlobals;
     std::shared_ptr<Renderer> mVKRenderer;
     std::shared_ptr<Renderer> mGLRenderer;
     std::shared_ptr<Renderer> mD3DRenderer;

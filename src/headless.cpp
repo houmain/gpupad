@@ -132,7 +132,7 @@ int runHeadless(QApplication &app)
 
                 const auto ident = arguments[++i];
                 const auto value = arguments[++i];
-                singletons.defaultScriptEngine().setGlobal(ident, value);
+                Singletons::setScriptGlobal(ident, value);
 
             } else if (argument == "--output") {
                 if (!checkParameterCount(2))

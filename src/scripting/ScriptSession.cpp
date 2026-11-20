@@ -4,14 +4,25 @@
 #include "objects/AppScriptObject.h"
 #include "Singletons.h"
 #include "FileDialog.h"
+#include <QThread>
 
 ScriptSession::ScriptSession(IScriptRenderSession *renderSession,
     QObject *parent)
     : QObject(parent)
     , mRenderSession(*renderSession)
 {
+    const auto globals = Singletons::scriptGlobals();
     mScriptEngine =
         ScriptEngine::make(QDir::current(), mRenderSession.renderThread());
+    const auto setGlobals = [engine = mScriptEngine, globals]() {
+        for (auto it = globals.cbegin(); it != globals.cend(); ++it)
+            engine->setGlobal(it.key(), it.value());
+    };
+    if (mScriptEngine->thread() == QThread::currentThread())
+        setGlobals();
+    else
+        QMetaObject::invokeMethod(mScriptEngine.get(), setGlobals,
+            Qt::BlockingQueuedConnection);
 }
 
 void ScriptSession::resetEngine()

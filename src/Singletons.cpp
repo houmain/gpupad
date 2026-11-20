@@ -195,6 +195,22 @@ ScriptEngine &Singletons::defaultScriptEngine()
     return *sInstance->mDefaultScriptEngine;
 }
 
+void Singletons::setScriptGlobal(const QString &name, const QString &value)
+{
+    Q_ASSERT(onMainThread());
+    {
+        const auto lock = QMutexLocker(&sInstance->mScriptGlobalsMutex);
+        sInstance->mScriptGlobals.insert(name, value);
+    }
+    sInstance->mDefaultScriptEngine->setGlobal(name, value);
+}
+
+QMap<QString, QString> Singletons::scriptGlobals()
+{
+    const auto lock = QMutexLocker(&sInstance->mScriptGlobalsMutex);
+    return sInstance->mScriptGlobals;
+}
+
 Singletons::Singletons(QMainWindow *window)
     : mSettings(std::make_unique<Settings>())
     , mFileCache(std::make_unique<FileCache>())
