@@ -37,11 +37,12 @@ Q_SIGNALS:
 protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
     void selectionChanged(const QItemSelection &selected,
         const QItemSelection &deselected) override;
     void focusInEvent(QFocusEvent *event) override;
     void focusOutEvent(QFocusEvent *event) override;
-    void dropEvent(QDropEvent *event) override;
+    void rowsInserted(const QModelIndex &parent, int start, int end) override;
 
 private:
     void cut();
@@ -54,6 +55,7 @@ private:
     void hideComponentContent(const QModelIndex &index);
     void renameCurrentItem();
     bool canPaste() const;
+    void handleItemCollapsed(const QModelIndex &index);
     void handleItemActivated(const QModelIndex &index);
     void selectSession();
 

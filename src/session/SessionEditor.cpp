@@ -35,6 +35,8 @@ SessionEditor::SessionEditor(QWidget *parent)
 
     connect(this, &QTreeView::activated, this,
         &SessionEditor::handleItemActivated);
+    connect(this, &QTreeView::collapsed, this,
+        &SessionEditor::handleItemCollapsed);
     connect(this, &QTreeView::customContextMenuRequested, this,
         &SessionEditor::openContextMenu);
     connect(&mModel, &SessionModel::rowsInserted, this,
@@ -239,6 +241,16 @@ void SessionEditor::wheelEvent(QWheelEvent *event)
     QTreeView::wheelEvent(event);
 }
 
+void SessionEditor::keyPressEvent(QKeyEvent *event)
+{
+    // prevent collapsing session root
+    if (event->key() == Qt::Key_Left && mModel.item<Session>(currentIndex())) {
+        event->accept();
+        return;
+    }
+    QTreeView::keyPressEvent(event);
+}
+
 void SessionEditor::selectionChanged(const QItemSelection &selected,
     const QItemSelection &deselected)
 {
@@ -270,12 +282,13 @@ void SessionEditor::focusOutEvent(QFocusEvent *event)
     Q_EMIT focusChanged(false);
 }
 
-void SessionEditor::dropEvent(QDropEvent *event)
+void SessionEditor::rowsInserted(const QModelIndex &parent, int start, int end)
 {
-    QTreeView::dropEvent(event);
+    QTreeView::rowsInserted(parent, start, end);
 
     // ensure Session stays expanded
-    setExpanded(mModel.sessionItemIndex(), true);
+    if (mModel.item<Session>(parent))
+        expand(parent);
 }
 
 bool SessionEditor::isModified() const
@@ -500,6 +513,12 @@ void SessionEditor::activateFirstTextureItem()
     });
     if (index.isValid())
         Q_EMIT itemActivated(index);
+}
+
+void SessionEditor::handleItemCollapsed(const QModelIndex &index)
+{
+    if (mModel.item<Session>(index))
+        expand(index);
 }
 
 void SessionEditor::handleItemActivated(const QModelIndex &index)
