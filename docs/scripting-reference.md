@@ -36,7 +36,6 @@ File paths returned by GPUpad are absolute native paths. Relative paths used by 
 
 - `currentEditor: Editor?` - Current editor, or `undefined` when none is active.
 - `openEditor(fileName: String): Editor?` - Opens or retrieves an editor. `.qml` files open as QML views. The Item equivalent is `item.openEditor()`.
-- `saveEditor(fileName: String): Boolean` - Saves an already open editor and returns whether it succeeded.
 - `mouse: Mouse` - Mouse state associated with the active editor.
 - `keyboard: Keyboard` - Keyboard state associated with the active editor.
 - `palette: Palette` - Current application colors as `#rrggbb` strings: `alternateBase`, `base`, `text`, `window`, `windowText`, `button`, and `buttonText`.
@@ -217,6 +216,10 @@ For a Texture, input is a flat, interleaved component array in format order (`R`
 - `fileName: String` - Absolute backing filename.
 - `title: String` - Display title. Assignment changes the window title only for a QML view opened from a main-thread script; `&` and `...` are removed.
 - `viewportSize: [width, height]` - Current editor viewport size. Reading it marks the Script as dependent on viewport-size changes.
+- `save(): Boolean` - Saves the editor to its `fileName`. Returns `false` for an untitled editor or when saving fails.
+- `exportTo(fileName: String): Boolean` - Writes the editor contents to another file without changing its backing filename. The filename extension selects the output format.
+- `reload(): Boolean` - Reloads the backing file, discarding unsaved editor contents. Returns whether reloading succeeded; untitled editors cannot be reloaded.
+- `close(): Boolean` - Closes this editor without prompting.
 
 ## Mouse
 

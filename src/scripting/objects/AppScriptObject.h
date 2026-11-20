@@ -67,7 +67,6 @@ public:
 
     Q_INVOKABLE bool isUntitled(QString fileName);
     Q_INVOKABLE QString getFileTitle(QString fileName);
-    Q_INVOKABLE QJSValue saveEditor(QString fileName);
     Q_INVOKABLE QJSValue openFileDialog(QString pattern = "");
     Q_INVOKABLE QJSValue saveFileDialog(QString pattern = "");
     Q_INVOKABLE QJSValue loadLibrary(QString fileName);
@@ -127,6 +126,7 @@ public:
         QString processType);
 
     const QDir &basePath() const { return mBasePath; }
+    QString getAbsolutePath(const QString &fileName) const;
     void deregisterEditorScriptObject(EditorScriptObject *object);
     void update();
     bool usesMouseState() const;
@@ -167,7 +167,6 @@ private:
     void handleEvaluationModeChanged(EvaluationMode evaluationMode);
     void handleFrameChanged(int frame);
     void handleTimeChanged(double time);
-    QString getAbsolutePath(const QString &fileName) const;
     void dispatchToMainThread(const std::function<void()> &function);
     QJSValue enumerate(QString pattern, bool directories);
     QJSValue tryGetEditorObject(const QString &fileName);

@@ -541,19 +541,33 @@ void EditorManager::resetQmlViewsDependingOn(const QString &fileName)
 
 bool EditorManager::saveEditor()
 {
-    if (auto editor = currentEditor()) {
-        if (FileDialog::isUntitled(editor->fileName()))
-            return saveEditorAs();
+    return saveEditor(currentEditorFileName());
+}
 
-        Singletons::fileCache().handleEditorSave(editor->fileName());
-        if (!editor->save()) {
-            if (!showSavingFailedMessage(this, editor->fileName()))
-                return false;
-            return saveEditorAs();
-        }
+bool EditorManager::saveEditor(const QString &fileName, bool promptFileName)
+{
+    auto editor = getEditor(fileName);
+    if (!editor)
+        return false;
+
+    if (FileDialog::isUntitled(editor->fileName()))
+        return (promptFileName ? saveEditorAs() : false);
+
+    Singletons::fileCache().handleEditorSave(editor->fileName());
+    if (editor->save())
         return true;
-    }
+
+    if (promptFileName && showSavingFailedMessage(this, editor->fileName()))
+        return saveEditorAs();
     return false;
+}
+
+bool EditorManager::exportEditorTo(const QString &fileName,
+    const QString &targetFileName)
+{
+    auto editor = getEditor(fileName);
+    return editor && !FileDialog::isEmptyOrUntitled(targetFileName)
+        && editor->exportTo(targetFileName);
 }
 
 bool EditorManager::saveEditorAs()
@@ -603,24 +617,36 @@ bool EditorManager::saveAllEditors()
 
 bool EditorManager::reloadEditor()
 {
-    if (auto editor = currentEditor()) {
-        if (FileDialog::isUntitled(editor->fileName()))
-            return false;
+    return reloadEditor(currentEditorFileName());
+}
 
-        // do not purge when reloading qml view
-        if (mQmlViews.indexOf(static_cast<QmlView *>(editor)) < 0)
-            Singletons::fileCache().invalidateFile(editor->fileName());
+bool EditorManager::reloadEditor(const QString &fileName)
+{
+    auto editor = getEditor(fileName);
+    if (!editor || FileDialog::isUntitled(editor->fileName()))
+        return false;
 
-        return editor->load();
-    }
-    return false;
+    // do not purge when reloading qml view
+    if (!mQmlViews.contains(static_cast<QmlView *>(editor)))
+        Singletons::fileCache().invalidateFile(editor->fileName());
+
+    return editor->load();
 }
 
 bool EditorManager::closeEditor()
 {
-    if (!mCurrentDock || !promptSaveDock(mCurrentDock))
+    return closeEditor(currentEditorFileName());
+}
+
+bool EditorManager::closeEditor(const QString &fileName, bool promptSave)
+{
+    auto dock = findEditorDock(getEditor(fileName));
+    if (!dock)
         return false;
-    closeDock(mCurrentDock);
+    if (promptSave && !promptSaveDock(dock))
+        return false;
+
+    closeDock(dock);
     syncDockClosing();
     return true;
 }

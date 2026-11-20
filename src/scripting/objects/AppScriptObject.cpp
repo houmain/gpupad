@@ -364,17 +364,6 @@ QJSValue AppScriptObject::getEditorObject(const QString &fileName)
         .first->second;
 }
 
-QJSValue AppScriptObject::saveEditor(QString fileName)
-{
-    fileName = toNativeCanonicalAbsoluteFilePath(fileName);
-    auto saved = false;
-    dispatchToMainThread([&]() {
-        if (auto editor = Singletons::editorManager().getEditor(fileName))
-            saved = editor->save();
-    });
-    return saved;
-}
-
 QJSValue AppScriptObject::loadLibrary(QString fileName)
 {
     // only load each library once

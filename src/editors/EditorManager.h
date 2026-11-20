@@ -83,10 +83,14 @@ public:
     void renameEditors(const QString &prevFileName, const QString &fileName);
     void resetQmlViewsDependingOn(const QString &fileName);
     bool saveEditor();
+    bool saveEditor(const QString &fileName, bool promptFileName = true);
+    bool exportEditorTo(const QString &fileName, const QString &targetFileName);
     bool saveEditorAs();
     bool saveAllEditors();
     bool reloadEditor();
+    bool reloadEditor(const QString &fileName);
     bool closeEditor();
+    bool closeEditor(const QString &fileName, bool promptSave = true);
     bool promptSaveAllEditors();
     bool closeAllEditors(bool promptSave = true);
     QString getEditorObjectName(const IEditor *editor) const;

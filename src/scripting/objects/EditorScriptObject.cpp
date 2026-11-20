@@ -62,3 +62,26 @@ QJsonValue EditorScriptObject::viewportSize() const
     mViewportSizeWasRead = true;
     return QJsonArray({ mViewportSize.width(), mViewportSize.height() });
 }
+
+bool EditorScriptObject::save()
+{
+    return Singletons::editorManager().saveEditor(mFileName, false);
+}
+
+bool EditorScriptObject::exportTo(QString fileName)
+{
+    if (!onMainThread())
+        return false;
+    fileName = mAppScriptObject->getAbsolutePath(fileName);
+    return Singletons::editorManager().exportEditorTo(mFileName, fileName);
+}
+
+bool EditorScriptObject::reload()
+{
+    return Singletons::editorManager().reloadEditor(mFileName);
+}
+
+bool EditorScriptObject::close()
+{
+    return Singletons::editorManager().closeEditor(mFileName, false);
+}

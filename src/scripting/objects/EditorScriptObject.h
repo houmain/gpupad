@@ -28,6 +28,10 @@ public:
     void setTitle(QString title);
     QJsonValue viewportSize() const;
     bool viewportSizeWasRead() const { return mViewportSizeWasRead; }
+    Q_INVOKABLE bool save();
+    Q_INVOKABLE bool exportTo(QString fileName);
+    Q_INVOKABLE bool reload();
+    Q_INVOKABLE bool close();
 
 Q_SIGNALS:
     void fileNameChanged();
