@@ -116,6 +116,10 @@ bool VKCall::validateShaderTypes()
 void VKCall::execute(VKContext &context, Bindings &&bindings,
     MessageList &messages, ScriptEngine &scriptEngine)
 {
+    if (mKind.graph) {
+        messages.insert(mCall.id, MessageType::NotImplemented, "Work graphs");
+        return;
+    }
     if (mKind.trace && !context.features().rayTracingPipeline) {
         mMessages.insert(mCall.id, MessageType::RayTracingNotAvailable);
         return;
@@ -191,6 +195,7 @@ void VKCall::execute(VKContext &context, Bindings &&bindings,
     case Call::CallType::TraceRays:
         executeTraceRays(context, messages, scriptEngine);
         break;
+    case Call::CallType::DispatchGraph: break;
     case Call::CallType::ClearTexture:
         executeClearTexture(context, messages);
         break;

@@ -24,6 +24,7 @@ public:
 
     void setProgram(VKProgram *program);
     void setShaderTable(const ShaderTable *shaderTable);
+    void setInputBuffer(VKBuffer *, const Block &) { }
     void setTarget(VKTarget *target);
     void setVextexStream(VKStream *vertexStream);
     void setIndexBuffer(VKBuffer *indices, const Block &block);

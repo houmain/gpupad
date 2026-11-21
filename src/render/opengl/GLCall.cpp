@@ -184,6 +184,10 @@ void GLCall::setTextures(GLTexture *texture, GLTexture *fromTexture)
 void GLCall::execute(GLContext &context, Bindings &&bindings,
     MessageList &messages, ScriptEngine &scriptEngine)
 {
+    if (mKind.graph) {
+        messages.insert(mCall.id, MessageType::NotImplemented, "Work graphs");
+        return;
+    }
     if (mProgram) {
         if (validateShaderTypes() && mProgram->bind(context)) {
             // Creating a target attachment may bind its texture on the active
@@ -247,6 +251,7 @@ void GLCall::execute(GLContext &gl, MessageList &messages,
     case Call::CallType::TraceRays:
         messages.insert(mCall.id, MessageType::RayTracingNotAvailable);
         break;
+    case Call::CallType::DispatchGraph: break;
     case Call::CallType::ClearTexture: executeClearTexture(gl, messages); break;
     case Call::CallType::CopyTexture:  executeCopyTexture(gl, messages); break;
     case Call::CallType::ClearBuffer:  executeClearBuffer(gl, messages); break;

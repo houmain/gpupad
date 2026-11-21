@@ -1,0 +1,101 @@
+{
+  "type": "Session",
+  "id": 1,
+  "name": "Work Graphs",
+  "renderer": "Direct3D",
+  "shaderLanguage": "HLSL",
+  "shaderCompiler": "DXC",
+  "shaderCompilerSettings": {"shaderModel": "6.8"},
+  "items": [
+    {
+      "type": "Buffer",
+      "id": 2,
+      "name": "Input Records",
+      "items": [
+        {
+          "type": "Block",
+          "id": 3,
+          "name": "Records",
+          "offset": "0",
+          "rowCount": "4",
+          "items": [
+            {"type": "Field", "id": 4, "name": "id", "dataType": "Uint32", "count": 1},
+            {"type": "Field", "id": 5, "name": "value", "dataType": "Uint32", "count": 1}
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Buffer",
+      "id": 6,
+      "name": "Results",
+      "items": [
+        {
+          "type": "Block",
+          "id": 7,
+          "name": "Values",
+          "offset": "0",
+          "rowCount": "8",
+          "items": [
+            {"type": "Field", "id": 8, "name": "value", "dataType": "Uint32", "count": 1}
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Script",
+      "id": 9,
+      "name": "Generate Inputs",
+      "fileName": "generateInputs.js",
+      "executeOn": "ResetEvaluation"
+    },
+    {
+      "type": "Binding",
+      "id": 10,
+      "name": "Settings.singleRecord",
+      "bindingType": "Uniform",
+      "editor": "Expression",
+      "values": ["0"]
+    },
+    {
+      "type": "Binding",
+      "id": 11,
+      "name": "Results",
+      "bindingType": "Buffer",
+      "bufferId": 6
+    },
+    {
+      "type": "Program",
+      "id": 12,
+      "name": "Graph Program",
+      "items": [
+        {
+          "type": "Shader",
+          "id": 13,
+          "name": "Nodes",
+          "fileName": "node-library.hlsl",
+          "shaderType": "Node",
+          "entryPoint": "produce"
+        }
+      ]
+    },
+    {
+      "type": "Group",
+      "id": 14,
+      "name": "Dispatch",
+      "iterations": "1",
+      "items": [
+        {
+          "type": "Call",
+          "id": 15,
+          "name": "Dispatch Graph",
+          "checked": true,
+          "callType": "DispatchGraph",
+          "programId": 12,
+          "inputBufferBlockId": 3,
+          "executeOn": "EveryEvaluation"
+        }
+      ]
+    }
+  ]
+}

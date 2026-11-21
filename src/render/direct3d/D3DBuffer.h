@@ -15,6 +15,7 @@ public:
     const ID3D12Resource &resource() const { return *mResource.Get(); }
 
     void reload();
+    const QByteArray *cpuData();
     void initialize(D3DContext &context);
     void clear(D3DContext &context);
     void copy(D3DContext &context, D3DBuffer &source);

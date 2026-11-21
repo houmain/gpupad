@@ -22,10 +22,10 @@ CallProperties::CallProperties(PropertiesEditor *propertiesEditor)
     connect(mUi->primitiveType, &DataComboBox::currentDataChanged, this,
         &CallProperties::updateWidgets);
 
-    for (auto combobox :
-        { mUi->program, mUi->shaderTable, mUi->vertexStream, mUi->target, mUi->indexBufferBlock,
-            mUi->indirectBufferBlock, mUi->texture, mUi->fromTexture,
-            mUi->buffer, mUi->fromBuffer })
+    for (auto combobox : { mUi->program, mUi->shaderTable, mUi->vertexStream,
+             mUi->target, mUi->indexBufferBlock, mUi->indirectBufferBlock,
+             mUi->inputBufferBlock, mUi->texture, mUi->fromTexture, mUi->buffer,
+             mUi->fromBuffer })
         connect(combobox, &ReferenceComboBox::textRequired,
             [this](QVariant data) {
                 return mPropertiesEditor.getItemName(data.toInt());
@@ -41,7 +41,8 @@ CallProperties::CallProperties(PropertiesEditor *propertiesEditor)
     });
     connect(mUi->target, &ReferenceComboBox::listRequired,
         [this]() { return mPropertiesEditor.getItemIds(Item::Type::Target); });
-    for (auto block : { mUi->indexBufferBlock, mUi->indirectBufferBlock })
+    for (auto block : { mUi->indexBufferBlock, mUi->indirectBufferBlock,
+             mUi->inputBufferBlock })
         connect(block, &ReferenceComboBox::listRequired, [this]() {
             return mPropertiesEditor.getItemIds(Item::Type::Block);
         });
@@ -117,6 +118,8 @@ void CallProperties::addMappings(QDataWidgetMapper &mapper)
 
     mapper.addMapping(mUi->indirectBufferBlock,
         SessionModel::CallIndirectBufferBlockId);
+    mapper.addMapping(mUi->inputBufferBlock,
+        SessionModel::CallInputBufferBlockId);
     mapper.addMapping(mUi->drawCount, SessionModel::CallDrawCount);
 
     mapper.addMapping(mUi->workGroupsX, SessionModel::CallWorkGroupsX);
@@ -140,7 +143,7 @@ void CallProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelExecuteOn, mUi->executeOn,
         !kind.sound);
     setFormVisibility(mUi->formLayout, mUi->labelProgram, mUi->program,
-        kind.draw || kind.compute);
+        kind.draw || kind.compute || kind.graph);
     setFormVisibility(mUi->formLayout, mUi->labelShaderTable,
         mUi->shaderTable, kind.trace);
     setFormVisibility(mUi->formLayout, mUi->labelTarget, mUi->target,
@@ -153,6 +156,8 @@ void CallProperties::updateWidgets()
         mUi->primitiveType, kind.draw && !kind.mesh);
     setFormVisibility(mUi->formLayout, mUi->labelIndirectBufferBlock,
         mUi->indirectBufferBlock, kind.indirect);
+    setFormVisibility(mUi->formLayout, mUi->labelInputBufferBlock,
+        mUi->inputBufferBlock, kind.graph);
 
     setFormVisibility(mUi->formLayout, mUi->labelPatchVertices,
         mUi->patchVertices,

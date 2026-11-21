@@ -23,6 +23,27 @@ bool D3DShader::compile(PrintfBase &printf)
     if (mBinary)
         return true;
 
+    if (mType == Shader::ShaderType::Node) {
+        if (mSession.shaderCompiler != Session::ShaderCompiler::DXC
+            || mSession.shaderLanguage != Session::ShaderLanguage::HLSL) {
+            mMessages.insert(mItemId, MessageType::ShaderError,
+                "Node libraries require HLSL and DXC");
+            return false;
+        }
+        const auto sources = getPatchedSourcesHLSL(printf);
+        if (sources.isEmpty() || !compile(mSession, sources.join("\n")))
+            return false;
+        mReflection = generateNodeReflection(mLibraryReflection.Get());
+        if (!mReflection) {
+            mMessages.insert(mItemId, MessageType::ShaderError,
+                "Cannot represent node library resource bindings");
+            mBinary.Reset();
+            mLibraryReflection.Reset();
+            return false;
+        }
+        return true;
+    }
+
     if (mSession.shaderCompiler == Session::ShaderCompiler::glslang) {
         const auto spirv = compileSpirv(printf);
         if (spirv.empty())
@@ -79,7 +100,9 @@ bool D3DShader::compile(const Session &session, const QString &source)
         .itemId = mItemId,
     };
     return ShaderCompiler::compileDXIL(session, input, mMessages, mBinary,
-        mD3DReflection);
+        mD3DReflection,
+        mType == Shader::ShaderType::Node ? std::addressof(mLibraryReflection)
+                                          : nullptr);
 }
 
 QStringList D3DShader::preprocessorDefinitions() const

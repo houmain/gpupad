@@ -29,6 +29,7 @@ public:
     void setVextexStream(D3DStream *vertexStream);
     void setIndexBuffer(D3DBuffer *indices, const Block &block);
     void setIndirectBuffer(D3DBuffer *commands, const Block &block);
+    void setInputBuffer(D3DBuffer *buffer, const Block &block);
     void setBuffers(D3DBuffer *buffer, D3DBuffer *fromBuffer);
     void setTextures(D3DTexture *texture, D3DTexture *fromTexture);
     void execute(D3DContext &context, Bindings &&bindings,
@@ -40,6 +41,8 @@ private:
     void executeDraw(D3DContext &context, MessageList &messages,
         ScriptEngine &scriptEngine);
     void executeCompute(D3DContext &context, MessageList &messages,
+        ScriptEngine &scriptEngine);
+    void executeGraph(D3DContext &context, MessageList &messages,
         ScriptEngine &scriptEngine);
     void executeTraceRays(D3DContext &context, MessageList &messages,
         ScriptEngine &scriptEngine);
@@ -77,6 +80,11 @@ private:
     D3DBuffer *mIndirectBuffer{ };
     int mIndirectStride{ };
     ComPtr<ID3D12CommandSignature> mIndirectCommandSignature;
+    D3DBuffer *mInputBuffer{};
+    QString mInputOffset;
+    QString mInputRowCount;
+    int mInputStride{};
+    QByteArray mInputRecords;
 
     QSet<ItemId> mUsedItems;
     std::unique_ptr<D3DPipeline> mPipeline;

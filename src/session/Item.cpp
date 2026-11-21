@@ -137,6 +137,7 @@ CallKind getKind(const Call &call)
         break;
     case Call::CallType::ComputeSound: kind.compute = kind.sound = true; break;
     case Call::CallType::TraceRays:    kind.trace = true; break;
+    case Call::CallType::DispatchGraph: kind.graph = true; break;
     default:                           break;
     }
 
@@ -179,6 +180,8 @@ bool callTypeSupportsShaderType(Call::CallType callType,
         return (shaderType == Shader::ShaderType::Compute);
 
     case Call::CallType::TraceRays: return isRayTracingShaderType(shaderType);
+    case Call::CallType::DispatchGraph:
+        return shaderType == Shader::ShaderType::Node;
     default:                        return false;
     }
 }

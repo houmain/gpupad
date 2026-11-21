@@ -83,6 +83,20 @@ void D3DCall::setIndirectBuffer(D3DBuffer *commands, const Block &block)
     mIndirectOffset = block.offset;
 }
 
+void D3DCall::setInputBuffer(D3DBuffer *buffer, const Block &block)
+{
+    if (!mKind.graph)
+        return;
+    mInputBuffer = buffer;
+    mInputOffset = block.offset;
+    mInputRowCount = block.rowCount;
+    mInputStride = getBlockStride(block);
+    mUsedItems += block.id;
+    mUsedItems += block.parent->id;
+    for (const auto field : block.items)
+        mUsedItems += field->id;
+}
+
 void D3DCall::setBuffers(D3DBuffer *buffer, D3DBuffer *fromBuffer)
 {
     mBuffer = buffer;
@@ -110,7 +124,7 @@ bool D3DCall::validateShaderTypes()
 void D3DCall::execute(D3DContext &context, Bindings &&bindings,
     MessageList &messages, ScriptEngine &scriptEngine)
 {
-    if (mKind.draw || mKind.compute || mKind.trace) {
+    if (mKind.draw || mKind.compute || mKind.trace || mKind.graph) {
         if (mKind.trace && !mShaderTable) {
             messages.insert(mCall.id, MessageType::ScriptError,
                 "No shader table set");
@@ -171,6 +185,9 @@ void D3DCall::execute(D3DContext &context, Bindings &&bindings,
         break;
     case Call::CallType::TraceRays:
         executeTraceRays(context, messages, scriptEngine);
+        break;
+    case Call::CallType::DispatchGraph:
+        executeGraph(context, messages, scriptEngine);
         break;
     case Call::CallType::ClearTexture:
         executeClearTexture(context, messages);
@@ -393,6 +410,34 @@ void D3DCall::executeCompute(D3DContext &context, MessageList &messages,
             indirectOffset, nullptr, 0);
     }
     mPipeline->markBufferWrites();
+    mUsedItems += mPipeline->usedItems();
+}
+
+void D3DCall::executeGraph(D3DContext &context, MessageList &messages,
+    ScriptEngine &scriptEngine)
+{
+    if (!mInputBuffer) {
+        messages.insert(mCall.id, MessageType::BufferNotAssigned);
+        return;
+    }
+    const auto offset = scriptEngine.evaluateUInt(mInputOffset, mCall.id);
+    const auto count = scriptEngine.evaluateUInt(mInputRowCount, mCall.id);
+    const auto size = static_cast<UINT64>(count) * mInputStride;
+    const auto data = mInputBuffer->cpuData();
+    if (!data)
+        return;
+    if (mInputStride <= 0 || offset > data->size()
+        || size > static_cast<UINT64>(data->size() - offset)) {
+        messages.insert(mCall.id, MessageType::ScriptError,
+            "Invalid work graph input block");
+        return;
+    }
+    mInputRecords = data->mid(offset, static_cast<qsizetype>(size));
+    if (!mPipeline || !mPipeline->createWorkGraph(context))
+        return;
+    if (mPipeline->dispatchGraph(context, scriptEngine, count,
+            static_cast<UINT>(mInputStride), mInputRecords.constData()))
+        mPipeline->markBufferWrites();
     mUsedItems += mPipeline->usedItems();
 }
 

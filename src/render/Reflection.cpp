@@ -139,6 +139,7 @@ SpvReflectShaderStageFlagBits getShaderStage(Shader::ShaderType shaderType)
     using enum Shader::ShaderType;
     switch (shaderType) {
     case Includable:  break;
+    case Node:        break;
     case Vertex:      return SPV_REFLECT_SHADER_STAGE_VERTEX_BIT;
     case Fragment:    return SPV_REFLECT_SHADER_STAGE_FRAGMENT_BIT;
     case Geometry:    return SPV_REFLECT_SHADER_STAGE_GEOMETRY_BIT;

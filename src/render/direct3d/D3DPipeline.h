@@ -24,9 +24,12 @@ public:
     bool createMesh(D3DContext &context, Call::PrimitiveType primitiveType,
         D3DTarget *target);
     bool createCompute(D3DContext &context);
+    bool createWorkGraph(D3DContext &context);
     bool createRayTracing(D3DContext &context);
     bool bindGraphics(D3DContext &context, ScriptEngine &scriptEngine);
     bool bindCompute(D3DContext &context, ScriptEngine &scriptEngine);
+    bool dispatchGraph(D3DContext &context, ScriptEngine &scriptEngine,
+        UINT count, UINT stride, const void *records);
     bool bindRayTracing(D3DContext &context, ScriptEngine &scriptEngine);
     void dispatchRays(D3DContext &context, UINT width, UINT height, UINT depth);
     void bindVertexBuffers(D3DContext &context);
@@ -122,6 +125,13 @@ private:
     bool mCreated{ };
     ComPtr<ID3D12PipelineState> mPipelineState;
     ComPtr<ID3D12StateObject> mRayTracingStateObject;
+    ComPtr<ID3D12StateObject> mWorkGraphStateObject;
+    ComPtr<ID3D12Resource> mWorkGraphBackingMemory;
+    D3D12_PROGRAM_IDENTIFIER mWorkGraphIdentifier{};
+    UINT64 mWorkGraphBackingSize{};
+    UINT mWorkGraphEntryIndex{};
+    UINT mWorkGraphRecordSize{};
+    bool mWorkGraphInitialized{};
     ComPtr<ID3D12Resource> mShaderBindingTable;
     D3D12_GPU_VIRTUAL_ADDRESS_RANGE mRayGenerationShaderRecord{ };
     D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE mMissShaderTable{ };
