@@ -145,6 +145,11 @@ void D3DRenderSession::render()
         mPrevCommandQueue.reset();
     }
 
+    // The allocator retains the memory used to record command lists until it
+    // is reset. render() waits for the previous frame's fence below, so it is
+    // safe to reclaim that memory before recording the next frame.
+    if (context.frameIndex)
+        AssertIfFailed(mCommandAllocator->Reset());
     AssertIfFailed(
         context.graphicsCommandList->Reset(mCommandAllocator.Get(), nullptr));
     ++context.frameIndex;
