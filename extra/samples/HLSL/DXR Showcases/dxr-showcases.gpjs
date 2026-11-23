@@ -1,0 +1,1787 @@
+{
+  "type": "Session",
+  "id": 1,
+  "name": "DXR Showcases",
+  "renderer": "Direct3D",
+  "shaderLanguage": "HLSL",
+  "shaderCompiler": "DXC",
+  "shaderCompilerSettings": {
+    "shaderModel": "6.5"
+  },
+  "items": [
+    {
+      "type": "Group",
+      "id": 201,
+      "name": "Settings",
+      "inlineScope": true,
+      "iterations": "1",
+      "items": [
+        {
+          "type": "Binding",
+          "id": 2,
+          "name": "Showcase",
+          "bindingType": "Uniform",
+          "values": [
+            "0"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 3,
+          "name": "FixedTime",
+          "bindingType": "Uniform",
+          "values": [
+            "-1"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 5,
+          "name": "Indirect",
+          "bindingType": "Uniform",
+          "values": [
+            "1"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 6,
+          "name": "MaskView",
+          "bindingType": "Uniform",
+          "values": [
+            "0"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 7,
+          "name": "ActiveShowcase",
+          "bindingType": "Uniform",
+          "values": [
+            "typeof rcShowcase === \"undefined\" ? Showcase : Number(rcShowcase)"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 8,
+          "name": "PlaybackTime",
+          "bindingType": "Uniform",
+          "values": [
+            "FixedTime < 0 ? app.time : FixedTime"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 9,
+          "name": "LatticeProbe",
+          "bindingType": "Uniform",
+          "values": [
+            "ActiveShowcase === 0 && typeof latticeFixture !== \"undefined\" && Number(latticeFixture) === 1 ? 1 : 0"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 10,
+          "name": "LatticeCapture",
+          "bindingType": "Uniform",
+          "values": [
+            "typeof latticeCapture !== \"undefined\" && Number(latticeCapture) === 1 ? 1 : 0"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 11,
+          "name": "FixtureMode",
+          "bindingType": "Uniform",
+          "values": [
+            "ActiveShowcase === 2 && typeof fieldFixture !== \"undefined\" ? Number(fieldFixture) : 0"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 12,
+          "name": "ActiveIndirect",
+          "bindingType": "Uniform",
+          "values": [
+            "typeof fieldIndirect === \"undefined\" ? Indirect : Number(fieldIndirect)"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 13,
+          "name": "MaskMode",
+          "bindingType": "Uniform",
+          "values": [
+            "typeof fieldMask === \"undefined\" ? 0 : Number(fieldMask)"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 14,
+          "name": "FrameWidth",
+          "bindingType": "Uniform",
+          "values": [
+            "LatticeProbe ? 5 : (FixtureMode ? 17 : 960)"
+          ]
+        },
+        {
+          "type": "Binding",
+          "id": 15,
+          "name": "FrameHeight",
+          "bindingType": "Uniform",
+          "values": [
+            "LatticeProbe ? 1 : (FixtureMode ? 9 : 540)"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Texture",
+      "id": 16,
+      "name": "Output Image",
+      "target": "Target2D",
+      "format": "RGBA8_UNorm",
+      "width": "960",
+      "height": "540",
+      "flipVertically": false
+    },
+    {
+      "type": "Group",
+      "id": 202,
+      "name": "Shared Scene",
+      "inlineScope": true,
+      "iterations": "1",
+      "items": [
+        {
+          "type": "Buffer",
+          "id": 17,
+          "name": "Rest Vertices",
+          "items": [
+            {
+              "type": "Block",
+              "id": 18,
+              "name": "Data",
+              "offset": "0",
+              "rowCount": "1152",
+              "items": [
+                {
+                  "type": "Field",
+                  "id": 19,
+                  "name": "Position",
+                  "dataType": "Float",
+                  "count": 3,
+                  "padding": 0
+                },
+                {
+                  "type": "Field",
+                  "id": 20,
+                  "name": "Normal",
+                  "dataType": "Float",
+                  "count": 3,
+                  "padding": 0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Buffer",
+          "id": 21,
+          "name": "Indices",
+          "items": [
+            {
+              "type": "Block",
+              "id": 22,
+              "name": "Data",
+              "offset": "0",
+              "rowCount": "6912",
+              "items": [
+                {
+                  "type": "Field",
+                  "id": 23,
+                  "name": "Index",
+                  "dataType": "Uint32",
+                  "count": 1,
+                  "padding": 0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "GeometrySet",
+          "id": 24,
+          "name": "Static Trefoil",
+          "items": [
+            {
+              "type": "Geometry",
+              "id": 25,
+              "name": "Trefoil Triangles",
+              "geometryType": "Triangles",
+              "vertexBufferBlockId": 18,
+              "indexBufferBlockId": 22,
+              "count": "2304",
+              "offset": "0",
+              "opaque": true
+            }
+          ]
+        },
+        {
+          "type": "Script",
+          "id": 26,
+          "name": "Generate Scene",
+          "fileName": "generateScene.js",
+          "executeOn": "ResetEvaluation"
+        },
+        {
+          "type": "Binding",
+          "id": 27,
+          "name": "OutputImage",
+          "bindingType": "Image",
+          "textureId": 16,
+          "level": 0,
+          "layer": -1,
+          "imageFormat": "Internal"
+        },
+        {
+          "type": "Binding",
+          "id": 28,
+          "name": "Vertices",
+          "bindingType": "Buffer",
+          "bufferId": 17
+        },
+        {
+          "type": "Binding",
+          "id": 29,
+          "name": "Indices",
+          "bindingType": "Buffer",
+          "bufferId": 21
+        }
+      ]
+    },
+    {
+      "type": "Group",
+      "id": 30,
+      "name": "Infinity Lattice",
+      "inlineScope": false,
+      "iterations": "ActiveShowcase === 0 ? 1 : 0",
+      "items": [
+        {
+          "type": "Group",
+          "id": 203,
+          "name": "Scene & Buffers",
+          "inlineScope": true,
+          "iterations": "1",
+          "items": [
+            {
+              "type": "Buffer",
+              "id": 31,
+              "name": "Material Indices",
+              "items": [
+                {
+                  "type": "Block",
+                  "id": 32,
+                  "name": "Data",
+                  "offset": "0",
+                  "rowCount": "256",
+                  "items": [
+                    {
+                      "type": "Field",
+                      "id": 33,
+                      "name": "Slot",
+                      "dataType": "Uint32",
+                      "count": 1,
+                      "padding": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "Buffer",
+              "id": 34,
+              "name": "Metal 0",
+              "items": [
+                {
+                  "type": "Block",
+                  "id": 35,
+                  "name": "Data",
+                  "offset": "0",
+                  "rowCount": "2",
+                  "items": [
+                    {
+                      "type": "Field",
+                      "id": 36,
+                      "name": "Value",
+                      "dataType": "Float",
+                      "count": 4,
+                      "padding": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "Buffer",
+              "id": 37,
+              "name": "Metal 1",
+              "items": [
+                {
+                  "type": "Block",
+                  "id": 38,
+                  "name": "Data",
+                  "offset": "0",
+                  "rowCount": "2",
+                  "items": [
+                    {
+                      "type": "Field",
+                      "id": 39,
+                      "name": "Value",
+                      "dataType": "Float",
+                      "count": 4,
+                      "padding": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "Buffer",
+              "id": 40,
+              "name": "Metal 2",
+              "items": [
+                {
+                  "type": "Block",
+                  "id": 41,
+                  "name": "Data",
+                  "offset": "0",
+                  "rowCount": "2",
+                  "items": [
+                    {
+                      "type": "Field",
+                      "id": 42,
+                      "name": "Value",
+                      "dataType": "Float",
+                      "count": 4,
+                      "padding": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "Buffer",
+              "id": 43,
+              "name": "Metal 3",
+              "items": [
+                {
+                  "type": "Block",
+                  "id": 44,
+                  "name": "Data",
+                  "offset": "0",
+                  "rowCount": "2",
+                  "items": [
+                    {
+                      "type": "Field",
+                      "id": 45,
+                      "name": "Value",
+                      "dataType": "Float",
+                      "count": 4,
+                      "padding": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "Buffer",
+              "id": 46,
+              "name": "Probe Results",
+              "items": [
+                {
+                  "type": "Block",
+                  "id": 47,
+                  "name": "Data",
+                  "offset": "0",
+                  "rowCount": "5",
+                  "items": [
+                    {
+                      "type": "Field",
+                      "id": 48,
+                      "name": "Probe",
+                      "dataType": "Uint32",
+                      "count": 4,
+                      "padding": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "Buffer",
+              "id": 49,
+              "name": "Image Capture",
+              "items": [
+                {
+                  "type": "Block",
+                  "id": 50,
+                  "name": "Data",
+                  "offset": "0",
+                  "rowCount": "LatticeCapture ? FrameWidth * FrameHeight : 1",
+                  "items": [
+                    {
+                      "type": "Field",
+                      "id": 51,
+                      "name": "RGBA",
+                      "dataType": "Uint32",
+                      "count": 1,
+                      "padding": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "AccelerationStructure",
+              "id": 52,
+              "name": "Lattice AS"
+            }
+          ]
+        },
+        {
+          "type": "Group",
+          "id": 204,
+          "name": "Trace",
+          "inlineScope": true,
+          "iterations": "1",
+          "items": [
+            {
+              "type": "Binding",
+              "id": 53,
+              "name": "Scene",
+              "bindingType": "AccelerationStructure",
+              "accelerationStructureId": 52
+            },
+            {
+              "type": "Binding",
+              "id": 54,
+              "name": "Settings.probeMode",
+              "bindingType": "Uniform",
+              "values": [
+                "LatticeProbe"
+              ]
+            },
+            {
+              "type": "Binding",
+              "id": 55,
+              "name": "Settings.captureMode",
+              "bindingType": "Uniform",
+              "values": [
+                "LatticeCapture"
+              ]
+            },
+            {
+              "type": "Binding",
+              "id": 56,
+              "name": "MaterialIndices",
+              "bindingType": "Buffer",
+              "bufferId": 31
+            },
+            {
+              "type": "Binding",
+              "id": 57,
+              "name": "Probes",
+              "bindingType": "Buffer",
+              "bufferId": 46
+            },
+            {
+              "type": "Binding",
+              "id": 58,
+              "name": "Capture",
+              "bindingType": "Buffer",
+              "bufferId": 49
+            },
+            {
+              "type": "Binding",
+              "id": 59,
+              "name": "Materials[0]",
+              "bindingType": "Buffer",
+              "bufferId": 34
+            },
+            {
+              "type": "Binding",
+              "id": 60,
+              "name": "Materials[1]",
+              "bindingType": "Buffer",
+              "bufferId": 37
+            },
+            {
+              "type": "Binding",
+              "id": 61,
+              "name": "Materials[2]",
+              "bindingType": "Buffer",
+              "bufferId": 40
+            },
+            {
+              "type": "Binding",
+              "id": 62,
+              "name": "Materials[3]",
+              "bindingType": "Buffer",
+              "bufferId": 43
+            },
+            {
+              "type": "Program",
+              "id": 63,
+              "name": "Ray Program",
+              "items": [
+                {
+                  "type": "Shader",
+                  "id": 64,
+                  "name": "RayGeneration",
+                  "fileName": "lattice/RayGeneration.hlsl",
+                  "shaderType": "RayGeneration",
+                  "entryPoint": "RayGeneration"
+                },
+                {
+                  "type": "Shader",
+                  "id": 65,
+                  "name": "RayMiss",
+                  "fileName": "lattice/RayMiss.hlsl",
+                  "shaderType": "RayMiss",
+                  "entryPoint": "RayMiss"
+                },
+                {
+                  "type": "Shader",
+                  "id": 66,
+                  "name": "RayClosestHit",
+                  "fileName": "lattice/RayClosestHit.hlsl",
+                  "shaderType": "RayClosestHit",
+                  "entryPoint": "RayClosestHit"
+                }
+              ]
+            },
+            {
+              "type": "ShaderTable",
+              "id": 67,
+              "name": "Shader Table",
+              "programId": 63,
+              "items": [
+                {
+                  "type": "Record",
+                  "id": 68,
+                  "name": "Ray Generation",
+                  "recordType": "RayGeneration",
+                  "shaderId": 64
+                },
+                {
+                  "type": "Record",
+                  "id": 69,
+                  "name": "Miss",
+                  "recordType": "Miss",
+                  "shaderId": 65
+                },
+                {
+                  "type": "Record",
+                  "id": 70,
+                  "name": "Metal Response 10",
+                  "recordType": "Hit",
+                  "closestHitShaderId": 66,
+                  "items": [
+                    {
+                      "type": "Binding",
+                      "id": 71,
+                      "name": "HitRecordData",
+                      "bindingType": "Uniform",
+                      "values": [
+                        "10"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "Record",
+                  "id": 72,
+                  "name": "Metal Response 20",
+                  "recordType": "Hit",
+                  "closestHitShaderId": 66,
+                  "items": [
+                    {
+                      "type": "Binding",
+                      "id": 73,
+                      "name": "HitRecordData",
+                      "bindingType": "Uniform",
+                      "values": [
+                        "20"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "Record",
+                  "id": 74,
+                  "name": "Metal Response 30",
+                  "recordType": "Hit",
+                  "closestHitShaderId": 66,
+                  "items": [
+                    {
+                      "type": "Binding",
+                      "id": 75,
+                      "name": "HitRecordData",
+                      "bindingType": "Uniform",
+                      "values": [
+                        "30"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "Record",
+                  "id": 76,
+                  "name": "Metal Response 40",
+                  "recordType": "Hit",
+                  "closestHitShaderId": 66,
+                  "items": [
+                    {
+                      "type": "Binding",
+                      "id": 77,
+                      "name": "HitRecordData",
+                      "bindingType": "Uniform",
+                      "values": [
+                        "40"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "Call",
+              "id": 78,
+              "name": "Trace Lattice",
+              "callType": "TraceRays",
+              "checked": true,
+              "shaderTableId": 67,
+              "workGroupsX": "FrameWidth",
+              "workGroupsY": "FrameHeight",
+              "workGroupsZ": "1",
+              "executeOn": "EveryEvaluation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Group",
+      "id": 79,
+      "name": "Living Geometry",
+      "inlineScope": false,
+      "iterations": "ActiveShowcase === 1 ? 1 : 0",
+      "items": [
+        {
+          "type": "Group",
+          "id": 205,
+          "name": "Scene & Buffers",
+          "inlineScope": true,
+          "iterations": "1",
+          "items": [
+            {
+              "type": "Texture",
+              "id": 80,
+              "name": "Surface Position",
+              "target": "Target2D",
+              "format": "RGBA32F",
+              "width": "960",
+              "height": "540",
+              "flipVertically": false
+            },
+            {
+              "type": "Texture",
+              "id": 81,
+              "name": "Surface Normal",
+              "target": "Target2D",
+              "format": "RGBA16F",
+              "width": "960",
+              "height": "540",
+              "flipVertically": false
+            },
+            {
+              "type": "Texture",
+              "id": 82,
+              "name": "Linear Reflection",
+              "target": "Target2D",
+              "format": "RGBA16F",
+              "width": "960",
+              "height": "540",
+              "flipVertically": false
+            },
+            {
+              "type": "Buffer",
+              "id": 83,
+              "name": "Deformed Vertices",
+              "items": [
+                {
+                  "type": "Block",
+                  "id": 84,
+                  "name": "Data",
+                  "offset": "0",
+                  "rowCount": "1152",
+                  "items": [
+                    {
+                      "type": "Field",
+                      "id": 85,
+                      "name": "Position",
+                      "dataType": "Float",
+                      "count": 3,
+                      "padding": 0
+                    },
+                    {
+                      "type": "Field",
+                      "id": 86,
+                      "name": "Normal",
+                      "dataType": "Float",
+                      "count": 3,
+                      "padding": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "Buffer",
+              "id": 87,
+              "name": "Geometry Probes",
+              "items": [
+                {
+                  "type": "Block",
+                  "id": 88,
+                  "name": "Data",
+                  "offset": "0",
+                  "rowCount": "4",
+                  "items": [
+                    {
+                      "type": "Field",
+                      "id": 89,
+                      "name": "Instance",
+                      "dataType": "Uint32",
+                      "count": 1,
+                      "padding": 0
+                    },
+                    {
+                      "type": "Field",
+                      "id": 90,
+                      "name": "Distance",
+                      "dataType": "Float",
+                      "count": 1,
+                      "padding": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "Buffer",
+              "id": 91,
+              "name": "Shadow Probes",
+              "items": [
+                {
+                  "type": "Block",
+                  "id": 92,
+                  "name": "Data",
+                  "offset": "0",
+                  "rowCount": "3",
+                  "items": [
+                    {
+                      "type": "Field",
+                      "id": 93,
+                      "name": "Occluded",
+                      "dataType": "Uint32",
+                      "count": 1,
+                      "padding": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "GeometrySet",
+              "id": 94,
+              "name": "Trefoil Geometry",
+              "items": [
+                {
+                  "type": "Geometry",
+                  "id": 95,
+                  "name": "Trefoil Triangles",
+                  "geometryType": "Triangles",
+                  "vertexBufferBlockId": 84,
+                  "indexBufferBlockId": 22,
+                  "count": "2304",
+                  "offset": "0",
+                  "opaque": true
+                }
+              ]
+            },
+            {
+              "type": "AccelerationStructure",
+              "id": 96,
+              "name": "Studio AS",
+              "items": [
+                {
+                  "type": "Instance",
+                  "id": 97,
+                  "name": "Copper Trefoil",
+                  "geometrySetId": 94,
+                  "shaderInstanceId": "0",
+                  "transform": "[0.903392112, 0, -0.25977431, -2.07, 0, 0.94, 0, 1.22, 0.25977431, 0, 0.903392112, 0.65]"
+                },
+                {
+                  "type": "Instance",
+                  "id": 98,
+                  "name": "Silver Trefoil",
+                  "geometrySetId": 94,
+                  "shaderInstanceId": "1",
+                  "transform": "[1.07348719, 0, 0.240052585, 0.08, 0, 1.1, 0, 1.38, -0.240052585, 0, 1.07348719, 1.32]"
+                },
+                {
+                  "type": "Instance",
+                  "id": 99,
+                  "name": "Blue Trefoil",
+                  "geometrySetId": 94,
+                  "shaderInstanceId": "2",
+                  "transform": "[0.759270222, 0, 0.44486934, 2.13, 0, 0.88, 0, 1.14, -0.44486934, 0, 0.759270222, 0.15]"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Group",
+          "id": 206,
+          "name": "Scene Bindings",
+          "inlineScope": true,
+          "iterations": "1",
+          "items": [
+            {
+              "type": "Binding",
+              "id": 100,
+              "name": "Scene",
+              "bindingType": "AccelerationStructure",
+              "accelerationStructureId": 96
+            },
+            {
+              "type": "Binding",
+              "id": 101,
+              "name": "Controls.captureProbes",
+              "bindingType": "Uniform",
+              "values": [
+                "typeof livingFixture === \"undefined\" ? 0 : Number(livingFixture)"
+              ]
+            },
+            {
+              "type": "Binding",
+              "id": 102,
+              "name": "Vertices",
+              "bindingType": "Buffer",
+              "bufferId": 83
+            }
+          ]
+        },
+        {
+          "type": "Group",
+          "id": 207,
+          "name": "Deform",
+          "inlineScope": true,
+          "iterations": "1",
+          "items": [
+            {
+              "type": "Binding",
+              "id": 103,
+              "name": "RestVertices",
+              "bindingType": "Buffer",
+              "bufferId": 17
+            },
+            {
+              "type": "Binding",
+              "id": 104,
+              "name": "Deformation.vertexCount",
+              "bindingType": "Uniform",
+              "values": [
+                "1152"
+              ]
+            },
+            {
+              "type": "Binding",
+              "id": 105,
+              "name": "Deformation.twist",
+              "bindingType": "Uniform",
+              "values": [
+                "typeof livingTick === \"undefined\" ? 2.1 * Math.sin(PlaybackTime * Math.PI / 5) : 0.8 * Number(livingTick)"
+              ]
+            },
+            {
+              "type": "Program",
+              "id": 106,
+              "name": "Deform Vertices Program",
+              "items": [
+                {
+                  "type": "Shader",
+                  "id": 107,
+                  "name": "Deform Vertices",
+                  "fileName": "living/Deform.hlsl",
+                  "shaderType": "Compute",
+                  "entryPoint": "main"
+                }
+              ]
+            },
+            {
+              "type": "Call",
+              "id": 108,
+              "name": "Deform Vertices",
+              "callType": "Compute",
+              "checked": true,
+              "programId": 106,
+              "workGroupsX": "18",
+              "workGroupsY": "1",
+              "workGroupsZ": "1",
+              "executeOn": "EveryEvaluation"
+            }
+          ]
+        },
+        {
+          "type": "Group",
+          "id": 208,
+          "name": "Trace",
+          "inlineScope": true,
+          "iterations": "1",
+          "items": [
+            {
+              "type": "Binding",
+              "id": 109,
+              "name": "GeometryProbes",
+              "bindingType": "Buffer",
+              "bufferId": 87
+            },
+            {
+              "type": "Binding",
+              "id": 110,
+              "name": "HitPosition",
+              "bindingType": "Image",
+              "textureId": 80,
+              "level": 0,
+              "layer": -1,
+              "imageFormat": "Internal"
+            },
+            {
+              "type": "Binding",
+              "id": 111,
+              "name": "HitNormal",
+              "bindingType": "Image",
+              "textureId": 81,
+              "level": 0,
+              "layer": -1,
+              "imageFormat": "Internal"
+            },
+            {
+              "type": "Binding",
+              "id": 112,
+              "name": "ReflectedLight",
+              "bindingType": "Image",
+              "textureId": 82,
+              "level": 0,
+              "layer": -1,
+              "imageFormat": "Internal"
+            },
+            {
+              "type": "Program",
+              "id": 113,
+              "name": "Ray Program",
+              "items": [
+                {
+                  "type": "Shader",
+                  "id": 114,
+                  "name": "RayGeneration",
+                  "fileName": "living/RayGeneration.hlsl",
+                  "shaderType": "RayGeneration",
+                  "entryPoint": "RayGeneration"
+                },
+                {
+                  "type": "Shader",
+                  "id": 115,
+                  "name": "RayMiss",
+                  "fileName": "shared/StudioMiss.hlsl",
+                  "shaderType": "RayMiss",
+                  "entryPoint": "RayMiss"
+                },
+                {
+                  "type": "Shader",
+                  "id": 116,
+                  "name": "RayClosestHit",
+                  "fileName": "shared/StudioClosestHit.hlsl",
+                  "shaderType": "RayClosestHit",
+                  "entryPoint": "RayClosestHit"
+                }
+              ]
+            },
+            {
+              "type": "ShaderTable",
+              "id": 117,
+              "name": "Shader Table",
+              "programId": 113,
+              "items": [
+                {
+                  "type": "Record",
+                  "id": 118,
+                  "name": "Ray Generation",
+                  "recordType": "RayGeneration",
+                  "shaderId": 114
+                },
+                {
+                  "type": "Record",
+                  "id": 119,
+                  "name": "Miss",
+                  "recordType": "Miss",
+                  "shaderId": 115
+                },
+                {
+                  "type": "Record",
+                  "id": 120,
+                  "name": "Opaque Hit",
+                  "recordType": "Hit",
+                  "closestHitShaderId": 116
+                }
+              ]
+            },
+            {
+              "type": "Call",
+              "id": 121,
+              "name": "Trace Studio",
+              "callType": "TraceRays",
+              "checked": true,
+              "shaderTableId": 117,
+              "workGroupsX": "960",
+              "workGroupsY": "540",
+              "workGroupsZ": "1",
+              "executeOn": "EveryEvaluation"
+            }
+          ]
+        },
+        {
+          "type": "Group",
+          "id": 209,
+          "name": "Shade & Composite",
+          "inlineScope": true,
+          "iterations": "1",
+          "items": [
+            {
+              "type": "Binding",
+              "id": 122,
+              "name": "HitPosition",
+              "bindingType": "Sampler",
+              "textureId": 80
+            },
+            {
+              "type": "Binding",
+              "id": 123,
+              "name": "HitNormal",
+              "bindingType": "Sampler",
+              "textureId": 81
+            },
+            {
+              "type": "Binding",
+              "id": 124,
+              "name": "ReflectedLight",
+              "bindingType": "Sampler",
+              "textureId": 82
+            },
+            {
+              "type": "Binding",
+              "id": 125,
+              "name": "ShadowProbes",
+              "bindingType": "Buffer",
+              "bufferId": 91
+            },
+            {
+              "type": "Program",
+              "id": 126,
+              "name": "Shadow and Composite Program",
+              "items": [
+                {
+                  "type": "Shader",
+                  "id": 127,
+                  "name": "Shadow and Composite",
+                  "fileName": "living/Shade.hlsl",
+                  "shaderType": "Compute",
+                  "entryPoint": "main"
+                }
+              ]
+            },
+            {
+              "type": "Call",
+              "id": 128,
+              "name": "Shadow and Composite",
+              "callType": "Compute",
+              "checked": true,
+              "programId": 126,
+              "workGroupsX": "120",
+              "workGroupsY": "68",
+              "workGroupsZ": "1",
+              "executeOn": "EveryEvaluation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Group",
+      "id": 129,
+      "name": "Adaptive Reflection Field",
+      "inlineScope": false,
+      "iterations": "ActiveShowcase === 2 ? 1 : 0",
+      "items": [
+        {
+          "type": "Group",
+          "id": 210,
+          "name": "Setup",
+          "inlineScope": true,
+          "iterations": "1",
+          "items": [
+            {
+              "type": "Binding",
+              "id": 130,
+              "name": "Settings.fixture",
+              "bindingType": "Uniform",
+              "values": [
+                "FixtureMode"
+              ]
+            },
+            {
+              "type": "Binding",
+              "id": 131,
+              "name": "Settings.maskMode",
+              "bindingType": "Uniform",
+              "values": [
+                "MaskMode"
+              ]
+            },
+            {
+              "type": "Binding",
+              "id": 132,
+              "name": "Settings.maskView",
+              "bindingType": "Uniform",
+              "values": [
+                "typeof fieldView === \"undefined\" ? MaskView : Number(fieldView)"
+              ]
+            },
+            {
+              "type": "Texture",
+              "id": 133,
+              "name": "Surface Position",
+              "target": "Target2D",
+              "format": "RGBA32F",
+              "width": "FrameWidth",
+              "height": "FrameHeight",
+              "flipVertically": false
+            },
+            {
+              "type": "Texture",
+              "id": 134,
+              "name": "Surface Normal",
+              "target": "Target2D",
+              "format": "RGBA16F",
+              "width": "FrameWidth",
+              "height": "FrameHeight",
+              "flipVertically": false
+            },
+            {
+              "type": "Buffer",
+              "id": 135,
+              "name": "Eligibility Mask",
+              "items": [
+                {
+                  "type": "Block",
+                  "id": 136,
+                  "name": "Data",
+                  "offset": "0",
+                  "rowCount": "FrameWidth * FrameHeight",
+                  "items": [
+                    {
+                      "type": "Field",
+                      "id": 137,
+                      "name": "Eligible",
+                      "dataType": "Uint32",
+                      "count": 1,
+                      "padding": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "Buffer",
+              "id": 138,
+              "name": "Pixel Queue",
+              "items": [
+                {
+                  "type": "Block",
+                  "id": 139,
+                  "name": "Data",
+                  "offset": "0",
+                  "rowCount": "FrameWidth * FrameHeight",
+                  "items": [
+                    {
+                      "type": "Field",
+                      "id": 140,
+                      "name": "Pixel",
+                      "dataType": "Uint32",
+                      "count": 1,
+                      "padding": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "Buffer",
+              "id": 141,
+              "name": "Active Count",
+              "items": [
+                {
+                  "type": "Block",
+                  "id": 142,
+                  "name": "Data",
+                  "offset": "0",
+                  "rowCount": "1",
+                  "items": [
+                    {
+                      "type": "Field",
+                      "id": 143,
+                      "name": "Count",
+                      "dataType": "Uint32",
+                      "count": 1,
+                      "padding": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "Buffer",
+              "id": 144,
+              "name": "Dispatch Dimensions",
+              "items": [
+                {
+                  "type": "Block",
+                  "id": 145,
+                  "name": "Data",
+                  "offset": "0",
+                  "rowCount": "1",
+                  "items": [
+                    {
+                      "type": "Field",
+                      "id": 146,
+                      "name": "Dimensions",
+                      "dataType": "Uint32",
+                      "count": 3,
+                      "padding": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "Buffer",
+              "id": 147,
+              "name": "Linear Reflections",
+              "items": [
+                {
+                  "type": "Block",
+                  "id": 148,
+                  "name": "Data",
+                  "offset": "0",
+                  "rowCount": "FrameWidth * FrameHeight",
+                  "items": [
+                    {
+                      "type": "Field",
+                      "id": 149,
+                      "name": "Radiance and Hit Tag",
+                      "dataType": "Float",
+                      "count": 4,
+                      "padding": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "AccelerationStructure",
+              "id": 150,
+              "name": "Studio AS",
+              "items": [
+                {
+                  "type": "Instance",
+                  "id": 151,
+                  "name": "Copper Trefoil",
+                  "geometrySetId": 24,
+                  "shaderInstanceId": "0",
+                  "transform": "trefoilTransform(-2.10, 1.20, 0.62, 0.96, -0.28, 0.30)"
+                },
+                {
+                  "type": "Instance",
+                  "id": 152,
+                  "name": "Satin Trefoil",
+                  "geometrySetId": 24,
+                  "shaderInstanceId": "1",
+                  "transform": "trefoilTransform(0.06, 1.42, 1.48, 1.10, 0.22, 1.25)"
+                },
+                {
+                  "type": "Instance",
+                  "id": 153,
+                  "name": "Teal Trefoil",
+                  "geometrySetId": 24,
+                  "shaderInstanceId": "2",
+                  "transform": "trefoilTransform(2.05, 1.18, 0.18, 0.92, 0.53, 2.18)"
+                }
+              ]
+            },
+            {
+              "type": "Binding",
+              "id": 154,
+              "name": "Scene",
+              "bindingType": "AccelerationStructure",
+              "accelerationStructureId": 150
+            }
+          ]
+        },
+        {
+          "type": "Group",
+          "id": 211,
+          "name": "Primary Trace",
+          "inlineScope": true,
+          "iterations": "1",
+          "items": [
+            {
+              "type": "Binding",
+              "id": 155,
+              "name": "SurfacePosition",
+              "bindingType": "Image",
+              "textureId": 133,
+              "level": 0,
+              "layer": -1,
+              "imageFormat": "Internal"
+            },
+            {
+              "type": "Binding",
+              "id": 156,
+              "name": "SurfaceNormal",
+              "bindingType": "Image",
+              "textureId": 134,
+              "level": 0,
+              "layer": -1,
+              "imageFormat": "Internal"
+            },
+            {
+              "type": "Program",
+              "id": 157,
+              "name": "Primary Program",
+              "items": [
+                {
+                  "type": "Shader",
+                  "id": 158,
+                  "name": "Ray Generation",
+                  "fileName": "adaptive/Primary.hlsl",
+                  "shaderType": "RayGeneration",
+                  "entryPoint": "RayGeneration"
+                },
+                {
+                  "type": "Shader",
+                  "id": 159,
+                  "name": "Ray Miss",
+                  "fileName": "shared/StudioMiss.hlsl",
+                  "shaderType": "RayMiss",
+                  "entryPoint": "RayMiss"
+                },
+                {
+                  "type": "Shader",
+                  "id": 160,
+                  "name": "Closest Hit",
+                  "fileName": "shared/StudioClosestHit.hlsl",
+                  "shaderType": "RayClosestHit",
+                  "entryPoint": "RayClosestHit"
+                }
+              ]
+            },
+            {
+              "type": "ShaderTable",
+              "id": 161,
+              "name": "Primary Shader Table",
+              "programId": 157,
+              "items": [
+                {
+                  "type": "Record",
+                  "id": 162,
+                  "name": "Ray Generation",
+                  "recordType": "RayGeneration",
+                  "shaderId": 158
+                },
+                {
+                  "type": "Record",
+                  "id": 163,
+                  "name": "Miss",
+                  "recordType": "Miss",
+                  "shaderId": 159
+                },
+                {
+                  "type": "Record",
+                  "id": 164,
+                  "name": "Opaque Hit",
+                  "recordType": "Hit",
+                  "closestHitShaderId": 160
+                }
+              ]
+            },
+            {
+              "type": "Call",
+              "id": 165,
+              "name": "Trace Primary Rays",
+              "callType": "TraceRays",
+              "checked": true,
+              "executeOn": "EveryEvaluation",
+              "shaderTableId": 161,
+              "workGroupsX": "FrameWidth",
+              "workGroupsY": "FrameHeight",
+              "workGroupsZ": "1"
+            }
+          ]
+        },
+        {
+          "type": "Group",
+          "id": 212,
+          "name": "Classify",
+          "inlineScope": true,
+          "iterations": "1",
+          "items": [
+            {
+              "type": "Binding",
+              "id": 166,
+              "name": "SurfacePosition",
+              "bindingType": "Sampler",
+              "textureId": 133
+            },
+            {
+              "type": "Binding",
+              "id": 167,
+              "name": "SurfaceNormal",
+              "bindingType": "Sampler",
+              "textureId": 134
+            },
+            {
+              "type": "Binding",
+              "id": 168,
+              "name": "Eligibility",
+              "bindingType": "Buffer",
+              "bufferId": 135
+            },
+            {
+              "type": "Program",
+              "id": 169,
+              "name": "Classify Pixels Program",
+              "items": [
+                {
+                  "type": "Shader",
+                  "id": 170,
+                  "name": "Classify Pixels",
+                  "fileName": "adaptive/Classify.hlsl",
+                  "shaderType": "Compute",
+                  "entryPoint": "main"
+                }
+              ]
+            },
+            {
+              "type": "Call",
+              "id": 171,
+              "name": "Classify Pixels",
+              "callType": "Compute",
+              "checked": true,
+              "executeOn": "EveryEvaluation",
+              "programId": 169,
+              "workGroupsX": "Math.ceil(FrameWidth / 8)",
+              "workGroupsY": "Math.ceil(FrameHeight / 8)",
+              "workGroupsZ": "1"
+            }
+          ]
+        },
+        {
+          "type": "Group",
+          "id": 214,
+          "name": "Reflections",
+          "inlineScope": true,
+          "iterations": "1",
+          "items": [
+            {
+              "type": "Group",
+              "id": 213,
+              "name": "Setup",
+              "inlineScope": true,
+              "iterations": "1",
+              "items": [
+                {
+                  "type": "Binding",
+                  "id": 172,
+                  "name": "PixelQueue",
+                  "bindingType": "Buffer",
+                  "bufferId": 138
+                },
+                {
+                  "type": "Binding",
+                  "id": 173,
+                  "name": "Reflections",
+                  "bindingType": "Buffer",
+                  "bufferId": 147
+                },
+                {
+                  "type": "Program",
+                  "id": 174,
+                  "name": "Reflection Program",
+                  "items": [
+                    {
+                      "type": "Shader",
+                      "id": 175,
+                      "name": "Ray Generation",
+                      "fileName": "adaptive/Reflect.hlsl",
+                      "shaderType": "RayGeneration",
+                      "entryPoint": "RayGeneration"
+                    },
+                    {
+                      "type": "Shader",
+                      "id": 176,
+                      "name": "Ray Miss",
+                      "fileName": "shared/StudioMiss.hlsl",
+                      "shaderType": "RayMiss",
+                      "entryPoint": "RayMiss"
+                    },
+                    {
+                      "type": "Shader",
+                      "id": 177,
+                      "name": "Closest Hit",
+                      "fileName": "shared/StudioClosestHit.hlsl",
+                      "shaderType": "RayClosestHit",
+                      "entryPoint": "RayClosestHit"
+                    }
+                  ]
+                },
+                {
+                  "type": "ShaderTable",
+                  "id": 178,
+                  "name": "Reflection Shader Table",
+                  "programId": 174,
+                  "items": [
+                    {
+                      "type": "Record",
+                      "id": 179,
+                      "name": "Ray Generation",
+                      "recordType": "RayGeneration",
+                      "shaderId": 175
+                    },
+                    {
+                      "type": "Record",
+                      "id": 180,
+                      "name": "Miss",
+                      "recordType": "Miss",
+                      "shaderId": 176
+                    },
+                    {
+                      "type": "Record",
+                      "id": 181,
+                      "name": "Opaque Hit",
+                      "recordType": "Hit",
+                      "closestHitShaderId": 177
+                    }
+                  ]
+                },
+                {
+                  "type": "Call",
+                  "id": 182,
+                  "name": "Clear Reflections",
+                  "callType": "ClearBuffer",
+                  "checked": true,
+                  "executeOn": "EveryEvaluation",
+                  "bufferId": 147
+                }
+              ]
+            },
+            {
+              "type": "Group",
+              "id": 183,
+              "name": "Dense",
+              "iterations": "ActiveIndirect ? 0 : 1",
+              "inlineScope": false,
+              "items": [
+                {
+                  "type": "Binding",
+                  "id": 184,
+                  "name": "Settings.useQueue",
+                  "bindingType": "Uniform",
+                  "values": [
+                    "0"
+                  ]
+                },
+                {
+                  "type": "Call",
+                  "id": 185,
+                  "name": "Trace Dense Rays",
+                  "callType": "TraceRays",
+                  "checked": true,
+                  "executeOn": "EveryEvaluation",
+                  "shaderTableId": 178,
+                  "workGroupsX": "FrameWidth",
+                  "workGroupsY": "FrameHeight",
+                  "workGroupsZ": "1"
+                }
+              ]
+            },
+            {
+              "type": "Group",
+              "id": 186,
+              "name": "Indirect",
+              "iterations": "ActiveIndirect ? 1 : 0",
+              "inlineScope": false,
+              "items": [
+                {
+                  "type": "Binding",
+                  "id": 187,
+                  "name": "Settings.useQueue",
+                  "bindingType": "Uniform",
+                  "values": [
+                    "1"
+                  ]
+                },
+                {
+                  "type": "Binding",
+                  "id": 188,
+                  "name": "ActiveCount",
+                  "bindingType": "Buffer",
+                  "bufferId": 141
+                },
+                {
+                  "type": "Binding",
+                  "id": 189,
+                  "name": "DispatchDimensions",
+                  "bindingType": "Buffer",
+                  "bufferId": 144
+                },
+                {
+                  "type": "Call",
+                  "id": 190,
+                  "name": "Clear Active Count",
+                  "callType": "ClearBuffer",
+                  "checked": true,
+                  "executeOn": "EveryEvaluation",
+                  "bufferId": 141
+                },
+                {
+                  "type": "Program",
+                  "id": 191,
+                  "name": "Compact Pixels Program",
+                  "items": [
+                    {
+                      "type": "Shader",
+                      "id": 192,
+                      "name": "Compact Pixels",
+                      "fileName": "adaptive/Compact.hlsl",
+                      "shaderType": "Compute",
+                      "entryPoint": "main"
+                    }
+                  ]
+                },
+                {
+                  "type": "Call",
+                  "id": 193,
+                  "name": "Compact Pixels",
+                  "callType": "Compute",
+                  "checked": true,
+                  "executeOn": "EveryEvaluation",
+                  "programId": 191,
+                  "workGroupsX": "Math.ceil((FrameWidth * FrameHeight) / 64)",
+                  "workGroupsY": "1",
+                  "workGroupsZ": "1"
+                },
+                {
+                  "type": "Program",
+                  "id": 194,
+                  "name": "Finalize Dimensions Program",
+                  "items": [
+                    {
+                      "type": "Shader",
+                      "id": 195,
+                      "name": "Finalize Dimensions",
+                      "fileName": "adaptive/Finalize.hlsl",
+                      "shaderType": "Compute",
+                      "entryPoint": "main"
+                    }
+                  ]
+                },
+                {
+                  "type": "Call",
+                  "id": 196,
+                  "name": "Finalize Dimensions",
+                  "callType": "Compute",
+                  "checked": true,
+                  "executeOn": "EveryEvaluation",
+                  "programId": 194,
+                  "workGroupsX": "1",
+                  "workGroupsY": "1",
+                  "workGroupsZ": "1"
+                },
+                {
+                  "type": "Call",
+                  "id": 197,
+                  "name": "Trace Indirect Rays",
+                  "callType": "TraceRaysIndirect",
+                  "checked": true,
+                  "executeOn": "EveryEvaluation",
+                  "shaderTableId": 178,
+                  "indirectBufferBlockId": 145
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Group",
+          "id": 215,
+          "name": "Composite",
+          "inlineScope": true,
+          "iterations": "1",
+          "items": [
+            {
+              "type": "Program",
+              "id": 198,
+              "name": "Composite Program",
+              "items": [
+                {
+                  "type": "Shader",
+                  "id": 199,
+                  "name": "Composite",
+                  "fileName": "adaptive/Composite.hlsl",
+                  "shaderType": "Compute",
+                  "entryPoint": "main"
+                }
+              ]
+            },
+            {
+              "type": "Call",
+              "id": 200,
+              "name": "Composite",
+              "callType": "Compute",
+              "checked": true,
+              "executeOn": "EveryEvaluation",
+              "programId": 198,
+              "workGroupsX": "Math.ceil(FrameWidth / 8)",
+              "workGroupsY": "Math.ceil(FrameHeight / 8)",
+              "workGroupsZ": "1"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
