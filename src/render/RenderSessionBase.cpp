@@ -14,6 +14,7 @@
 #include "direct3d/D3DRenderSession.h"
 #include "media/MediaFrameWriter.h"
 #include "media/SoundOutput.h"
+#include <QScopeGuard>
 #include <QStack>
 #include <algorithm>
 #include <cmath>
@@ -358,6 +359,8 @@ void RenderSessionBase::configure()
     }
 
     mScriptSession->beginSessionUpdate();
+    const auto endSessionUpdate = qScopeGuard(
+        [this]() { mScriptSession->endSessionUpdate(); });
     mBindingValues.clear();
 
     // collect items to evaluate, since doing so can modify list
@@ -430,7 +433,7 @@ void RenderSessionBase::configured()
 {
     Q_ASSERT(onMainThread());
     if (mScriptSession)
-        mScriptSession->endSessionUpdate();
+        mScriptSession->applySessionUpdates();
 
     if (!recording() && mEvaluationType != EvaluationType::Steady
         && Singletons::synchronizeLogic().resetRenderSessionInvalidationState())

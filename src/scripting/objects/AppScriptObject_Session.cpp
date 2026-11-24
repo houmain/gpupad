@@ -313,8 +313,13 @@ void AppScriptObject::beginBackgroundUpdate(IScriptRenderSession *renderSession)
 
 void AppScriptObject::endBackgroundUpdate()
 {
-    Q_ASSERT(onMainThread());
+    Q_ASSERT(!onMainThread());
     mRenderSession = nullptr;
+}
+
+void AppScriptObject::applyBackgroundUpdates()
+{
+    Q_ASSERT(onMainThread());
 
     auto &session = Singletons::sessionModel();
     if (!mPendingSessionUpdates.empty()) {

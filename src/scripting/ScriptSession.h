@@ -25,10 +25,11 @@ public:
 
     // 2. called in render thread
     void beginSessionUpdate();
+    void endSessionUpdate();
     ScriptEngine &engine();
 
     // 3. called in main thread
-    void endSessionUpdate();
+    void applySessionUpdates();
 
 private:
     IScriptRenderSession &mRenderSession;

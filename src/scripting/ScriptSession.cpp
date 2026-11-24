@@ -38,17 +38,23 @@ void ScriptSession::beginSessionUpdate()
         .beginBackgroundUpdate(&mRenderSession);
 }
 
+void ScriptSession::endSessionUpdate()
+{
+    Q_ASSERT(!onMainThread());
+    mScriptEngine->appScriptObject().endBackgroundUpdate();
+}
+
 ScriptEngine &ScriptSession::engine()
 {
     Q_ASSERT(!onMainThread());
     return *mScriptEngine;
 }
 
-void ScriptSession::endSessionUpdate()
+void ScriptSession::applySessionUpdates()
 {
     Q_ASSERT(onMainThread());
     mScriptEngine->appScriptObject()
-        .endBackgroundUpdate();
+        .applyBackgroundUpdates();
 }
 
 bool ScriptSession::usesMouseState() const

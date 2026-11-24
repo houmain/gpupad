@@ -47,6 +47,7 @@ public:
     void setSelection(const QModelIndexList &selectedIndices);
     void beginBackgroundUpdate(IScriptRenderSession *renderSession);
     void endBackgroundUpdate();
+    void applyBackgroundUpdates();
 
     QString evaluation() const;
     void setEvaluation(QString mode);

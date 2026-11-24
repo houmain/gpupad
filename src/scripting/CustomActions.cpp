@@ -97,7 +97,7 @@ MessageList CustomAction::apply(const QModelIndexList &selection)
 
     applyInEngine(*mScriptEngine);
 
-    mScriptEngine->appScriptObject().endBackgroundUpdate();
+    mScriptEngine->appScriptObject().applyBackgroundUpdates();
 
     return mScriptEngine->resetMessages();
 }
