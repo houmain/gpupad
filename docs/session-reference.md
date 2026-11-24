@@ -155,7 +155,7 @@ An item marked `sessionInterface: Input` or `Output` in the source session is ma
 - `Buffer`, `Texture`, `Program`, `ShaderTable`, `Stream`, `Target`, `GeometrySet`, and `AccelerationStructure`.
 - A top-level `Group`, `Binding`, `Call`, or `Script`. These types cannot be exported from a nested scope because moving them would change execution behavior.
 
-For a non-Binding input, `inputItemId` selects a visible item of the same type outside the component. All references to the imported input inside the component are replaced with that item during evaluation. Chained component inputs are resolved transitively; missing, differently typed, or cyclic input references are invalid. An input `Binding` is not replaced by ID; its binding properties form the editable component input. Component outputs are visible to items after the component. Other component contents are internal and cannot be structurally inserted, removed, or cleared through the scripting API.
+For a non-Binding input, `inputItemId` selects an item of the same type outside the component. All references to the imported input inside the component are replaced with that item during evaluation. Chained component inputs are resolved transitively; missing, differently typed, or cyclic input references are invalid. An input `Binding` is not replaced by ID; its binding properties form the editable component input. Component outputs are visible to items after the component. Other component contents are internal and hidden.
 
 ### Buffer
 

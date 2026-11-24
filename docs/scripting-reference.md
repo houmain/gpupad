@@ -176,7 +176,7 @@ At least one codec is required, and the selected combination must appear in `app
 
 ## Item
 
-An Item is a mutable live view of one session item. Its data properties match [session-reference.md](session-reference.md), including `items: [Item]`. Assigning a writable property updates the Session. `id` and `type` identify the existing Item rather than mutable session properties. Structural changes use the methods below. Items inside a Component cannot be structurally inserted, removed, replaced, or cleared.
+An Item is a mutable live view of one session item. Its data properties match [session-reference.md](session-reference.md). Assigning a writable property updates the Session. `id` and `type` identify the existing Item rather than mutable session properties. Structural changes use the methods below.
 
 ### Lookup
 
