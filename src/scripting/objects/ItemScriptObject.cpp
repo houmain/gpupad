@@ -62,7 +62,7 @@ QJSValue ItemScriptObject::getItem(QJSValue itemIdent)
 
 QJSValue ItemScriptObject::findItem(QJSValue itemIdent)
 {
-    return findItem(itemIdent, true);
+    return findItem(itemIdent, false);
 }
 
 QJSValue ItemScriptObject::findItem(QJSValue itemIdent, bool searchSubItems)
@@ -73,7 +73,7 @@ QJSValue ItemScriptObject::findItem(QJSValue itemIdent, bool searchSubItems)
 
 QJSValue ItemScriptObject::findItems(QJSValue itemIdent)
 {
-    return findItems(itemIdent, true);
+    return findItems(itemIdent, false);
 }
 
 QJSValue ItemScriptObject::findItems(QJSValue itemIdent, bool searchSubItems)
@@ -84,7 +84,7 @@ QJSValue ItemScriptObject::findItems(QJSValue itemIdent, bool searchSubItems)
 
 QJSValue ItemScriptObject::trackItems(QJSValue itemIdent, QJSValue callback)
 {
-    return trackItems(itemIdent, true, callback);
+    return trackItems(itemIdent, false, callback);
 }
 
 QJSValue ItemScriptObject::trackItems(QJSValue itemIdent, bool searchSubItems,

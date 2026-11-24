@@ -182,10 +182,10 @@ An Item is a mutable live view of one session item. Its data properties match [s
 
 - `properties(): [PropertyInfo]` - Metadata for every property supported by this Item type. Each PropertyInfo has `name: String` and `type: "boolean|integer|number|string|color|array|object|reference|enum"`. Integer and reference properties additionally have `unsigned: Boolean`; enum properties have `values: [String]`.
 - `parent(): Item?` - Parent Item, or `undefined` for the Session root.
-- `findItem(itemIdent: ItemIdent, searchSubItems: Boolean = true): Item?` - First matching Item relative to this Item, or `undefined`.
-- `findItems(itemIdent: ItemIdent, searchSubItems: Boolean = true): [Item]` - All predicate matches. A path, ID, or Item identifies at most one result.
+- `findItem(itemIdent: ItemIdent, searchSubItems: Boolean = false): Item?` - First matching Item relative to this Item, or `undefined`.
+- `findItems(itemIdent: ItemIdent, searchSubItems: Boolean = false): [Item]` - All predicate matches. A path, ID, or Item identifies at most one result.
 - `getItem(itemIdent: ItemIdent): Item` - Equivalent to `findItem` but throws if no Item matches.
-- `trackItems(itemIdent: ItemIdent, searchSubItems: Boolean = true, callback: Function): TrackingIndex` - Registers `callback(item, action)` where action is `"added"`, `"modified"`, or `"removed"`. Existing matches immediately produce `"added"`. The returned index remains active until passed to `untrackItems`.
+- `trackItems(itemIdent: ItemIdent, searchSubItems: Boolean = false, callback: Function): TrackingIndex` - Registers `callback(item, action)` where action is `"added"`, `"modified"`, or `"removed"`. Existing matches immediately produce `"added"`. The returned index remains active until passed to `untrackItems`.
 - `untrackItems(trackingIndex: TrackingIndex): void` - Stops a tracker.
 
 `ItemIdent` accepts a `/`-separated path of Item `name` values relative to the origin, an Item object, a predicate `(item) => Boolean` or as last resort the Item ID. `searchSubItems: false` restricts predicate matching to direct children. Path segments match `name`, not `fileName`.
