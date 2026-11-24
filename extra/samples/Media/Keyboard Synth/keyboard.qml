@@ -41,7 +41,7 @@ FocusScope {
   }
 
   function publishNoteStateValues() {
-    const binding = app.findItem("noteState")
+    const binding = app.session.findItem("noteState")
     if (binding)
       binding.values = noteStateValues.map(value => value.toString())
   }

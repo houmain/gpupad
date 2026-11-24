@@ -1,5 +1,7 @@
 "use strict"
 
+const session = app.session
+
 const manifest = {
   name: "&Insert Orbit Camera"
 }
@@ -121,14 +123,14 @@ function perspective(fovy, aspect, near, far) {
 
 //===============================================
 
-const script = app.insertItem({
+const script = session.insert({
   name: 'OrbitCamera.js',
   type: 'Script',
   executeOn: 'ResetEvaluation',
 })
-app.setScriptSource(script, scriptSource)
+script.setSource(scriptSource)
 
-app.insertItem({
+session.insert({
   name: 'uViewMatrix',
   type: 'Binding',
   values: [

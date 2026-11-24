@@ -21,7 +21,7 @@ Item {
       Number(currentIndex === index ? value : currentValue).toFixed(3))
     values = nextValues
 
-    const binding = app.findItem(bindingId)
+    const binding = app.session.findItem(bindingId)
     if (binding)
       binding.values = nextValues
   }

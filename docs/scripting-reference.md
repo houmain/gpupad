@@ -12,8 +12,7 @@ File paths returned by GPUpad are absolute native paths. Relative paths used by 
 
 ### Session
 
-- `session: Item` - Root Session Item, or the nearest Component root while a
-  Script or expression inside that Component is being evaluated.
+- `session: Item` - Root Session Item, or the nearest Component root while a Script or expression inside that Component is being evaluated.
 - `loadSession(fileName: String): void` - Pauses evaluation, closes editors, clears the current Session, and loads `fileName`.
 - `closeSession(): void` - Clears the current Session and invalidates existing Item trackers and wrappers.
 - `messages: [Message]` - Snapshot of application messages. Each Message has `severity: "INFO|WARNING|ERROR"` and `text: String`, with optional `fileName: String`, `line: Number`, and `itemId: Number`.
@@ -189,7 +188,7 @@ An Item is a mutable live view of one session item. Its data properties match [s
 - `trackItems(itemIdent: ItemIdent, searchSubItems: Boolean = true, callback: Function): TrackingIndex` - Registers `callback(item, action)` where action is `"added"`, `"modified"`, or `"removed"`. Existing matches immediately produce `"added"`. The returned index remains active until passed to `untrackItems`.
 - `untrackItems(trackingIndex: TrackingIndex): void` - Stops a tracker.
 
-`ItemIdent` accepts a `/`-separated path of Item `name` values relative to the origin, a numeric session-wide Item ID, an Item object, or a predicate `(item) => Boolean`. `searchSubItems: false` restricts predicate matching to direct children; IDs and Item objects are session-wide identities. Path segments match `name`, not `fileName`.
+`ItemIdent` accepts a `/`-separated path of Item `name` values relative to the origin, an Item object, a predicate `(item) => Boolean` or as last resort the Item ID. `searchSubItems: false` restricts predicate matching to direct children. Path segments match `name`, not `fileName`.
 
 ### Structure and files
 

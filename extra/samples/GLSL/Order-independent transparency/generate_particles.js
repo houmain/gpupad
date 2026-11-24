@@ -9,16 +9,16 @@ for (let i = 0, p = 0; i < ParticlesCount; ++i) {
   particles[p++] = random(-16, 16)
   particles[p++] = random(-16, 16)
   particles[p++] = random(-16, 16)
-  
+
   // size
   particles[p++] = 3
-  
+
   // velocity
   particles[p++] = random(0, 0.01)
   particles[p++] = random(0, 0.01)
   particles[p++] = random(0, 0.01)
   particles[p++] = 0
-  
+
   // color
   particles[p++] = random(0, 1)
   particles[p++] = random(0, 1)
@@ -26,5 +26,4 @@ for (let i = 0, p = 0; i < ParticlesCount; ++i) {
   particles[p++] = 0.4
 }
 
-app.setBufferData(
-  'Buffers/Particle Buffer', particles)
+app.session.getItem('Buffers/Particle Buffer').setData(particles)

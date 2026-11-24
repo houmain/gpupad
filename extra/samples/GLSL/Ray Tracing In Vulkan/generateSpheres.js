@@ -2,11 +2,11 @@
 random = Math.random
 
 function length(v) {
-  return Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+	return Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
 }
 
 function sub(a, b) {
-  return [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+	return [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 }
 
 function Lambertian(diffuse) {
@@ -34,8 +34,8 @@ let spheres = [];
 let materials = [];
 
 function addSphere(center, radius, material) {
-  spheres.push([center[0], center[1], center[2], radius]);
-  materials.push(material);
+	spheres.push([center[0], center[1], center[2], radius]);
+	materials.push(material);
 }
 
 addSphere([0, -1000, 0], 1000, Lambertian([0.5, 0.5, 0.5]));
@@ -43,17 +43,14 @@ addSphere([0, 1, 0], 1.0, Dielectric(1.5));
 addSphere([-4, 1, 0], 1.0, Lambertian([0.4, 0.2, 0.1]));
 addSphere([4, 1, 0], 1.0, Metallic([0.7, 0.6, 0.5], 0.0));
 
-for (let i = -11; i < 11; ++i)
-{
-	for (let j = -11; j < 11; ++j)
-	{
+for (let i = -11; i < 11; ++i) {
+	for (let j = -11; j < 11; ++j) {
 		const chooseMat = random();
 		const center_y = j + 0.9 * random();
 		const center_x = i + 0.9 * random();
 		const center = [center_x, 0.2, center_y];
 
-		if (length(sub(center, [4, 0.2, 0])) > 0.9)
-		{
+		if (length(sub(center, [4, 0.2, 0])) > 0.9) {
 			if (chooseMat < 0.8) // Diffuse
 			{
 				const b = random() * random();
@@ -81,11 +78,11 @@ for (let i = -11; i < 11; ++i)
 
 aabbs = []
 for (let s of spheres) {
-  const x = s[0]
-  const y = s[1]
-  const z = s[2]
-  const rad = s[3]
-  aabbs.push([x - rad, y - rad, z - rad, x + rad, y + rad, z + rad])
+	const x = s[0]
+	const y = s[1]
+	const z = s[2]
+	const rad = s[3]
+	aabbs.push([x - rad, y - rad, z - rad, x + rad, y + rad, z + rad])
 }
 
 // convert to single array
@@ -93,9 +90,9 @@ spheres = [].concat.apply([], spheres)
 materials = [].concat.apply([], materials)
 aabbs = [].concat.apply([], aabbs)
 
-app.setBufferData("Materials", materials)
-app.setBufferData("Spheres", spheres)
-app.setBufferData("AABBs", aabbs)
+app.session.getItem("Materials").setData(materials)
+app.session.getItem("Spheres").setData(spheres)
+app.session.getItem("AABBs").setData(aabbs)
 
 totalSamples = 0
 

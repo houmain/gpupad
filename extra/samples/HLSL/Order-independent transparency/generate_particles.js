@@ -26,5 +26,4 @@ for (let i = 0, p = 0; i < ParticlesCount; ++i) {
   particles[p++] = 0.4
 }
 
-app.setBufferData(
-  'Buffers/Particle Buffer', particles)
+app.session.getItem('Buffers/Particle Buffer').setData(particles)

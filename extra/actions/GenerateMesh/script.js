@@ -4,6 +4,8 @@ const manifest = {
   name: "&Generate Mesh..."
 }
 
+const session = app.session
+
 class Script {
   constructor() {
     this.library = app.loadLibrary("GenerateMesh")
@@ -52,16 +54,16 @@ class Script {
     ui.hasSubdivisions = lib.hasSubdivisions(typeIndex)
     ui.hasSeed = lib.hasSeed(typeIndex)
 
-    if (app.findItem(this.buffer))
+    if (session.findItem(this.buffer))
       this.generate()
   }
 
   insert() {
-    this.group = app.findItem(this.settings.group)
+    this.group = session.findItem(this.settings.group)
 
     if (!this.group)
       this.group =
-        app.insertItem(this.settings.parent || app.session, {
+        (this.settings.parent || session).insert({
           name: 'Mesh',
           type: 'Group',
           inlineScope: true,
@@ -73,8 +75,8 @@ class Script {
       this.group.dynamic = true
 
     this.buffer =
-      app.findItem(item => item.type == 'Buffer', this.group) ||
-      app.insertItem(this.group, {
+      this.group.findItem(item => item.type == 'Buffer') ||
+      this.group.insert({
         name: 'Buffer',
         type: 'Buffer',
         items: [
@@ -105,8 +107,8 @@ class Script {
     this.indices = this.buffer.items[1]
 
     this.stream =
-      app.findItem(item => item.type == 'Stream', this.group) ||
-      app.insertItem(this.group, {
+      this.group.findItem(item => item.type == 'Stream') ||
+      this.group.insert({
         name: 'Stream',
         type: 'Stream',
         items: [
@@ -125,9 +127,9 @@ class Script {
         ]
       })
 
-    this.drawCall = app.findItem(item => item.type == 'Call', this.group)
+    this.drawCall = this.group.findItem(item => item.type == 'Call')
 
-    app.replaceItems(this.group, [this.buffer, this.stream, this.drawCall])
+    this.group.replaceItems([this.buffer, this.stream, this.drawCall])
 
     this.generate()
   }
@@ -144,10 +146,10 @@ class Script {
 
       this.vertices.items[2].padding = padding * 4
       this.vertices.rowCount = vertices.length / components
-      app.setBlockData(this.vertices, vertices)
+      this.vertices.setData(vertices)
 
       if (!this.indices)
-        this.indices = app.insertItem(this.buffer, {
+        this.indices = this.buffer.insert({
           name: 'Indices',
           type: 'Block',
           items: [
@@ -162,7 +164,7 @@ class Script {
       const indices = lib.getIndices(geometry)
       this.indices.offset = this.vertices.rowCount * (components + padding) * 4
       this.indices.rowCount = indices.length / 3
-      app.setBlockData(this.indices, indices)
+      this.indices.setData(indices)
     }
     else {
       const vertices = lib.getVerticesUnweld(geometry)
@@ -171,10 +173,10 @@ class Script {
 
       this.vertices.items[2].padding = this.settings.vertexPadding * 4
       this.vertices.rowCount = vertices.length / components
-      app.setBlockData(this.vertices, vertices)
+      this.vertices.setData(vertices)
 
       if (this.indices) {
-        app.deleteItem(this.indices)
+        this.indices.remove()
         this.indices = undefined
       }
     }
@@ -183,19 +185,19 @@ class Script {
   updateDrawCall() {
     if (this.settings.drawCall === false) {
       if (this.drawCall)
-        app.deleteItem(this.drawCall)
+        this.drawCall.remove()
       this.drawCall = undefined
       return
     }
 
     if (!this.drawCall) {
-      const target = app.findItem(item => item.type == 'Target')
+      const target = session.findItem(item => item.type == 'Target')
 
-      const program = app.findItem(
+      const program = session.findItem(
         item => (item.type == 'Program' &&
           item.items[0]?.shaderType == "Vertex"))
 
-      this.drawCall = app.insertItem(this.group, {
+      this.drawCall = this.group.insert({
         name: 'Draw',
         type: 'Call',
         targetId: target?.id,

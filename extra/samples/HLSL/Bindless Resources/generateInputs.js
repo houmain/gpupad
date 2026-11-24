@@ -1,8 +1,8 @@
 var middleValue = 20
-app.setBufferData("Value0", [10])
-app.setBufferData("Value1", [middleValue])
-app.setBufferData("Value2", [30])
-app.setBufferData("Value3", [50])
-app.setBufferData("Selection", [2, 0, 1])
-app.setBufferData(14, [0xffffffff, 0xffffffff, 0xffffffff,
+app.session.getItem("Value0").setData([10])
+app.session.getItem("Value1").setData([middleValue])
+app.session.getItem("Value2").setData([30])
+app.session.getItem("Value3").setData([50])
+app.session.getItem("Selection").setData([2, 0, 1])
+app.session.getItem("Results").setData([0xffffffff, 0xffffffff, 0xffffffff,
     0xffffffff, 0xffffffff, 0xffffffff])

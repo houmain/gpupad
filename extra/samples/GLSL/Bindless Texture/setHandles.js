@@ -6,6 +6,6 @@ let names = [
 
 let handles = []
 for (let name of names)
-  handles.push(app.getTextureHandle(name))
+  handles.push(app.session.getItem(name).getDeviceHandle())
 
-app.setBufferData("Buffer", handles)
+app.session.getItem("Buffer").setData(handles)

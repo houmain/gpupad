@@ -17,12 +17,12 @@ function LoadParticles(particles, offset, center, velocity, spread, numParticles
             delta[1] = RandomPercent();
             delta[1] = RandomPercent();
         } while (vec3.squaredLength(delta) > 1);
-        
+
         particles[offset++] = center[0] + delta[0] * spread;
         particles[offset++] = center[1] + delta[1] * spread;
         particles[offset++] = center[2] + delta[2] * spread;
         particles[offset++] = 10000.0 * 10000.0,
-        particles[offset++] = velocity[0];
+            particles[offset++] = velocity[0];
         particles[offset++] = velocity[1];
         particles[offset++] = velocity[2];
         particles[offset++] = velocity[3];
@@ -36,14 +36,14 @@ LoadParticles(data, 0,
     vec3.fromValues(spread * 0.5, 0, 0),
     vec4.fromValues(0, 0, -20, 1 / 100000000),
     spread, ParticleCount / 2);
-    
+
 LoadParticles(data, ParticleCount / 2 * 8,
     vec3.fromValues(spread * 0.5, 0, 0),
     vec4.fromValues(0, 0, -20, 1 / 100000000),
     spread, ParticleCount / 2);
-    
-app.setBufferData("BufferR", data);
-app.setBufferData("BufferW", data);
+
+app.session.getItem("BufferR").setData(data);
+app.session.getItem("BufferW").setData(data);
 
 const colors = []
 for (let i = 0, offset = 0; i < ParticleCount; i++) {
@@ -52,4 +52,4 @@ for (let i = 0, offset = 0; i < ParticleCount; i++) {
     colors[offset++] = 0.2;
     colors[offset++] = 1.0;
 }
-app.setBufferData("Colors", colors);
+app.session.getItem("Colors").setData(colors);

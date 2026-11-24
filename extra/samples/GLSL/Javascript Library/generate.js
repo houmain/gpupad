@@ -5,18 +5,19 @@ for (let i = 0; i < vertices.length; ++i) {
   do {
     x = Math.random() - 0.5
     y = Math.random() - 0.5
-  } while(x * x + y * y > 0.25)
+  } while (x * x + y * y > 0.25)
   vertices[i] = [x + 0.5, y + 0.5]
 }
 let indices = Delaunay.triangulate(vertices)
 // convert to single array
 vertices = [].concat.apply([], vertices)
 
-app.setBlockData('Buffer/Vertices', vertices)
+let Vertices = app.session.getItem('Buffer/Vertices')
+Vertices.setData(vertices)
 
-let Indices = app.getItem('Buffer/Indices')
+let Indices = app.session.getItem('Buffer/Indices')
 Indices.offset = vertices.length * 4
-app.setBlockData(Indices, indices)
+Indices.setData(indices)
 
-let Draw = app.getItem('Draw')
+let Draw = app.session.getItem('Draw')
 Draw.count = indices.length

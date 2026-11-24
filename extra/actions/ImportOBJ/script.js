@@ -46,32 +46,32 @@ class Script {
       throw new Error(error)
     lib.setSettings(this.model, JSON.stringify(this.settings))
 
-    this.group = app.findItem(this.settings.group)
+    this.group = app.session.findItem(this.settings.group)
 
     if (!this.group)
-      this.group = app.insertItem(this.settings.parent || app.session, {
+      this.group = (this.settings.parent || app.session).insert({
         name: (this.settings.name || this.getBaseName(this.settings.fileName)),
         type: 'Group',
         inlineScope: true,
       })
 
     this.buffer =
-      app.findItem(item => item.type == 'Buffer', this.group) ||
-      app.insertItem(this.group, {
+      this.group.findItem(item => item.type == 'Buffer') ||
+      this.group.insert({
         name: 'Buffer',
         type: 'Buffer',
       })
 
     this.streams =
-      app.findItem('Streams', this.group) ||
-      app.insertItem(this.group, {
+      this.group.findItem('Streams') ||
+      this.group.insert({
         name: 'Streams',
         type: 'Group',
       })
 
-    this.drawCalls = app.findItem('Calls', this.group)
+    this.drawCalls = this.group.findItem('Calls')
 
-    app.replaceItems(this.group, [this.buffer, this.streams, this.drawCalls])
+    this.group.replaceItems([this.buffer, this.streams, this.drawCalls])
 
     this.update()
   }
@@ -87,12 +87,12 @@ class Script {
 
   updateBuffer() {
     const lib = this.library
-    app.clearItems(this.buffer)
+    this.buffer.clear()
 
     const shapeCount = lib.getShapeCount(this.model)
     if (this.settings.indexed) {
       const vertices = lib.getVertices(this.model)
-      const block = app.insertItem(this.buffer, {
+      const block = this.buffer.insert({
         name: 'Vertices',
         type: 'Block',
         rowCount: vertices.length / 8,
@@ -114,13 +114,13 @@ class Script {
           }
         ]
       })
-      app.setBlockData(block, vertices)
+      block.setData(vertices)
 
       let offset = vertices.length * 4
       for (let i = 0; i < shapeCount; ++i) {
         const name = lib.getShapeName(this.model, i)
         const indices = lib.getShapeIndices(this.model, i)
-        const block = app.insertItem(this.buffer, {
+        const block = this.buffer.insert({
           name: name,
           type: 'Block',
           rowCount: indices.length / 3,
@@ -133,7 +133,7 @@ class Script {
             }
           ]
         })
-        app.setBlockData(block, indices)
+        block.setData(indices)
         offset += indices.length * 4
       }
     }
@@ -142,7 +142,7 @@ class Script {
       for (let i = 0; i < shapeCount; ++i) {
         const name = lib.getShapeName(this.model, i)
         const vertices = lib.getShapeVertices(this.model, i)
-        const block = app.insertItem(this.buffer, {
+        const block = this.buffer.insert({
           name: name,
           type: 'Block',
           rowCount: vertices.length / 8,
@@ -165,7 +165,7 @@ class Script {
             }
           ]
         })
-        app.setBlockData(block, vertices)
+        block.setData(vertices)
         offset += vertices.length * 8
       }
     }
@@ -216,26 +216,26 @@ class Script {
         })
     }
 
-    app.replaceItems(this.streams, streams)
+    this.streams.replaceItems(streams)
   }
 
   updateDrawCalls() {
     if (this.settings.drawCalls === false) {
       if (this.drawCalls)
-        app.deleteItem(this.drawCalls)
+        this.drawCalls.remove()
       this.drawCalls = undefined
       return
     }
 
     if (!this.drawCalls)
-      this.drawCalls = app.insertItem(this.group, {
+      this.drawCalls = this.group.insert({
         name: 'Calls',
         type: 'Group',
       })
 
-    const targetId = app.findItem(item => item.type == "Target")?.id
+    const targetId = app.session.findItem(item => item.type == "Target")?.id
 
-    const programId = app.findItem(
+    const programId = app.session.findItem(
       item => (item.type == 'Program' &&
         item.items[0]?.shaderType == "Vertex"))?.id
 
@@ -271,7 +271,7 @@ class Script {
       }
     }
 
-    app.replaceItems(this.drawCalls, drawCalls)
+    this.drawCalls.replaceItems(drawCalls)
   }
 } // Script
 

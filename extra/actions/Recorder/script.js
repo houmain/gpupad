@@ -20,17 +20,17 @@ class Script {
     this.totalFrames = 0
 
     this.textures = [{ key: 0, text: "None (audio only)", item: null }]
-    for (const texture of app.findItems(item => item.type == "Texture")) {
+    for (const texture of app.session.findItems(item => item.type == "Texture")) {
       this.textures.push({
         key: Number(texture.id),
         text: String(texture.name),
         item: texture,
       })
     }
-    this.sessionHasAudio = app.findItems(item =>
+    this.sessionHasAudio = app.session.findItems(item =>
       item.type == "Call" && item.checked
       && item.callType == "ComputeSound").length > 0
-      || app.findItems(item => item.type == "Texture"
+      || app.session.findItems(item => item.type == "Texture"
         && (item.sourceType == "AudioSpectrum"
           || item.sourceType == "AudioSamples")
         && /\.(wav|mp3|flac|aac|aif|aiff|m4a|ogg|oga|opus|wma)$/i

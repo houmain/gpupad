@@ -14,16 +14,17 @@ if (!json)
 const reflection = JSON.parse(json)
 
 const reuseFileName =
-  app.findItem(item => (item.type == "Texture" &&
+  app.session.findItem(item => (item.type == "Texture" &&
     app.isUntitled(item.fileName)))?.fileName;
 
-app.clearSession()
+const session = app.session
+session.clear()
 
 let width = 512
 let height = 512
 
 // Target
-const color = app.insertItem({
+const color = session.insert({
   type: "Texture",
   name: "Color",
   width: width,
@@ -32,9 +33,9 @@ const color = app.insertItem({
   fileName: reuseFileName,
 })
 
-app.openEditor(color)
+color.openEditor()
 
-let target = app.insertItem({
+let target = session.insert({
   type: "Target",
   items: [
     {
@@ -54,7 +55,7 @@ for (let uniform of reflection.uniforms || []) {
     uniform.type.match(/^[ui]?image/)) {
     bindingType = (uniform.type.match(/^[ui]?sampler/) ?
       "Sampler" : "Image");
-    textureId = app.insertItem({
+    textureId = session.insert({
       type: "Texture",
       name: `Texture ${uniform.name}`,
       width: 10,
@@ -71,7 +72,7 @@ for (let uniform of reflection.uniforms || []) {
         data.push(c);
         data.push(1);
       }
-    app.setTextureData(textureId, data);
+    textureId.setData(data);
   }
   else if (uniform.name.match(/time/) &&
     uniform.type == 'float') {
@@ -102,7 +103,7 @@ for (let uniform of reflection.uniforms || []) {
     }
   }
 
-  app.insertItem({
+  session.insert({
     type: "Binding",
     name: uniform.name,
     bindingType: bindingType,
@@ -113,12 +114,12 @@ for (let uniform of reflection.uniforms || []) {
 }
 
 // Program
-const program = app.insertItem({
+const program = session.insert({
   type: "Program",
 })
 
 // Vertex Shader
-const vs = app.insertItem(program, {
+const vs = program.insert({
   type: "Shader",
   name: "Vertex Shader",
   shaderType: "Vertex",
@@ -132,7 +133,7 @@ for (let input of reflection.inputs || []) {
 }
 varyings.push('');
 
-app.setShaderSource(vs, `
+vs.setSource(`
 ${varyingDeclarations.join('\n')}
 
 void main() {
@@ -143,14 +144,14 @@ void main() {
 `)
 
 // Fragment shader
-const effect = app.insertItem(program, {
+const effect = program.insert({
   type: "Shader",
   shaderType: "Fragment",
   fileName: shaderFileName,
 })
 
 // Call
-const call = app.insertItem({
+const call = session.insert({
   type: "Call",
   callType: "Draw",
   programId: program.id,
@@ -158,4 +159,4 @@ const call = app.insertItem({
   count: 3,
 })
 
-app.evaluation = 'Reset'
+app.evaluate(true)

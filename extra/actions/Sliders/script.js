@@ -19,7 +19,7 @@ class Script {
   initializeUi(ui) {
     this.ui = ui
 
-    app.trackItems(
+    app.session.trackItems(
       (item) => {
         const valueCount = item.values?.length ?? 0
         return (item.type == 'Binding' && item.bindingType == 'Uniform'

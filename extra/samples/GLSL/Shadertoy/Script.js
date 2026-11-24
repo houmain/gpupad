@@ -1,2 +1,2 @@
 
-target = app.openEditor(app.getItem("TargetTexture"))
+target = app.session.getItem("TargetTexture").openEditor()

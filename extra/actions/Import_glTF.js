@@ -1,10 +1,11 @@
 "use strict"
 
+const session = app.session
+
 const manifest = {
   name: "Import gl&TF",
   applicable: false, // Disabled for now
 }
-
 
 var PrimitiveType = {
   4: "Triangles",
@@ -211,7 +212,7 @@ function setMaterial(material) {
 
 function findItemId(type, items) {
   if (!items)
-    items = app.session.items;
+    items = session.items;
   for (var i in items) {
     var item = items[i];
     if (item.type == type)
@@ -253,4 +254,4 @@ for (var m in gltf.meshes) {
     call.targetId = findItemId("Target");
   }
 }
-app.insertItem(group);
+session.insert(group);

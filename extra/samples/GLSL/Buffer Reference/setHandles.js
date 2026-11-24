@@ -1,6 +1,6 @@
 
 let handles = [
-  app.getBufferHandle("colors.bin")
+  app.session.getItem("colors.bin").getDeviceHandle()
 ]
 
-app.setBufferData("BufferReferences", handles)
+app.session.getItem("BufferReferences").setData(handles)
