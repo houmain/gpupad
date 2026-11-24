@@ -198,6 +198,7 @@ QJSValue ScriptEngine::evaluateScript(const QString &script,
     const auto guardRunning = registerRunning();
     const auto guardConsole =
         mConsoleScriptObject->setLocation(itemId, fileName);
+    const auto guardItem = mAppScriptObject->setCurrentItemId(itemId);
     const auto result = mJsEngine->evaluate(script, fileName);
     outputError(result, itemId);
     return result;
@@ -209,6 +210,7 @@ ScriptValueList ScriptEngine::evaluateValues(const QString &valueExpression,
     Q_ASSERT(QThread::currentThread() == thread());
     const auto guardRunning = registerRunning();
     const auto guardConsole = mConsoleScriptObject->setItemId(itemId);
+    const auto guardItem = mAppScriptObject->setCurrentItemId(itemId);
     const auto result = mJsEngine->evaluate(valueExpression);
     outputError(result, itemId);
     return getFlattenedValues(result);

@@ -390,7 +390,7 @@ QJSValue AppScriptObject::loadLibrary(QString fileName)
                     toNativeCanonicalFilePath(dir.filePath(fileName));
                 auto source = QString();
                 if (Singletons::fileCache().getSource(filePath, &source)) {
-                    engine().evaluateScript(source, filePath);
+                    engine().evaluateScript(source, filePath, mCurrentItemId);
                     // script does not return anything for now
                     const auto libraryObject = jsEngine().newObject();
                     mLoadedLibraries[fileName] = libraryObject;
@@ -425,7 +425,7 @@ void AppScriptObject::evaluateScript(QString fileName)
         return throwJsError(
             "Loading file '" + FileDialog::getFileTitle(fileName) + "' failed");
 
-    engine().evaluateScript(source, fileName);
+    engine().evaluateScript(source, fileName, mCurrentItemId);
 }
 
 QJSValue AppScriptObject::callAction(QString id, QJSValue arguments)

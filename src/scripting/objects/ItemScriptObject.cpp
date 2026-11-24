@@ -126,7 +126,7 @@ void ItemScriptObject::remove()
 
 QJSValue ItemScriptObject::openEditor()
 {
-    return mAppScriptObject.openEditor(QJSValue(mItemId));
+    return mAppScriptObject.openItemEditor(QJSValue(mItemId));
 }
 
 void ItemScriptObject::setData(QJSValue data)

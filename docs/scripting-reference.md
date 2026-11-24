@@ -12,7 +12,8 @@ File paths returned by GPUpad are absolute native paths. Relative paths used by 
 
 ### Session
 
-- `session: Item` - Root Session Item.
+- `session: Item` - Root Session Item, or the nearest Component root while a
+  Script or expression inside that Component is being evaluated.
 - `loadSession(fileName: String): void` - Pauses evaluation, closes editors, clears the current Session, and loads `fileName`.
 - `closeSession(): void` - Clears the current Session and invalidates existing Item trackers and wrappers.
 - `messages: [Message]` - Snapshot of application messages. Each Message has `severity: "INFO|WARNING|ERROR"` and `text: String`, with optional `fileName: String`, `line: Number`, and `itemId: Number`.

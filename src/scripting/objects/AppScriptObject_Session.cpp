@@ -15,6 +15,7 @@
 #include <QTextStream>
 #include <limits>
 #include <cstring>
+#include <utility>
 
 namespace {
     struct Int64
@@ -340,15 +341,25 @@ QJSValue AppScriptObject::session()
         return QJSValue::UndefinedValue;
     }
 
-    if (mSessionProperty.isUndefined())
-        mSessionProperty =
-            makeItemObject(threadSessionModel().sessionItem().id);
-    return mSessionProperty;
+    return makeItemObject(sessionRootItem().id);
 }
 
-QJSValue AppScriptObject::insertItem(QJSValue object)
+const Item &AppScriptObject::sessionRootItem()
 {
-    return insertItem(QJSValue::UndefinedValue, object);
+    const auto &session = threadSessionModel();
+    for (auto item = session.findItem(mCurrentItemId); item;
+         item = item->parent) {
+        if (item->type == Item::Type::Component)
+            return *item;
+    }
+    return session.sessionItem();
+}
+
+std::shared_ptr<void> AppScriptObject::setCurrentItemId(ItemId itemId)
+{
+    const auto previousItemId = std::exchange(mCurrentItemId, itemId);
+    return std::shared_ptr<void>(nullptr,
+        [this, previousItemId](void *) { mCurrentItemId = previousItemId; });
 }
 
 JsonObject AppScriptObject::toJsonObject(const QJSValue &value)
@@ -398,7 +409,7 @@ QJSValue AppScriptObject::insertItemAt(const Item *parent, int row,
 QJSValue AppScriptObject::insertItem(QJSValue parentIdent, QJSValue object)
 {
     const auto parent = (parentIdent.isUndefined()
-            ? &threadSessionModel().sessionItem()
+            ? &sessionRootItem()
             : findSessionItem(parentIdent));
     if (!parent) {
         throwJsError("Invalid parent");
@@ -512,7 +523,7 @@ QModelIndex AppScriptObject::getOriginIndex(QJSValue originIdent)
 {
     const auto &session = threadSessionModel();
     if (originIdent.isUndefined())
-        return session.sessionItemIndex();
+        return session.getIndex(&sessionRootItem());
 
     const auto origin = findSessionItem(originIdent);
     if (!origin) {
@@ -554,7 +565,8 @@ const Item *AppScriptObject::findSessionItem(QJSValue itemIdent,
 
 const Item *AppScriptObject::findSessionItem(QJSValue itemIdent)
 {
-    return findSessionItem(itemIdent, threadSessionModel().sessionItemIndex(),
+    const auto &session = threadSessionModel();
+    return findSessionItem(itemIdent, session.getIndex(&sessionRootItem()),
         true);
 }
 
@@ -718,22 +730,6 @@ QJSValue AppScriptObject::findItem(QJSValue itemIdent, QJSValue originIdent,
     return QJSValue::UndefinedValue;
 }
 
-QJSValue AppScriptObject::getItem(QJSValue itemIdent)
-{
-    if (auto item = findItem(itemIdent); !item.isUndefined())
-        return item;
-
-    throwJsError("Item does not exist");
-    return QJSValue::UndefinedValue;
-}
-
-QJSValue AppScriptObject::findItem(QJSValue itemIdent)
-{
-    if (auto item = findSessionItem(itemIdent))
-        return makeItemObject(item->id);
-    return QJSValue::UndefinedValue;
-}
-
 QJSValue AppScriptObject::findItems(QJSValue itemIdent, QJSValue originIdent,
     bool searchSubItems)
 {
@@ -743,11 +739,6 @@ QJSValue AppScriptObject::findItems(QJSValue itemIdent, QJSValue originIdent,
 
     return makeItemArray(
         findSessionItems(itemIdent, originIndex, searchSubItems));
-}
-
-QJSValue AppScriptObject::findItems(QJSValue itemIdent)
-{
-    return findItems(itemIdent, QJSValue::UndefinedValue, true);
 }
 
 QJSValue AppScriptObject::trackItems(QJSValue itemIdent, QJSValue originIdent,
@@ -781,17 +772,6 @@ QJSValue AppScriptObject::trackItems(QJSValue itemIdent, QJSValue originIdent,
     return index;
 }
 
-QJSValue AppScriptObject::trackItems(QJSValue itemIdent, QJSValue originIdent,
-    QJSValue callback)
-{
-    return trackItems(itemIdent, originIdent, false, callback);
-}
-
-QJSValue AppScriptObject::trackItems(QJSValue itemIdent, QJSValue callback)
-{
-    return trackItems(itemIdent, QJSValue::UndefinedValue, true, callback);
-}
-
 void AppScriptObject::untrackItems(int trackingIndex)
 {
     mItemTrackings.erase(trackingIndex);
@@ -808,7 +788,7 @@ void AppScriptObject::loadSession(QString fileName)
     sync.finishEvaluation();
 
     Singletons::editorManager().closeAllEditors(false);
-    clearSession();
+    closeSession();
 
     fileName = toNativeCanonicalAbsoluteFilePath(fileName);
     if (!Singletons::sessionModel().load(fileName))
@@ -821,7 +801,6 @@ void AppScriptObject::closeSession()
         return throwJsError(
             "Sessions can only be closed from a main-thread script");
 
-    mSessionProperty = QJSValue::UndefinedValue;
     mItemTrackings.clear();
     for (const auto &[id, item] : mItemObjects)
         item.object->deleteLater();
@@ -837,11 +816,6 @@ QJSValue AppScriptObject::getItemProperties(QJSValue itemIdent)
         return QJSValue::UndefinedValue;
     }
     return jsEngine().toScriptValue(threadSessionModel().itemProperties(*item));
-}
-
-void AppScriptObject::clearSession()
-{
-    closeSession();
 }
 
 void AppScriptObject::clearItems(QJSValue parentIdent)
@@ -873,30 +847,30 @@ void AppScriptObject::deleteItem(QJSValue itemIdent)
     updateItemProperties(parent);
 }
 
-QJSValue AppScriptObject::openEditor(QJSValue fileNameOrItemIdent)
+QJSValue AppScriptObject::openEditor(QString fileName)
 {
-    if (fileNameOrItemIdent.isString()) {
-        const auto fileName = getAbsolutePath(fileNameOrItemIdent.toString());
-        if (auto editor = tryGetEditorObject(fileName); !editor.isUndefined())
-            return editor;
+    fileName = getAbsolutePath(fileName);
+    if (auto editor = tryGetEditorObject(fileName); !editor.isUndefined())
+        return editor;
 
-        auto opened = false;
-        dispatchToMainThread([&, onMainThread = onMainThread()]() {
-            if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
-                const auto enginePtr =
-                    (onMainThread ? mEnginePtr.lock() : nullptr);
-                const auto editor = Singletons::editorManager().openQmlView(
-                    fileName, enginePtr);
-                opened = static_cast<bool>(editor);
-            } else {
-                opened = static_cast<bool>(
-                    Singletons::editorManager().openEditor(fileName));
-            }
-        });
-        return (opened ? getEditorObject(fileName) : QJSValue::UndefinedValue);
-    }
+    auto opened = false;
+    dispatchToMainThread([&, onMainThread = onMainThread()]() {
+        if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
+            const auto enginePtr = (onMainThread ? mEnginePtr.lock() : nullptr);
+            const auto editor = Singletons::editorManager().openQmlView(
+                fileName, enginePtr);
+            opened = static_cast<bool>(editor);
+        } else {
+            opened = static_cast<bool>(
+                Singletons::editorManager().openEditor(fileName));
+        }
+    });
+    return (opened ? getEditorObject(fileName) : QJSValue::UndefinedValue);
+}
 
-    const auto item = findSessionItem<FileItem>(fileNameOrItemIdent);
+QJSValue AppScriptObject::openItemEditor(QJSValue itemIdent)
+{
+    const auto item = findSessionItem<FileItem>(itemIdent);
     if (!item)
         return QJSValue::UndefinedValue;
 
@@ -1060,13 +1034,13 @@ QJSValue AppScriptObject::processItemShader(QJSValue itemIdent,
                              : QJSValue::UndefinedValue);
 }
 
-QJSValue AppScriptObject::processShader(QJSValue fileNameOrItemIdent,
+QJSValue AppScriptObject::processShader(QString fileName,
     QString processType)
 {
     auto result = QVariant();
     dispatchToMainThread([&]() {
         if (auto editor = Singletons::editorManager().getSourceEditor(
-                getAbsolutePath(fileNameOrItemIdent.toString())))
+                getAbsolutePath(fileName)))
             result = processShader(editor->fileName(), editor->sourceType(),
                 processType);
     });

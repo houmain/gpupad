@@ -31,7 +31,7 @@ class AppScriptObject final : public QObject
     Q_PROPERTY(double soundTime READ soundTime NOTIFY timeChanged)
     Q_PROPERTY(double timeDelta READ timeDelta NOTIFY timeDeltaChanged)
     Q_PROPERTY(QJSValue date READ date CONSTANT)
-    Q_PROPERTY(QJSValue session READ session CONSTANT)
+    Q_PROPERTY(QJSValue session READ session)
     Q_PROPERTY(QJSValue mouse READ mouse CONSTANT)
     Q_PROPERTY(QJSValue keyboard READ keyboard CONSTANT)
     Q_PROPERTY(
@@ -70,6 +70,7 @@ public:
     Q_INVOKABLE QString getFileTitle(QString fileName);
     Q_INVOKABLE QJSValue openFileDialog(QString pattern = "");
     Q_INVOKABLE QJSValue saveFileDialog(QString pattern = "");
+    Q_INVOKABLE QJSValue openEditor(QString fileName);
     Q_INVOKABLE QJSValue loadLibrary(QString fileName);
     Q_INVOKABLE QJSValue callAction(QString id);
     Q_INVOKABLE QJSValue callAction(QString id, QJSValue arguments);
@@ -88,44 +89,7 @@ public:
     Q_INVOKABLE void evaluate(bool reset = false);
     Q_INVOKABLE void loadSession(QString fileName);
     Q_INVOKABLE void closeSession();
-    Q_INVOKABLE QJSValue processShader(QJSValue fileName, QString processType);
-
-    // deprecated in 4.8
-    Q_INVOKABLE QJSValue getItemProperties(QJSValue itemIdent);
-    Q_INVOKABLE void clearSession();
-    Q_INVOKABLE QJSValue getItem(QJSValue itemIdent);
-    Q_INVOKABLE QJSValue getParentItem(QJSValue itemIdent);
-    Q_INVOKABLE QJSValue findItem(QJSValue itemIdent);
-    Q_INVOKABLE QJSValue findItem(QJSValue itemIdent, QJSValue originIdent,
-        bool searchSubItems = false);
-    Q_INVOKABLE QJSValue findItems(QJSValue itemIdent, QJSValue originIdent,
-        bool searchSubItems = false);
-    Q_INVOKABLE QJSValue findItems(QJSValue itemIdent);
-    Q_INVOKABLE QJSValue trackItems(QJSValue itemIdent, QJSValue originIdent,
-        bool searchSubItems, QJSValue callback);
-    Q_INVOKABLE QJSValue trackItems(QJSValue itemIdent, QJSValue originIdent,
-        QJSValue callback);
-    Q_INVOKABLE QJSValue trackItems(QJSValue itemIdent, QJSValue callback);
-    Q_INVOKABLE void untrackItems(int trackingIndex);
-    Q_INVOKABLE QJSValue insertItem(QJSValue object);
-    Q_INVOKABLE QJSValue insertItem(QJSValue parentIdent, QJSValue object);
-    Q_INVOKABLE QJSValue insertBeforeItem(QJSValue siblingIdent,
-        QJSValue object);
-    Q_INVOKABLE QJSValue insertAfterItem(QJSValue siblingIdent,
-        QJSValue object);
-    Q_INVOKABLE void replaceItems(QJSValue parentIdent, QJSValue array);
-    Q_INVOKABLE void clearItems(QJSValue parentIdent);
-    Q_INVOKABLE void deleteItem(QJSValue itemIdent);
-    Q_INVOKABLE QJSValue openEditor(QJSValue fileNameOrItemIdent);
-    Q_INVOKABLE void setBufferData(QJSValue itemIdent, QJSValue data);
-    Q_INVOKABLE void setBlockData(QJSValue itemIdent, QJSValue data);
-    Q_INVOKABLE void setTextureData(QJSValue itemIdent, QJSValue data);
-    Q_INVOKABLE void setScriptSource(QJSValue itemIdent, QJSValue data);
-    Q_INVOKABLE void setShaderSource(QJSValue itemIdent, QJSValue data);
-    Q_INVOKABLE quint64 getTextureHandle(QJSValue itemIdent);
-    Q_INVOKABLE quint64 getBufferHandle(QJSValue itemIdent);
-    Q_INVOKABLE QJSValue processItemShader(QJSValue itemIdent,
-        QString processType);
+    Q_INVOKABLE QJSValue processShader(QString fileName, QString processType);
 
     const QDir &basePath() const { return mBasePath; }
     QString getAbsolutePath(const QString &fileName) const;
@@ -146,6 +110,7 @@ Q_SIGNALS:
     void messagesChanged();
 
 private:
+    friend class ScriptEngine;
     friend class ItemScriptObject;
     using UpdateSessionFunction = std::function<void(SessionModel &)>;
 
@@ -178,8 +143,34 @@ private:
     // session
     bool isSessionAvailable() const;
     SessionModel &threadSessionModel();
+    const Item &sessionRootItem();
+    std::shared_ptr<void> setCurrentItemId(ItemId itemId);
     JsonObject toJsonObject(const QJSValue &object);
     void withSessionModel(UpdateSessionFunction &&updateFunction);
+    QJSValue getItemProperties(QJSValue itemIdent);
+    QJSValue getParentItem(QJSValue itemIdent);
+    QJSValue findItem(QJSValue itemIdent, QJSValue originIdent,
+        bool searchSubItems);
+    QJSValue findItems(QJSValue itemIdent, QJSValue originIdent,
+        bool searchSubItems);
+    QJSValue trackItems(QJSValue itemIdent, QJSValue originIdent,
+        bool searchSubItems, QJSValue callback);
+    void untrackItems(int trackingIndex);
+    QJSValue insertItem(QJSValue parentIdent, QJSValue object);
+    QJSValue insertBeforeItem(QJSValue siblingIdent, QJSValue object);
+    QJSValue insertAfterItem(QJSValue siblingIdent, QJSValue object);
+    void replaceItems(QJSValue parentIdent, QJSValue array);
+    void clearItems(QJSValue parentIdent);
+    void deleteItem(QJSValue itemIdent);
+    QJSValue openItemEditor(QJSValue itemIdent);
+    void setBufferData(QJSValue itemIdent, QJSValue data);
+    void setBlockData(QJSValue itemIdent, QJSValue data);
+    void setTextureData(QJSValue itemIdent, QJSValue data);
+    void setScriptSource(QJSValue itemIdent, QJSValue data);
+    void setShaderSource(QJSValue itemIdent, QJSValue data);
+    quint64 getTextureHandle(QJSValue itemIdent);
+    quint64 getBufferHandle(QJSValue itemIdent);
+    QJSValue processItemShader(QJSValue itemIdent, QString processType);
     QModelIndex getOriginIndex(QJSValue originIdent);
     const Item *findSessionItem(QJSValue itemIdent,
         const QModelIndex &originIndex, bool searchSubItems);
@@ -237,8 +228,8 @@ private:
 
     // session
     QJSValue mSelectionProperty;
-    QJSValue mSessionProperty;
     IScriptRenderSession *mRenderSession{ };
+    ItemId mCurrentItemId{ };
     std::vector<UpdateSessionFunction> mPendingSessionUpdates;
     std::map<ItemId, ItemObject> mItemObjects;
     std::map<int, ItemTracking> mItemTrackings;
