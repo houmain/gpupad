@@ -41,7 +41,7 @@ public:
     void handleEditorFileChanged(const QString &fileName,
         bool emitFileChanged = true);
     void handleEditorSave(const QString &fileName);
-    void updateFromEditors();
+    void synchronizeEditors();
 
 Q_SIGNALS:
     void fileChanged(const QString &fileName);
@@ -62,12 +62,16 @@ public Q_SLOTS:
 private:
     class BackgroundLoader;
 
+    enum class CachedDataType { Source, Texture, Binary };
+
     void handleFileSystemFileChanged(const QString &fileName);
     void addFileSystemWatch(const QString &fileName,
         bool changed = false) const;
     void updateFileSystemWatches();
     bool reloadFileInBackground(const QString &fileName);
     bool updateFromEditor(const QString &fileName);
+    void updateEditorFromCache(
+        const QString &fileName, CachedDataType dataType);
     void purgeFile(const QString &fileName);
 
     mutable QMutex mMutex;
@@ -77,6 +81,8 @@ private:
     mutable QMap<QString, bool> mFileSystemWatchesToAdd;
 
     QSet<QString> mEditorFilesChanged;
+    QMap<QString, CachedDataType> mCachedFilesChanged;
+    QString mUpdatingEditorFile;
     QSet<QString> mEditorSaveAdvertised;
     QTimer mUpdateFileSystemWatchesTimer;
     QFileSystemWatcher mFileSystemWatcher;

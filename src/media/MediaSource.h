@@ -18,14 +18,18 @@ struct MediaSource
 
     MediaSource() = default;
     MediaSource(QString fileName) : fileName(fileName) { }
-    MediaSource(QString fileName, Texture::SourceType type,
-        Texture::Target target = Texture::Target::Target2D,
-        QSize resolution = { })
+    MediaSource(QString fileName, Texture::SourceType type)
         : fileName(fileName)
         , type(type)
-        , target(target)
-        , width(std::max(resolution.width(), 1))
-        , height(1)
+    {
+    }
+    MediaSource(QString fileName, Texture::SourceType type,
+        Texture::Target target, QSize resolution)
+        : fileName(fileName)
+        , type(type)
+        , target(type != Texture::SourceType::NoSource ? target : Texture::Target::Target2D)
+        , width(type != Texture::SourceType::NoSource ? std::max(resolution.width(), 1) : 0)
+        , height(type != Texture::SourceType::NoSource ? 1 : 0)
     {
     }
 

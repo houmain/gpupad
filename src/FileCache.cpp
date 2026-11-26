@@ -231,6 +231,8 @@ void FileCache::unloadAll()
     mTextures.clear();
     mBinaries.clear();
     mFileSystemWatchesToAdd.clear();
+    mEditorFilesChanged.clear();
+    mCachedFilesChanged.clear();
 }
 
 void FileCache::invalidateFile(const QString &fileName)
@@ -252,7 +254,13 @@ void FileCache::handleEditorFileChanged(const QString &fileName,
 {
     Q_ASSERT(onMainThread());
     Q_ASSERT(isNativeCanonicalFilePath(fileName));
+    if (mUpdatingEditorFile == fileName)
+        return;
+
+    QMutexLocker lock(&mMutex);
+    mCachedFilesChanged.remove(fileName);
     mEditorFilesChanged.insert(fileName);
+    lock.unlock();
     if (emitFileChanged)
         Q_EMIT fileChanged(fileName);
 }
@@ -263,6 +271,8 @@ void FileCache::handleEditorSave(const QString &fileName)
     Q_ASSERT(isNativeCanonicalFilePath(fileName));
     QMutexLocker lock(&mMutex);
     updateFromEditor(fileName);
+    mCachedFilesChanged.remove(fileName);
+    mEditorFilesChanged.remove(fileName);
     mEditorSaveAdvertised.insert(fileName);
 }
 
@@ -289,14 +299,88 @@ bool FileCache::updateFromEditor(const QString &fileName)
     return false;
 }
 
-void FileCache::updateFromEditors()
+void FileCache::synchronizeEditors()
 {
     Q_ASSERT(onMainThread());
-    QMutexLocker lock(&mMutex);
-    for (const auto &fileName : std::as_const(mEditorFilesChanged))
-        if (!updateFromEditor(fileName))
-            purgeFile(fileName);
-    mEditorFilesChanged.clear();
+
+    auto cachedFilesChanged = QMap<QString, CachedDataType>{ };
+    {
+        QMutexLocker lock(&mMutex);
+        for (const auto &fileName : std::as_const(mEditorFilesChanged))
+            if (!updateFromEditor(fileName))
+                purgeFile(fileName);
+        mEditorFilesChanged.clear();
+        cachedFilesChanged.swap(mCachedFilesChanged);
+    }
+
+    for (auto it = cachedFilesChanged.cbegin(); it != cachedFilesChanged.cend();
+        ++it)
+        updateEditorFromCache(it.key(), it.value());
+}
+
+void FileCache::updateEditorFromCache(const QString &fileName,
+    CachedDataType dataType)
+{
+    Q_ASSERT(onMainThread());
+
+    auto source = QString{ };
+    auto texture = TextureData{ };
+    auto binary = QByteArray{ };
+    {
+        QMutexLocker lock(&mMutex);
+        switch (dataType) {
+        case CachedDataType::Source:
+            if (!mSources.contains(fileName))
+                return;
+            source = mSources.value(fileName);
+            break;
+        case CachedDataType::Texture: {
+            const auto it = mTextures.find(fileName);
+            if (it == mTextures.end())
+                return;
+            texture = it->second;
+            break;
+        }
+        case CachedDataType::Binary:
+            if (!mBinaries.contains(fileName))
+                return;
+            binary = mBinaries.value(fileName);
+            break;
+        }
+    }
+
+    Q_ASSERT(mUpdatingEditorFile.isEmpty());
+    mUpdatingEditorFile = fileName;
+    auto &editorManager = Singletons::editorManager();
+    switch (dataType) {
+    case CachedDataType::Source:
+        if (auto editor = (FileDialog::isUntitled(fileName)
+                    ? editorManager.getSourceEditor(fileName)
+                    : editorManager.openSourceEditor(fileName, true))) {
+            editor->replace(std::move(source), false);
+            editor->setModified();
+        }
+        break;
+    case CachedDataType::Texture:
+        if (auto editor = (FileDialog::isUntitled(fileName)
+                    ? editorManager.getTextureEditor(fileName)
+                    : editorManager.openTextureEditor(fileName, true))) {
+            editor->replace(std::move(texture), false);
+            editor->setModified();
+        }
+        break;
+    case CachedDataType::Binary:
+        if (auto editor = (FileDialog::isUntitled(fileName)
+                    ? editorManager.getBinaryEditor(fileName)
+                    : editorManager.openBinaryEditor(fileName, true))) {
+            editor->replace(std::move(binary), false);
+            editor->setModified();
+        }
+        break;
+    }
+    mUpdatingEditorFile.clear();
+
+    Q_EMIT fileChanged(fileName);
 }
 
 bool FileCache::getSource(const QString &fileName, QString *source) const
@@ -344,8 +428,8 @@ bool FileCache::getTexture(const MediaSource &source,
         auto item = Texture();
         item.sourceType = source.type;
         initializeTextureSource(item);
-        texture->create(source.target, item.format, source.width,
-            source.height, 1, 1);
+        texture->create(source.target, item.format, source.width, source.height,
+            1, 1);
         texture->clear();
         mTextures.emplace(source, *texture);
         Q_EMIT mediaRequested(source);
@@ -361,34 +445,31 @@ bool FileCache::getTexture(const MediaSource &source,
 void FileCache::updateSource(const QString &fileName, QString source)
 {
     Q_ASSERT(isNativeCanonicalFilePath(fileName));
-    auto &editorManager = Singletons::editorManager();
-    if (auto editor = (FileDialog::isUntitled(fileName)
-                ? editorManager.getSourceEditor(fileName)
-                : editorManager.openSourceEditor(fileName, true))) {
-        editor->replace(std::move(source));
-    } else {
-        QMutexLocker lock(&mMutex);
-        mSources[fileName] = std::move(source);
-        lock.unlock();
-        Q_EMIT fileChanged(fileName);
-    }
+    QMutexLocker lock(&mMutex);
+    addFileSystemWatch(fileName);
+    if (mSources.contains(fileName) && mSources.value(fileName) == source
+        && !mEditorFilesChanged.contains(fileName))
+        return;
+
+    mSources[fileName] = std::move(source);
+    mEditorFilesChanged.remove(fileName);
+    mCachedFilesChanged[fileName] = CachedDataType::Source;
 }
 
 void FileCache::updateTexture(const QString &fileName, TextureData texture)
 {
     Q_ASSERT(!texture.isNull());
     Q_ASSERT(isNativeCanonicalFilePath(fileName));
-    auto &editorManager = Singletons::editorManager();
-    if (auto editor = (FileDialog::isUntitled(fileName)
-                ? editorManager.getTextureEditor(fileName)
-                : editorManager.openTextureEditor(fileName, true))) {
-        editor->replace(std::move(texture));
-    } else {
-        QMutexLocker lock(&mMutex);
-        mTextures[fileName] = std::move(texture);
-        lock.unlock();
-        Q_EMIT fileChanged(fileName);
-    }
+    QMutexLocker lock(&mMutex);
+    addFileSystemWatch(fileName);
+    const auto it = mTextures.find(fileName);
+    if (it != mTextures.end() && it->second == texture
+        && !mEditorFilesChanged.contains(fileName))
+        return;
+
+    mTextures[fileName] = std::move(texture);
+    mEditorFilesChanged.remove(fileName);
+    mCachedFilesChanged[fileName] = CachedDataType::Texture;
 }
 
 void FileCache::updateMediaTexture(const MediaSource &source,
@@ -406,17 +487,15 @@ void FileCache::updateMediaTexture(const MediaSource &source,
 void FileCache::updateBinary(const QString &fileName, QByteArray binary)
 {
     Q_ASSERT(isNativeCanonicalFilePath(fileName));
-    auto &editorManager = Singletons::editorManager();
-    if (auto editor = (FileDialog::isUntitled(fileName)
-                ? editorManager.getBinaryEditor(fileName)
-                : editorManager.openBinaryEditor(fileName, true))) {
-        editor->replace(binary);
-    } else {
-        QMutexLocker lock(&mMutex);
-        mBinaries[fileName] = std::move(binary);
-        lock.unlock();
-        Q_EMIT fileChanged(fileName);
-    }
+    QMutexLocker lock(&mMutex);
+    addFileSystemWatch(fileName);
+    if (mBinaries.contains(fileName) && mBinaries.value(fileName) == binary
+        && !mEditorFilesChanged.contains(fileName))
+        return;
+
+    mBinaries[fileName] = std::move(binary);
+    mEditorFilesChanged.remove(fileName);
+    mCachedFilesChanged[fileName] = CachedDataType::Binary;
 }
 
 void FileCache::updateBinaryRange(const QString &fileName, int offset,
@@ -427,24 +506,34 @@ void FileCache::updateBinaryRange(const QString &fileName, int offset,
     if (offset < 0)
         return;
 
-    auto data = QByteArray();
-    if (auto editor = Singletons::editorManager().getBinaryEditor(fileName)) {
-        data = editor->data();
-    } else {
-        getBinary(fileName, &data);
-    }
-    if (offset == 0 && range.size() >= data.size())
-        return updateBinary(fileName, range);
-
-    if (data.size() >= range.size() + offset
-        && !std::memcmp(data.data() + offset, range.constData(), range.size()))
+    if (range.isEmpty())
         return;
 
-    if (offset + range.size() > data.size())
-        data.resize(offset + range.size());
-    std::memcpy(data.data() + offset, range.constData(), range.size());
+    auto data = QByteArray();
+    getBinary(fileName, &data);
 
-    updateBinary(fileName, data);
+    QMutexLocker lock(&mMutex);
+    if (const auto it = mBinaries.constFind(fileName); it != mBinaries.cend())
+        data = *it;
+
+    if (offset == 0 && range.size() >= data.size()) {
+        if (data == range)
+            return;
+        data = range;
+    } else {
+        if (data.size() >= range.size() + offset
+            && !std::memcmp(data.constData() + offset, range.constData(),
+                range.size()))
+            return;
+
+        if (offset + range.size() > data.size())
+            data.resize(offset + range.size());
+        std::memcpy(data.data() + offset, range.constData(), range.size());
+    }
+
+    mBinaries[fileName] = std::move(data);
+    mEditorFilesChanged.remove(fileName);
+    mCachedFilesChanged[fileName] = CachedDataType::Binary;
 }
 
 bool FileCache::getBinary(const QString &fileName, QByteArray *binary) const
@@ -552,6 +641,8 @@ void FileCache::purgeFile(const QString &fileName)
     mBinaries.remove(fileName);
     std::erase_if(mTextures,
         [&](const auto &entry) { return entry.first.fileName == fileName; });
+    mEditorFilesChanged.remove(fileName);
+    mCachedFilesChanged.remove(fileName);
     Singletons::mediaManager().unloadFile(fileName);
 }
 

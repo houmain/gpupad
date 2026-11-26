@@ -331,7 +331,7 @@ void AppScriptObject::applyBackgroundUpdates()
         session.endUndoMacro();
     }
 
-    Singletons::fileCache().updateFromEditors();
+    Singletons::fileCache().synchronizeEditors();
 }
 
 QJSValue AppScriptObject::session()
@@ -348,7 +348,7 @@ const Item &AppScriptObject::sessionRootItem()
 {
     const auto &session = threadSessionModel();
     for (auto item = session.findItem(mCurrentItemId); item;
-         item = item->parent) {
+        item = item->parent) {
         if (item->type == Item::Type::Component)
             return *item;
     }
@@ -857,8 +857,8 @@ QJSValue AppScriptObject::openEditor(QString fileName)
     dispatchToMainThread([&, onMainThread = onMainThread()]() {
         if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
             const auto enginePtr = (onMainThread ? mEnginePtr.lock() : nullptr);
-            const auto editor = Singletons::editorManager().openQmlView(
-                fileName, enginePtr);
+            const auto editor =
+                Singletons::editorManager().openQmlView(fileName, enginePtr);
             opened = static_cast<bool>(editor);
         } else {
             opened = static_cast<bool>(
@@ -911,14 +911,15 @@ void AppScriptObject::setBufferData(QJSValue itemIdent, QJSValue data)
     const auto rowCount = bufferData.size() / getBlockStride(*block);
 
     withSessionModel([bufferId = buffer->id, bufferData, rowCount,
-                         fileName = QString()](SessionModel &session) mutable {
+                         fileName = QString(),
+                         cacheUpdated = false](SessionModel &session) mutable {
         if (auto buffer = session.findItem<Buffer>(bufferId)) {
             if (buffer->items.size() == 1) {
                 const auto block = castItem<Block>(buffer->items[0]);
                 session.setField(block, SessionModel::BlockRowCount, rowCount);
             }
             fileName = session.ensureFileName(*buffer, fileName);
-            if (onMainThread())
+            if (!std::exchange(cacheUpdated, true))
                 Singletons::fileCache().updateBinary(buffer->fileName,
                     bufferData);
         }
@@ -965,10 +966,11 @@ void AppScriptObject::setTextureData(QJSValue itemIdent, QJSValue data)
         return throwJsError("Invalid data");
 
     withSessionModel([textureId = texture->id, textureData,
-                         fileName = QString()](SessionModel &session) mutable {
+                         fileName = QString(),
+                         cacheUpdated = false](SessionModel &session) mutable {
         if (auto texture = session.findItem<Texture>(textureId)) {
             fileName = session.ensureFileName(*texture, fileName);
-            if (onMainThread())
+            if (!std::exchange(cacheUpdated, true))
                 Singletons::fileCache().updateTexture(texture->fileName,
                     textureData);
         }
@@ -1034,8 +1036,7 @@ QJSValue AppScriptObject::processItemShader(QJSValue itemIdent,
                              : QJSValue::UndefinedValue);
 }
 
-QJSValue AppScriptObject::processShader(QString fileName,
-    QString processType)
+QJSValue AppScriptObject::processShader(QString fileName, QString processType)
 {
     auto result = QVariant();
     dispatchToMainThread([&]() {

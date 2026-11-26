@@ -243,7 +243,7 @@ void QmlView::reset()
             }
         });
 
-    Singletons::fileCache().updateFromEditors();
+    Singletons::fileCache().synchronizeEditors();
 
     mQuickView->setSource(QUrl::fromLocalFile(mFileName));
     mQuickWidget->setWidgetWindow(mQuickView);

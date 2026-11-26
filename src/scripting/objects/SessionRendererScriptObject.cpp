@@ -57,7 +57,7 @@ public:
         auto &synchronize = Singletons::synchronizeLogic();
         synchronize.setEvaluationMode(EvaluationMode::Paused);
         synchronize.finishEvaluation();
-        Singletons::fileCache().updateFromEditors();
+        Singletons::fileCache().synchronizeEditors();
 
         const auto renderer = Singletons::sessionRenderer();
         if (!renderer || renderer->failed()) {

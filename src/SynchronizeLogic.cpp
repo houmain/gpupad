@@ -514,7 +514,7 @@ void SynchronizeLogic::evaluate(EvaluationType evaluationType)
 void SynchronizeLogic::handlePreparingEvaluation(bool &itemsChanged,
     EvaluationType &evaluationType)
 {
-    Singletons::fileCache().updateFromEditors();
+    Singletons::fileCache().synchronizeEditors();
     Q_EMIT waitingForSync();
 
     itemsChanged = mRenderSessionInvalidated;
@@ -547,7 +547,7 @@ void SynchronizeLogic::handlePreparingEvaluation(bool &itemsChanged,
 
 void SynchronizeLogic::handleEvaluated()
 {
-    Singletons::fileCache().updateFromEditors();
+    Singletons::fileCache().synchronizeEditors();
 
     if (mEvaluationMode != EvaluationMode::Paused && mRenderSession)
         Singletons::sessionModel().setActiveItems(mRenderSession->usedItems());
@@ -670,7 +670,7 @@ void SynchronizeLogic::processSource()
         || !Singletons::editorManager().getSourceEditor(mCurrentEditorFileName))
         return;
 
-    Singletons::fileCache().updateFromEditors();
+    Singletons::fileCache().synchronizeEditors();
 
     if (!initializeRenderSession())
         return;

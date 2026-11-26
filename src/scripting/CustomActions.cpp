@@ -131,7 +131,7 @@ void CustomActions::actionTriggered()
 void CustomActions::updateActions()
 {
     Q_ASSERT(onMainThread());
-    Singletons::fileCache().updateFromEditors();
+    Singletons::fileCache().synchronizeEditors();
 
     mMessages.clear();
     mActions.clear();
