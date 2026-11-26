@@ -54,6 +54,22 @@
             ]
         },
         {
+            "executeOn": "EveryEvaluation",
+            "fileName": "input.js",
+            "id": 10106,
+            "type": "Script"
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 10105,
+            "name": "iMouse",
+            "type": "Binding",
+            "values": [
+                "shadertoyMouse"
+            ]
+        },
+        {
             "flipVertically": false,
             "format": "RGBA8_UNorm",
             "height": "iResolution[1]",
@@ -143,12 +159,6 @@
                     "target": "Target2D",
                     "type": "Texture",
                     "width": "256"
-                },
-                {
-                    "executeOn": "EveryEvaluation",
-                    "fileName": "keyboard.js",
-                    "id": 967,
-                    "type": "Script"
                 }
             ],
             "iterations": "1",
