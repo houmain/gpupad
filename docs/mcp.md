@@ -1,14 +1,14 @@
 # MCP bridge
 
-MCP mode lets an external application inspect and modify a running GPUpad instance through the [scripting API](scripting-reference.md). The MCP server and the interactive application are two processes from the same GPUpad binary.
+MCP bridge lets an external application launch and list GPUpad instances and control them through the [scripting API](scripting-reference.md). The MCP bridge and each controlled application are separate processes from the same GPUpad binary and must run as the same operating-system user. No network listener is opened.
 
 ```text
-MCP client ← standard input/output → gpupad --mcp ← local IPC → running GPUpad
+MCP client ← standard input/output → gpupad --mcp ← local IPC → GPUpad instances
 ```
 
-## Starting MCP mode
+## Starting MCP bridge
 
-Start the normal GPUpad application first and open the session to be automated. Configure the MCP client to launch the same binary with `--mcp` as its first argument:
+Configure the MCP client to launch GPUpad with `--mcp` as its first argument:
 
 ```json
 {
@@ -21,15 +21,34 @@ Start the normal GPUpad application first and open the session to be automated. 
 }
 ```
 
-The MCP process does not open or own a session. It translates MCP messages on standard input/output to local requests handled by the already running GPUpad application. Both processes must run as the same operating-system user. No network listener is opened. MCP evaluations run on GPUpad's main thread.
+The MCP process is a broker. It discovers running GPUpad instances, can launch new ones, and routes evaluations to the selected instance. 
 
-## Tool
+## Tools
 
-The server exposes one tool:
+The bridge exposes these tools:
 
-- `eval({code: String})` - Evaluates JavaScript in the persistent scripting state of the running GPUpad instance.
+- `list({})` - Lists running instances and reports which one is selected.
+- `status({instanceId?: String})` - Reports an instance's process, mode, readiness, and loaded session. When omitted, `instanceId` refers to the selected instance.
+- `select({instanceId: String})` - Selects the target used by subsequent evaluations.
+- `launch({arguments?: String[]})` - Launches and instance with the arguments and automatically selects the new instance.
+- `close({instanceId?: String})` - Closes an instance, or the selected instance when omitted. Closing a windowed instance uses the normal unsaved-changes prompt; canceling that prompt leaves the instance running and selected.
+- `eval({code: String})` - Evaluates JavaScript in the selected instance's persistent scripting state on the main thread.
 
-The code has access to `app`, the current Session, editors, files, shader processing, and the other objects described in the [scripting reference](scripting-reference.md). Session Item types and properties are described in the [session item reference](session-reference.md).
+When no instance has been selected, `eval` and `status` automatically select the only running instance. They return an ambiguity error when multiple instances are available.
+
+`launch` generates an instance ID and automatically prepends `--instance <id>` to the supplied arguments. The call returns after the new instance has registered and is ready; failed launches preserve the previous selection. Headless instances keep running when launched by the `--instance` argument is passed.
+
+`close` requests a clean shutdown through the instance connection. It does not terminate the process by PID. Successfully closing the selected instance clears the selection.
+
+For example, this launches a persistent windowless instance with a session already loaded:
+
+```json
+{
+  "arguments": ["--headless", "C:/project/sample.gpjs"]
+}
+```
+
+`eval` code has access to `app`, the current Session, editors, files, shader processing, and the other objects described in the [scripting reference](scripting-reference.md). Session Item types and properties are described in the [session item reference](session-reference.md).
 
 An evaluation can inspect state:
 
@@ -123,25 +142,25 @@ The MCP server publishes four Markdown resources:
 - `gpupad://session-reference` - Session Item types, hierarchy, properties, and enum values.
 - `gpupad://headless` - Headless execution and strict session validation.
 
-The server's initialization instructions and `eval` tool description direct clients to these resources.
+The server's initialization instructions and tool descriptions direct clients to these resources.
 
 A client that can start local processes can use `gpupad --headless --strict` to validate a generated session file before loading it into the running application.
 
 ## Transport and limits
 
-MCP messages use JSON-RPC over line-delimited standard input/output. The bridge uses a user-local connection to the interactive GPUpad process. Requests and responses are limited to 4 MiB. Connecting and writing use a one-second timeout, and an evaluation response uses a 30-second timeout.
+MCP messages use JSON-RPC over line-delimited standard input/output. The bridge uses user-local connections to registered GPUpad instances. Requests and responses are limited to 4 MiB. Connecting and writing use a one-second timeout, and an evaluation response uses a 30-second timeout.
 
 Only one JSON value can be returned by an evaluation, but it can contain nested arrays and objects. Large binary data and device handles are better consumed inside the evaluated script or written through the scripting API rather than returned through MCP.
 
 ## Manual check
 
-With GPUpad running, an MCP client's tool inspector should show the `eval` tool and all four resources. The protocol can also be checked directly by sending one JSON-RPC request to the MCP process. For example, PowerShell can list the tools with:
+An MCP client's tool inspector should show all five tools and all four resources. The protocol can also be checked directly by sending one JSON-RPC request to the MCP process. For example, PowerShell can list the tools with:
 
 ```powershell
 '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | & 'C:\path\to\gpupad.exe' --mcp
 ```
 
-An `eval` call requires the running interactive application:
+An `eval` call requires a selected instance. A single running instance is selected automatically:
 
 ```json
 {"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"eval","arguments":{"code":"app.session.name"}}}

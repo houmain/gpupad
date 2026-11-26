@@ -985,6 +985,8 @@ bool MainWindow::saveSessionAs()
 
     mSessionEditor->save();
     mSessionEditor->clearUndo();
+    Singletons::synchronizeLogic().handleSessionFileNameChanged(
+        mSessionEditor->fileName());
     saveSessionState(mSessionEditor->fileName());
     addToRecentFileList(mSessionEditor->fileName());
     return true;

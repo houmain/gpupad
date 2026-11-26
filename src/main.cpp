@@ -80,6 +80,27 @@ const auto singleApplicationMode = SingleApplication::Mode::User
     | SingleApplication::Mode::ExcludeAppPath
     | SingleApplication::Mode::ExcludeAppVersion;
 
+bool takeInstanceArgument(int &argc, char *argv[], QString *instanceId)
+{
+    for (auto i = 1; i < argc; ++i) {
+        if (std::string_view(argv[i]) != "--instance")
+            continue;
+        if (!instanceId->isEmpty() || i + 1 >= argc)
+            return false;
+
+        *instanceId = QString::fromLocal8Bit(argv[i + 1]);
+        if (!isValidMcpInstanceId(*instanceId))
+            return false;
+
+        for (auto j = i; j + 2 < argc; ++j)
+            argv[j] = argv[j + 2];
+        argc -= 2;
+        argv[argc] = nullptr;
+        --i;
+    }
+    return true;
+}
+
 bool forwardToInstance(int argc, char *argv[])
 {
     auto app = QCoreApplication(argc, argv);
@@ -123,6 +144,7 @@ void outputHelpToStdout()
         "%s %s (c) %s-%s by %s\n"
         "\n"
         "Usage: gpupad (--option | filename)*\n"
+        "  --instance <id>                   use a managed MCP instance ID.\n"
         "  --headless                        run in headless mode.\n"
         "  --mcp                             run as an MCP stdio server.\n"
         "  --help                            print this help.\n"
@@ -144,17 +166,17 @@ void outputHelpToStdout()
     std::fflush(stdout);
 }
 
-int runHeadless(int argc, char *argv[])
+int runHeadless(int argc, char *argv[], const QString &instanceId)
 {
     auto app = QApplication(argc, argv);
     defaultMessageHandler = qInstallMessageHandler(filteringMessageHandler);
     attachToConsole();
 
-    extern int runHeadless(QApplication & app);
-    return runHeadless(app);
+    extern int runHeadless(QApplication & app, const QString &instanceId);
+    return runHeadless(app, instanceId);
 }
 
-int run(int argc, char *argv[])
+int run(int argc, char *argv[], const QString &instanceId)
 {
     auto app = QApplication(argc, argv);
     defaultMessageHandler = qInstallMessageHandler(filteringMessageHandler);
@@ -165,9 +187,13 @@ int run(int argc, char *argv[])
 
     auto instance = SingleApplication(true, singleApplicationMode);
     auto window = MainWindow();
-    auto externalScriptServer = ExternalScriptServer();
-    if (!externalScriptServer.listen() && instance.isPrimary())
+    auto externalScriptServer = ExternalScriptServer(instanceId, false,
+        [&window]() { return window.close(); });
+    if (!externalScriptServer.listen()) {
         qWarning("Starting the external script server failed");
+        if (!instanceId.isEmpty())
+            return 1;
+    }
 
     QObject::connect(&instance, &SingleApplication::receivedMessage,
         [&](quint32 instanceId, QByteArray argument) {
@@ -249,16 +275,23 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(format);
 #endif
 
+    auto instanceId = QString();
+    if (!takeInstanceArgument(argc, argv, &instanceId)) {
+        attachToConsole();
+        std::fputs("Invalid --instance argument.\n", stderr);
+        return 1;
+    }
+
     const auto executableName =
         QFileInfo(QString::fromLocal8Bit(argv[0])).completeBaseName();
     if (executableName.compare("gpupad-headless", Qt::CaseInsensitive) == 0)
-        return runHeadless(argc, argv);
+        return runHeadless(argc, argv, instanceId);
 
     if (const auto arg1 = std::string_view(argc > 1 ? argv[1] : "");
         arg1.starts_with("--")) {
 
         if (arg1 == "--headless")
-            return runHeadless(argc, argv);
+            return runHeadless(argc, argv, instanceId);
         if (arg1 == "--mcp")
             return runMcp(argc, argv);
 
@@ -267,8 +300,8 @@ int main(int argc, char *argv[])
         return (arg1 == "--help" ? 0 : 1);
     }
 
-    if (forwardToInstance(argc, argv))
+    if (instanceId.isEmpty() && forwardToInstance(argc, argv))
         return 0;
 
-    return run(argc, argv);
+    return run(argc, argv, instanceId);
 }

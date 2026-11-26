@@ -686,6 +686,7 @@ void SynchronizeLogic::handleSessionFileNameChanged(const QString &fileName)
 {
     Q_ASSERT(FileDialog::isEmptyOrUntitled(fileName)
         || QDir::current() == QFileInfo(fileName).dir());
+    mSessionFileName = fileName;
 }
 
 void SynchronizeLogic::handleMouseStateChanged()

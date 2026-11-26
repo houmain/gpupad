@@ -40,6 +40,7 @@ public:
     const QString &processSourceType() const { return mProcessSourceType; }
     void setCurrentEditorFileName(QString fileName);
     void setCurrentEditorSourceType(SourceType sourceType);
+    const QString &sessionFileName() const { return mSessionFileName; }
 
     void handleTextureDeviceDataChanged(ItemId itemId, const TextureData &data,
         const ShareHandle &shareHandle, int samples);
@@ -91,6 +92,7 @@ private:
     void processSource();
 
     SessionModel &mModel;
+    QString mSessionFileName;
 
     QTimer *mUpdateEditorsTimer{};
     QSet<ItemId> mEditorItemsModified;

@@ -50,3 +50,5 @@ gpupad --headless --strict first.gpjs second.gpjs
 The process exits with status `0` when all requested files load, every session evaluation finishes without an error message, and all requested outputs are saved. It exits with status `1` for invalid command-line arguments, loading or saving failures, script errors, shader or rendering errors, and other messages classified as errors. Warnings do not change the exit status.
 
 Without `--verbose`, informational messages such as call timings are omitted. Each printed diagnostic includes its severity and, when available, the source filename, line, and Item name.
+
+When headless mode is launched with `--instance <id>`, it remains running after successful command-line processing and accepts MCP evaluations.

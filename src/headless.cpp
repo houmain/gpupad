@@ -1,5 +1,6 @@
 
 #include "FileDialog.h"
+#include "Mcp.h"
 #include "message/MessageList.h"
 #include "message/MessageLocationIndex.h"
 #include "Singletons.h"
@@ -40,7 +41,7 @@ void outputMessagesToStdout(const SessionModel &sessionModel, bool verbose)
     std::fflush(stdout);
 }
 
-int runHeadless(QApplication &app)
+int runHeadless(QApplication &app, const QString &instanceId)
 {
     auto singletons = Singletons(nullptr);
     auto &editorManager = singletons.editorManager();
@@ -90,6 +91,7 @@ int runHeadless(QApplication &app)
         editorManager.closeAllEditors(false);
         outputMessagesToStdout(sessionModel, verbose);
         sessionModel.clear();
+        synchronizeLogic.handleSessionFileNameChanged({ });
         messages.clear();
     };
 
@@ -177,6 +179,7 @@ int runHeadless(QApplication &app)
                 auto errorMessage = QString();
                 if (!sessionModel.load(fileName, strict, &errorMessage))
                     return loadingFileFailed(fileName, errorMessage);
+                synchronizeLogic.handleSessionFileNameChanged(fileName);
                 // Session loading changes cwd for the GUI. Keep headless output
                 // paths relative to the directory from which it was invoked.
                 QDir::setCurrent(workingDirectory.path());
@@ -196,5 +199,16 @@ int runHeadless(QApplication &app)
     }
     if (!evaluateSession())
         return 1;
+    if (!instanceId.isEmpty()) {
+        auto externalScriptServer = ExternalScriptServer(instanceId, true,
+            [&app]() {
+                QMetaObject::invokeMethod(
+                    &app, &QCoreApplication::quit, Qt::QueuedConnection);
+                return true;
+            });
+        if (!externalScriptServer.listen())
+            return invalidArgument(externalScriptServer.errorString());
+        return app.exec();
+    }
     return 0;
 }

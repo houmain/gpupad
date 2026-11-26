@@ -793,6 +793,8 @@ void AppScriptObject::loadSession(QString fileName)
     fileName = toNativeCanonicalAbsoluteFilePath(fileName);
     if (!Singletons::sessionModel().load(fileName))
         throwJsError("Loading session failed: " + fileName);
+    else
+        sync.handleSessionFileNameChanged(fileName);
 }
 
 void AppScriptObject::closeSession()
@@ -802,6 +804,7 @@ void AppScriptObject::closeSession()
             "Sessions can only be closed from a main-thread script");
 
     mItemTrackings.clear();
+    Singletons::synchronizeLogic().handleSessionFileNameChanged({ });
     for (const auto &[id, item] : mItemObjects)
         item.object->deleteLater();
     mItemObjects.clear();
