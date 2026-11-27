@@ -797,6 +797,19 @@ void AppScriptObject::loadSession(QString fileName)
         sync.handleSessionFileNameChanged(fileName);
 }
 
+void AppScriptObject::saveSession(QString fileName)
+{
+    if (!onMainThread())
+        return throwJsError(
+            "Sessions can only be saved from a main-thread script");
+
+    fileName = toNativeCanonicalAbsoluteFilePath(fileName);
+    if (!Singletons::sessionModel().save(fileName))
+        throwJsError("Saving session failed: " + fileName);
+    else
+        Singletons::synchronizeLogic().handleSessionFileNameChanged(fileName);
+}
+
 void AppScriptObject::closeSession()
 {
     if (!onMainThread())
