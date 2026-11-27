@@ -3,6 +3,29 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 4.9.0] - 2026-11-27
+
+### Added
+
+- Added process management to the MCP bridge.
+- Added App script object method `saveSession`.
+- Added session hot reloading.
+- Added support for indirect Direct3D ray dispatch (#64).
+- Add a wave reduction and compaction sample (#62).
+- Add an indirect ray dispatch sample.
+
+### Changed
+
+- App script object `session` property returns component root within components.
+- Updated samples and actions to use new item script object methods.
+- Changed default of `findItem/s` to not search sub items by default.
+
+### Fixed
+
+- Item file data set by script functions is applied in same evaluation.
+- Fixed memory leak of Direct3D renderer.
+- Fixed race on session background updates.
+
 ## [Version 4.8.1] - 2026-11-20
 
 ### Added
@@ -1309,6 +1332,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 4.9.0]: https://github.com/houmain/gpupad/compare/4.8.1...4.9.0
 [version 4.8.1]: https://github.com/houmain/gpupad/compare/4.8.0...4.8.1
 [version 4.8.0]: https://github.com/houmain/gpupad/compare/4.7.0...4.8.0
 [version 4.7.0]: https://github.com/houmain/gpupad/compare/4.6.0...4.7.0
