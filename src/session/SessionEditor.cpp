@@ -3,6 +3,7 @@
 #include "FileDialog.h"
 #include "SessionModel.h"
 #include "Singletons.h"
+#include "SynchronizeLogic.h"
 #include "properties/PropertiesEditor.h"
 #include <QApplication>
 #include <QClipboard>
@@ -334,7 +335,7 @@ bool SessionEditor::load()
 
 bool SessionEditor::save()
 {
-    return mModel.save(mFileName);
+    return Singletons::synchronizeLogic().saveSession(mFileName);
 }
 
 void SessionEditor::cut()

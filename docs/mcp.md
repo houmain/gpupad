@@ -71,7 +71,7 @@ The value of the final JavaScript expression is returned. `undefined` is reporte
 
 Messages written with `console.log`, `console.warn`, or `console.error` during the evaluation are returned as tool content. A JavaScript exception returns an MCP tool error with its message, stack, source location, and console output.
 
-Changes to session Items and editor contents are applied in memory and affect the next evaluation without being saved. Saving is only needed to persist changes to disk and is normally left to the user. An MCP client should save only when explicitly requested.
+Changes to session Items and editor contents are applied in memory and affect the next evaluation without being saved. Saving is only needed to persist changes to disk and is normally left to the user. An MCP client should save only when explicitly requested. GPUpad automatically reloads the open session and referenced files when they are modified externally. Reloading the session preserves its undo history and is recorded as a single undo step.
 
 The following example replaces the current session with a complete in-memory graphics session. IDs returned by inserted Items can immediately be used for references. `setSource()` creates untitled backing files without writing anything to disk. The function scope also allows the example to be run repeatedly in the persistent scripting state. An output Texture's editor must be open during evaluation to receive the evaluated data. `app.evaluate()` triggers manual evaluation. An explicitly requested export can directly follow. The destination extension selects the image or texture format:
 

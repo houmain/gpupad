@@ -41,6 +41,7 @@ public:
     void handleEditorFileChanged(const QString &fileName,
         bool emitFileChanged = true);
     void handleEditorSave(const QString &fileName);
+    void setSessionFileWatch(const QString &fileName);
     void synchronizeEditors();
 
 Q_SIGNALS:
@@ -83,6 +84,7 @@ private:
     QSet<QString> mEditorFilesChanged;
     QMap<QString, CachedDataType> mCachedFilesChanged;
     QString mUpdatingEditorFile;
+    QString mSessionFileWatch;
     QSet<QString> mEditorSaveAdvertised;
     QTimer mUpdateFileSystemWatchesTimer;
     QFileSystemWatcher mFileSystemWatcher;

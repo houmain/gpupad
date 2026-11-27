@@ -276,6 +276,24 @@ void FileCache::handleEditorSave(const QString &fileName)
     mEditorSaveAdvertised.insert(fileName);
 }
 
+void FileCache::setSessionFileWatch(const QString &fileName)
+{
+    Q_ASSERT(onMainThread());
+    Q_ASSERT(isNativeCanonicalFilePath(fileName));
+
+    QMutexLocker lock(&mMutex);
+    if (mSessionFileWatch == fileName)
+        return;
+
+    if (!mSessionFileWatch.isEmpty()) {
+        mFileSystemWatchesToAdd.remove(mSessionFileWatch);
+        mFileSystemWatcher.removePath(mSessionFileWatch);
+    }
+
+    mSessionFileWatch = fileName;
+    addFileSystemWatch(mSessionFileWatch);
+}
+
 bool FileCache::updateFromEditor(const QString &fileName)
 {
     auto &editorManager = Singletons::editorManager();

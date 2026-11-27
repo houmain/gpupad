@@ -56,6 +56,8 @@ public:
     bool save(const QString &fileName);
     bool load(const QString &fileName, bool strictProperties = false,
         QString *errorMessage = nullptr);
+    bool reload(const QString &fileName, bool strictProperties = false,
+        QString *errorMessage = nullptr);
     const Item *findItemByPath(const QModelIndex &index,
         const QString &path) const;
     const Item *findItemByPath(const QString &path) const

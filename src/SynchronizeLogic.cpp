@@ -57,10 +57,13 @@ namespace {
 SynchronizeLogic::SynchronizeLogic(QObject *parent)
     : QObject(parent)
     , mModel(Singletons::sessionModel())
+    , mSessionReloadTimer(new QTimer(this))
     , mUpdateEditorsTimer(new QTimer(this))
     , mEvaluationTimer(new QTimer(this))
     , mProcessSourceTimer(new QTimer(this))
 {
+    connect(mSessionReloadTimer, &QTimer::timeout, this,
+        &SynchronizeLogic::reloadSession);
     connect(mUpdateEditorsTimer, &QTimer::timeout, this,
         &SynchronizeLogic::updateEditors);
     connect(mEvaluationTimer, &QTimer::timeout, this,
@@ -90,6 +93,8 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
     connect(&Singletons::inputState(), &InputState::keysChanged, this,
         &SynchronizeLogic::handleKeyboardStateChanged);
     mUpdateEditorsTimer->start(100);
+    mSessionReloadTimer->setInterval(50);
+    mSessionReloadTimer->setSingleShot(true);
     mEvaluationTimer->setTimerType(Qt::PreciseTimer);
 
     mProcessSourceTimer->setInterval(50);
@@ -226,6 +231,11 @@ bool SynchronizeLogic::resetRenderSessionInvalidationState()
 
 void SynchronizeLogic::handleFileChanged(const QString &fileName)
 {
+    if (fileName == mSessionFileName) {
+        mSessionReloadTimer->start();
+        return;
+    }
+
     mModel.forEachFileItem([&](const FileItem &item) {
         if (item.fileName == fileName) {
             const auto index = mModel.getIndex(&item);
@@ -238,6 +248,17 @@ void SynchronizeLogic::handleFileChanged(const QString &fileName)
         mProcessSourceTimer->start();
 
     editorManager.resetQmlViewsDependingOn(fileName);
+}
+
+void SynchronizeLogic::reloadSession()
+{
+    if (mSessionFileName.isEmpty())
+        return;
+
+    auto errorMessage = QString();
+    if (!mModel.reload(mSessionFileName, false, &errorMessage))
+        qWarning("Reloading session '%s' failed: %s",
+            qUtf8Printable(mSessionFileName), qUtf8Printable(errorMessage));
 }
 
 void SynchronizeLogic::handleItemsModified(const QModelIndex &topLeft,
@@ -686,7 +707,20 @@ void SynchronizeLogic::handleSessionFileNameChanged(const QString &fileName)
 {
     Q_ASSERT(FileDialog::isEmptyOrUntitled(fileName)
         || QDir::current() == QFileInfo(fileName).dir());
+    mSessionReloadTimer->stop();
     mSessionFileName = fileName;
+    Singletons::fileCache().setSessionFileWatch(fileName);
+}
+
+bool SynchronizeLogic::saveSession(const QString &fileName)
+{
+    mSessionReloadTimer->stop();
+
+    auto &fileCache = Singletons::fileCache();
+    fileCache.setSessionFileWatch({ });
+    const auto result = mModel.save(fileName);
+    fileCache.setSessionFileWatch(mSessionFileName);
+    return result;
 }
 
 void SynchronizeLogic::handleMouseStateChanged()

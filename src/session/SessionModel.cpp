@@ -676,6 +676,43 @@ bool SessionModel::load(const QString &fileName, bool strict,
     return true;
 }
 
+bool SessionModel::reload(const QString &fileName, bool strict,
+    QString *errorMessage)
+{
+    const auto previousDirectory = QDir::currentPath();
+    auto sourceModel = SessionModel();
+    if (!sourceModel.load(fileName, strict, errorMessage)) {
+        QDir::setCurrent(previousDirectory);
+        return false;
+    }
+
+    const auto sourceJson = sourceModel.getJson({ QModelIndex() });
+    if (sourceJson.empty()) {
+        QDir::setCurrent(previousDirectory);
+        return false;
+    }
+
+    auto untitledFileNames = QMap<ItemId, QString>();
+    forEachFileItem([&](const FileItem &item) {
+        if (FileDialog::isUntitled(item.fileName))
+            untitledFileNames.insert(item.id, item.fileName);
+    });
+    setActiveItems({ });
+    beginUndoMacro(tr("Reload Session"));
+    deleteItem(QModelIndex());
+    dropJson(sourceJson, 0, QModelIndex());
+    forEachFileItem([&](const FileItem &item) {
+        if (item.fileName.isEmpty())
+            if (const auto it = untitledFileNames.constFind(item.id);
+                it != untitledFileNames.cend()) {
+                setField(&item, FileName, it.value());
+            }
+    });
+    endUndoMacro();
+    undoStack().setClean();
+    return true;
+}
+
 QModelIndex SessionModel::insertComponent(const QString &fileName_,
     const QModelIndex &parent, int row)
 {

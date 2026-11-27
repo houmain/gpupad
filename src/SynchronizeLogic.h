@@ -41,6 +41,7 @@ public:
     void setCurrentEditorFileName(QString fileName);
     void setCurrentEditorSourceType(SourceType sourceType);
     const QString &sessionFileName() const { return mSessionFileName; }
+    bool saveSession(const QString &fileName);
 
     void handleTextureDeviceDataChanged(ItemId itemId, const TextureData &data,
         const ShareHandle &shareHandle, int samples);
@@ -79,6 +80,7 @@ private:
     void handleFileItemFileChanged(const FileItem &item);
     void handleFileItemRenamed(const FileItem &item, const QString &prevName);
     void handleFileChanged(const QString &fileName);
+    void reloadSession();
     void handleItemAdded(const QModelIndex &parent, int first);
     void handleItemRemoved(const QModelIndex &parent, int first);
     void updateEditors();
@@ -93,6 +95,7 @@ private:
 
     SessionModel &mModel;
     QString mSessionFileName;
+    QTimer *mSessionReloadTimer{};
 
     QTimer *mUpdateEditorsTimer{};
     QSet<ItemId> mEditorItemsModified;
